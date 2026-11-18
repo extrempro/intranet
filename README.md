@@ -13,7 +13,7 @@ Was das Intranet können soll, steht in der **[Spezifikation](docs/spec.md)**.
 
 ## Entwicklung
 
-Voraussetzungen: Node.js 22, eine PostgreSQL-Datenbank (z. B. über `docker compose up db`).
+Voraussetzungen: Node.js 24 oder neuer, eine PostgreSQL-Datenbank (z. B. über `docker compose up db`).
 
 ```bash
 cp .env.example .env        # Werte anpassen
@@ -41,6 +41,15 @@ docker compose up -d --build
 
 Die Anwendung hört im Container auf Port 3000 (`APP_PORT` auf dem Host). Der Zustand ist unter
 `/health` abrufbar. Die Datenbank ist nicht nach außen veröffentlicht.
+
+## Aktualität der Pakete
+
+- **Wöchentlich** (montags) hebt der Workflow *Abhängigkeiten aktualisieren* alle npm-Pakete auf die neueste Version,
+  auch auf neue Hauptversionen. Er prüft Typen, Lint, Tests, Build und bekannte Sicherheitslücken und committet
+  nur, wenn alles grün ist. Ist er rot, braucht es eine Anpassung im Code.
+- **Täglich** läuft die CI zusätzlich, damit neu bekannte Sicherheitslücken auffallen.
+- **Monatlich** schlägt Dependabot neue Versionen für GitHub Actions und das Docker-Basis-Image vor.
+- Der Workflow lässt sich unter *Actions* auch von Hand starten.
 
 ## Sicherheit
 

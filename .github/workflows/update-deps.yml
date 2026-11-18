@@ -1,0 +1,50 @@
+name: Abhängigkeiten aktualisieren
+
+# Hebt jede Woche alle npm-Pakete auf die neueste Version (auch neue Hauptversionen),
+# prüft das Ergebnis vollständig und committet nur, wenn alles grün ist.
+# Schlägt ein Schritt fehl, wird nichts übernommen und der Lauf ist rot.
+on:
+  schedule:
+    - cron: '17 4 * * 1' # montags 04:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-deps
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+      - name: Versionen auf den neuesten Stand heben
+        run: npx --yes npm-check-updates@latest --upgrade
+      - name: Installieren und Lock-Datei erzeugen
+        run: npm install
+      - name: Typen prüfen
+        run: npm run check
+      - name: Lint
+        run: npm run lint
+      - name: Tests
+        run: npm test
+      - name: Bauen
+        run: npm run build
+      - name: Sicherheitslücken prüfen
+        run: npm audit --audit-level=high
+      - name: Änderungen übernehmen
+        run: |
+          if git diff --quiet -- package.json package-lock.json; then
+            echo "Alles ist aktuell."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "Abhängigkeiten aktualisieren"
+          git push

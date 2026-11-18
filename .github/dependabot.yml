@@ -1,14 +1,15 @@
+# npm-Pakete aktualisiert der Workflow „Abhängigkeiten aktualisieren“ selbst.
+# Dependabot kümmert sich nur um GitHub Actions und das Docker-Basis-Image,
+# jeweils gebündelt in einem Pull Request pro Monat.
 version: 2
 updates:
-  - package-ecosystem: npm
-    directory: /
-    schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+    groups:
+      actions:
+        patterns: ['*']
   - package-ecosystem: docker
     directory: /
     schedule:
