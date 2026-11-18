@@ -1,5 +1,5 @@
 # --- Bauen ---
-FROM node:22-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
@@ -7,7 +7,7 @@ COPY . .
 RUN npm run build && npm prune --omit=dev
 
 # --- Laufen ---
-FROM node:22-alpine
+FROM node:26-alpine
 ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=build --chown=node:node /app/build ./build

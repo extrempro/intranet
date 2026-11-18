@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    - cron: '43 5 * * *' # täglich: neu bekannte Sicherheitslücken auffallen lassen
 
 permissions:
   contents: read
@@ -12,10 +14,10 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 26
       # Solange es noch keine package-lock.json gibt, wird normal installiert.
       - name: Abhängigkeiten installieren
         run: if [ -f package-lock.json ]; then npm ci; else npm install; fi
@@ -34,6 +36,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: check
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Docker-Image bauen
         run: docker build -t intranet:ci .
