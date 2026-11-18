@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Solange es noch keine package-lock.json gibt, wird normal installiert.
+      - name: Abhängigkeiten installieren
+        run: if [ -f package-lock.json ]; then npm ci; else npm install; fi
+      - name: Typen prüfen
+        run: npm run check
+      - name: Lint
+        run: npm run lint
+      - name: Tests
+        run: npm test
+      - name: Bauen
+        run: npm run build
+      - name: Abhängigkeiten auf bekannte Sicherheitslücken prüfen
+        run: npm audit --audit-level=high
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+      - name: Docker-Image bauen
+        run: docker build -t intranet:ci .
