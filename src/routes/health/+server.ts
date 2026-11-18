@@ -1,4 +1,4 @@
-import type { RequestHandler } from './$types';
+import type { RequestHandler } from '@sveltejs/kit';
 
 /** Zustandsprüfung für Docker und den Reverse Proxy. Gibt keine Details preis. */
 export const GET: RequestHandler = () =>

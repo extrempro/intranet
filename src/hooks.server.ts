@@ -1,8 +1,8 @@
-import type { Handle } from '@sveltejs/kit';
+import type { Handle } from '@sveltejs/kit/hooks';
 
 /**
  * Sicherheits-Header für jede Antwort.
- * Die Content Security Policy setzt SvelteKit selbst (svelte.config.js).
+ * Die Content Security Policy setzt SvelteKit selbst (vite.config.ts).
  */
 const securityHeaders: Record<string, string> = {
 	'X-Content-Type-Options': 'nosniff',

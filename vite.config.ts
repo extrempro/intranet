@@ -1,8 +1,31 @@
+import adapter from '@sveltejs/adapter-node';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-	plugins: [sveltekit()],
+	plugins: [
+		sveltekit({
+			adapter: adapter(),
+			// Content Security Policy: Skripte und Styles nur von der eigenen Herkunft,
+			// SvelteKit ergänzt Hashes bzw. Nonces für eigene Inline-Skripte.
+			// Schutz gegen CSRF ist in SvelteKit immer aktiv.
+			csp: {
+				mode: 'auto',
+				directives: {
+					'default-src': ['self'],
+					'script-src': ['self'],
+					'style-src': ['self', 'unsafe-inline'],
+					'img-src': ['self', 'data:', 'blob:'],
+					'font-src': ['self'],
+					'connect-src': ['self'],
+					'frame-ancestors': ['none'],
+					'form-action': ['self'],
+					'base-uri': ['self'],
+					'object-src': ['none']
+				}
+			}
+		})
+	],
 	test: {
 		include: ['src/**/*.test.ts']
 	}
