@@ -38,6 +38,8 @@ jobs:
         run: npm run build
       - name: Sicherheitslücken prüfen
         run: npm audit --audit-level=high
+      - name: Docker-Image bauen
+        run: docker build -t intranet:update .
       - name: Änderungen übernehmen
         run: |
           if git diff --quiet -- package.json package-lock.json; then
