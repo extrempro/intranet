@@ -1,6 +1,7 @@
 name: Abhängigkeiten aktualisieren
 
 # Hebt jede Woche alle npm-Pakete auf die neueste Version (auch neue Hauptversionen),
+# soweit die Pakete untereinander zusammenpassen (--peer),
 # prüft das Ergebnis vollständig und committet nur, wenn alles grün ist.
 # Schlägt ein Schritt fehl, wird nichts übernommen und der Lauf ist rot.
 on:
@@ -24,7 +25,7 @@ jobs:
         with:
           node-version: 26
       - name: Versionen auf den neuesten Stand heben
-        run: npx --yes npm-check-updates@latest --upgrade
+        run: npx --yes npm-check-updates@latest --upgrade --peer
       - name: Installieren und Lock-Datei erzeugen
         run: npm install
       - name: Typen prüfen
