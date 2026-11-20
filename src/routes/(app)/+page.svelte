@@ -1,0 +1,284 @@
+<script lang="ts">
+	import { enhance } from '$app/forms';
+	import Icon from '#lib/components/Icon.svelte';
+	import { moveItem } from '#lib/home.ts';
+
+	let { data, form } = $props();
+
+	let bearbeiten = $state(false);
+	let karten = $state<typeof data.karten>([]);
+	let favoriten = $state<typeof data.favoriten>([]);
+
+	function starten() {
+		karten = structuredClone(data.karten);
+		favoriten = structuredClone(data.favoriten);
+		bearbeiten = true;
+	}
+
+	const sichtbareKarten = $derived(data.karten.filter((k) => k.visible));
+</script>
+
+<svelte:head><title>Start · Intranet</title></svelte:head>
+
+<div class="start">
+	<div class="kopfzeile">
+		<div>
+			<h1>{data.gruss}</h1>
+			<p class="hinweis">{data.datum}</p>
+		</div>
+		{#if !bearbeiten}
+			<button type="button" class="knopf zweit" onclick={starten}>Startseite anpassen</button>
+		{/if}
+	</div>
+
+	{#if form?.gespeichert}<p class="meldung" role="status">Deine Startseite ist gespeichert.</p>{/if}
+	{#if form?.zurueckgesetzt}<p class="meldung" role="status">
+			Die Startseite ist auf den Standard zurückgesetzt.
+		</p>{/if}
+	{#if form?.fehler}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
+
+	<!-- Dringende Meldungen stehen immer oben (Kap. 8.2) -->
+
+	<section aria-labelledby="fav-h">
+		<h2 id="fav-h">Favoriten</h2>
+		{#if (bearbeiten ? favoriten : data.favoriten).length === 0}
+			<p class="hinweis">
+				Noch keine Favoriten. Tippe auf einer Seite auf den Stern ☆, um sie hier anzuzeigen.
+			</p>
+		{:else}
+			<ul class="favoriten">
+				{#each bearbeiten ? favoriten : data.favoriten as f, i (f.key)}
+					<li class="karte fav">
+						{#if bearbeiten}
+							<span class="fav-inhalt"><Icon d={f.icon} /><strong>{f.label}</strong></span>
+							<span class="werkzeuge">
+								<button
+									type="button"
+									class="mini"
+									aria-label="{f.label} nach links"
+									disabled={i === 0}
+									onclick={() => (favoriten = moveItem(favoriten, i, -1))}
+								>
+									←
+								</button>
+								<button
+									type="button"
+									class="mini"
+									aria-label="{f.label} nach rechts"
+									disabled={i === favoriten.length - 1}
+									onclick={() => (favoriten = moveItem(favoriten, i, 1))}
+								>
+									→
+								</button>
+								<button
+									type="button"
+									class="mini"
+									aria-label="{f.label} entfernen"
+									onclick={() => (favoriten = favoriten.filter((x) => x.key !== f.key))}
+								>
+									×
+								</button>
+							</span>
+						{:else}
+							<!-- href stammt aus der festen Zielliste auf dem Server -->
+							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+							<a class="fav-inhalt" href={f.href}>
+								<Icon d={f.icon} />
+								<strong>{f.label}</strong>
+								<span class="hinweis">{f.beschreibung}</span>
+							</a>
+						{/if}
+					</li>
+				{/each}
+			</ul>
+		{/if}
+	</section>
+
+	{#if bearbeiten}
+		<section class="karte" aria-labelledby="karten-h">
+			<h2 id="karten-h">Karten</h2>
+			{#if karten.length === 0}
+				<p class="hinweis">
+					Weitere Karten wie Termine oder Speiseplan kommen dazu, sobald es sie gibt.
+				</p>
+			{:else}
+				<ul class="kartenliste">
+					{#each karten as k, i (k.id)}
+						<li>
+							<label class="schalter">
+								<input type="checkbox" role="switch" bind:checked={k.visible} />
+								{k.label}
+							</label>
+							<span class="werkzeuge">
+								<button
+									type="button"
+									class="mini"
+									aria-label="{k.label} nach oben"
+									disabled={i === 0}
+									onclick={() => (karten = moveItem(karten, i, -1))}
+								>
+									↑
+								</button>
+								<button
+									type="button"
+									class="mini"
+									aria-label="{k.label} nach unten"
+									disabled={i === karten.length - 1}
+									onclick={() => (karten = moveItem(karten, i, 1))}
+								>
+									↓
+								</button>
+							</span>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+			<div class="aktionen">
+				<form
+					method="POST"
+					action="?/speichern"
+					use:enhance={() =>
+						async ({ update }) => {
+							await update();
+							bearbeiten = false;
+						}}
+				>
+					<input type="hidden" name="reihenfolge" value={JSON.stringify(karten.map((k) => k.id))} />
+					<input
+						type="hidden"
+						name="ausgeblendet"
+						value={JSON.stringify(karten.filter((k) => !k.visible).map((k) => k.id))}
+					/>
+					<input
+						type="hidden"
+						name="favoriten"
+						value={JSON.stringify(favoriten.map((f) => f.key))}
+					/>
+					<button class="knopf" type="submit">Fertig</button>
+				</form>
+				<button type="button" class="knopf zweit" onclick={() => (bearbeiten = false)}>
+					Abbrechen
+				</button>
+				{#if data.eigeneEinstellung}
+					<form
+						method="POST"
+						action="?/zuruecksetzen"
+						use:enhance={() =>
+							async ({ update }) => {
+								await update();
+								bearbeiten = false;
+							}}
+					>
+						<button class="linkknopf" type="submit">Auf Standard zurücksetzen</button>
+					</form>
+				{/if}
+			</div>
+		</section>
+	{/if}
+
+	{#each sichtbareKarten as k (k.id)}
+		<!-- Karten folgen mit ihren Funktionen -->
+		<section class="karte" aria-label={k.label}></section>
+	{/each}
+</div>
+
+<style>
+	.start {
+		display: grid;
+		gap: 18px;
+	}
+	.kopfzeile {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		align-items: flex-start;
+		gap: 12px;
+	}
+	h1 {
+		margin: 0;
+	}
+	h2 {
+		margin: 0 0 10px;
+	}
+	.favoriten {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+		gap: 12px;
+	}
+	.fav {
+		padding: 0;
+		min-height: 96px;
+		display: flex;
+		flex-direction: column;
+	}
+	.fav-inhalt {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 8px;
+		padding: 16px;
+		color: var(--tx);
+		text-decoration: none;
+		border-radius: var(--radius);
+	}
+	a.fav-inhalt:hover {
+		box-shadow: 0 6px 20px rgb(0 0 0 / 0.1);
+	}
+	.werkzeuge {
+		display: flex;
+		gap: 4px;
+		padding: 0 12px 12px;
+	}
+	.kartenliste .werkzeuge {
+		padding: 0;
+	}
+	.mini {
+		min-width: 40px;
+		min-height: 40px;
+		border-radius: 10px;
+		border: 1px solid var(--bd);
+		background: var(--sf);
+		color: var(--tx);
+		font: inherit;
+		font-size: 18px;
+		cursor: pointer;
+	}
+	.mini:disabled {
+		opacity: 0.35;
+		cursor: not-allowed;
+	}
+	.kartenliste {
+		list-style: none;
+		margin: 0 0 12px;
+		padding: 0;
+		display: grid;
+		gap: 8px;
+	}
+	.kartenliste li {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 12px;
+	}
+	.schalter {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		min-height: 44px;
+	}
+	.schalter input {
+		width: 20px;
+		height: 20px;
+		accent-color: var(--fill);
+	}
+	.aktionen {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+		align-items: center;
+	}
+</style>

@@ -1,6 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import type { Handle, ServerInit } from '@sveltejs/kit/hooks';
 import { loadPrincipal } from '#lib/server/auth/access.ts';
+import { getPreferences } from '#lib/server/preferences.ts';
 import { deleteSessionCookie, SESSION_COOKIE, validateSession } from '#lib/server/auth/session.ts';
 
 /** Beim Start ausstehende Migrationen einspielen (abschaltbar mit MIGRATE_ON_START=false). */
@@ -39,6 +40,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.person = null;
 	event.locals.session = null;
 	event.locals.principal = null;
+	event.locals.theme = 'auto';
 
 	const token = event.cookies.get(SESSION_COOKIE);
 	if (token) {
@@ -47,7 +49,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 			event.locals.person = session.person;
 			event.locals.session = { id: session.id, authMethod: session.authMethod };
 			// Rollen und Mitgliedschaften je Anfrage frisch, damit Entzug sofort wirkt
-			event.locals.principal = await loadPrincipal(session.person);
+			const [principal, prefs] = await Promise.all([
+				loadPrincipal(session.person),
+				getPreferences(session.person.id)
+			]);
+			event.locals.principal = principal;
+			event.locals.theme = prefs.theme;
 		} else {
 			deleteSessionCookie(event.cookies);
 		}
@@ -58,7 +65,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 		redirect(303, ziel === '/' ? '/anmelden' : `/anmelden?ziel=${encodeURIComponent(ziel)}`);
 	}
 
-	const response = await resolve(event);
+	const theme = event.locals.theme;
+	const response = await resolve(event, {
+		// Darstellung schon im HTML setzen, damit nichts flackert
+		transformPageChunk: ({ html }) => html.replace('%intranet.theme%', theme)
+	});
 	for (const [name, value] of Object.entries(securityHeaders)) {
 		response.headers.set(name, value);
 	}

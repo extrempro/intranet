@@ -1,51 +1,263 @@
-:root {
-	color-scheme: light dark;
-	--bg: #f7f8f7;
-	--fg: #1b1f1d;
-	--accent: #0f6b55;
-	font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
-	line-height: 1.5;
-	background: var(--bg);
-	color: var(--fg);
+/*
+ * Gestaltung nach dem klickbaren Entwurf „Intranet-PWA“.
+ * Farben je Darstellung (hell/dunkel), Akzent je Mandant (--ac-hell/--ac-dunkel,
+ * gesetzt im Layout). Schrift Inter, lokal ausgeliefert (keine externen Dienste).
+ */
+@import '@fontsource-variable/inter';
+
+:root,
+[data-theme='hell'] {
+	color-scheme: light;
+	--bg: #f4f6f5;
+	--sf: #ffffff;
+	--tx: #18201c;
+	--mu: #525c57;
+	--bd: #d9dfdb;
+	--inp-bd: #8a938e;
+	--ac-hell: #0f6e56;
+	--ac-dunkel: #5dcaa5;
+	--ac: var(--ac-hell);
+	--fill: var(--ac-hell);
+	--focus: #2f7de1;
+	--err-bg: #fef3f2;
+	--err-bd: #d92d20;
+	--err-tx: #b42318;
+	--ok-bg: #ecf6f1;
+	--shadow: 0 12px 32px rgb(0 0 0 / 0.18);
 }
 
+[data-theme='dunkel'] {
+	color-scheme: dark;
+	--bg: #111614;
+	--sf: #1a201d;
+	--tx: #eaefec;
+	--mu: #a6b0ab;
+	--bd: #2f3733;
+	--inp-bd: #6b746f;
+	--ac: var(--ac-dunkel);
+	--err-bg: #3a1614;
+	--err-bd: #f97066;
+	--err-tx: #fda29b;
+	--ok-bg: #16302a;
+	--shadow: 0 12px 32px rgb(0 0 0 / 0.5);
+}
+
+/* „Automatisch“ folgt dem System */
 @media (prefers-color-scheme: dark) {
-	:root {
-		--bg: #141816;
-		--fg: #eef1ef;
-		--accent: #5ec8a8;
+	[data-theme='auto'] {
+		color-scheme: dark;
+		--bg: #111614;
+		--sf: #1a201d;
+		--tx: #eaefec;
+		--mu: #a6b0ab;
+		--bd: #2f3733;
+		--inp-bd: #6b746f;
+		--ac: var(--ac-dunkel);
+		--err-bg: #3a1614;
+		--err-bd: #f97066;
+		--err-tx: #fda29b;
+		--ok-bg: #16302a;
+		--shadow: 0 12px 32px rgb(0 0 0 / 0.5);
 	}
+}
+
+:root {
+	--tint: color-mix(in srgb, var(--ac) 15%, var(--sf));
+	--radius: 14px;
+	font-family:
+		'Inter Variable',
+		Inter,
+		system-ui,
+		-apple-system,
+		'Segoe UI',
+		sans-serif;
+	font-size: 15px;
+	line-height: 1.55;
+	background: var(--bg);
+	color: var(--tx);
 }
 
 body {
 	margin: 0;
+	background: var(--bg);
+	color: var(--tx);
 }
 
-main {
-	max-width: 960px;
-	margin: 0 auto;
-	padding: 24px;
+h1 {
+	font-size: 1.75rem;
+	line-height: 1.25;
+	margin: 0 0 0.5rem;
+}
+
+h2 {
+	font-size: 1.15rem;
+	margin: 1.5rem 0 0.5rem;
 }
 
 a {
-	color: var(--accent);
+	color: var(--ac);
 }
 
 :focus-visible {
-	outline: 3px solid var(--accent);
+	outline: 3px solid var(--focus);
 	outline-offset: 2px;
+}
+
+/* Fokus nicht unter der festen Kopfzeile verstecken (WCAG 2.4.11) */
+html {
+	scroll-padding-top: 76px;
 }
 
 .skip {
 	position: absolute;
 	left: -9999px;
+	z-index: 100;
 }
 
 .skip:focus {
 	left: 16px;
 	top: 16px;
 	padding: 8px 12px;
-	background: var(--bg);
+	background: var(--sf);
+	color: var(--tx);
+	border-radius: 8px;
+}
+
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
+
+/* ---- Bausteine ---------------------------------------------------------- */
+
+.karte {
+	background: var(--sf);
+	border: 1px solid var(--bd);
+	border-radius: var(--radius);
+	padding: 18px;
+	box-sizing: border-box;
+}
+
+.knopf {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: 44px;
+	padding: 10px 16px;
+	box-sizing: border-box;
+	border-radius: 10px;
+	border: 1px solid var(--fill);
+	background: var(--fill);
+	color: #fff;
+	font: inherit;
+	font-weight: 600;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.knopf.zweit {
+	background: var(--sf);
+	color: var(--tx);
+	border-color: var(--bd);
+	font-weight: 500;
+}
+
+.knopf.dunkel {
+	background: var(--tx);
+	border-color: var(--tx);
+	color: var(--sf);
+}
+
+.knopf:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.linkknopf {
+	min-height: 44px;
+	padding: 0 4px;
+	background: transparent;
+	border: 0;
+	color: var(--ac);
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+	text-align: left;
+}
+
+.felder {
+	display: grid;
+	gap: 14px;
+}
+
+.feld {
+	display: grid;
+	gap: 6px;
+}
+
+.feld > span,
+.feld > label,
+legend {
+	font-weight: 600;
+}
+
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='search'],
+input:not([type]),
+select,
+textarea {
+	min-height: 44px;
+	padding: 10px 12px;
+	box-sizing: border-box;
+	border: 1px solid var(--inp-bd);
+	border-radius: 10px;
+	background: var(--sf);
+	color: var(--tx);
+	font: inherit;
+	width: 100%;
+}
+
+.hinweis {
+	color: var(--mu);
+	font-size: 0.93rem;
+	margin: 0;
+}
+
+.meldung {
+	padding: 12px 14px;
+	border-radius: 10px;
+	background: var(--ok-bg);
+	border: 1px solid var(--bd);
+	margin: 0;
+}
+
+.meldung.fehler {
+	background: var(--err-bg);
+	border-color: var(--err-bd);
+	color: var(--err-tx);
+}
+
+.schild {
+	display: inline-block;
+	font-size: 12px;
+	font-weight: 600;
+	padding: 3px 10px;
+	border-radius: 999px;
+	background: var(--tint);
+	color: var(--ac);
+}
+
+.schild.rand {
+	background: transparent;
+	border: 1px solid var(--bd);
+	color: var(--tx);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -54,4 +266,46 @@ a {
 		transition: none !important;
 		scroll-behavior: auto !important;
 	}
+}
+
+.stapel {
+	display: grid;
+	gap: 14px;
+}
+
+.stapel h1 {
+	font-size: 24px;
+	margin: 0;
+}
+
+.stapel h2 {
+	margin: 0.5rem 0 0;
+}
+
+.stapel > .knopf,
+.stapel form > .knopf {
+	justify-self: start;
+}
+
+/* Wiederherstellungscodes */
+.codes {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.25rem 1.5rem;
+	font-size: 1.05rem;
+	margin: 0;
+}
+
+/* QR-Code immer auf Weiß, auch im Dunkelmodus (lesbar für Kameras) */
+.qr {
+	width: 12rem;
+	background: #fff;
+	padding: 0.5rem;
+	border-radius: 8px;
+}
+
+.staerke {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
 }

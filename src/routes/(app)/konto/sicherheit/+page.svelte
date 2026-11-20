@@ -34,8 +34,8 @@
 	<title>Sicherheit · Konto · Intranet</title>
 </svelte:head>
 
-<section class="karte" aria-labelledby="titel">
-	<h1 id="titel">Sicherheit</h1>
+<div class="stapel seite">
+	<h1>Sicherheit</h1>
 
 	<h2>Angemeldete Geräte</h2>
 	{#if form?.sitzungFehler}<p class="meldung fehler" role="alert">{form.sitzungFehler}</p>{/if}
@@ -56,7 +56,7 @@
 				{#if !s.aktuell}
 					<form method="POST" action="?/sitzungBeenden">
 						<input type="hidden" name="id" value={s.id} />
-						<button class="link" type="submit">Beenden</button>
+						<button class="linkknopf" type="submit">Beenden</button>
 					</form>
 				{/if}
 			</li>
@@ -103,42 +103,24 @@
 			<p>Noch {data.restCodes} von 10 Codes übrig.</p>
 			<form method="POST" action="?/neueCodes" class="felder">
 				{#if form?.fehler}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
-				<label>
-					Zur Bestätigung dein Passwort
+				<label class="feld">
+					<span>Zur Bestätigung dein Passwort</span>
 					<input name="passwort" type="password" autocomplete="current-password" required />
 				</label>
 				<button class="knopf" type="submit">Neue Codes erzeugen</button>
 			</form>
 		{/if}
 	{/if}
-</section>
+</div>
 
 <style>
-	.karte {
-		max-width: 36rem;
-		margin: 3rem auto;
-		padding: 0 1rem;
-	}
-	.felder {
-		display: grid;
-		gap: 0.75rem;
-		max-width: 24rem;
-	}
-	label {
-		display: grid;
-		gap: 0.25rem;
-		font-weight: 600;
-	}
-	input {
-		min-height: 44px;
-		padding: 0 0.75rem;
-		font: inherit;
-		border: 1px solid #767676;
-		border-radius: 0.5rem;
+	.seite {
+		max-width: 40rem;
 	}
 	.sitzungen {
 		list-style: none;
 		padding: 0;
+		margin: 0;
 		display: grid;
 		gap: 0.75rem;
 	}
@@ -147,52 +129,11 @@
 		justify-content: space-between;
 		gap: 1rem;
 		align-items: center;
-		border-bottom: 1px solid #ccc;
+		border-bottom: 1px solid var(--bd);
 		padding-bottom: 0.5rem;
 	}
 	.klein {
 		font-size: 0.9rem;
-	}
-	.link {
-		min-height: 44px;
-		background: none;
-		border: 0;
-		font: inherit;
-		color: #1f4f8f;
-		text-decoration: underline;
-		cursor: pointer;
-	}
-	.meldung {
-		padding: 0.75rem 1rem;
-		border-radius: 0.5rem;
-		background: #eef3fb;
-		color: #10233f;
-	}
-	.codes {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 0.25rem 1.5rem;
-	}
-	.knopf {
-		min-height: 44px;
-		padding: 0 1.25rem;
-		border-radius: 999px;
-		background: var(--akzent, #1f4f8f);
-		color: #fff;
-		font: inherit;
-		font-weight: 600;
-		border: 0;
-		cursor: pointer;
-		justify-self: start;
-	}
-	:focus-visible {
-		outline: 3px solid #1f4f8f;
-		outline-offset: 2px;
-	}
-	.meldung.fehler {
-		padding: 0.75rem 1rem;
-		border-radius: 0.5rem;
-		background: #fdecec;
-		color: #6b1010;
+		color: var(--mu);
 	}
 </style>

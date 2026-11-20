@@ -11,6 +11,8 @@ declare global {
 			session: { id: string; authMethod: 'entra' | 'local' } | null;
 			/** Rollen und Mitgliedschaften der angemeldeten Person für die Rechteprüfung. */
 			principal: Principal | null;
+			/** Gewählte Darstellung; „auto“ folgt dem System. */
+			theme: 'auto' | 'hell' | 'dunkel';
 		}
 		// interface PageData {}
 		// interface PageState {}
