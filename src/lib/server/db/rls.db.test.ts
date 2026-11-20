@@ -155,7 +155,8 @@ describe.skipIf(!url)('Row-Level Security', () => {
 			'location_operators',
 			'menus',
 			'events',
-			'calendar_feeds'
+			'calendar_feeds',
+			'notifications'
 		]) {
 			await expect(
 				mod.scoped(asB, (tx) => tx.execute(sql.raw(`select * from ${table}`)))

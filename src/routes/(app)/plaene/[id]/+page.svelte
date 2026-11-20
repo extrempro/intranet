@@ -76,6 +76,10 @@
 						<input type="file" name="datei" accept=".pdf,application/pdf" />
 						<span class="hinweis">Die bisherige Datei wird ersetzt und gelöscht.</span>
 					</label>
+					<label class="informieren">
+						<input type="checkbox" name="informieren" />
+						Über die neue Fassung informieren (nur wenn eine neue Datei hochgeladen wird)
+					</label>
 					<div class="aktionen">
 						<button class="knopf" type="submit">Speichern</button>
 						<button class="knopf zweit" type="button" onclick={() => (bearbeiten = false)}>
@@ -142,5 +146,16 @@
 	.rot {
 		background: #b42318;
 		border-color: #b42318;
+	}
+	.informieren {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		min-height: 44px;
+	}
+	.informieren input {
+		width: 20px;
+		height: 20px;
+		accent-color: var(--fill);
 	}
 </style>

@@ -14,6 +14,14 @@
 			</a>
 		</li>
 	</ul>
+	<h2>Benachrichtigungen</h2>
+	<ul class="kacheln">
+		<li>
+			<a class="karte kachel" href={resolve('/(app)/konto/benachrichtigungen')}>
+				<strong>Benachrichtigungen</strong><span class="hinweis">Glocke und E-Mail je Thema</span>
+			</a>
+		</li>
+	</ul>
 	<h2>Weitere Einstellungen</h2>
 	<ul class="kacheln">
 		<li>

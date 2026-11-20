@@ -1,5 +1,6 @@
 import { canSeeAdministration } from '#lib/server/auth/access.ts';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
+import { unreadCount } from '#lib/server/notify.ts';
 import { accentStyle, brandingFor } from '#lib/server/tenant-branding.ts';
 import type { LayoutServerLoad } from './$types';
 
@@ -10,10 +11,15 @@ function initials(name: string): string {
 	return (first + last).toUpperCase();
 }
 
-export const load: LayoutServerLoad = async ({ locals }) => {
+export const load: LayoutServerLoad = async ({ locals, url }) => {
+	// Zähler der Glocke bei jedem Seitenwechsel neu laden
+	void url.pathname;
 	const principal = requirePrincipal(locals);
 	const person = locals.person!;
-	const branding = await brandingFor(person.tenantId);
+	const [branding, ungelesen] = await Promise.all([
+		brandingFor(person.tenantId),
+		unreadCount(person.id)
+	]);
 	return {
 		ich: {
 			name: person.displayName,
@@ -23,6 +29,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		},
 		akzent: accentStyle(branding),
 		theme: locals.theme,
-		darfVerwaltung: canSeeAdministration(principal)
+		darfVerwaltung: canSeeAdministration(principal),
+		ungelesen
 	};
 };

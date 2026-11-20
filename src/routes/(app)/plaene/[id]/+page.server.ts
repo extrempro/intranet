@@ -24,7 +24,8 @@ export const actions: Actions = {
 				params.id,
 				input,
 				datei instanceof File ? datei : null,
-				getClientAddress()
+				getClientAddress(),
+				f.get('informieren') === 'on'
 			);
 			return { gespeichert: true };
 		} catch (err) {
