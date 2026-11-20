@@ -1,4 +1,5 @@
 // Typen für SvelteKit, siehe https://svelte.dev/docs/kit/types#app.d.ts
+import type { Principal } from '#lib/server/auth/access.ts';
 import type { SessionPerson } from '#lib/server/auth/session.ts';
 
 declare global {
@@ -8,6 +9,8 @@ declare global {
 			/** Angemeldete Person, sonst null. */
 			person: SessionPerson | null;
 			session: { id: string; authMethod: 'entra' | 'local' } | null;
+			/** Rollen und Mitgliedschaften der angemeldeten Person für die Rechteprüfung. */
+			principal: Principal | null;
 		}
 		// interface PageData {}
 		// interface PageState {}

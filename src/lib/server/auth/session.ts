@@ -1,20 +1,41 @@
 /**
  * Eigene Sitzungen in PostgreSQL (Kap. 4.4, 16).
  * Im Cookie steht ein zufälliges Token, in der Datenbank nur sein SHA-256.
- * Inaktivität und Höchstdauer werden in Schritt 4 einstellbar.
+ * Abmelden nach Inaktivität: Einstellung „session.idle“ (30m / 8h / 7d,
+ * Standard 8h), gilt für Entra und lokal. Höchstdauer 30 Tage.
  */
 import { createHash, randomBytes } from 'node:crypto';
 import type { Cookies } from '@sveltejs/kit';
-import { eq } from 'drizzle-orm';
+import { and, desc, eq, lt, ne, or, sql } from 'drizzle-orm';
 import { db } from '../db/index.ts';
 import { persons, sessions } from '../db/schema.ts';
 import { ipPrefix } from '../net.ts';
+import { getSetting } from '../settings.ts';
 
 export const SESSION_COOKIE = '__Host-intranet-sitzung';
 
-/** Standard bis zur Einstellbarkeit: 8 Stunden Inaktivität, höchstens 30 Tage. */
-const IDLE_TIMEOUT_MS = 8 * 60 * 60 * 1000;
+export const IDLE_OPTIONS = {
+	'30m': 30 * 60 * 1000,
+	'8h': 8 * 60 * 60 * 1000,
+	'7d': 7 * 24 * 60 * 60 * 1000
+} as const;
+export type IdleOption = keyof typeof IDLE_OPTIONS;
+export const DEFAULT_IDLE: IdleOption = '8h';
 const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+
+let idleCache: { value: number; at: number } | null = null;
+/** Inaktivitätsgrenze in ms, eine Minute zwischengespeichert. */
+export async function idleTimeoutMs(): Promise<number> {
+	if (idleCache && Date.now() - idleCache.at < 60_000) return idleCache.value;
+	const key = await getSetting<string>('session.idle', DEFAULT_IDLE);
+	const value = IDLE_OPTIONS[key as IdleOption] ?? IDLE_OPTIONS[DEFAULT_IDLE];
+	idleCache = { value, at: Date.now() };
+	return value;
+}
+
+export function clearIdleCache() {
+	idleCache = null;
+}
 /** lastActiveAt nur schreiben, wenn älter als das – spart Schreibzugriffe. */
 const TOUCH_INTERVAL_MS = 60 * 1000;
 
@@ -76,7 +97,7 @@ export async function validateSession(token: string): Promise<ValidSession | nul
 	if (!row) return null;
 
 	const now = Date.now();
-	const idle = now - row.lastActiveAt.getTime() > IDLE_TIMEOUT_MS;
+	const idle = now - row.lastActiveAt.getTime() > (await idleTimeoutMs());
 	if (idle || row.expiresAt.getTime() <= now || row.person.status !== 'active') {
 		await db.delete(sessions).where(eq(sessions.id, id));
 		return null;
@@ -113,4 +134,66 @@ export function setSessionCookie(cookies: Cookies, token: string, expiresAt: Dat
 
 export function deleteSessionCookie(cookies: Cookies) {
 	cookies.delete(SESSION_COOKIE, { path: '/', httpOnly: true, secure: true, sameSite: 'lax' });
+}
+
+export interface SessionInfo {
+	id: string;
+	authMethod: 'entra' | 'local';
+	createdAt: Date;
+	lastActiveAt: Date;
+	userAgent: string | null;
+	ipPrefix: string | null;
+}
+
+/** Eigene Sitzungen für „Konto → Sicherheit“ (Kap. 4.4). */
+export async function listSessions(personId: string): Promise<SessionInfo[]> {
+	return db
+		.select({
+			id: sessions.id,
+			authMethod: sessions.authMethod,
+			createdAt: sessions.createdAt,
+			lastActiveAt: sessions.lastActiveAt,
+			userAgent: sessions.userAgent,
+			ipPrefix: sessions.ipPrefix
+		})
+		.from(sessions)
+		.where(eq(sessions.personId, personId))
+		.orderBy(desc(sessions.lastActiveAt));
+}
+
+/** Beendet eine eigene Sitzung; die ID ist der Hash, nie das Token. */
+export async function endOwnSession(personId: string, sessionId: string): Promise<boolean> {
+	const rows = await db
+		.delete(sessions)
+		.where(and(eq(sessions.id, sessionId), eq(sessions.personId, personId)))
+		.returning({ id: sessions.id });
+	return rows.length === 1;
+}
+
+export async function endOtherSessions(personId: string, currentId: string): Promise<number> {
+	const rows = await db
+		.delete(sessions)
+		.where(and(eq(sessions.personId, personId), ne(sessions.id, currentId)))
+		.returning({ id: sessions.id });
+	return rows.length;
+}
+
+/** Alle Sitzungen einer Person beenden (z. B. beim Sperren). */
+export async function endAllSessions(personId: string): Promise<void> {
+	await db.delete(sessions).where(eq(sessions.personId, personId));
+}
+
+/** Abgelaufene und inaktive Sitzungen löschen (Löschfrist „sofort nach Ende“). */
+export async function deleteExpiredSessions(): Promise<number> {
+	const idle = await idleTimeoutMs();
+	const rows = await db
+		.delete(sessions)
+		.where(
+			or(
+				lt(sessions.expiresAt, new Date()),
+				lt(sessions.lastActiveAt, sql`now() - ${`${idle} milliseconds`}::interval`)
+			)
+		)
+		.returning({ id: sessions.id });
+	return rows.length;
 }
