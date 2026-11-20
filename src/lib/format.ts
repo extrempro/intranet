@@ -12,3 +12,9 @@ export function initials(name: string): string {
 	const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
 	return (first + last).toUpperCase();
 }
+
+/** Datum „JJJJ-MM-TT“ als „01.11.2026“. */
+export function formatIsoDate(d: string): string {
+	const [y, m, t] = d.split('-');
+	return y && m && t ? `${t}.${m}.${y}` : d;
+}

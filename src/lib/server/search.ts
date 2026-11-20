@@ -13,6 +13,7 @@ import { searchFaqs } from './faqs.ts';
 import { listHubs } from './hubs.ts';
 import { searchPosts } from './kulissen.ts';
 import { searchNews } from './news.ts';
+import { searchLegal } from './legal.ts';
 import { searchPersons } from './people.ts';
 
 export interface SearchHit {
@@ -50,6 +51,7 @@ export async function search(
 			zustaendigkeiten: [],
 			beitraege: [],
 			faqs: [],
+			rechtliches: [],
 			termine: [],
 			hubs: [],
 			brett: [],
@@ -62,7 +64,7 @@ export async function search(
 	const limit = Math.min(opts.limit ?? 20, 50);
 	const text = searchTerms(q).join(' ');
 
-	const [personen, abteilungen, beitraege, faqs, termine, hubs, brett, kulissen] =
+	const [personen, abteilungen, beitraege, faqs, termine, hubs, brett, kulissen, recht] =
 		await Promise.all([
 			want('personen') ? searchPersons(p, q, tsq, limit) : [],
 			want('einheiten') || want('zustaendigkeiten') ? listDepartments(p) : [],
@@ -71,7 +73,8 @@ export async function search(
 			want('termine') ? searchEvents(p, tsq, limit) : [],
 			want('hubs') ? listHubs(p) : [],
 			want('brett') ? searchAds(p, tsq, limit) : [],
-			want('kulissen') ? searchPosts(p, tsq, limit) : []
+			want('kulissen') ? searchPosts(p, tsq, limit) : [],
+			want('rechtliches') ? searchLegal(p, text, limit) : { vereinbarungen: [], links: [] }
 		]);
 
 	out.personen = personen.map((x) => ({
@@ -128,6 +131,22 @@ export async function search(
 		meta: x.unitName,
 		snippet: x.snippet
 	}));
+	out.rechtliches = [
+		...recht.vereinbarungen.map((x) => ({
+			kind: 'rechtliches' as const,
+			id: x.id,
+			title: x.title,
+			href: `/rechtliches/${x.id}`,
+			meta: `${x.kind === 'betrieb' ? 'Betriebsvereinbarung' : 'Dienstvereinbarung'} · gilt ab ${day(x.validFrom)}`
+		})),
+		...recht.links.map((x) => ({
+			kind: 'rechtliches' as const,
+			id: x.id,
+			title: x.title,
+			href: `/rechtliches#eintrag-${x.id}`,
+			meta: x.kind === 'gesetz' ? 'Gesetz' : 'Tarifvertrag'
+		}))
+	].slice(0, limit);
 	out.termine = termine.map((x) => ({
 		kind: 'termine',
 		id: x.id,

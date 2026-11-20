@@ -112,6 +112,15 @@ const TARGETS = new Map<string, FavoriteTarget>([
 		}
 	],
 	[
+		'rechtliches',
+		{
+			label: 'Rechtliches',
+			description: 'Vereinbarungen, Gesetze, Tarifverträge',
+			href: '/rechtliches',
+			icon: 'M12 3v18M5 7h14M7 7l-3 7a3 3 0 0 0 6 0zM17 7l-3 7a3 3 0 0 0 6 0zM8 21h8'
+		}
+	],
+	[
 		'faqs',
 		{
 			label: 'FAQs',
