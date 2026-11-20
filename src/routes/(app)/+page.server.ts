@@ -5,6 +5,7 @@ import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import { db } from '#lib/server/db/index.ts';
 import { listNews, urgentForBanner } from '#lib/server/news.ts';
 import { todayAndTomorrow } from '#lib/server/calendar.ts';
+import { subscribedHubIds } from '#lib/server/hubs.ts';
 import { canteenCards } from '#lib/server/canteen.ts';
 import { latestPlans } from '#lib/server/plans.ts';
 import { tenants } from '#lib/server/db/schema.ts';
@@ -21,7 +22,7 @@ const ZONE = 'Europe/Berlin';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const principal = requirePrincipal(locals);
-	const [prefs, favs, [tenant], dringend, neuigkeiten, plaene, kantinen, termine] =
+	const [prefs, favs, [tenant], dringend, neuigkeiten, plaene, kantinen, termine, hubBeitraege] =
 		await Promise.all([
 			getPreferences(principal.personId),
 			listFavorites(principal.personId),
@@ -33,7 +34,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 			listNews(principal, { limit: 5 }),
 			latestPlans(principal),
 			canteenCards(principal.personId),
-			todayAndTomorrow(principal)
+			todayAndTomorrow(principal),
+			subscribedHubIds(principal).then((ids) => listNews(principal, { unitIds: ids, limit: 4 }))
 		]);
 	const now = new Date();
 	const hour = Number(
@@ -62,7 +64,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 		neuigkeiten: neuigkeiten.filter((n) => !n.planned),
 		plaene,
 		kantinen,
-		termine
+		termine,
+		hubBeitraege: hubBeitraege.filter((n) => !n.planned)
 	};
 };
 

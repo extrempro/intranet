@@ -38,6 +38,7 @@ const AREAS: NavArea[] = [
 			{ key: 'neuigkeiten', label: 'Neuigkeiten', href: '/neuigkeiten' },
 			{ key: 'plaene', label: 'Pläne (KBB)', href: '/plaene' },
 			{ key: 'kalender', label: 'Kalender', href: '/kalender' },
+			{ key: 'aus-den-hubs', label: 'Aus den Hubs', href: '/aus-den-hubs' },
 			{ key: 'schwarzes-brett', label: 'Schwarzes Brett', href: '/schwarzes-brett' },
 			{ key: 'speiseplan', label: 'Speiseplan', href: '/speiseplan' }
 		]
@@ -47,7 +48,10 @@ const AREAS: NavArea[] = [
 		label: 'Organisation',
 		icon: ICONS.organisation,
 		href: '',
-		pages: [{ key: 'organigramm', label: 'Organigramm', href: '/organigramm' }]
+		pages: [
+			{ key: 'hubs', label: 'Hubs', href: '/hubs' },
+			{ key: 'organigramm', label: 'Organigramm', href: '/organigramm' }
+		]
 	},
 	{
 		key: 'wissen',

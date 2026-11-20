@@ -80,6 +80,46 @@ export async function notify(topic: string, personIds: string[], content: Notify
 	return count;
 }
 
+/** Mit festen Kanälen je Person (Hub-Abos aus „Meine Hubs“). */
+export async function notifyWithChannels(
+	topic: string,
+	list: { personId: string; bell: boolean; email: boolean }[],
+	content: NotifyContent
+) {
+	const wanted = list.filter((r) => r.bell || r.email);
+	for (let i = 0; i < wanted.length; i += 1000) {
+		const chunk = wanted.slice(i, i + 1000);
+		const ok = new Set(
+			(
+				await db
+					.select({ id: persons.id })
+					.from(persons)
+					.where(
+						and(
+							inArray(
+								persons.id,
+								chunk.map((c) => c.personId)
+							),
+							regularPerson
+						)
+					)
+			).map((r) => r.id)
+		);
+		const values = chunk
+			.filter((c) => ok.has(c.personId))
+			.map((c) => ({
+				personId: c.personId,
+				topic,
+				title: content.title.slice(0, 200),
+				detail: content.detail?.slice(0, 200) ?? null,
+				link: content.link,
+				bell: c.bell,
+				email: c.email ? ('pending' as const) : null
+			}));
+		if (values.length) await db.insert(notifications).values(values);
+	}
+}
+
 /** Alle regulären Personen eines oder mehrerer Mandanten (null = alle). */
 export async function personsOfTenants(tenantIds: string[] | null) {
 	const rows = await db
@@ -98,6 +138,8 @@ export async function dispatchNews(now = new Date()) {
 		.select({
 			id: news.id,
 			title: news.title,
+			unitId: units.id,
+			unitType: units.type,
 			unitName: units.name,
 			allTenants: news.allTenants,
 			pinnedUntil: news.pinnedUntil,
@@ -128,6 +170,16 @@ export async function dispatchNews(now = new Date()) {
 			)
 			.returning({ id: news.id });
 		if (!claimed.length) continue;
+		if (n.unitType === 'hub') {
+			// Hub-Beiträge nur an Abonnierende, Kanäle aus „Meine Hubs“
+			const { hubRecipients } = await import('./hubs.ts');
+			await notifyWithChannels('hubs', await hubRecipients(n.unitId), {
+				title: n.title,
+				detail: n.unitName,
+				link: `/neuigkeiten/${n.id}`
+			});
+			continue;
+		}
 		const topic = urgent
 			? 'dringend'
 			: n.pinnedUntil !== null && n.pinnedUntil > now

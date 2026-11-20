@@ -15,6 +15,8 @@ export interface TopicDefinition {
 	fixed?: Channel[];
 	/** Nur für Personen mit dieser Aufgabe sichtbar */
 	onlyFor?: 'moderation';
+	/** Nicht in der Tabelle: Einstellung woanders (Hubs: „Meine Hubs“) */
+	hidden?: boolean;
 }
 
 /** Reihenfolge und Voreinstellungen nach Tabelle 11.2 */
@@ -52,7 +54,8 @@ export const TOPICS: TopicDefinition[] = [
 		hint: 'nur Moderation',
 		defaults: { bell: true, email: true },
 		onlyFor: 'moderation'
-	}
+	},
+	{ key: 'hubs', label: 'Aus den Hubs', defaults: { bell: true, email: false }, hidden: true }
 ];
 
 export type Topic = (typeof TOPICS)[number]['key'];

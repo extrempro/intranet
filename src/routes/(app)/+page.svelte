@@ -221,6 +221,24 @@
 							/>{/each}
 					{/if}
 				</section>
+			{:else if k.id === 'hubs'}
+				<section aria-labelledby="karte-hubs" class="stapel">
+					<div class="kartenkopf">
+						<h2 id="karte-hubs">Neu in deinen Hubs</h2>
+						<a href={resolve('/(app)/aus-den-hubs')}>Aus den Hubs</a>
+					</div>
+					{#if data.hubBeitraege.length === 0}
+						<p class="hinweis">
+							Keine neuen Beiträge. <a href={resolve('/(app)/hubs')}>Hubs ansehen</a>
+						</p>
+					{:else}
+						{#each data.hubBeitraege as item (item.id)}<Beitragskarte
+								{item}
+								ebene={3}
+								mitReaktionen={false}
+							/>{/each}
+					{/if}
+				</section>
 			{:else if k.id === 'termine'}
 				<section aria-labelledby="karte-termine" class="stapel">
 					<div class="kartenkopf">

@@ -49,6 +49,24 @@ export interface FavoriteTarget {
  */
 const TARGETS = new Map<string, FavoriteTarget>([
 	[
+		'hubs',
+		{
+			label: 'Hubs',
+			description: 'Themengruppen zum Mitmachen',
+			href: '/hubs',
+			icon: 'M9 7a3 3 0 1 0 6 0a3 3 0 0 0 -6 0M3 21v-2a4 4 0 0 1 4 -4h4M16 19h6M19 16v6'
+		}
+	],
+	[
+		'aus-den-hubs',
+		{
+			label: 'Aus den Hubs',
+			description: 'Beiträge deiner Hubs',
+			href: '/aus-den-hubs',
+			icon: 'M16 6h3a1 1 0 0 1 1 1v11a2 2 0 0 1 -4 0v-13a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1v12a3 3 0 0 0 3 3h11'
+		}
+	],
+	[
 		'schwarzes-brett',
 		{
 			label: 'Schwarzes Brett',

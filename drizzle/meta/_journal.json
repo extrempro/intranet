@@ -92,6 +92,13 @@
       "when": 1795173087817,
       "tag": "0012_brett_nachrichten",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1795174884948,
+      "tag": "0013_hubs",
+      "breakpoints": true
     }
   ]
 }
