@@ -227,6 +227,8 @@ export const persons = pgTable(
 		entraOid: text('entra_oid').unique(),
 		status: personStatus('status').notNull().default('active'),
 		disabledAt: timestamp('disabled_at', { withTimezone: true }),
+		/** Wer gesperrt hat: „entra“ (Abgleich) gibt Entra wieder frei, sonst nur die Verwaltung. */
+		disabledBy: text('disabled_by', { enum: ['verwaltung', 'entra'] }),
 		// Selbst gepflegte Kontaktdaten (Kap. 8.13), keine Übernahme aus Entra
 		position: text('position'),
 		phone: text('phone'),

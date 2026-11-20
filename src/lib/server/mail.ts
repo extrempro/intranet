@@ -9,8 +9,7 @@
  * Absender: Einstellung „mail“ (später in der Verwaltung), bis dahin MAIL_SENDER
  * und optional MAIL_REPLY_TO.
  */
-import * as oidc from 'openid-client';
-import { getEntraConfig, getOidcConfiguration } from './auth/entra.ts';
+import { getEntraConfig, graphAppToken as appToken } from './auth/entra.ts';
 import { getSetting } from './settings.ts';
 
 interface MailSettings {
@@ -23,27 +22,6 @@ export interface MailMessage {
 	subject: string;
 	text: string;
 	html: string;
-}
-
-let tokenCache: { token: string; expiresAt: number; key: string } | null = null;
-
-async function appToken(): Promise<string> {
-	const entra = await getEntraConfig();
-	if (!entra) throw new Error('Anmeldung mit Microsoft ist nicht eingerichtet');
-	const key = `${entra.tenantId}|${entra.clientId}`;
-	if (tokenCache && tokenCache.key === key && tokenCache.expiresAt > Date.now() + 60_000) {
-		return tokenCache.token;
-	}
-	const config = await getOidcConfiguration(entra);
-	const res = await oidc.clientCredentialsGrant(config, {
-		scope: 'https://graph.microsoft.com/.default'
-	});
-	tokenCache = {
-		token: res.access_token,
-		expiresAt: Date.now() + (res.expires_in ?? 3000) * 1000,
-		key
-	};
-	return res.access_token;
 }
 
 export async function mailConfigured(): Promise<boolean> {

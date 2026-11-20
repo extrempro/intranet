@@ -129,3 +129,62 @@ export function safeReturnTo(value: string | null | undefined): string {
 	}
 	return value;
 }
+
+// ---------------------------------------------------------------------------
+// Graph mit Anwendungsberechtigungen (Client Credentials): E-Mail-Versand und
+// nächtlicher Abgleich. Nötige Berechtigungen siehe README.
+// ---------------------------------------------------------------------------
+
+let tokenCache: { token: string; expiresAt: number; key: string } | null = null;
+
+export async function graphAppToken(): Promise<string> {
+	const entra = await getEntraConfig();
+	if (!entra) throw new Error('Anmeldung mit Microsoft ist nicht eingerichtet');
+	const key = `${entra.tenantId}|${entra.clientId}`;
+	if (tokenCache && tokenCache.key === key && tokenCache.expiresAt > Date.now() + 60_000) {
+		return tokenCache.token;
+	}
+	const config = await getOidcConfiguration(entra);
+	const res = await oidc.clientCredentialsGrant(config, {
+		scope: 'https://graph.microsoft.com/.default'
+	});
+	tokenCache = {
+		token: res.access_token,
+		expiresAt: Date.now() + (res.expires_in ?? 3000) * 1000,
+		key
+	};
+	return res.access_token;
+}
+
+export class GraphError extends Error {
+	constructor(
+		readonly status: number,
+		message: string
+	) {
+		super(message);
+	}
+}
+
+/**
+ * GET gegen Graph mit Anwendungs-Token. 404 → null. Bei Drosselung (429/503)
+ * bis zu dreimal nach Retry-After erneut.
+ */
+export async function graphAppGet<T>(pathOrUrl: string): Promise<T | null> {
+	const url = pathOrUrl.startsWith('https://') ? pathOrUrl : `${GRAPH}${pathOrUrl}`;
+	if (!url.startsWith(`${GRAPH}/`)) throw new Error('Unerwartete Graph-Adresse');
+	for (let versuch = 0; ; versuch++) {
+		const res = await fetch(url, {
+			headers: { Authorization: `Bearer ${await graphAppToken()}`, Accept: 'application/json' },
+			signal: AbortSignal.timeout(15_000),
+			redirect: 'error'
+		});
+		if (res.status === 404) return null;
+		if ((res.status === 429 || res.status === 503) && versuch < 3) {
+			const warten = Math.min(Number(res.headers.get('Retry-After')) || 5, 60);
+			await new Promise((r) => setTimeout(r, warten * 1000));
+			continue;
+		}
+		if (!res.ok) throw new GraphError(res.status, `Graph antwortet mit ${res.status}`);
+		return (await res.json()) as T;
+	}
+}

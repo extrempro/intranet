@@ -18,6 +18,8 @@ export const init: ServerInit = async () => {
 	startCleanup();
 	const { startNotifier } = await import('#lib/server/notify.ts');
 	startNotifier();
+	const { startEntraSync } = await import('#lib/server/auth/entra-sync.ts');
+	startEntraSync();
 };
 
 /**
