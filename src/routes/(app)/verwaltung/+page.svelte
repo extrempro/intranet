@@ -1,0 +1,47 @@
+<script lang="ts">
+	import { resolve } from '$app/paths';
+
+	let { data } = $props();
+</script>
+
+<svelte:head><title>Verwaltung · Intranet</title></svelte:head>
+
+<div class="stapel">
+	<h1>Verwaltung</h1>
+	<h2>Zugänge</h2>
+	<ul class="kacheln">
+		<li>
+			<a class="karte kachel" href={resolve('/(app)/verwaltung/einladen')}>
+				<strong>Lokales Konto einladen</strong><span class="hinweis">
+					Für Personen ohne Microsoft-Konto
+				</span>
+			</a>
+		</li>
+		{#if data.systemAdmin}
+			<li>
+				<a class="karte kachel" href={resolve('/(app)/verwaltung/anmeldung')}>
+					<strong>Anmeldung</strong><span class="hinweis">Abmelden nach Inaktivität</span>
+				</a>
+			</li>
+		{/if}
+	</ul>
+</div>
+
+<style>
+	.kacheln {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+		gap: 12px;
+	}
+	.kachel {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		min-height: 88px;
+		color: var(--tx);
+		text-decoration: none;
+	}
+</style>

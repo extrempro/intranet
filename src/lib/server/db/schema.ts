@@ -26,6 +26,7 @@ import {
 	uniqueIndex,
 	uuid
 } from 'drizzle-orm/pg-core';
+import type { HomeLayout } from '../../home';
 import { ROLES } from '../../roles';
 
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
@@ -47,8 +48,12 @@ export const tenants = pgTable(
 		shortName: text('short_name').notNull().unique(),
 		/** Genau ein Mandant ist Hauptmandant (zentrale Einheiten gehören zu ihm). */
 		isMain: boolean('is_main').notNull().default(false),
-		/** Akzentfarbe als Hex-Wert, z. B. #8a1538. Logo folgt mit der Dateiablage. */
+		/** Akzentfarbe als Hex-Wert, z. B. #0F6E56. Logo folgt mit der Dateiablage. */
 		accentColor: text('accent_color'),
+		/** Hellere Variante der Akzentfarbe für die dunkle Darstellung. */
+		accentColorDark: text('accent_color_dark'),
+		/** Startseite für neue Personen (Kap. 3.1, 7): Reihenfolge und Sichtbarkeit der Karten. */
+		homeDefault: jsonb('home_default').$type<HomeLayout>(),
 		/** Leitung des Mandanten (Kap. 3.1), jeweils eine Einheit vom Typ Geschäftsführung. */
 		artisticLeadUnitId: uuid('artistic_lead_unit_id').references((): AnyPgColumn => units.id, {
 			onDelete: 'set null'
@@ -67,7 +72,8 @@ export const tenants = pgTable(
 		uniqueIndex('tenants_one_main')
 			.on(t.isMain)
 			.where(sql`${t.isMain}`),
-		check('tenants_accent_color_hex', sql`${t.accentColor} ~ '^#[0-9a-fA-F]{6}$'`)
+		check('tenants_accent_color_hex', sql`${t.accentColor} ~ '^#[0-9a-fA-F]{6}$'`),
+		check('tenants_accent_color_dark_hex', sql`${t.accentColorDark} ~ '^#[0-9a-fA-F]{6}$'`)
 	]
 );
 
@@ -214,6 +220,37 @@ export const persons = pgTable(
 		),
 		check('persons_disabled_at', sql`(${t.status} = 'disabled') = (${t.disabledAt} is not null)`)
 	]
+);
+
+/** Persönliche Einstellungen, gelten für das Konto auf allen Geräten. */
+export const personPreferences = pgTable('person_preferences', {
+	personId: uuid('person_id')
+		.primaryKey()
+		.references(() => persons.id, { onDelete: 'cascade' }),
+	theme: text('theme', { enum: ['auto', 'hell', 'dunkel'] })
+		.notNull()
+		.default('auto'),
+	/** null = Standard des Mandanten. */
+	homeLayout: jsonb('home_layout').$type<HomeLayout>(),
+	updatedAt: updatedAt()
+});
+
+/**
+ * Favoriten der Startseite (Kap. 7), höchstens 8. Gespeichert wird nur ein
+ * Schlüssel aus der Liste bekannter Ziele (src/lib/server/favorites.ts),
+ * nie eine freie Adresse.
+ */
+export const favorites = pgTable(
+	'favorites',
+	{
+		personId: uuid('person_id')
+			.notNull()
+			.references(() => persons.id, { onDelete: 'cascade' }),
+		key: text('key').notNull(),
+		position: integer('position').notNull(),
+		createdAt: createdAt()
+	},
+	(t) => [primaryKey({ columns: [t.personId, t.key] })]
 );
 
 // ---------------------------------------------------------------------------

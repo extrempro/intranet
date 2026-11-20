@@ -6,8 +6,8 @@
 	<title>Lokales Konto einladen · Verwaltung · Intranet</title>
 </svelte:head>
 
-<section class="karte" aria-labelledby="titel">
-	<h1 id="titel">Lokales Konto einladen</h1>
+<div class="stapel seite">
+	<h1>Lokales Konto einladen</h1>
 	<p>
 		Für Personen ohne Microsoft-Konto. Die Person bekommt eine E-Mail mit einem Link, der 7 Tage
 		gilt. Der Mandant ergibt sich aus der E-Mail-Domain.
@@ -24,12 +24,12 @@
 
 	<form method="POST" class="felder">
 		{#if form?.fehler}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
-		<label>
-			Name
+		<label class="feld">
+			<span>Name</span>
 			<input name="name" autocomplete="off" required maxlength="200" value={form?.name ?? ''} />
 		</label>
-		<label>
-			E-Mail-Adresse
+		<label class="feld">
+			<span>E-Mail-Adresse</span>
 			<input name="email" type="email" autocomplete="off" required value={form?.email ?? ''} />
 		</label>
 		<button class="knopf" type="submit" disabled={!data.mailBereit}>Einladung senden</button>
@@ -37,58 +37,10 @@
 	<p class="hinweis">
 		Lädst du eine schon eingeladene Person erneut ein, gilt nur noch der neue Link.
 	</p>
-</section>
+</div>
 
 <style>
-	.karte {
-		max-width: 32rem;
-		margin: 3rem auto;
-		padding: 0 1rem;
-	}
-	.felder {
-		display: grid;
-		gap: 0.75rem;
-	}
-	label {
-		display: grid;
-		gap: 0.25rem;
-		font-weight: 600;
-	}
-	input {
-		min-height: 44px;
-		padding: 0 0.75rem;
-		font: inherit;
-		border: 1px solid #767676;
-		border-radius: 0.5rem;
-	}
-	.knopf {
-		min-height: 44px;
-		padding: 0 1.25rem;
-		border-radius: 999px;
-		background: var(--akzent, #1f4f8f);
-		color: #fff;
-		font: inherit;
-		font-weight: 600;
-		border: 0;
-		cursor: pointer;
-		justify-self: start;
-	}
-	.knopf:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
-	:focus-visible {
-		outline: 3px solid #1f4f8f;
-		outline-offset: 2px;
-	}
-	.meldung {
-		padding: 0.75rem 1rem;
-		border-radius: 0.5rem;
-		background: #eef3fb;
-		color: #10233f;
-	}
-	.meldung.fehler {
-		background: #fdecec;
-		color: #6b1010;
+	.seite {
+		max-width: 40rem;
 	}
 </style>

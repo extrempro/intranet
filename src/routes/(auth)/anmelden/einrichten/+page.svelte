@@ -46,9 +46,9 @@
 	<title>Zweiten Faktor einrichten · Intranet</title>
 </svelte:head>
 
-<section class="karte" aria-labelledby="titel">
+<div class="stapel">
 	{#if codes}
-		<h1 id="titel">Deine Wiederherstellungscodes</h1>
+		<h1>Deine Wiederherstellungscodes</h1>
 		<p>
 			Mit diesen Codes kommst du rein, wenn du dein Handy oder deinen Passkey nicht zur Hand hast.
 			Jeder Code gilt einmal. <strong>
@@ -59,17 +59,17 @@
 		<ol class="codes">
 			{#each codes as code (code)}<li><code>{code}</code></li>{/each}
 		</ol>
-		<button class="link" type="button" onclick={kopieren}>Codes kopieren</button>
+		<button class="linkknopf" type="button" onclick={kopieren}>Codes kopieren</button>
 		<form method="POST" action="?/fertig">
 			<button class="knopf" type="submit">Ich habe die Codes gesichert</button>
 		</form>
 	{:else if data.fertig}
-		<h1 id="titel">Fast geschafft</h1>
+		<h1>Fast geschafft</h1>
 		<form method="POST" action="?/fertig">
 			<button class="knopf" type="submit">Weiter ins Intranet</button>
 		</form>
 	{:else}
-		<h1 id="titel">Zweiten Faktor einrichten</h1>
+		<h1>Zweiten Faktor einrichten</h1>
 		<p>
 			Hallo {data.name}, zum Schutz deines Kontos brauchst du einen zweiten Faktor. Wähle eine der
 			beiden Möglichkeiten.
@@ -87,8 +87,8 @@
 			{/if}
 			<form method="POST" action="?/totpBestaetigen" class="felder" use:enhance>
 				{#if form?.totpFehler}<p class="meldung fehler" role="alert">{form.totpFehler}</p>{/if}
-				<label>
-					Code aus der App
+				<label class="feld">
+					<span>Code aus der App</span>
 					<input
 						name="code"
 						inputmode="numeric"
@@ -101,7 +101,7 @@
 			</form>
 			{#if !form?.totp}
 				<form method="POST" action="?/totpStarten" use:enhance>
-					<button class="link" type="submit">QR-Code neu anzeigen</button>
+					<button class="linkknopf" type="submit">QR-Code neu anzeigen</button>
 				</form>
 			{/if}
 		{:else}
@@ -112,8 +112,8 @@
 
 		<h2>Passkey</h2>
 		<p>Mit Fingerabdruck, Gesicht oder Geräte-PIN – ohne Code abzutippen.</p>
-		<label class="felder">
-			Name für den Passkey (optional)
+		<label class="feld">
+			<span>Name für den Passkey (optional)</span>
 			<input bind:value={passkeyName} maxlength="60" placeholder="z. B. Mein Laptop" />
 		</label>
 		<button class="knopf" type="button" onclick={passkeyEinrichten} disabled={laeuft}>
@@ -121,78 +121,4 @@
 		</button>
 		{#if passkeyFehler}<p class="meldung fehler" role="alert">{passkeyFehler}</p>{/if}
 	{/if}
-</section>
-
-<style>
-	.karte {
-		max-width: 32rem;
-		margin: 3rem auto;
-		padding: 0 1rem;
-		display: grid;
-		gap: 0.75rem;
-	}
-	h2 {
-		margin: 1.25rem 0 0;
-		font-size: 1.15rem;
-	}
-	.felder {
-		display: grid;
-		gap: 0.5rem;
-		font-weight: 600;
-	}
-	label {
-		display: grid;
-		gap: 0.25rem;
-	}
-	input {
-		min-height: 44px;
-		padding: 0 0.75rem;
-		font: inherit;
-		border: 1px solid #767676;
-		border-radius: 0.5rem;
-	}
-	.qr {
-		width: 12rem;
-		background: #fff;
-		padding: 0.5rem;
-	}
-	.codes {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 0.25rem 1.5rem;
-		font-size: 1.05rem;
-	}
-	.knopf {
-		min-height: 44px;
-		padding: 0 1.25rem;
-		border-radius: 999px;
-		background: var(--akzent, #1f4f8f);
-		color: #fff;
-		font: inherit;
-		font-weight: 600;
-		border: 0;
-		cursor: pointer;
-		justify-self: start;
-	}
-	.link {
-		min-height: 44px;
-		background: none;
-		border: 0;
-		padding: 0;
-		font: inherit;
-		color: #1f4f8f;
-		text-decoration: underline;
-		cursor: pointer;
-		justify-self: start;
-	}
-	:focus-visible {
-		outline: 3px solid #1f4f8f;
-		outline-offset: 2px;
-	}
-	.meldung.fehler {
-		padding: 0.75rem 1rem;
-		border-radius: 0.5rem;
-		background: #fdecec;
-		color: #6b1010;
-	}
-</style>
+</div>
