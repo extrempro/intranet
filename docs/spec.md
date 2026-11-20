@@ -96,7 +96,7 @@ Ein gemeinsames Intranet für mehrere Mandanten (Häuser) mit Neuigkeiten, Organ
 - MFA und bedingter Zugriff werden in Entra geregelt.
 - **Abgleich** von Profil, Gruppen und Mandant bei jeder Anmeldung und nächtlich (Standard 02:30 Uhr). In Entra deaktivierte Konten werden gesperrt.
 - **Rollen aus Entra-Gruppen**: Zuordnung Gruppe → Rolle (+ Geltungsbereich), z. B. `GRP-INTRANET-REDAKTION` → Redaktion · alle Mandanten.
-- Microsoft Graph wird mit den nötigsten Berechtigungen genutzt (Profile, Gruppen, E-Mail-Versand, Teams-Nachrichten).
+- Microsoft Graph wird mit den nötigsten Berechtigungen genutzt (Profile, Gruppen, Teams-Nachrichten).
 
 ### 4.2 Lokale Konten
 Für Personen ohne Microsoft-Konto. Angelegt durch die Verwaltung per Einladung.
@@ -301,7 +301,7 @@ Arbeitsliste (keine Einstellungen). Sichtbar mit der Rolle Redaktion; mit der Ro
 ### 11.1 Kanäle
 - **Glocke** im Intranet.
 - **Web Push** (VAPID). Auf dem iPhone erst nach „Zum Home-Bildschirm“.
-- **E-Mail** über Microsoft Graph aus einem in der Verwaltung festgelegten Absenderpostfach (Anzeigename, optional „Antworten an“). Die Graph-Berechtigung zum Senden wird in Exchange Online auf dieses Postfach beschränkt.
+- **E-Mail** per SMTP (STARTTLS, TLS oder interner Relay) mit in der Verwaltung festgelegtem Server, Absender (Anzeigename, optional „Antworten an“) und Zugangsdaten; das Passwort wird verschlüsselt gespeichert.
 - **Teams** über die Intranet-App im Tenant; Nachrichten enthalten nur Titel, Absender und Link.
 
 ### 11.2 Voreinstellungen je Thema
@@ -404,7 +404,7 @@ Weitere Regeln:
 - **Zugriffskontrolle** serverseitig für jede Anfrage: Rolle, Geltungsbereich und Mandant. Mandantentrennung zusätzlich auf Datenbankebene absichern (**Vorschlag**: Row-Level Security in PostgreSQL).
 - **Eingaben**: Validierung serverseitig; HTML aus dem Editor wird bereinigt; Schutz gegen CSRF; Content Security Policy und übliche Sicherheits-Header.
 - **Dateien**: Verschlüsselung je Datei mit eigenem Schlüssel; Schlüssel werden mit einem Hauptschlüssel geschützt; Auslieferung nur nach Rechteprüfung; Typprüfung und Größenlimits beim Hochladen.
-- **Ausgehende Verbindungen** nur zu freigegebenen Zielen: Microsoft (Anmeldung, Graph), Push-Dienste, `api.pwnedpasswords.com`; später Spielplan-Quelle. Schutz gegen SSRF (nur HTTPS, keine internen Adressen).
+- **Ausgehende Verbindungen** nur zu freigegebenen Zielen: Microsoft (Anmeldung, Graph), SMTP-Server, Push-Dienste, `api.pwnedpasswords.com`; später Spielplan-Quelle. Schutz gegen SSRF (nur HTTPS, keine internen Adressen).
 - **Protokollierung** sicherheitsrelevanter Ereignisse ohne Inhalte; Anmeldeprotokoll mit gekürzter IP.
 - **Abhängigkeiten** werden in der Pipeline auf Sicherheitslücken geprüft; regelmäßige eigene Prüfung der lokal gehosteten Instanz.
 - **Begrenzung** von Anfragen (Anmeldung, Zurücksetzen, Hochladen, Nachrichten).

@@ -5,8 +5,14 @@
  */
 import type { Cookies } from '@sveltejs/kit';
 import { and, eq, gt, isNull, lt, sql } from 'drizzle-orm';
-import { checkPasswordPolicy, type PasswordProblem } from '../../password.ts';
+import {
+	checkPasswordPolicy,
+	normalizePolicy,
+	type PasswordPolicy,
+	type PasswordProblem
+} from '../../password.ts';
 import { tenantFromEmail } from '../../tenant.ts';
+import { getSetting } from '../settings.ts';
 import { audit } from '../audit.ts';
 import { seedFavorites } from '../preferences.ts';
 import { decryptSecret, encryptSecret, randomToken, sha256Hex } from '../crypto.ts';
@@ -151,6 +157,11 @@ export async function findInvitation(token: string) {
 	return row ?? null;
 }
 
+/** Passwortrichtlinie aus Verwaltung → Anmeldung (Kap. 4.2). */
+export async function passwordPolicy(): Promise<PasswordPolicy> {
+	return normalizePolicy(await getSetting<unknown>('password.policy', null));
+}
+
 export type NewPasswordProblem = PasswordProblem | 'pwned' | 'mismatch';
 
 /** Richtlinie und HIBP. Ist HIBP nicht erreichbar, wird angenommen und protokolliert. */
@@ -160,7 +171,7 @@ export async function checkNewPassword(
 	ctx: { personId: string; ip: string }
 ): Promise<NewPasswordProblem | null> {
 	if (password !== repeat) return 'mismatch';
-	const policy = checkPasswordPolicy(password);
+	const policy = checkPasswordPolicy(password, (await passwordPolicy()).minLength);
 	if (policy) return policy;
 	const pwned = await isPwnedPassword(password);
 	if (pwned === null) {

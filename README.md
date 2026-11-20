@@ -53,6 +53,10 @@ Der nächtliche Abgleich (02:30, `ENTRA_SYNC_TIME`) liest mit den **Anwendungsbe
 in Entra gelöschte oder deaktivierte Konten und Personen ohne Zugangsgruppe; würde er mehr als
 10 % sperren, hält er an. Zustand und „Jetzt abgleichen“: Verwaltung → System.
 
+E-Mails (Einladungen, „Passwort vergessen“, Benachrichtigungen) gehen per **SMTP** raus
+(`SMTP_*` und `MAIL_FROM` in der `.env` oder unter Verwaltung → Benachrichtigungen). Der Server
+braucht dafür ausgehend Zugriff auf den SMTP-Server.
+
 Sicherungen macht der Dienst `backup` (täglich, verschlüsselt, mit wöchentlichem
 Wiederherstellungstest). Einrichten und Wiederherstellen: [backup/README.md](backup/README.md).
 
