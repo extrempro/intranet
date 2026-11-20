@@ -156,3 +156,26 @@ export function newsUnitIds(p: Principal): Set<string> {
 	}
 	return ids;
 }
+
+// ---------------------------------------------------------------------------
+// Rollen vergeben (Verwaltung → Benutzer und Rollen)
+// ---------------------------------------------------------------------------
+
+export interface GrantTarget {
+	role: Role;
+	scope: 'all' | 'tenant' | 'unit';
+	/** Bei „tenant“ der Mandant, bei „unit“ der Mandant der Einheit. */
+	tenantId: string | null;
+}
+
+/**
+ * System-Admins vergeben alles. Mandanten-Admins nur Rollen im eigenen
+ * Mandanten (Geltungsbereich Mandant oder Einheit), nie Admin-Rollen und nie
+ * „alle Mandanten“. Gilt ebenso fürs Entziehen.
+ */
+export function canGrantRole(p: Principal, t: GrantTarget): boolean {
+	if (isSystemAdmin(p)) return true;
+	if (t.role === 'system_admin' || t.role === 'mandanten_admin') return false;
+	if (t.scope === 'all' || !t.tenantId) return false;
+	return canAdministerTenant(p, t.tenantId);
+}
