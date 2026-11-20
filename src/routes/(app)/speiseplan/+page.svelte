@@ -2,6 +2,8 @@
 	/* eslint-disable svelte/no-navigation-without-resolve -- nur Suchparameter der eigenen Seite */
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import { actionUrl } from '#lib/action-url.ts';
+	import { page } from '$app/state';
 	import PdfAnsicht from '#lib/components/PdfAnsicht.svelte';
 	import StandortWahl from '#lib/components/StandortWahl.svelte';
 	import { closureRange, closureTitle, dayLabel, hoursSummary } from '#lib/canteen.ts';
@@ -19,7 +21,7 @@
 	<div class="kopfzeile">
 		<div class="titel">
 			<h1>Speiseplan</h1>
-			<form method="POST" action="?/favorit" use:enhance>
+			<form method="POST" action={actionUrl(page.url.search, 'favorit')} use:enhance>
 				<button
 					class="stern"
 					type="submit"

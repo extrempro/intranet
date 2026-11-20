@@ -85,6 +85,13 @@
       "when": 1795172274969,
       "tag": "0011_benachrichtigungen",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1795173087817,
+      "tag": "0012_brett_nachrichten",
+      "breakpoints": true
     }
   ]
 }

@@ -5,7 +5,9 @@
 import { and, isNotNull, lt, or, sql } from 'drizzle-orm';
 import { deleteExpiredSessions } from './auth/session.ts';
 import { deleteOrphans } from './files/store.ts';
+import { boardRetention } from './board.ts';
 import { calendarRetention } from './calendar.ts';
+import { deleteClosedConversations } from './messages.ts';
 import { deleteExpiredCanteenData } from './canteen.ts';
 import { deleteOldNotifications } from './notify.ts';
 import { deleteForgottenPlans } from './plans.ts';
@@ -23,6 +25,8 @@ export async function cleanup(): Promise<void> {
 	await deleteExpiredCanteenData();
 	await calendarRetention();
 	await deleteOldNotifications();
+	await boardRetention();
+	await deleteClosedConversations();
 	await db.delete(pendingLogins).where(lt(pendingLogins.expiresAt, new Date()));
 	// Abgelaufene oder benutzte Einladungslinks nach 30 Tagen entfernen
 	await db

@@ -239,6 +239,8 @@ export const personPreferences = pgTable('person_preferences', {
 	calendarTenants: jsonb('calendar_tenants').$type<string[]>(),
 	/** Benachrichtigungen (Kap. 11); null = Voreinstellungen */
 	notify: jsonb('notify').$type<NotifySettings>(),
+	/** Schwarzes Brett „Anzeigen aus: …“ (weitere Mandanten) */
+	boardTenants: jsonb('board_tenants').$type<string[]>(),
 	updatedAt: updatedAt()
 });
 
@@ -937,4 +939,174 @@ export const notifications = pgTable(
 		index('notifications_person').on(t.personId, t.createdAt),
 		index('notifications_email').on(t.email)
 	]
+);
+
+// ---------------------------------------------------------------------------
+// Nachrichten (Kap. 9): nur Gespräche zu Vorgängen
+// ---------------------------------------------------------------------------
+
+/**
+ * Ein Gespräch zu einem Vorgang. Beteiligt sind einzelne Personen
+ * (conversation_members) und optional ein gemeinsames Postfach einer Rolle
+ * (role_box, bei der Moderation je Mandant).
+ */
+export const conversations = pgTable(
+	'conversations',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		/** anzeige = Interessierte ↔ Anzeigende; moderation = Moderation ↔ Anzeigende */
+		kind: text('kind', { enum: ['anzeige', 'moderation'] }).notNull(),
+		subject: text('subject').notNull(),
+		/** Vorgang, z. B. die Anzeige */
+		refId: uuid('ref_id'),
+		roleBox: text('role_box', { enum: ['moderation'] }),
+		roleTenantId: uuid('role_tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
+		closedAt: timestamp('closed_at', { withTimezone: true }),
+		lastMessageAt: timestamp('last_message_at', { withTimezone: true }).notNull().defaultNow(),
+		createdAt: createdAt()
+	},
+	(t) => [
+		index('conversations_ref').on(t.refId),
+		index('conversations_role').on(t.roleBox, t.roleTenantId)
+	]
+);
+
+export const conversationMembers = pgTable(
+	'conversation_members',
+	{
+		conversationId: uuid('conversation_id')
+			.notNull()
+			.references(() => conversations.id, { onDelete: 'cascade' }),
+		personId: uuid('person_id')
+			.notNull()
+			.references(() => persons.id, { onDelete: 'cascade' })
+	},
+	(t) => [
+		primaryKey({ columns: [t.conversationId, t.personId] }),
+		index('conversation_members_person').on(t.personId)
+	]
+);
+
+/** Gelesen bis – für Mitglieder und für Personen mit dem Rollen-Postfach. */
+export const conversationReads = pgTable(
+	'conversation_reads',
+	{
+		conversationId: uuid('conversation_id')
+			.notNull()
+			.references(() => conversations.id, { onDelete: 'cascade' }),
+		personId: uuid('person_id')
+			.notNull()
+			.references(() => persons.id, { onDelete: 'cascade' }),
+		lastReadAt: timestamp('last_read_at', { withTimezone: true }).notNull()
+	},
+	(t) => [primaryKey({ columns: [t.conversationId, t.personId] })]
+);
+
+export const messages = pgTable(
+	'messages',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		conversationId: uuid('conversation_id')
+			.notNull()
+			.references(() => conversations.id, { onDelete: 'cascade' }),
+		authorId: uuid('author_id').references(() => persons.id, { onDelete: 'set null' }),
+		/** Geschrieben für das Rollen-Postfach (z. B. „Moderation“) */
+		asRole: boolean('as_role').notNull().default(false),
+		body: text('body').notNull(),
+		createdAt: createdAt()
+	},
+	(t) => [index('messages_conversation').on(t.conversationId, t.createdAt)]
+);
+
+// ---------------------------------------------------------------------------
+// Schwarzes Brett (Kap. 8.5)
+// ---------------------------------------------------------------------------
+
+export const boardCategories = pgTable('board_categories', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	name: text('name').notNull().unique(),
+	position: integer('position').notNull().default(0),
+	/** „Sonstiges“: nicht löschbar, nimmt Anzeigen gelöschter Kategorien auf */
+	fixed: boolean('fixed').notNull().default(false)
+});
+
+export const boardAds = pgTable(
+	'board_ads',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		personId: uuid('person_id')
+			.notNull()
+			.references(() => persons.id, { onDelete: 'cascade' }),
+		/** Mandant der Person; dessen Moderation prüft */
+		tenantId: uuid('tenant_id')
+			.notNull()
+			.references(() => tenants.id, { onDelete: 'cascade' }),
+		categoryId: uuid('category_id')
+			.notNull()
+			.references(() => boardCategories.id, { onDelete: 'restrict' }),
+		title: text('title').notNull(),
+		body: text('body').notNull(),
+		/** „Teams-Chat“ und „E-Mail“ an der Anzeige zeigen */
+		viaApps: boolean('via_apps').notNull().default(false),
+		ownContact: text('own_contact'),
+		status: text('status', {
+			enum: ['pending', 'active', 'rejected', 'done', 'expired', 'removed']
+		}).notNull(),
+		rejectReason: text('reject_reason'),
+		expiresAt: timestamp('expires_at', { withTimezone: true }),
+		extended: boolean('extended').notNull().default(false),
+		/** Zeitpunkt, ab dem die Löschfrist läuft (abgelehnt, erledigt, abgelaufen, entfernt) */
+		endedAt: timestamp('ended_at', { withTimezone: true }),
+		createdAt: createdAt(),
+		updatedAt: updatedAt()
+	},
+	(t) => [
+		index('board_ads_status').on(t.status, t.expiresAt),
+		index('board_ads_person').on(t.personId)
+	]
+);
+
+/** „Wer sieht das?“: Ziel-Mandanten (der eigene ist immer dabei). */
+export const boardAdTenants = pgTable(
+	'board_ad_tenants',
+	{
+		adId: uuid('ad_id')
+			.notNull()
+			.references(() => boardAds.id, { onDelete: 'cascade' }),
+		tenantId: uuid('tenant_id')
+			.notNull()
+			.references(() => tenants.id, { onDelete: 'cascade' })
+	},
+	(t) => [primaryKey({ columns: [t.adId, t.tenantId] })]
+);
+
+export const boardAdPhotos = pgTable(
+	'board_ad_photos',
+	{
+		adId: uuid('ad_id')
+			.notNull()
+			.references(() => boardAds.id, { onDelete: 'cascade' }),
+		fileId: uuid('file_id')
+			.notNull()
+			.unique()
+			.references(() => files.id, { onDelete: 'cascade' }),
+		position: integer('position').notNull()
+	},
+	(t) => [primaryKey({ columns: [t.adId, t.fileId] })]
+);
+
+/** Meldungen; wer gemeldet hat, sieht nur das System. */
+export const boardReports = pgTable(
+	'board_reports',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		adId: uuid('ad_id')
+			.notNull()
+			.references(() => boardAds.id, { onDelete: 'cascade' }),
+		reporterId: uuid('reporter_id').references(() => persons.id, { onDelete: 'set null' }),
+		reason: text('reason', { enum: ['gewerblich', 'unpassend', 'sonstiges'] }).notNull(),
+		createdAt: createdAt(),
+		resolvedAt: timestamp('resolved_at', { withTimezone: true })
+	},
+	(t) => [unique('board_reports_once').on(t.adId, t.reporterId)]
 );

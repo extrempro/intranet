@@ -2,6 +2,7 @@
 	/* eslint-disable svelte/no-navigation-without-resolve -- nur Suchparameter der eigenen Seite */
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import { actionUrl } from '#lib/action-url.ts';
 	import { page } from '$app/state';
 	import { dayHeading, monthCells, monthLabel, shiftMonth, timeLabel } from '#lib/calendar.ts';
 
@@ -39,7 +40,7 @@
 	<div class="kopfzeile">
 		<div class="titel">
 			<h1>Kalender</h1>
-			<form method="POST" action="?/favorit" use:enhance>
+			<form method="POST" action={actionUrl(page.url.search, 'favorit')} use:enhance>
 				<button
 					class="stern"
 					type="submit"
@@ -84,7 +85,7 @@
 		</a>
 		<details class="aus">
 			<summary class="pille">{ausLabel} ▾</summary>
-			<form method="POST" action="?/aus" class="ausliste">
+			<form method="POST" action={actionUrl(page.url.search, 'aus')} class="ausliste">
 				<input type="hidden" name="zurueck" value={page.url.search} />
 				{#each data.mandanten as m (m.id)}
 					<label>
