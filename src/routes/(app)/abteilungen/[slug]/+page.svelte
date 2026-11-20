@@ -5,6 +5,7 @@
 	import { berlinNow } from '#lib/canteen.ts';
 	import { groupResponsibilities, matchesSearch } from '#lib/departments.ts';
 	import { formatDay } from '#lib/news.ts';
+	import Avatar from '#lib/components/Avatar.svelte';
 
 	let { data, form } = $props();
 	const e = $derived(data.einheit);
@@ -60,7 +61,7 @@
 					{#each leitung as l (l.p.id)}
 						<div>
 							<dt>{l.rolle}</dt>
-							<dd><a href="mailto:{l.p.email}">{l.p.name}</a></dd>
+							<dd><a href={resolve('/(app)/personen/[id]', { id: l.p.id })}>{l.p.name}</a></dd>
 						</div>
 					{/each}
 				</dl>
@@ -119,7 +120,9 @@
 											<strong>{z.topic}</strong>
 											{#if z.kontakt}
 												<span class="kontakt">
-													<a href="mailto:{z.kontakt.email}">{z.kontakt.name}</a>
+													<a href={resolve('/(app)/personen/[id]', { id: z.kontakt.id })}>
+														{z.kontakt.name}
+													</a>
 													{#if z.kontakt.vertretung}<span class="schild">Vertretung</span>{/if}
 													{#if z.kontakt.phone}
 														<span class="hinweis">
@@ -158,14 +161,17 @@
 					<ul class="team">
 						{#each e.team as m (m.id)}
 							<li>
-								<strong>{m.name}</strong>
-								{#if m.position}<span class="hinweis">{m.position}</span>{/if}
-								<span class="hinweis">
-									<a href="mailto:{m.email}">{m.email}</a>
-									{#if m.phone}· <a href="tel:{m.phone}">{m.phone}</a>{/if}
-									{#if m.mobile}· <a href="tel:{m.mobile}">{m.mobile}</a>{/if}
-									{#if m.room}· Raum {m.room}{/if}
-								</span>
+								<Avatar name={m.name} foto={m.foto} groesse={44} />
+								<div class="person">
+									<a class="name" href={resolve('/(app)/personen/[id]', { id: m.id })}>{m.name}</a>
+									{#if m.position}<span class="hinweis">{m.position}</span>{/if}
+									<span class="hinweis">
+										<a href="mailto:{m.email}">{m.email}</a>
+										{#if m.phone}· <a href="tel:{m.phone}">{m.phone}</a>{/if}
+										{#if m.mobile}· <a href="tel:{m.mobile}">{m.mobile}</a>{/if}
+										{#if m.room}· Raum {m.room}{/if}
+									</span>
+								</div>
 							</li>
 						{/each}
 					</ul>
@@ -355,8 +361,23 @@
 		padding: 0;
 		display: grid;
 	}
-	.zliste li,
 	.team li {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 10px 0;
+		border-top: 1px solid var(--bd);
+	}
+	.person {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		min-width: 0;
+	}
+	.name {
+		font-weight: 700;
+	}
+	.zliste li {
 		display: flex;
 		flex-direction: column;
 		gap: 4px;

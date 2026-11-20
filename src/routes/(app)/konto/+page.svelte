@@ -9,6 +9,11 @@
 	<h2>Persönlich</h2>
 	<ul class="kacheln">
 		<li>
+			<a class="karte kachel" href={resolve('/(app)/konto/profil')}>
+				<strong>Mein Profil</strong><span class="hinweis">Foto und Kontaktdaten</span>
+			</a>
+		</li>
+		<li>
 			<a class="karte kachel" href={resolve('/(app)/konto/standorte')}>
 				<strong>Meine Standorte</strong><span class="hinweis">Kantine für den Speiseplan</span>
 			</a>

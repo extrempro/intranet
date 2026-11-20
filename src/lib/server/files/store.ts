@@ -35,11 +35,21 @@ export async function storeUpload(file: File, personId: string) {
 			'Dieser Dateityp ist nicht erlaubt. Erlaubt sind PDF, JPG, PNG, WebP, Word, Excel und PowerPoint (ohne Makros).'
 		);
 	}
+	return storeBytes(bytes, safeFileName(file.name, kind), kind, personId);
+}
+
+/** Geprüfte Bytes verschlüsselt ablegen (ohne Verknüpfung). */
+export async function storeBytes(
+	bytes: Uint8Array,
+	name: string,
+	kind: FileKind,
+	personId: string
+) {
 	const { key, keyEnc } = newFileKey();
 	const [row] = await db
 		.insert(files)
 		.values({
-			name: safeFileName(file.name, kind),
+			name,
 			mime: MIME[kind],
 			kind,
 			size: bytes.length,
@@ -91,7 +101,8 @@ const unlinked = sql`not exists (select 1 from news_attachments a where a.file_i
 	and not exists (select 1 from plans pl where pl.file_id = ${files.id})
 	and not exists (select 1 from org_chart o where o.file_id = ${files.id})
 	and not exists (select 1 from menus m where m.file_id = ${files.id})
-	and not exists (select 1 from board_ad_photos bp where bp.file_id = ${files.id})`;
+	and not exists (select 1 from board_ad_photos bp where bp.file_id = ${files.id})
+	and not exists (select 1 from persons pp where pp.photo_file_id = ${files.id})`;
 
 /** Eigene, noch nirgends verknüpfte Uploads (für Anhänge). Liefert die gültigen IDs. */
 export async function ownUnlinkedFiles(personId: string, ids: string[]): Promise<string[]> {

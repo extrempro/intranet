@@ -5,12 +5,14 @@
 	let {
 		name,
 		kuerzel,
+		foto = null,
 		mandant,
 		darfVerwaltung,
 		darfRedaktion = false
 	}: {
 		name: string;
 		kuerzel: string;
+		foto?: string | null;
 		mandant: string;
 		darfVerwaltung: boolean;
 		darfRedaktion?: boolean;
@@ -50,15 +52,18 @@
 		aria-label="Kontomenü von {name}"
 		onclick={() => (offen = !offen)}
 	>
-		{kuerzel}
+		{#if foto}<img src={foto} alt="" />{:else}{kuerzel}{/if}
 	</button>
 
 	{#if offen}
 		<div bind:this={menue} id="kontomenue" class="menue" role="region" aria-label="Kontomenü">
 			<div class="kopf">
-				<div class="avatar gross" aria-hidden="true">{kuerzel}</div>
+				<div class="avatar gross" aria-hidden="true">
+					{#if foto}<img src={foto} alt="" />{:else}{kuerzel}{/if}
+				</div>
 				<div><strong>{name}</strong><br /><span class="mu">{mandant}</span></div>
 			</div>
+			<a href={resolve('/(app)/konto/profil')} class="eintrag">Mein Profil</a>
 			<a href={resolve('/(app)/konto')} class="eintrag">Konto und Einstellungen</a>
 			{#if darfRedaktion}
 				<a href={resolve('/(app)/redaktion')} class="eintrag">Redaktion</a>
@@ -92,6 +97,14 @@
 		align-items: center;
 		justify-content: center;
 		padding: 0;
+	}
+	.avatar {
+		overflow: hidden;
+	}
+	.avatar img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
 	}
 	.avatar.gross {
 		flex: none;

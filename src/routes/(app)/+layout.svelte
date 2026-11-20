@@ -98,6 +98,7 @@
 		<Kontomenue
 			name={data.ich.name}
 			kuerzel={data.ich.kuerzel}
+			foto={data.ich.foto}
 			mandant={data.ich.mandant}
 			darfVerwaltung={data.darfVerwaltung}
 			darfRedaktion={data.darfRedaktion}

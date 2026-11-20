@@ -14,6 +14,7 @@ import {
 	type UnitType
 } from '../roles.ts';
 import { audit } from './audit.ts';
+import { removePhoto } from './people.ts';
 import { canAdministerTenant, canGrantRole, isSystemAdmin, type Principal } from './auth/access.ts';
 import { endAllSessions } from './auth/session.ts';
 import { db } from './db/index.ts';
@@ -328,6 +329,8 @@ export async function setPersonActive(p: Principal, personId: string, active: bo
 			.set({ status: 'disabled', disabledAt: new Date() })
 			.where(eq(persons.id, personId));
 		await endAllSessions(personId);
+		// Profilfoto sofort löschen (Kap. 15)
+		await removePhoto(personId);
 	}
 	await audit({
 		category: 'admin',
