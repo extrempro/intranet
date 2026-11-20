@@ -71,6 +71,13 @@
       "when": 1795168229214,
       "tag": "0009_faqs_speiseplan",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1795170296849,
+      "tag": "0010_kalender",
+      "breakpoints": true
     }
   ]
 }

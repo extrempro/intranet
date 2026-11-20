@@ -4,6 +4,7 @@ import { greeting, HOME_CARDS, resolveLayout } from '#lib/home.ts';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import { db } from '#lib/server/db/index.ts';
 import { listNews, urgentForBanner } from '#lib/server/news.ts';
+import { todayAndTomorrow } from '#lib/server/calendar.ts';
 import { canteenCards } from '#lib/server/canteen.ts';
 import { latestPlans } from '#lib/server/plans.ts';
 import { tenants } from '#lib/server/db/schema.ts';
@@ -20,18 +21,20 @@ const ZONE = 'Europe/Berlin';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const principal = requirePrincipal(locals);
-	const [prefs, favs, [tenant], dringend, neuigkeiten, plaene, kantinen] = await Promise.all([
-		getPreferences(principal.personId),
-		listFavorites(principal.personId),
-		db
-			.select({ homeDefault: tenants.homeDefault })
-			.from(tenants)
-			.where(eq(tenants.id, principal.tenantId)),
-		urgentForBanner(principal),
-		listNews(principal, { limit: 5 }),
-		latestPlans(principal),
-		canteenCards(principal.personId)
-	]);
+	const [prefs, favs, [tenant], dringend, neuigkeiten, plaene, kantinen, termine] =
+		await Promise.all([
+			getPreferences(principal.personId),
+			listFavorites(principal.personId),
+			db
+				.select({ homeDefault: tenants.homeDefault })
+				.from(tenants)
+				.where(eq(tenants.id, principal.tenantId)),
+			urgentForBanner(principal),
+			listNews(principal, { limit: 5 }),
+			latestPlans(principal),
+			canteenCards(principal.personId),
+			todayAndTomorrow(principal)
+		]);
 	const now = new Date();
 	const hour = Number(
 		new Intl.DateTimeFormat('de-DE', { hour: 'numeric', hourCycle: 'h23', timeZone: ZONE }).format(
@@ -58,7 +61,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 		dringend,
 		neuigkeiten: neuigkeiten.filter((n) => !n.planned),
 		plaene,
-		kantinen
+		kantinen,
+		termine
 	};
 };
 

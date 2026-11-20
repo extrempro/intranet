@@ -115,6 +115,7 @@ export interface UnitInput {
 	isCentral: boolean;
 	hidden: boolean;
 	mayPostUrgent: boolean | null;
+	mayCreateEvents: boolean | null;
 	isKbb: boolean;
 }
 
@@ -175,7 +176,8 @@ export async function createUnit(p: Principal, input: UnitInput, ip: string): Pr
 			slug: await uniqueSlug(name),
 			isCentral: central,
 			hidden: input.hidden,
-			mayPostUrgent: input.mayPostUrgent
+			mayPostUrgent: input.mayPostUrgent,
+			mayCreateEvents: input.mayCreateEvents
 		})
 		.returning({ id: units.id });
 	if (input.type === 'abteilung') await setKbb(input.tenantId, row.id, input.isKbb);
@@ -206,7 +208,8 @@ export async function updateUnit(p: Principal, unitId: string, input: UnitInput,
 			title,
 			isCentral: central,
 			hidden: input.hidden,
-			mayPostUrgent: input.mayPostUrgent
+			mayPostUrgent: input.mayPostUrgent,
+			mayCreateEvents: input.mayCreateEvents
 		})
 		.where(eq(units.id, unitId));
 	if (input.type === 'abteilung') await setKbb(input.tenantId, unitId, input.isKbb);
@@ -222,6 +225,7 @@ export async function updateUnit(p: Principal, unitId: string, input: UnitInput,
 			central,
 			hidden: input.hidden,
 			mayPostUrgent: input.mayPostUrgent,
+			mayCreateEvents: input.mayCreateEvents,
 			kbb: input.isKbb
 		},
 		ip
