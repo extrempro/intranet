@@ -15,6 +15,13 @@
       "when": 1795152187876,
       "tag": "0001_entra_gruppen_rollen",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795152874761,
+      "tag": "0002_lokale_konten",
+      "breakpoints": true
     }
   ]
 }

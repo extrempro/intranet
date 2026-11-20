@@ -13,7 +13,9 @@ import {
 	type AnyPgColumn,
 	boolean,
 	check,
+	customType,
 	index,
+	integer,
 	jsonb,
 	pgEnum,
 	pgTable,
@@ -322,6 +324,104 @@ export const sessions = pgTable(
 	},
 	(t) => [index('sessions_person').on(t.personId), index('sessions_expires').on(t.expiresAt)]
 );
+
+// ---------------------------------------------------------------------------
+// Lokale Konten (Kap. 4.2)
+// ---------------------------------------------------------------------------
+
+const bytea = customType<{ data: Uint8Array<ArrayBuffer>; driverData: Buffer }>({
+	dataType: () => 'bytea',
+	toDriver: (v) => Buffer.from(v),
+	fromDriver: (v) => new Uint8Array(v)
+});
+
+export const localCredentials = pgTable('local_credentials', {
+	personId: uuid('person_id')
+		.primaryKey()
+		.references(() => persons.id, { onDelete: 'cascade' }),
+	/** Argon2id. null, solange die Einladung nicht angenommen ist. */
+	passwordHash: text('password_hash'),
+	/** TOTP-Schlüssel, mit ENCRYPTION_KEY verschlüsselt (AES-256-GCM). */
+	totpSecretEnc: text('totp_secret_enc'),
+	totpConfirmedAt: timestamp('totp_confirmed_at', { withTimezone: true }),
+	/** Letzter angenommener TOTP-Zeitschritt, damit ein Code nur einmal gilt. */
+	totpLastStep: integer('totp_last_step'),
+	failedAttempts: integer('failed_attempts').notNull().default(0),
+	lastFailedAt: timestamp('last_failed_at', { withTimezone: true }),
+	passwordChangedAt: timestamp('password_changed_at', { withTimezone: true }),
+	updatedAt: updatedAt()
+});
+
+export const passkeys = pgTable(
+	'passkeys',
+	{
+		/** Credential-ID (base64url). */
+		id: text('id').primaryKey(),
+		personId: uuid('person_id')
+			.notNull()
+			.references(() => persons.id, { onDelete: 'cascade' }),
+		publicKey: bytea('public_key').notNull(),
+		counter: integer('counter').notNull().default(0),
+		transports: text('transports').array(),
+		name: text('name').notNull(),
+		createdAt: createdAt(),
+		lastUsedAt: timestamp('last_used_at', { withTimezone: true })
+	},
+	(t) => [index('passkeys_person').on(t.personId)]
+);
+
+/** Einmalcodes, nur als SHA-256 gespeichert (hohe Zufälligkeit, kein Argon2 nötig). */
+export const recoveryCodes = pgTable(
+	'recovery_codes',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		personId: uuid('person_id')
+			.notNull()
+			.references(() => persons.id, { onDelete: 'cascade' }),
+		codeHash: text('code_hash').notNull(),
+		usedAt: timestamp('used_at', { withTimezone: true }),
+		createdAt: createdAt()
+	},
+	(t) => [index('recovery_codes_person').on(t.personId)]
+);
+
+export const invitations = pgTable(
+	'invitations',
+	{
+		/** SHA-256 des Tokens aus dem Link. */
+		tokenHash: text('token_hash').primaryKey(),
+		personId: uuid('person_id')
+			.notNull()
+			.references(() => persons.id, { onDelete: 'cascade' }),
+		expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+		usedAt: timestamp('used_at', { withTimezone: true }),
+		createdAt: createdAt(),
+		createdBy: uuid('created_by').references(() => persons.id, { onDelete: 'set null' })
+	},
+	(t) => [index('invitations_person').on(t.personId)]
+);
+
+/**
+ * Halbfertige Anmeldung: Passwort ist geprüft, zweiter Faktor (oder dessen
+ * Einrichtung) steht noch aus. Im Cookie steht das Token, hier sein Hash.
+ * Hält auch die WebAuthn-Challenge.
+ */
+export const pendingLogins = pgTable('pending_logins', {
+	id: text('id').primaryKey(),
+	personId: uuid('person_id')
+		.notNull()
+		.references(() => persons.id, { onDelete: 'cascade' }),
+	/** mfa = Code/Passkey eingeben, setup = zweiten Faktor erst einrichten. */
+	purpose: text('purpose', { enum: ['mfa', 'setup'] }).notNull(),
+	challenge: text('challenge'),
+	/** Noch nicht bestätigter TOTP-Schlüssel während der Einrichtung (verschlüsselt). */
+	pendingTotpEnc: text('pending_totp_enc'),
+	/** Wiederherstellungscodes wurden gezeigt, Anmeldung kann abgeschlossen werden. */
+	setupDone: boolean('setup_done').notNull().default(false),
+	ziel: text('ziel').notNull().default('/'),
+	expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+	createdAt: createdAt()
+});
 
 // ---------------------------------------------------------------------------
 // Protokoll
