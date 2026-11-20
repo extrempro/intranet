@@ -1,18 +1,31 @@
 import { describe, expect, it } from 'vitest';
-import { BG_DEFAULT, BG_DEFAULT_DARK, checkBackground } from './color.ts';
+import { normalizeUiFarben, palette, pruefePalette } from './color.ts';
 
-describe('Seitenhintergrund', () => {
-	it('Standardfarben haben genug Kontrast', () => {
-		expect(checkBackground(BG_DEFAULT, BG_DEFAULT_DARK, '#0F6E56', '#5DCAA5').ok).toBe(true);
+describe('Oberflächenfarben', () => {
+	it('Standard hell und dunkel haben genug Kontrast', () => {
+		expect(pruefePalette(palette('hell', '#0F6E56', '#0F6E56')).ok).toBe(true);
+		expect(pruefePalette(palette('dunkel', '#5DCAA5', '#0F6E56')).ok).toBe(true);
 	});
 
-	it('zu dunkler heller Hintergrund fällt durch', () => {
-		const k = checkBackground('#9AA39F', BG_DEFAULT_DARK, '#0F6E56', '#5DCAA5');
-		expect(k.ok).toBe(false);
-		expect(k.hell.gedaempft).toBeLessThan(4.5);
+	it('leitet im Dunkeln Fläche und Rahmen aus eigenem Hintergrund ab', () => {
+		const p = palette('dunkel', '#F2A36B', '#0F6E56', { hintergrund: '#000000' });
+		expect(p.flaeche).toBe('#141414');
+		expect(p.rahmen).toBe('#2E2E2E');
+		expect(pruefePalette(p).ok).toBe(true);
 	});
 
-	it('zu heller dunkler Hintergrund fällt durch', () => {
-		expect(checkBackground(BG_DEFAULT, '#5A6460', '#0F6E56', '#5DCAA5').ok).toBe(false);
+	it('eigene Werte haben Vorrang, zu wenig Kontrast fällt durch', () => {
+		const p = palette('hell', '#0F6E56', '#0F6E56', { grau: '#9AA39F' });
+		expect(p.grau).toBe('#9AA39F');
+		expect(pruefePalette(p).ok).toBe(false);
+		expect(
+			pruefePalette(palette('hell', '#0F6E56', '#0F6E56', { knopf: '#7FD8BE' })).knopf
+		).toBeLessThan(4.5);
+	});
+
+	it('übernimmt nur gültige Hex-Werte', () => {
+		expect(
+			normalizeUiFarben({ hell: { knopf: '#abcdef', text: 'rot' }, dunkel: 'x', fremd: {} })
+		).toEqual({ hell: { knopf: '#ABCDEF' } });
 	});
 });

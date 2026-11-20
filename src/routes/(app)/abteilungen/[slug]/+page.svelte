@@ -68,6 +68,13 @@
 	const LINK =
 		'M9 15l6 -6M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463';
 	const PFEIL = 'M9 6l6 6l-6 6';
+	const BRIEF =
+		'M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2zM3 7l9 6l9 -6';
+	const TELEFON =
+		'M5 4h4l2 5l-2.5 1.5a11 11 0 0 0 5 5l1.5 -2.5l5 2v4a2 2 0 0 1 -2 2a16 16 0 0 1 -15 -15a2 2 0 0 1 2 -2';
+	const UHR = 'M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0M12 7v5l3 3';
+	const ORT =
+		'M12 11m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M17.66 16.66l-4.24 4.24a2 2 0 0 1 -2.83 0l-4.25 -4.24a8 8 0 1 1 11.31 0z';
 	const LINKSYMBOL = 'M9 15l6 -6M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464';
 </script>
 
@@ -81,6 +88,7 @@
 				<div class="namen">
 					<span class="art">{e.label} · {e.isCentral ? 'für alle Mandanten' : e.tenantName}</span>
 					<h1 id="u-h">{e.name}</h1>
+					{#if e.tagline}<span class="kurz">{e.tagline}</span>{/if}
 					{#if leitung.length}
 						<span class="leitung">
 							{#each leitung as l, i (l.p.id)}
@@ -123,6 +131,28 @@
 				{/if}
 			</div>
 		</div>
+		{#if e.kontakt.email || e.kontakt.telefon || e.kontakt.sprechzeiten || e.kontakt.raum}
+			<ul class="chips" aria-label="Kontakt">
+				{#if e.kontakt.email}<li>
+						<a class="chip" href="mailto:{e.kontakt.email}">
+							<Icon d={BRIEF} size={16} stroke={1.8} />{e.kontakt.email}
+						</a>
+					</li>{/if}
+				{#if e.kontakt.telefon}<li>
+						<a class="chip" href="tel:{e.kontakt.telefon.replace(/[^0-9+]/g, '')}">
+							<Icon d={TELEFON} size={16} stroke={1.8} />{e.kontakt.telefon}
+						</a>
+					</li>{/if}
+				{#if e.kontakt.sprechzeiten}<li>
+						<span class="chip">
+							<Icon d={UHR} size={16} stroke={1.8} />Sprechzeiten {e.kontakt.sprechzeiten}
+						</span>
+					</li>{/if}
+				{#if e.kontakt.raum}<li>
+						<span class="chip"><Icon d={ORT} size={16} stroke={1.8} />{e.kontakt.raum}</span>
+					</li>{/if}
+			</ul>
+		{/if}
 	</section>
 
 	{#if form && 'fehler' in form}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
@@ -411,6 +441,42 @@
 		border-radius: 24px;
 		background: var(--tint);
 		padding: 24px;
+		display: flex;
+		flex-direction: column;
+		gap: 18px;
+	}
+	.kurz {
+		color: var(--mu);
+	}
+	.chips {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+	.chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		min-height: 40px;
+		padding: 8px 14px;
+		box-sizing: border-box;
+		border-radius: 999px;
+		background: var(--sf);
+		color: var(--tx);
+		font-size: 14px;
+		font-weight: 500;
+		text-decoration: none;
+		overflow-wrap: anywhere;
+	}
+	a.chip:hover {
+		text-decoration: underline;
+	}
+	.chip :global(svg) {
+		flex: none;
+		color: var(--mu);
 	}
 	.kopfzeile {
 		display: flex;

@@ -45,6 +45,8 @@ const ICONS = {
 	brett: 'M9 4v6l-2 4v2h10v-2l-2 -4v-6M12 16v5M8 4h8',
 	speiseplan: 'M7 3v8a2 2 0 0 0 2 2h0a2 2 0 0 0 2 -2v-8M9 3v18M17 3c-2 0 -3 3 -3 7h3v11',
 	hubs: 'M4 4h6v6h-6zM14 4h6v6h-6zM4 14h6v6h-6zM14 14h6v6h-6z',
+	personen:
+		'M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2M16 3.13a4 4 0 0 1 0 7.75M21 21v-2a4 4 0 0 0 -3 -3.85',
 	organigramm:
 		'M10 3h4a1 1 0 0 1 1 1v3a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1zM4 16h4a1 1 0 0 1 1 1v3a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1zM16 16h4a1 1 0 0 1 1 1v3a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-3a1 1 0 0 1 1 -1zM12 8v4M6 16v-4h12v4',
 	faqs: 'M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0M12 17v.01M12 13.5a1.5 1.5 0 0 1 1 -1.5a2.6 2.6 0 1 0 -3 -4',
@@ -132,6 +134,13 @@ const AREAS: NavArea[] = [
 				href: '/hubs',
 				icon: ICONS.hubs,
 				text: 'Themenseiten für alle'
+			},
+			{
+				key: 'personen',
+				label: 'Personen',
+				href: '/personen',
+				icon: ICONS.personen,
+				text: 'Ansprechpersonen finden'
 			},
 			{
 				key: 'organigramm',

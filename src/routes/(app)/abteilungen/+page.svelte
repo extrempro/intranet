@@ -118,6 +118,7 @@
 	<a class="karte kachel" href={resolve('/(app)/abteilungen/[slug]', { slug: e.slug })}>
 		<strong>{e.name}</strong>
 		{#if e.title}<span class="titelzeile">{e.title}</span>{/if}
+		{#if e.tagline}<span class="kurz">{e.tagline}</span>{/if}
 		<span class="zahlen">
 			{[
 				e.personen ? (e.personen === 1 ? '1 Person' : `${e.personen} Personen`) : null,
@@ -164,6 +165,10 @@
 		font-size: 13px;
 		font-weight: 600;
 		color: var(--ac);
+	}
+	.kurz {
+		font-size: 13px;
+		color: var(--mu);
 	}
 	.zahlen {
 		font-size: 13px;

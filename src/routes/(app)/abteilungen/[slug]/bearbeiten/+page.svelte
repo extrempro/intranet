@@ -19,6 +19,11 @@
 	let seite = $state(
 		untrack(() => ({
 			about: data.einheit.about,
+			tagline: data.einheit.tagline,
+			email: data.einheit.contactEmail,
+			phone: data.einheit.contactPhone,
+			hours: data.einheit.officeHours,
+			room: data.einheit.room,
 			lead: data.einheit.leadPersonId ?? '',
 			second: data.einheit.secondLeadPersonId ?? '',
 			deputy: data.einheit.deputyPersonId ?? ''
@@ -95,6 +100,53 @@
 				</label>
 			</div>
 			<p class="hinweis">Zur Auswahl stehen Personen aus dem Team.</p>
+			<label class="feld">
+				<span>Kurzbeschreibung</span>
+				<input
+					name="kurz"
+					maxlength="120"
+					bind:value={seite.tagline}
+					placeholder="z. B. Verträge, Abwesenheiten, Gehalt"
+				/>
+				<span class="hinweis">Eine Zeile unter dem Namen, auch in der Abteilungsliste.</span>
+			</label>
+			<fieldset class="kontaktfelder">
+				<legend>Kontakt im Kopf der Seite (alles freiwillig)</legend>
+				<div class="zwei">
+					<label class="feld">
+						<span>Funktionsadresse</span>
+						<input
+							name="funktionsadresse"
+							type="email"
+							maxlength="254"
+							bind:value={seite.email}
+							placeholder="z. B. personal@…"
+						/>
+					</label>
+					<label class="feld">
+						<span>Telefon</span>
+						<input name="telefon" type="tel" maxlength="40" bind:value={seite.phone} />
+					</label>
+					<label class="feld">
+						<span>Sprechzeiten</span>
+						<input
+							name="sprechzeiten"
+							maxlength="120"
+							bind:value={seite.hours}
+							placeholder="z. B. Mo–Do 9–12 Uhr"
+						/>
+					</label>
+					<label class="feld">
+						<span>Raum</span>
+						<input
+							name="raum"
+							maxlength="60"
+							bind:value={seite.room}
+							placeholder="z. B. 3.14, Haus B"
+						/>
+					</label>
+				</div>
+			</fieldset>
 			<label class="feld">
 				<span>Über uns</span>
 				<textarea name="ueber" rows="6" maxlength="3000" bind:value={seite.about}></textarea>
@@ -287,6 +339,15 @@
 </div>
 
 <style>
+	.kontaktfelder {
+		border: 1px solid var(--bd);
+		border-radius: var(--radius);
+		padding: 10px 16px 14px;
+		margin: 0;
+	}
+	.kontaktfelder legend {
+		font-weight: 600;
+	}
 	.seite {
 		max-width: 52rem;
 	}
