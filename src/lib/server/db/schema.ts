@@ -62,6 +62,9 @@ export const tenants = pgTable(
 		bgColorDark: text('bg_color_dark'),
 		/** Weitere Oberflächenfarben je Darstellung (Knöpfe, Flächen, Rahmen, Text) */
 		uiColors: jsonb('ui_colors').$type<UiFarben>(),
+		/** Links zu Datenschutzerklärung und Impressum (Anmeldeseite, Kontomenü) */
+		privacyUrl: text('privacy_url'),
+		imprintUrl: text('imprint_url'),
 		/** Startseite für neue Personen (Kap. 3.1, 7): Reihenfolge und Sichtbarkeit der Karten. */
 		homeDefault: jsonb('home_default').$type<HomeLayout>(),
 		/** Favoriten für neue Personen (Schlüssel wie in favorites.key); null = Standard */

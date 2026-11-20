@@ -10,7 +10,9 @@
 		accentDark: '#5DCAA5',
 		bg: '',
 		bgDark: '',
-		ui: {}
+		ui: {},
+		privacyUrl: '',
+		imprintUrl: ''
 	};
 </script>
 

@@ -10,6 +10,7 @@ export const load: LayoutServerLoad = async () => {
 			logoHell: branding.logoHell,
 			logoDunkel: branding.logoDunkel
 		},
+		rechtliches: { datenschutz: branding.datenschutz, impressum: branding.impressum },
 		akzent: accentStyle(branding)
 	};
 };

@@ -8,7 +8,9 @@
 		foto = null,
 		mandant,
 		darfVerwaltung,
-		darfRedaktion = false
+		darfRedaktion = false,
+		datenschutz = null,
+		impressum = null
 	}: {
 		name: string;
 		kuerzel: string;
@@ -16,6 +18,8 @@
 		mandant: string;
 		darfVerwaltung: boolean;
 		darfRedaktion?: boolean;
+		datenschutz?: string | null;
+		impressum?: string | null;
 	} = $props();
 
 	let offen = $state(false);
@@ -77,11 +81,31 @@
 			<form method="POST" action="/abmelden">
 				<button type="submit" class="eintrag abmelden">Abmelden</button>
 			</form>
+			{#if datenschutz || impressum}
+				<p class="rechtliches">
+					{#if datenschutz}
+						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- externer Link -->
+						<a href={datenschutz} rel="noopener">Datenschutz</a>
+					{/if}
+					{#if datenschutz && impressum}·{/if}
+					{#if impressum}
+						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- externer Link -->
+						<a href={impressum} rel="noopener">Impressum</a>
+					{/if}
+				</p>
+			{/if}
 		</div>
 	{/if}
 </div>
 
 <style>
+	.rechtliches {
+		margin: 6px 0 0;
+		padding: 8px 12px 2px;
+		border-top: 1px solid var(--bd);
+		font-size: 12px;
+		color: var(--mu);
+	}
 	.konto {
 		position: relative;
 	}

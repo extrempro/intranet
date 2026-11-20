@@ -211,6 +211,13 @@
       "when": 1795214181566,
       "tag": "0029_mandanten_farben",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1795215476081,
+      "tag": "0030_rechtliche_links",
+      "breakpoints": true
     }
   ]
 }

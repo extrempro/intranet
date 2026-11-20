@@ -13,7 +13,9 @@ export function readTenantForm(form: FormData): TenantInput {
 		accentDark: s('akzent_dunkel', 7),
 		bg: s('hintergrund', 7),
 		bgDark: s('hintergrund_dunkel', 7),
-		ui: uiFarben(form)
+		ui: uiFarben(form),
+		privacyUrl: s('datenschutz', 500),
+		imprintUrl: s('impressum', 500)
 	};
 }
 

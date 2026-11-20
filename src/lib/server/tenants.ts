@@ -74,6 +74,8 @@ export async function getTenant(p: Principal, id: string) {
 		bg: t.bgColor ?? '',
 		bgDark: t.bgColorDark ?? '',
 		ui: normalizeUiFarben(t.uiColors),
+		privacyUrl: t.privacyUrl ?? '',
+		imprintUrl: t.imprintUrl ?? '',
 		domains: domains.map((d) => d.domain),
 		admins
 	};
@@ -89,6 +91,24 @@ export interface TenantInput {
 	bgDark: string;
 	/** Weitere Oberflächenfarben je Darstellung */
 	ui: UiFarben;
+	/** Links zu Datenschutz und Impressum; leer = keiner */
+	privacyUrl: string;
+	imprintUrl: string;
+}
+
+/** Nur vollständige http(s)-Adressen, damit kein javascript: im Link landet. */
+function checkLink(wert: string | undefined, was: string): string | null {
+	const v = (wert ?? '').trim();
+	if (!v) return null;
+	let u: URL;
+	try {
+		u = new URL(v);
+	} catch {
+		throw new TenantError(`${was}: bitte eine vollständige Adresse mit https:// angeben.`);
+	}
+	if (u.protocol !== 'https:' && u.protocol !== 'http:')
+		throw new TenantError(`${was}: bitte eine Adresse mit https:// angeben.`);
+	return u.href;
 }
 
 function checkInput(input: TenantInput) {
@@ -125,7 +145,9 @@ function checkInput(input: TenantInput) {
 		accentColorDark: input.accentDark.toUpperCase(),
 		bgColor: bg ? bg.toUpperCase() : null,
 		bgColorDark: bgDark ? bgDark.toUpperCase() : null,
-		uiColors: Object.keys(ui).length ? ui : null
+		uiColors: Object.keys(ui).length ? ui : null,
+		privacyUrl: checkLink(input.privacyUrl, 'Datenschutz'),
+		imprintUrl: checkLink(input.imprintUrl, 'Impressum')
 	};
 }
 
