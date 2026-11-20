@@ -3,6 +3,8 @@
 	/**
 	 * Suche in der Kopfzeile (Kap. 8.14): Vorschläge beim Tippen als Combobox,
 	 * Enter führt zur Ergebnisseite. Tastenkürzel „/“ öffnet die Suche.
+	 * ort „seite“: Feld oben in der Seitenleiste (PC); „kopf“: Feld in der
+	 * Kopfzeile (Tablet) bzw. Lupe mit eingeblendetem Feld (Handy).
 	 */
 	import { afterNavigate, goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
@@ -17,6 +19,10 @@
 		meta: string;
 		foto?: string | null;
 	}
+
+	let { ort = 'kopf' }: { ort?: 'kopf' | 'seite' } = $props();
+	const uid = $props.id();
+	const fid = `suche-${uid}`;
 
 	const LUPE = 'M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0M21 21l-6 -6';
 
@@ -97,6 +103,8 @@
 		const ziel = e.target as HTMLElement | null;
 		const tippt =
 			ziel && (ziel.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(ziel.tagName));
+		// Nur die gerade sichtbare Suche reagiert (Kopf oder Seitenleiste)
+		if (!box?.getClientRects().length) return;
 		if (e.key === '/' && !tippt && !e.ctrlKey && !e.metaKey && !e.altKey) {
 			e.preventDefault();
 			oeffnen();
@@ -110,7 +118,7 @@
 
 <svelte:window onkeydown={global} onclick={klick} />
 
-<div class="kopfsuche" class:offen bind:this={box} data-tour="suche">
+<div class="kopfsuche {ort}" class:offen bind:this={box} data-tour="suche">
 	<button
 		type="button"
 		class="symbolknopf lupe"
@@ -127,33 +135,29 @@
 	</button>
 
 	<div class="feldbox" role="search">
-		<label class="sr-only" for="kopfsuche-feld">Intranet durchsuchen</label>
+		<span class="feldlupe" aria-hidden="true"><Icon d={LUPE} size={18} stroke={1.8} /></span>
+		<label class="sr-only" for={fid}>Intranet durchsuchen</label>
 		<input
 			bind:this={feld}
 			bind:value={q}
-			id="kopfsuche-feld"
+			id={fid}
 			type="search"
 			role="combobox"
 			autocomplete="off"
 			maxlength="100"
-			placeholder="Suchen …"
+			placeholder={ort === 'seite' ? 'Suchen' : 'Personen, Themen, Beiträge, FAQs suchen'}
 			aria-autocomplete="list"
-			aria-controls="kopfsuche-liste"
+			aria-controls="{fid}-liste"
 			aria-expanded={vorschlaege.length > 0}
-			aria-activedescendant={aktiv >= 0 ? `kopfsuche-${aktiv}` : undefined}
+			aria-activedescendant={aktiv >= 0 ? `${fid}-${aktiv}` : undefined}
 			onfocus={() => (offen = true)}
 			oninput={eingabe}
 			onkeydown={taste}
 		/>
 		{#if offen && q.trim().length >= 2}
-			<ul id="kopfsuche-liste" class="liste" role="listbox" aria-label="Vorschläge">
+			<ul id="{fid}-liste" class="liste" role="listbox" aria-label="Vorschläge">
 				{#each vorschlaege as v, i (v.href + i)}
-					<li
-						id="kopfsuche-{i}"
-						role="option"
-						aria-selected={aktiv === i}
-						class:aktiv={aktiv === i}
-					>
+					<li id="{fid}-{i}" role="option" aria-selected={aktiv === i} class:aktiv={aktiv === i}>
 						<a href={v.href} tabindex="-1">
 							{#if v.kind === 'personen'}<Avatar name={v.title} foto={v.foto} groesse={28} />{/if}
 							<span class="text">
@@ -167,7 +171,7 @@
 					<li class="leer" role="presentation">Keine Vorschläge</li>
 				{/if}
 				<li
-					id="kopfsuche-{vorschlaege.length}"
+					id="{fid}-{vorschlaege.length}"
 					role="option"
 					aria-selected={aktiv === vorschlaege.length}
 					class="alle"
@@ -196,43 +200,96 @@
 		justify-content: center;
 		background: transparent;
 		color: var(--tx);
-		border: 1px solid var(--bd);
+		border: 0;
 		border-radius: 10px;
 		cursor: pointer;
 		padding: 0;
 	}
 	.feldbox {
 		display: none;
+		align-items: center;
+		gap: 8px;
+		padding: 0 12px;
+		box-sizing: border-box;
+		border: 1px solid var(--bd);
+		border-radius: 10px;
+		background: var(--bg);
 	}
-	.offen .feldbox {
-		display: block;
+	.feldlupe {
+		display: inline-flex;
+		color: var(--mu);
+	}
+	.feldbox input {
+		flex: 1;
+		min-width: 0;
+		min-height: 42px;
+		padding: 0;
+		border: 0;
+		border-radius: 0;
+		background: transparent;
+		color: var(--tx);
+		font: inherit;
+	}
+	.feldbox input:focus-visible {
+		outline: none;
+	}
+	.feldbox:focus-within {
+		outline: 3px solid var(--focus);
+		outline-offset: 2px;
+	}
+
+	/* Kopf, Handy: Lupe blendet das Feld oben ein */
+	.kopf.offen .feldbox {
+		display: flex;
 		position: fixed;
 		top: 8px;
 		left: 8px;
 		right: 8px;
 		z-index: 50;
-	}
-	@media (min-width: 900px) {
-		.lupe {
-			display: none;
-		}
-		.feldbox,
-		.offen .feldbox {
-			display: block;
-			position: relative;
-			inset: auto;
-			width: min(360px, 32vw);
-		}
-	}
-	input {
-		width: 100%;
-		box-sizing: border-box;
+		background: var(--sf);
 		box-shadow: var(--shadow);
 	}
-	@media (min-width: 900px) {
-		input {
+	/* Kopf, Tablet: Feld direkt in der Kopfzeile */
+	@media (min-width: 600px) {
+		.kopf {
+			flex: 1 1 200px;
+			min-width: 160px;
+			max-width: 560px;
+		}
+		.kopf .lupe {
+			display: none;
+		}
+		.kopf .feldbox,
+		.kopf.offen .feldbox {
+			display: flex;
+			position: relative;
+			inset: auto;
+			width: 100%;
+			background: var(--bg);
 			box-shadow: none;
 		}
+	}
+	/* PC: die Suche steht in der Seitenleiste */
+	@media (min-width: 1024px) {
+		.kopf {
+			display: none;
+		}
+	}
+
+	/* Seitenleiste */
+	.seite .lupe {
+		display: none;
+	}
+	.seite .feldbox {
+		display: flex;
+		width: 100%;
+		gap: 10px;
+		padding: 0 14px;
+		border: 0;
+	}
+	.seite .feldbox input {
+		min-height: 46px;
+		font-size: 15px;
 	}
 	.liste {
 		position: absolute;

@@ -178,23 +178,6 @@
 		gap: 8px;
 		align-items: center;
 	}
-	.pille {
-		display: inline-flex;
-		align-items: center;
-		min-height: 40px;
-		padding: 0 16px;
-		border-radius: 999px;
-		border: 1px solid var(--bd);
-		background: var(--sf);
-		color: var(--tx);
-		text-decoration: none;
-		font-weight: 600;
-	}
-	.pille[aria-current='true'] {
-		background: var(--fill);
-		border-color: var(--fill);
-		color: #fff;
-	}
 	dl {
 		display: grid;
 		grid-template-columns: max-content 1fr;

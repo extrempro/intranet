@@ -104,23 +104,6 @@
 		flex-wrap: wrap;
 		gap: 6px;
 	}
-	.pille {
-		display: inline-flex;
-		align-items: center;
-		min-height: 44px;
-		padding: 0 16px;
-		border-radius: 999px;
-		border: 1px solid var(--bd);
-		background: var(--sf);
-		color: var(--tx);
-		text-decoration: none;
-		font-weight: 600;
-	}
-	.pille[aria-current='true'] {
-		background: var(--fill);
-		border-color: var(--fill);
-		color: #fff;
-	}
 	.liste {
 		list-style: none;
 		margin: 0;

@@ -66,9 +66,6 @@
 		--warn-bg: #3a2a10;
 		--warn-bd: #fdb022;
 		--warn-tx: #fec84b;
-		--warn-bg: #3a2a10;
-		--warn-bd: #fdb022;
-		--warn-tx: #fec84b;
 		--shadow: 0 12px 32px rgb(0 0 0 / 0.5);
 	}
 }
@@ -96,7 +93,7 @@ body {
 }
 
 h1 {
-	font-size: 1.75rem;
+	font-size: 28px;
 	line-height: 1.25;
 	margin: 0 0 0.5rem;
 }
@@ -313,6 +310,91 @@ textarea {
 	color: var(--tx);
 }
 
+/* Filter-Pille (Entwurf: aktiv gefüllt im Akzent) */
+.pille {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-height: 44px;
+	padding: 8px 16px;
+	box-sizing: border-box;
+	border-radius: 999px;
+	border: 1px solid var(--bd);
+	background: var(--sf);
+	color: var(--tx);
+	font: inherit;
+	font-weight: 500;
+	text-decoration: none;
+	white-space: nowrap;
+	cursor: pointer;
+	list-style: none;
+}
+
+.pille::-webkit-details-marker {
+	display: none;
+}
+
+.pille:hover {
+	border-color: var(--mu);
+}
+
+.pille[aria-current='true'],
+.pille[aria-current='page'],
+.pille[aria-pressed='true'] {
+	background: var(--fill);
+	border-color: var(--fill);
+	color: #fff;
+	font-weight: 600;
+}
+
+/* Suchfelder im Inhalt: Pille mit Lupe (Entwurf) */
+main input[type='search'] {
+	border-color: var(--bd);
+	border-radius: 999px;
+	padding-left: 42px;
+	background: var(--sf)
+		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23525c57' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='10' cy='10' r='7'/%3E%3Cpath d='M21 21l-6 -6'/%3E%3C/svg%3E")
+		no-repeat 15px center / 18px;
+}
+
+[data-theme='dunkel'] main input[type='search'] {
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a6b0ab' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='10' cy='10' r='7'/%3E%3Cpath d='M21 21l-6 -6'/%3E%3C/svg%3E");
+}
+
+@media (prefers-color-scheme: dark) {
+	[data-theme='auto'] main input[type='search'] {
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a6b0ab' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='10' cy='10' r='7'/%3E%3Cpath d='M21 21l-6 -6'/%3E%3C/svg%3E");
+	}
+}
+
+/* Aktionslink (z. B. „Kalender abonnieren“, „Weiterlesen“): fett, ohne Unterstrich */
+.aktionslink {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-height: 44px;
+	color: var(--ac);
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.aktionslink:hover {
+	text-decoration: underline;
+}
+
+/* Titel-Link in Listen: Textfarbe, fett, dezent unterstrichen (Entwurf „linkBtn“) */
+.titellink {
+	color: var(--tx);
+	font-weight: 700;
+	text-decoration: underline;
+	text-decoration-color: var(--bd);
+	text-underline-offset: 4px;
+}
+
+.titellink:hover {
+	text-decoration-color: currentColor;
+}
+
 @media (prefers-reduced-motion: reduce) {
 	* {
 		animation: none !important;
@@ -327,7 +409,7 @@ textarea {
 }
 
 .stapel h1 {
-	font-size: 24px;
+	font-size: 28px;
 	margin: 0;
 }
 
