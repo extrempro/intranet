@@ -11,6 +11,7 @@ import { hasUnitRole, type Principal } from './auth/access.ts';
 import { db } from './db/index.ts';
 import { files, orgChart, persons, plans, tenants, units } from './db/schema.ts';
 import { deleteStored, FileError, storePdf } from './files/store.ts';
+import { notify, personsOfTenants } from './notify.ts';
 import { getSetting } from './settings.ts';
 
 export class PlanError extends Error {}
@@ -145,7 +146,8 @@ export async function createPlan(
 	unitId: string,
 	input: PlanInput,
 	file: File | null,
-	ip: string
+	ip: string,
+	inform = false
 ) {
 	const kbb = await requireKbb(unitId);
 	if (!canMaintainPlans(p, unitId)) throw new PlanError('Dafür fehlt dir das Recht (Fachpflege).');
@@ -172,6 +174,7 @@ export async function createPlan(
 		details: { unitId, ...values },
 		ip
 	});
+	if (inform) await informAboutPlan(kbb, row.id, values.title);
 	return row.id;
 }
 
@@ -181,7 +184,8 @@ export async function replacePlan(
 	id: string,
 	input: PlanInput,
 	file: File | null,
-	ip: string
+	ip: string,
+	inform = false
 ) {
 	const [plan] = await db.select().from(plans).where(eq(plans.id, id));
 	if (!plan || !canMaintainPlans(p, plan.unitId)) throw new PlanError('Plan nicht gefunden.');
@@ -212,7 +216,21 @@ export async function replacePlan(
 			details: { unitId: plan.unitId, neueFassung: true, ...values },
 			ip
 		});
+		if (inform) await informAboutPlan(kbb, id, `${values.title} (neue Fassung)`);
 	}
+}
+
+/** Personen des Mandanten, zu dem das KBB gehört (Thema „Pläne (KBB)“). */
+async function informAboutPlan(
+	kbb: { tenantId: string; unitName: string },
+	id: string,
+	title: string
+) {
+	await notify('plaene', await personsOfTenants([kbb.tenantId]), {
+		title,
+		detail: kbb.unitName,
+		link: `/plaene/${id}`
+	});
 }
 
 export async function deletePlan(p: Principal, id: string, ip: string) {

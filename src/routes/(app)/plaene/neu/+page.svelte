@@ -41,6 +41,16 @@
 			<input type="file" name="datei" accept=".pdf,application/pdf" required />
 			{#if form?.fehler}<span class="hinweis">Wähle die Datei bitte erneut aus.</span>{/if}
 		</label>
+		<label class="informieren">
+			<input type="checkbox" name="informieren" checked />
+			<span>
+				Über den neuen Plan informieren
+				<span class="hinweis">
+					Alle im Mandanten des KBB, die „Pläne (KBB)“ in ihren Benachrichtigungen eingeschaltet
+					haben.
+				</span>
+			</span>
+		</label>
 		<button class="knopf" type="submit" disabled={sendet}>
 			{sendet ? 'Wird hochgeladen …' : 'Hochladen'}
 		</button>
@@ -63,5 +73,21 @@
 	}
 	.knopf {
 		justify-self: start;
+	}
+	.informieren {
+		display: flex;
+		align-items: flex-start;
+		gap: 10px;
+		min-height: 44px;
+	}
+	.informieren input {
+		width: 20px;
+		height: 20px;
+		margin-top: 2px;
+		accent-color: var(--fill);
+	}
+	.informieren > span {
+		display: flex;
+		flex-direction: column;
 	}
 </style>

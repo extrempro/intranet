@@ -16,6 +16,8 @@ export const init: ServerInit = async () => {
 	await ensureInitialTenant();
 	const { startCleanup } = await import('#lib/server/cleanup.ts');
 	startCleanup();
+	const { startNotifier } = await import('#lib/server/notify.ts');
+	startNotifier();
 };
 
 /**

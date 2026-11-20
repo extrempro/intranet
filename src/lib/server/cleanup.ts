@@ -7,6 +7,7 @@ import { deleteExpiredSessions } from './auth/session.ts';
 import { deleteOrphans } from './files/store.ts';
 import { calendarRetention } from './calendar.ts';
 import { deleteExpiredCanteenData } from './canteen.ts';
+import { deleteOldNotifications } from './notify.ts';
 import { deleteForgottenPlans } from './plans.ts';
 import { db } from './db/index.ts';
 import { auditLog, invitations, pendingLogins } from './db/schema.ts';
@@ -21,6 +22,7 @@ export async function cleanup(): Promise<void> {
 	await deleteForgottenPlans();
 	await deleteExpiredCanteenData();
 	await calendarRetention();
+	await deleteOldNotifications();
 	await db.delete(pendingLogins).where(lt(pendingLogins.expiresAt, new Date()));
 	// Abgelaufene oder benutzte Einladungslinks nach 30 Tagen entfernen
 	await db
