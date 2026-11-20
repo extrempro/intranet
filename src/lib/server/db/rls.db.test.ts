@@ -71,6 +71,11 @@ describe.skipIf(!url)('Row-Level Security', () => {
 				(${N.oper}, ${T.haupt}), (${N.zentralB}, ${T.b})`);
 		await db.execute(sql`
 			insert into urgent_dismissals (news_id, person_id) values (${N.zentralAlle}, ${P.itPerson})`);
+		await db.execute(sql`
+			insert into faqs (unit_id, question, answer_html, answer_text) values
+				(${U.it}, 'Zentrale Frage?', '<p>a</p>', 'a'),
+				(${U.kbbHaupt}, 'Frage der Oper?', '<p>a</p>', 'a'),
+				(${U.kbbB}, 'Frage des Zweithauses?', '<p>a</p>', 'a')`);
 	});
 
 	afterAll(async () => {
@@ -131,8 +136,25 @@ describe.skipIf(!url)('Row-Level Security', () => {
 		).rejects.toMatchObject({ cause: { code: '42501' } });
 	});
 
+	it('zeigt FAQs nur von sichtbaren Einheiten', async () => {
+		const rows = await mod.scoped(asB, (tx) =>
+			tx.execute<{ question: string }>(sql`select question from faqs order by question`)
+		);
+		expect(rows.map((r) => r.question)).toEqual(['Frage des Zweithauses?', 'Zentrale Frage?']);
+		await expect(mod.scoped(asB, (tx) => tx.execute(sql`delete from faqs`))).rejects.toMatchObject({
+			cause: { code: '42501' }
+		});
+	});
+
 	it('sperrt Anmeldedaten, Sitzungen und Rollen für die App-Rolle', async () => {
-		for (const table of ['local_credentials', 'sessions', 'role_assignments', 'audit_log']) {
+		for (const table of [
+			'local_credentials',
+			'sessions',
+			'role_assignments',
+			'audit_log',
+			'location_operators',
+			'menus'
+		]) {
 			await expect(
 				mod.scoped(asB, (tx) => tx.execute(sql.raw(`select * from ${table}`)))
 			).rejects.toMatchObject({ cause: { code: '42501' } });

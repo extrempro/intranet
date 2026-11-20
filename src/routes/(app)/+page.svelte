@@ -5,6 +5,7 @@
 	import Icon from '#lib/components/Icon.svelte';
 	import { moveItem } from '#lib/home.ts';
 	import { formatWhen } from '#lib/news.ts';
+	import { closureRange, closureTitle } from '#lib/canteen.ts';
 	import { formatRange } from '#lib/plans.ts';
 
 	let { data, form } = $props();
@@ -221,6 +222,40 @@
 							/>{/each}
 					{/if}
 				</section>
+			{:else if k.id === 'speiseplan'}
+				<section aria-labelledby="karte-speiseplan" class="stapel">
+					<div class="kartenkopf">
+						<h2 id="karte-speiseplan">Speiseplan</h2>
+						<a href={resolve('/(app)/speiseplan')}>Zum Speiseplan</a>
+					</div>
+					{#if data.kantinen.length === 0}
+						<p class="hinweis">
+							Wähl unter <a href={resolve('/(app)/konto/standorte')}>Meine Standorte</a> deine Kantine
+							aus.
+						</p>
+					{:else}
+						<ul class="karte planliste">
+							{#each data.kantinen as kt (kt.id)}
+								<li>
+									<a href="{resolve('/(app)/speiseplan')}?standort={kt.id}">
+										<strong>{kt.name}</strong>
+									</a>
+									<span class="schild" class:rand={!kt.status.open} class:zu={kt.activeClosure}>
+										{kt.activeClosure ? closureTitle(kt.activeClosure) : kt.status.text}
+									</span>
+									{#each kt.announced as c (c.id)}
+										<span class="voll hinweis">Demnächst geschlossen: {closureRange(c)}</span>
+									{/each}
+									<span class="voll hinweis">
+										{kt.current
+											? `${kt.current.title} liegt vor`
+											: 'Noch kein Speiseplan für diese Woche'}
+									</span>
+								</li>
+							{/each}
+						</ul>
+					{/if}
+				</section>
 			{:else if k.id === 'plaene'}
 				<section aria-labelledby="karte-plaene" class="stapel">
 					<div class="kartenkopf">
@@ -384,6 +419,13 @@
 		justify-content: space-between;
 		gap: 4px 12px;
 		padding: 12px 16px;
+	}
+	.planliste .voll {
+		flex-basis: 100%;
+	}
+	.schild.zu {
+		background: #fcebeb;
+		color: #b42318;
 	}
 	.planliste li + li {
 		border-top: 1px solid var(--bd);

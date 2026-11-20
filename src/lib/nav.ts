@@ -36,7 +36,8 @@ const AREAS: NavArea[] = [
 		href: '',
 		pages: [
 			{ key: 'neuigkeiten', label: 'Neuigkeiten', href: '/neuigkeiten' },
-			{ key: 'plaene', label: 'Pläne (KBB)', href: '/plaene' }
+			{ key: 'plaene', label: 'Pläne (KBB)', href: '/plaene' },
+			{ key: 'speiseplan', label: 'Speiseplan', href: '/speiseplan' }
 		]
 	},
 	{
@@ -46,7 +47,13 @@ const AREAS: NavArea[] = [
 		href: '',
 		pages: [{ key: 'organigramm', label: 'Organigramm', href: '/organigramm' }]
 	},
-	{ key: 'wissen', label: 'Wissen', icon: ICONS.wissen, href: '', pages: [] }
+	{
+		key: 'wissen',
+		label: 'Wissen',
+		icon: ICONS.wissen,
+		href: '',
+		pages: [{ key: 'faqs', label: 'FAQs', href: '/faqs' }]
+	}
 ];
 
 /** Bereiche mit Ziel; ein Bereich ohne fertige Unterseite erscheint nicht. */

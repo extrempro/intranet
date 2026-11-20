@@ -49,6 +49,24 @@ export interface FavoriteTarget {
  */
 const TARGETS = new Map<string, FavoriteTarget>([
 	[
+		'faqs',
+		{
+			label: 'FAQs',
+			description: 'Häufige Fragen aller Bereiche',
+			href: '/faqs',
+			icon: 'M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0 -18M12 16v.01M12 13a2 2 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483'
+		}
+	],
+	[
+		'speiseplan',
+		{
+			label: 'Speiseplan',
+			description: 'Kantine an deinem Standort',
+			href: '/speiseplan',
+			icon: 'M19 3v12h-5c-.023 -3.681 .184 -7.406 5 -12zM19 15v6h-1v-3M8 4v17M5 4v3a3 3 0 1 0 6 0v-3'
+		}
+	],
+	[
 		'plaene',
 		{
 			label: 'Pläne (KBB)',

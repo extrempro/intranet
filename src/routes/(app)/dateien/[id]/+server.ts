@@ -2,6 +2,8 @@ import { error } from '@sveltejs/kit';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import { readStored } from '#lib/server/files/store.ts';
 import { contentDisposition, INLINE } from '#lib/server/files/types.ts';
+import { menuFileAllowed } from '#lib/server/canteen.ts';
+import { faqOfFile } from '#lib/server/faqs.ts';
 import { newsOfFile } from '#lib/server/news.ts';
 import { isPublicDocument } from '#lib/server/plans.ts';
 import type { RequestHandler } from './$types';
@@ -12,10 +14,17 @@ import type { RequestHandler } from './$types';
  */
 export const GET: RequestHandler = async ({ locals, params, url }) => {
 	const p = requirePrincipal(locals);
-	// Anhang eines sichtbaren Beitrags, oder Plan/Organigramm (für alle Angemeldeten)
+	// Betreiber: nur Speisepläne des eigenen Standorts. Sonst Anhang eines
+	// sichtbaren Beitrags oder einer FAQ, Plan/Organigramm oder Speiseplan.
+	const id = params.id;
 	const allowed =
-		/^[0-9a-f-]{36}$/i.test(params.id) &&
-		((await isPublicDocument(params.id)) || (await newsOfFile(p, params.id)));
+		/^[0-9a-f-]{36}$/i.test(id) &&
+		(p.operatorLocationId
+			? await menuFileAllowed(p, id)
+			: (await isPublicDocument(id)) ||
+				(await menuFileAllowed(p, id)) ||
+				Boolean(await newsOfFile(p, id)) ||
+				(await faqOfFile(p, id)));
 	if (!allowed) error(404, 'Diese Datei gibt es nicht oder nicht mehr.');
 	const file = await readStored(params.id);
 	if (!file) error(404, 'Diese Datei gibt es nicht oder nicht mehr.');

@@ -5,6 +5,7 @@
 import { and, isNotNull, lt, or, sql } from 'drizzle-orm';
 import { deleteExpiredSessions } from './auth/session.ts';
 import { deleteOrphans } from './files/store.ts';
+import { deleteExpiredCanteenData } from './canteen.ts';
 import { deleteForgottenPlans } from './plans.ts';
 import { db } from './db/index.ts';
 import { auditLog, invitations, pendingLogins } from './db/schema.ts';
@@ -17,6 +18,7 @@ export async function cleanup(): Promise<void> {
 	await deleteExpiredSessions();
 	await deleteOrphans();
 	await deleteForgottenPlans();
+	await deleteExpiredCanteenData();
 	await db.delete(pendingLogins).where(lt(pendingLogins.expiresAt, new Date()));
 	// Abgelaufene oder benutzte Einladungslinks nach 30 Tagen entfernen
 	await db

@@ -45,12 +45,14 @@ export async function inviteLocalPerson(input: {
 	ip: string;
 	/** Darf die einladende Person Konten in diesem Mandanten anlegen? */
 	mayInvite: (tenantId: string) => boolean;
+	/** Fester Mandant statt Ableitung aus der Domain (Betreiber-Konten externer Firmen). */
+	tenantId?: string;
 }): Promise<InviteResult> {
 	const email = input.email.trim();
 	const domains = Object.fromEntries(
 		(await db.select().from(tenantDomains)).map((d) => [d.domain, d.tenantId])
 	);
-	const tenantId = tenantFromEmail(email, domains);
+	const tenantId = input.tenantId ?? tenantFromEmail(email, domains);
 	if (!tenantId) return { ok: false, reason: 'unknown_domain' };
 	if (!input.mayInvite(tenantId)) return { ok: false, reason: 'forbidden' };
 

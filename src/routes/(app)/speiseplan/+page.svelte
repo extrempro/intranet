@@ -1,0 +1,267 @@
+<script lang="ts">
+	/* eslint-disable svelte/no-navigation-without-resolve -- nur Suchparameter der eigenen Seite */
+	import { enhance } from '$app/forms';
+	import { resolve } from '$app/paths';
+	import PdfAnsicht from '#lib/components/PdfAnsicht.svelte';
+	import StandortWahl from '#lib/components/StandortWahl.svelte';
+	import { closureRange, closureTitle, dayLabel, hoursSummary } from '#lib/canteen.ts';
+	import { formatRange } from '#lib/plans.ts';
+
+	let { data, form } = $props();
+	const a = $derived(data.ansicht);
+	const datei = $derived(data.plan ? resolve('/(app)/dateien/[id]', { id: data.plan.fileId }) : '');
+	const heuteZu = $derived(a?.closedToday || a?.activeClosure);
+</script>
+
+<svelte:head><title>Speiseplan · Intranet</title></svelte:head>
+
+<div class="stapel">
+	<div class="kopfzeile">
+		<div class="titel">
+			<h1>Speiseplan</h1>
+			<form method="POST" action="?/favorit" use:enhance>
+				<button
+					class="stern"
+					type="submit"
+					aria-pressed={data.favorit}
+					aria-label={data.favorit ? 'Aus den Favoriten entfernen' : 'Zu den Favoriten hinzufügen'}
+				>
+					{data.favorit ? '★' : '☆'}
+				</button>
+			</form>
+		</div>
+		{#if data.meine.length}
+			<a class="knopf zweit" href={resolve('/(app)/konto/standorte')}>Standorte ändern</a>
+		{/if}
+	</div>
+	{#if form && 'fehler' in form}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
+
+	{#if data.alle.length === 0}
+		<p class="hinweis">Es ist noch kein Kantinen-Standort eingerichtet.</p>
+	{:else if !a}
+		<section class="karte">
+			<p>Wähl deinen Standort, dann siehst du hier Speiseplan und Öffnungszeiten deiner Kantine.</p>
+			<StandortWahl alle={data.alle} meine={[]} />
+		</section>
+	{:else}
+		{#if data.meine.length > 1 || !data.meine.some((m) => m.id === a.id)}
+			<nav class="pillen" aria-label="Standort wählen">
+				{#each data.meine as l (l.id)}
+					<a
+						href="?standort={l.id}"
+						class="pille"
+						aria-current={l.id === a.id ? 'true' : undefined}
+					>
+						{l.name}
+					</a>
+				{/each}
+				{#if !data.meine.some((m) => m.id === a.id)}
+					<span class="pille" aria-current="true">{a.name}</span>
+				{/if}
+			</nav>
+		{/if}
+
+		{#if heuteZu}
+			<div class="zu" role="alert">
+				<svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
+					<circle cx="12" cy="12" r="9" /><path d="M5.7 5.7l12.6 12.6" />
+				</svg>
+				<div>
+					{#if a.activeClosure}
+						<strong>{closureTitle(a.activeClosure)}</strong>
+						<span>{closureRange(a.activeClosure)}</span>
+					{:else}
+						<strong>Heute geschlossen</strong>
+						<span>Heute, {dayLabel(a.today)}</span>
+					{/if}
+				</div>
+			</div>
+		{/if}
+		{#each a.announced as c (c.id)}
+			<p class="demnaechst" role="status">
+				<strong>Demnächst geschlossen:</strong>
+				{closureRange(c)}
+			</p>
+		{/each}
+
+		<section class="karte info" aria-labelledby="h-kantine">
+			<div class="kopf">
+				<div>
+					<h2 id="h-kantine">{a.name}</h2>
+					{#if a.address}<span class="hinweis">{a.address}</span>{/if}
+				</div>
+				<span class="schild" class:rand={!a.status.open}>{a.status.text}</span>
+			</div>
+			<dl class="zeiten">
+				{#each hoursSummary(a.hours) as z (z.days)}
+					<dt>{z.days}</dt>
+					<dd>{z.time}</dd>
+				{/each}
+			</dl>
+			{#if a.place}<p><strong>Lage:</strong> {a.place}</p>{/if}
+			{#if a.note}<p><strong>Hinweis:</strong> {a.note}</p>{/if}
+			{#if a.contact}<p><strong>Kontakt:</strong> {a.contact}</p>{/if}
+		</section>
+
+		{#if data.plan}
+			<div>
+				<h2 class="plantitel">{data.plan.title}</h2>
+				{#if data.plan.title.startsWith('Speiseplan KW')}
+					<p class="hinweis">gültig {formatRange(data.plan.validFrom, data.plan.validUntil)}</p>
+				{/if}
+			</div>
+			{#key data.plan.fileId}
+				<PdfAnsicht src={datei} titel={data.plan.title} download="{datei}?download" />
+			{/key}
+		{:else}
+			<p class="meldung" role="status">Für diese Woche liegt noch kein Speiseplan vor.</p>
+		{/if}
+
+		{#if a.upcoming.length || (a.current && data.plan?.id !== a.current.id)}
+			<nav class="weitere" aria-label="Weitere Speisepläne">
+				{#if a.current && data.plan?.id !== a.current.id}
+					<a href="?standort={a.id}">Aktueller Speiseplan ({a.current.title})</a>
+				{/if}
+				{#each a.upcoming.filter((m) => m.id !== data.plan?.id) as m (m.id)}
+					<a href="?standort={a.id}&plan={m.id}">
+						Nächster Speiseplan: {m.title} (ab {dayLabel(m.validFrom)})
+					</a>
+				{/each}
+			</nav>
+		{/if}
+	{/if}
+</div>
+
+<style>
+	.kopfzeile {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		align-items: center;
+		gap: 12px;
+	}
+	.titel {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+	h1 {
+		margin: 0;
+	}
+	.stern {
+		width: 44px;
+		height: 44px;
+		border: 0;
+		background: transparent;
+		color: var(--ac);
+		font-size: 24px;
+		cursor: pointer;
+	}
+	.pillen {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+	}
+	.pille {
+		display: inline-flex;
+		align-items: center;
+		min-height: 44px;
+		padding: 0 16px;
+		border-radius: 999px;
+		border: 1px solid var(--bd);
+		background: var(--sf);
+		color: var(--tx);
+		text-decoration: none;
+		font-weight: 600;
+	}
+	.pille[aria-current='true'] {
+		background: var(--fill);
+		border-color: var(--fill);
+		color: #fff;
+	}
+	.zu {
+		display: flex;
+		align-items: flex-start;
+		gap: 14px;
+		padding: 16px 18px;
+		border-radius: 16px;
+		background: #fcebeb;
+		border: 1px solid #f09595;
+		border-left: 6px solid #b42318;
+		color: #18201c;
+	}
+	.zu svg {
+		flex: none;
+		fill: none;
+		stroke: #b42318;
+		stroke-width: 2;
+		stroke-linecap: round;
+	}
+	.zu div {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+	.zu strong {
+		font-size: 20px;
+		color: #b42318;
+	}
+	.zu span {
+		font-weight: 600;
+	}
+	.demnaechst {
+		margin: 0;
+		padding: 12px 16px;
+		border-radius: 14px;
+		background: var(--tint);
+		border: 1px solid var(--bd);
+	}
+	.info {
+		display: grid;
+		gap: 10px;
+	}
+	.info p {
+		margin: 0;
+	}
+	.kopf {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		align-items: flex-start;
+		gap: 8px;
+	}
+	.kopf h2 {
+		margin: 0;
+		font-size: 1.2rem;
+	}
+	.kopf > div {
+		display: flex;
+		flex-direction: column;
+	}
+	.zeiten {
+		display: grid;
+		grid-template-columns: max-content 1fr;
+		gap: 2px 16px;
+		margin: 0;
+	}
+	.zeiten dt {
+		font-weight: 600;
+	}
+	.zeiten dd {
+		margin: 0;
+	}
+	.plantitel {
+		margin: 0;
+		font-size: 1.2rem;
+	}
+	.weitere {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+	.weitere a {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+</style>

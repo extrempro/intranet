@@ -22,6 +22,11 @@
 				</span>
 			</a>
 		</li>
+		<li>
+			<a class="karte kachel" href={resolve('/(app)/verwaltung/standorte')}>
+				<strong>Standorte</strong><span class="hinweis">Kantinen und Betreiber-Konten</span>
+			</a>
+		</li>
 	</ul>
 	<h2>Zugänge</h2>
 	<ul class="kacheln">
