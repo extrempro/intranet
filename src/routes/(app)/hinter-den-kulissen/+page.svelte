@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { livesuche } from '#lib/livesuche.ts';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
@@ -46,12 +47,24 @@
 	{#if form && 'ok' in form}<p class="meldung" role="status">{form.ok}</p>{/if}
 
 	<div class="filter">
-		<form method="GET" class="suche" role="search">
+		<form
+			method="GET"
+			class="suche"
+			role="search"
+			data-sveltekit-reset="false"
+			data-sveltekit-replacestate
+		>
 			<label class="feld">
 				<span class="sr-only">Hinter den Kulissen durchsuchen</span>
-				<input type="search" name="q" value={data.q} maxlength="100" placeholder="Suchen …" />
+				<input
+					use:livesuche
+					type="search"
+					name="q"
+					value={data.q}
+					maxlength="100"
+					placeholder="Suchen …"
+				/>
 			</label>
-			<button class="knopf zweit" type="submit">Suchen</button>
 		</form>
 		<details class="auf">
 			<summary class="pille">{ausLabel} ▾</summary>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { livesuche } from '#lib/livesuche.ts';
 	import { resolve } from '$app/paths';
 
 	let { data } = $props();
@@ -9,12 +10,17 @@
 
 <div class="stapel">
 	<h1>Benutzer und Rollen</h1>
-	<form method="GET" class="suche" data-sveltekit-keepfocus>
+	<form method="GET" class="suche" data-sveltekit-reset="false" data-sveltekit-replacestate>
 		<label class="feld">
 			<span class="sr-only">Name oder E-Mail suchen</span>
-			<input type="search" name="q" value={data.q} placeholder="Name oder E-Mail suchen" />
+			<input
+				use:livesuche
+				type="search"
+				name="q"
+				value={data.q}
+				placeholder="Name oder E-Mail suchen"
+			/>
 		</label>
-		<button class="knopf zweit" type="submit">Suchen</button>
 	</form>
 
 	{#if data.personen.length === 0}

@@ -380,3 +380,19 @@ export async function resetHelpSeen(personId: string) {
 		.values({ personId, helpSeen: keep })
 		.onConflictDoUpdate({ target: personPreferences.personId, set: { helpSeen: keep } });
 }
+
+/** Zeitpunkt, an dem die Person zuletzt die Neuigkeiten geöffnet hat. */
+export async function getNewsSeen(personId: string): Promise<Date | null> {
+	const [row] = await db
+		.select({ seen: personPreferences.newsSeenAt })
+		.from(personPreferences)
+		.where(eq(personPreferences.personId, personId));
+	return row?.seen ?? null;
+}
+
+export async function markNewsSeen(personId: string, at = new Date()) {
+	await db
+		.insert(personPreferences)
+		.values({ personId, newsSeenAt: at })
+		.onConflictDoUpdate({ target: personPreferences.personId, set: { newsSeenAt: at } });
+}
