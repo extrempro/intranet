@@ -28,6 +28,12 @@
 	<h1>{e.name}</h1>
 	<p class="hinweis">
 		{unitTypeLabel(e)} · {e.isCentral ? 'Zentral, für alle Mandanten' : e.tenantName}
+		·
+		{#if hub}
+			<a href={resolve('/(app)/hubs/[slug]', { slug: e.slug })}>Zur Hub-Seite</a>
+		{:else}
+			<a href={resolve('/(app)/abteilungen/[slug]', { slug: e.slug })}>Zur Abteilungsseite</a>
+		{/if}
 	</p>
 
 	{#if form?.fehler}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}

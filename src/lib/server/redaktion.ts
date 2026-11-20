@@ -8,6 +8,7 @@ import { unitTypeLabel } from '../roles.ts';
 import { isEditorial, type Principal } from './auth/access.ts';
 import { isModerator, moderationQueue } from './board.ts';
 import { db } from './db/index.ts';
+import { overdueWithoutMaintenance } from './departments.ts';
 import { faqs, hubApplications, news, persons, tenants, units } from './db/schema.ts';
 
 /** Mandanten, für die die Person Redaktion ist. */
@@ -38,7 +39,7 @@ export async function editorialWorklist(p: Principal) {
 			)
 		: sql`false`;
 
-	const [ohnePflege, ablaufend, alteFaqs, inaktiv, hervorgehoben, antraege, brett] =
+	const [ohnePflege, ablaufend, alteFaqs, inaktiv, hervorgehoben, antraege, brett, ueberfaellig] =
 		await Promise.all([
 			// Ohne eigene Pflege: keine Abteilungsverwaltung bzw. kein Hub-Team
 			redaktion
@@ -98,7 +99,7 @@ export async function editorialWorklist(p: Principal) {
 						.orderBy(asc(faqs.updatedAt))
 						.limit(100)
 				: [],
-			// Inaktive Ansprechpersonen: gesperrte Konten als Leitung oder im Hub-Team
+			// Inaktive Ansprechpersonen: gesperrte Konten als Leitung, in Zuständigkeiten oder im Hub-Team
 			redaktion
 				? db
 						.selectDistinct({
@@ -116,6 +117,7 @@ export async function editorialWorklist(p: Principal) {
 								eq(persons.id, units.leadPersonId),
 								eq(persons.id, units.secondLeadPersonId),
 								eq(persons.id, units.deputyPersonId),
+								sql`exists (select 1 from responsibilities z where z.unit_id = ${units.id} and (z.person_id = ${persons.id} or z.deputy_id = ${persons.id}))`,
 								sql`exists (select 1 from role_assignments r where r.person_id = ${persons.id} and r.scope_unit_id = ${units.id} and r.role = 'hub_team')`
 							)
 						)
@@ -152,7 +154,9 @@ export async function editorialWorklist(p: Principal) {
 						)
 						.orderBy(asc(hubApplications.createdAt))
 				: [],
-			isModerator(p) ? moderationQueue(p) : Promise.resolve([])
+			isModerator(p) ? moderationQueue(p) : Promise.resolve([]),
+			// Überfällige Zuständigkeiten bei Einheiten ohne eigene Pflege
+			redaktion ? overdueWithoutMaintenance(unitScope) : Promise.resolve([])
 		]);
 
 	return {
@@ -160,7 +164,7 @@ export async function editorialWorklist(p: Principal) {
 		moderation: isModerator(p),
 		mandanten: tenantList.map((t) => t.short),
 		ohnePflege: ohnePflege.map((u) => ({ ...u, label: unitTypeLabel(u) })),
-		zuPruefen: { ablaufend, alteFaqs, inaktiv },
+		zuPruefen: { ueberfaellig, ablaufend, alteFaqs, inaktiv },
 		hervorgehoben,
 		antraege,
 		brett: brett.map((a) => ({

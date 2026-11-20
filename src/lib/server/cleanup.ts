@@ -8,6 +8,7 @@ import { deleteOrphans } from './files/store.ts';
 import { boardRetention } from './board.ts';
 import { calendarRetention } from './calendar.ts';
 import { hubRetention } from './hubs.ts';
+import { remindResponsibilityReviews } from './departments.ts';
 import { deleteClosedConversations } from './messages.ts';
 import { deleteExpiredCanteenData } from './canteen.ts';
 import { deleteOldNotifications } from './notify.ts';
@@ -28,6 +29,7 @@ export async function cleanup(): Promise<void> {
 	await deleteOldNotifications();
 	await boardRetention();
 	await hubRetention();
+	await remindResponsibilityReviews();
 	await deleteClosedConversations();
 	await db.delete(pendingLogins).where(lt(pendingLogins.expiresAt, new Date()));
 	// Abgelaufene oder benutzte Einladungslinks nach 30 Tagen entfernen
