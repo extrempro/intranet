@@ -30,12 +30,12 @@
 			{#if data.antraegePruefen}
 				<a class="knopf zweit" href={resolve('/(app)/hubs/antraege')}>Anträge prüfen</a>
 			{/if}
-			<a class="knopf" href={resolve('/(app)/hubs/beantragen')}>Hub beantragen</a>
+			<a class="knopf zweit" href={resolve('/(app)/hubs/beantragen')}>Hub beantragen</a>
 		</div>
 	</div>
 	<p class="hinweis">
-		Themengruppen zum Mitmachen. Tipp auf die Glocke, dann erscheinen die Beiträge eines Hubs unter
-		„Aus den Hubs“.
+		Themenseiten über Abteilungen hinweg. Tipp auf die Glocke, dann erscheinen die Beiträge eines
+		Hubs unter „Aus den Hubs“.
 	</p>
 	{#if form && 'fehler' in form}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
 	{#if form && 'ok' in form}<p class="meldung" role="status">{form.ok}</p>{/if}
@@ -65,21 +65,23 @@
 			{#each data.hubs as h (h.id)}
 				<li class="karte hub">
 					<div class="oben">
-						<a class="name" href={resolve('/(app)/hubs/[slug]', { slug: h.slug })}>{h.name}</a>
-						<HubGlocke hub={h} />
-					</div>
-					<div class="schilder">
-						{#if h.isCentral}<span class="schild rand">Für alle Mandanten</span>{:else}<span
-								class="schild rand"
-							>
-								{h.tenantShort}
-							</span>{/if}
-						{#if h.resting}<span class="schild warn">ruht</span>{/if}
-						{#if h.mandatory}<span class="schild">Pflicht-Abo</span>{/if}
+						<a class="name dehnen" href={resolve('/(app)/hubs/[slug]', { slug: h.slug })}>
+							{h.name}
+						</a>
+						<span class="glocke"><HubGlocke hub={h} /></span>
 					</div>
 					{#if h.about}<p class="text">
-							{h.about.slice(0, 180)}{h.about.length > 180 ? ' …' : ''}
+							{h.about.slice(0, 120)}{h.about.length > 120 ? ' …' : ''}
 						</p>{/if}
+					<div class="schilder">
+						{#if h.isCentral}<span class="schild">Alle Mandanten</span>{:else}<span class="schild">
+								{h.tenantShort}
+							</span>{/if}
+						{#if h.resting}<span class="schild warn">Ruht</span>{/if}
+						{#if h.mandatory}<span class="schild rand">
+								Pflicht-Abo
+							</span>{:else if h.subscribed}<span class="schild rand"> Abonniert </span>{/if}
+					</div>
 				</li>
 			{/each}
 		</ul>
@@ -122,13 +124,23 @@
 		margin: 0;
 		padding: 0;
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-		gap: 14px;
+		grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+		gap: 12px;
 	}
 	.hub {
-		display: grid;
-		gap: 8px;
-		align-content: start;
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		padding: 16px;
+		transition: box-shadow 0.15s ease;
+	}
+	.hub:hover {
+		box-shadow: 0 6px 20px rgb(0 0 0 / 0.08);
+	}
+	.hub:has(.dehnen:focus-visible) {
+		outline: 3px solid var(--focus);
+		outline-offset: 2px;
 	}
 	.oben {
 		display: flex;
@@ -137,21 +149,36 @@
 		gap: 10px;
 	}
 	.name {
-		font-size: 1.1rem;
+		font-size: 16px;
 		font-weight: 700;
 		color: var(--tx);
+		text-decoration: none;
+	}
+	.dehnen:focus-visible {
+		outline: none;
+	}
+	.dehnen::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+	}
+	.glocke {
+		position: relative;
+		z-index: 1;
 	}
 	.schilder {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 6px;
+		margin-top: auto;
 	}
 	.schild.warn {
-		background: #fef0c7;
-		color: #7a2e0e;
+		background: var(--warn-bg);
+		color: var(--warn-tx);
 	}
 	.text {
 		margin: 0;
+		font-size: 14px;
 		color: var(--mu);
 	}
 </style>

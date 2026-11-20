@@ -15,6 +15,8 @@ export interface NavPage {
 export interface NavArea {
 	key: string;
 	label: string;
+	/** Kurzer Name für schmale Leisten (Tablet, Handy) */
+	kurz?: string;
 	/** SVG-Pfad (24×24, Strich) */
 	icon: string;
 	href: string;
@@ -113,6 +115,7 @@ const AREAS: NavArea[] = [
 	{
 		key: 'organisation',
 		label: 'Organisation',
+		kurz: 'Orga',
 		icon: ICONS.organisation,
 		href: '/organisation',
 		pages: [

@@ -20,6 +20,15 @@
 	const seitentitel = $derived(aktuell.page?.label ?? aktuell.area?.label ?? 'Intranet');
 	let wechselnOffen = $state(false);
 
+	/** Handy: Zurück zur übergeordneten Seite (Unterseite → Bereich, Detail → Unterseite). */
+	const zurueck = $derived.by(() => {
+		const a = aktuell.area;
+		const p = aktuell.page;
+		if (!a || !p) return null;
+		if (page.url.pathname !== p.href) return { href: p.href, label: p.label };
+		return { href: a.href, label: a.label };
+	});
+
 	/** Zähler „neu“ an Bereich und Unterseite (bisher: neue Neuigkeiten). */
 	function zahl(key: string): number {
 		return key === 'aktuelles' || key === 'neuigkeiten' ? (data.neueBeitraege ?? 0) : 0;
@@ -94,8 +103,27 @@
 
 <div class="app akzent" style={data.akzent}>
 	<header class="kopf">
-		<a class="marke" href={resolve('/(app)')} aria-label="Intranet, zur Startseite">
-			<span class="logo" aria-hidden="true">{data.ich.mandantKurz}</span>
+		{#if zurueck}
+			<a
+				class="symbolknopf nur-handy-flex"
+				href={zurueck.href}
+				aria-label="Zurück zu {zurueck.label}"
+			>
+				<Icon d="M15 6l-6 6l6 6" size={22} stroke={2} />
+			</a>
+		{/if}
+		<a
+			class="marke"
+			class:ohne-handy={zurueck}
+			href={resolve('/(app)')}
+			aria-label="Intranet, zur Startseite"
+		>
+			{#if data.logo.hell}
+				<img class="logobild logo-hell" src={data.logo.hell} alt="" />
+				<img class="logobild logo-dunkel" src={data.logo.dunkel} alt="" />
+			{:else}
+				<span class="logo" aria-hidden="true">{data.ich.mandantKurz}</span>
+			{/if}
 			<span class="name nur-gross">Intranet</span>
 		</a>
 		<span class="titel nur-handy" aria-hidden="true">{seitentitel}</span>
@@ -104,6 +132,7 @@
 		<span class="luecke nur-gross"></span>
 
 		<form
+			class="ohne-xs"
 			method="POST"
 			action="/konto/darstellung?/umschalten"
 			use:enhance={({ formData }) => {
@@ -125,7 +154,7 @@
 		</form>
 
 		<a
-			class="symbolknopf nur-gross"
+			class="symbolknopf"
 			data-tour="rueckmeldung"
 			href="{resolve('/(app)/rueckmeldung/neu')}?von={encodeURIComponent(
 				page.url.pathname + page.url.search
@@ -168,14 +197,16 @@
 				</span>{/if}
 		</a>
 
-		<Kontomenue
-			name={data.ich.name}
-			kuerzel={data.ich.kuerzel}
-			foto={data.ich.foto}
-			mandant={data.ich.mandant}
-			darfVerwaltung={data.darfVerwaltung}
-			darfRedaktion={data.darfRedaktion}
-		/>
+		<span class="nur-gross-flex">
+			<Kontomenue
+				name={data.ich.name}
+				kuerzel={data.ich.kuerzel}
+				foto={data.ich.foto}
+				mandant={data.ich.mandant}
+				darfVerwaltung={data.darfVerwaltung}
+				darfRedaktion={data.darfRedaktion}
+			/>
+		</span>
 	</header>
 
 	<div class="rumpf">
@@ -237,7 +268,7 @@
 								{zahl(area.key)}
 							</span>{/if}
 					</span>
-					<span>{area.label}</span>
+					<span>{area.kurz ?? area.label}</span>
 				</a>
 			{/each}
 		</nav>
@@ -340,15 +371,27 @@
 							{zahl(area.key)}
 						</span>{/if}
 				</span>
-				<span>{area.label}</span>
+				<span>{area.kurz ?? area.label}</span>
 			</a>
 		{/each}
+		<a
+			href={resolve('/(app)/konto')}
+			data-tour="konto"
+			class:an={page.url.pathname.startsWith('/konto')}
+			aria-current={page.url.pathname === '/konto' ? 'page' : undefined}
+		>
+			<span class="symbol konto-symbol">
+				{#if data.ich.foto}<img src={data.ich.foto} alt="" />{:else}{data.ich.kuerzel}{/if}
+			</span>
+			<span>Konto</span>
+		</a>
 	</nav>
 </div>
 
 <style>
 	.app {
 		min-height: 100vh;
+		background: var(--bg);
 		display: flex;
 		flex-direction: column;
 	}
@@ -388,6 +431,29 @@
 	.name {
 		font-weight: 700;
 		font-size: 17px;
+	}
+	.logobild {
+		height: 34px;
+		width: auto;
+		max-width: 160px;
+		object-fit: contain;
+	}
+	.logo-dunkel {
+		display: none;
+	}
+	:global([data-theme='dunkel']) .logo-hell {
+		display: none;
+	}
+	:global([data-theme='dunkel']) .logo-dunkel {
+		display: block;
+	}
+	@media (prefers-color-scheme: dark) {
+		:global([data-theme='auto']) .logo-hell {
+			display: none;
+		}
+		:global([data-theme='auto']) .logo-dunkel {
+			display: block;
+		}
 	}
 	.titel {
 		font-weight: 700;
@@ -766,11 +832,41 @@
 		max-width: 120px;
 	}
 
-	.nur-handy {
+	.nur-handy,
+	.nur-handy-flex {
 		display: none;
+	}
+	.nur-gross-flex {
+		display: inline-flex;
+	}
+	.konto-symbol {
+		width: 28px;
+		height: 28px;
+		border-radius: 999px;
+		background: var(--tint);
+		color: var(--ac);
+		font-size: 11px;
+		font-weight: 700;
+		align-items: center;
+		justify-content: center;
+		overflow: hidden;
+	}
+	.konto-symbol img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+	.unten a.an .konto-symbol {
+		outline: 2px solid var(--ac);
+		outline-offset: 1px;
 	}
 
 	/* ---- Geräte ---- */
+	@media (max-width: 419px) {
+		.ohne-xs {
+			display: none;
+		}
+	}
 	@media (min-width: 1024px) {
 		.seitenleiste {
 			display: block;
@@ -797,6 +893,13 @@
 		.nur-handy {
 			display: block;
 		}
+		.nur-handy-flex {
+			display: inline-flex;
+		}
+		.nur-gross-flex,
+		.marke.ohne-handy {
+			display: none;
+		}
 		.titel {
 			flex: 1;
 		}
@@ -808,7 +911,7 @@
 			padding-right: 8px;
 		}
 		main {
-			padding: 16px 14px 110px;
+			padding: 16px 14px 160px;
 		}
 	}
 </style>

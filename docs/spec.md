@@ -58,7 +58,7 @@ Ein gemeinsames Intranet für mehrere Mandanten (Häuser) mit Neuigkeiten, Organ
 ## 3. Mandanten und Organisation
 
 ### 3.1 Mandanten
-- Name, Kürzel, Mandanten-Admins, Branding (Logo, Akzentfarbe).
+- Name, Kürzel, Mandanten-Admins, Branding (Logos für hell und dunkel, Akzent- und Hintergrundfarbe, App-Symbol und Favicon).
 - **E-Mail-Domains**: Der Mandant einer Person wird immer aus der Domain ihrer E-Mail-Adresse abgeleitet.
 - **Leitung je Mandant** (Auswahl aus Einheiten vom Typ Geschäftsführung):
   - Künstlerische Leitung, z. B. Intendanz (Hauptmandant, Mandant B) oder Generalmusikdirektor (Mandant C).

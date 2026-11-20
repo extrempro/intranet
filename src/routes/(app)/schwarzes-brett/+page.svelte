@@ -31,8 +31,8 @@
 	const weitere = $derived(data.mandanten.filter((m) => m.an && !m.eigener));
 	const ausLabel = $derived(
 		weitere.length
-			? `Anzeigen aus: dein Mandant + ${weitere.map((m) => m.short).join(', ')}`
-			: 'Anzeigen aus: dein Mandant'
+			? `Aus: dein Mandant + ${weitere.map((m) => m.short).join(', ')}`
+			: 'Aus: dein Mandant'
 	);
 	const kat = $derived(data.kategorien.find((k) => k.id === data.kategorie));
 	const teams = (mail: string) =>
@@ -80,7 +80,7 @@
 				</button>
 			</form>
 		</div>
-		<a class="knopf" href={resolve('/(app)/schwarzes-brett/neu')} data-tour="aufgeben">
+		<a class="knopf hauptaktion" href={resolve('/(app)/schwarzes-brett/neu')} data-tour="aufgeben">
 			Anzeige aufgeben
 		</a>
 	</div>
@@ -92,29 +92,6 @@
 			Danke! Deine Anzeige erscheint, sobald die Moderation sie freigegeben hat.
 		</p>
 	{/if}
-
-	<nav class="pillen" aria-label="Ansicht">
-		<a class="pille" href="?" aria-current={data.ansicht === 'alle' ? 'true' : undefined}>
-			Alle Anzeigen
-		</a>
-		<a
-			class="pille"
-			data-tour="meine"
-			href="?ansicht=meine"
-			aria-current={data.ansicht === 'meine' ? 'true' : undefined}
-		>
-			Meine Anzeigen
-		</a>
-		{#if data.moderator}
-			<a
-				class="pille"
-				href="?ansicht=moderation"
-				aria-current={data.ansicht === 'moderation' ? 'true' : undefined}
-			>
-				Moderation
-			</a>
-		{/if}
-	</nav>
 
 	{#if data.ansicht === 'alle'}
 		<form
@@ -137,43 +114,77 @@
 				/>
 			</label>
 		</form>
-		<div class="filter" data-tour="kategorien">
-			<details class="auf">
-				<summary class="pille">{kat ? kat.name : 'Alle Kategorien'} ▾</summary>
-				<div class="liste-auf">
-					<a
-						href={data.q ? `?q=${encodeURIComponent(data.q)}` : '?'}
-						aria-current={!data.kategorie ? 'true' : undefined}
-					>
-						Alle Kategorien
-					</a>
-					{#each data.kategorien as k (k.id)}
+	{/if}
+	<div class="leiste">
+		<nav class="pillen" aria-label="Ansicht">
+			<a class="pille" href="?" aria-current={data.ansicht === 'alle' ? 'true' : undefined}>
+				Alle
+			</a>
+			<a
+				class="pille"
+				data-tour="meine"
+				href="?ansicht=meine"
+				aria-current={data.ansicht === 'meine' ? 'true' : undefined}
+			>
+				Meine Anzeigen
+			</a>
+			{#if data.moderator}
+				<a
+					class="pille"
+					href="?ansicht=moderation"
+					aria-current={data.ansicht === 'moderation' ? 'true' : undefined}
+				>
+					Moderation
+				</a>
+			{/if}
+		</nav>
+		{#if data.ansicht === 'alle'}
+			<div class="filter" data-tour="kategorien">
+				<details class="auf">
+					<summary class="pille">Kategorie: {kat ? kat.name : 'alle'}</summary>
+					<div class="liste-auf">
 						<a
-							href="?kategorie={k.id}{data.q ? `&q=${encodeURIComponent(data.q)}` : ''}"
-							aria-current={k.id === data.kategorie ? 'true' : undefined}
+							href={data.q ? `?q=${encodeURIComponent(data.q)}` : '?'}
+							aria-current={!data.kategorie ? 'true' : undefined}
 						>
-							<span>{k.name}</span><span class="hinweis">{k.n}</span>
+							Alle Kategorien
 						</a>
-					{/each}
-				</div>
-			</details>
-			<details class="auf">
-				<summary class="pille">{ausLabel} ▾</summary>
-				<form method="POST" action={aktion('aus')} class="liste-auf">
-					<input type="hidden" name="zurueck" value={page.url.search} />
-					{#each data.mandanten as m (m.id)}
-						<label>
-							<input type="checkbox" name="aus" value={m.id} checked={m.an} disabled={m.eigener} />
-							<span>{m.name}</span>
-							{#if m.eigener}<span class="hinweis">immer dabei</span>{/if}
-						</label>
-					{/each}
-					<span class="hinweis">Wird in deinem Konto gespeichert.</span>
-					<button class="knopf klein" type="submit">Übernehmen</button>
-				</form>
-			</details>
-		</div>
+						{#each data.kategorien as k (k.id)}
+							<a
+								href="?kategorie={k.id}{data.q ? `&q=${encodeURIComponent(data.q)}` : ''}"
+								aria-current={k.id === data.kategorie ? 'true' : undefined}
+							>
+								<span>{k.name}</span><span class="hinweis">{k.n}</span>
+							</a>
+						{/each}
+					</div>
+				</details>
+				<details class="auf">
+					<summary class="pille">{ausLabel}</summary>
+					<form method="POST" action={aktion('aus')} class="liste-auf">
+						<input type="hidden" name="zurueck" value={page.url.search} />
+						{#each data.mandanten as m (m.id)}
+							<label>
+								<input
+									type="checkbox"
+									name="aus"
+									value={m.id}
+									checked={m.an}
+									disabled={m.eigener}
+								/>
+								<span>{m.name}</span>
+								{#if m.eigener}<span class="hinweis">immer dabei</span>{/if}
+							</label>
+						{/each}
+						<span class="hinweis">Wird in deinem Konto gespeichert.</span>
+						<button class="knopf klein" type="submit">Übernehmen</button>
+					</form>
+				</details>
+			</div>
+		{/if}
+	</div>
 
+	{#if data.ansicht === 'alle'}
 		{#if data.anzeigen.length === 0}
 			<p class="karte hinweis" role="status">Keine Anzeigen für diese Auswahl.</p>
 		{:else}
@@ -428,6 +439,12 @@
 		cursor: pointer;
 	}
 	.pillen,
+	.leiste {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px;
+	}
 	.filter {
 		display: flex;
 		flex-wrap: wrap;

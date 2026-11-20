@@ -5,7 +5,8 @@
  * Domains bestimmen, wer zu welchem Mandanten gehört – deshalb nur System-Admins.
  */
 import { and, asc, eq, sql } from 'drizzle-orm';
-import { checkAccent, HEX } from '../color.ts';
+import { forgetBranding } from './tenant-branding.ts';
+import { BG_DEFAULT, BG_DEFAULT_DARK, checkAccent, checkBackground, HEX } from '../color.ts';
 import { normalizeDomain } from '../domain.ts';
 import { audit } from './audit.ts';
 import { canAdministerTenant, isSystemAdmin, type Principal } from './auth/access.ts';
@@ -70,6 +71,8 @@ export async function getTenant(p: Principal, id: string) {
 		isMain: t.isMain,
 		accent: t.accentColor ?? DEFAULT_ACCENT,
 		accentDark: t.accentColorDark ?? DEFAULT_ACCENT_DARK,
+		bg: t.bgColor ?? '',
+		bgDark: t.bgColorDark ?? '',
 		domains: domains.map((d) => d.domain),
 		admins
 	};
@@ -80,6 +83,9 @@ export interface TenantInput {
 	shortName: string;
 	accent: string;
 	accentDark: string;
+	/** Seitenhintergrund; leer = Standard */
+	bg: string;
+	bgDark: string;
 }
 
 function checkInput(input: TenantInput) {
@@ -97,11 +103,29 @@ function checkInput(input: TenantInput) {
 			`Zu wenig Kontrast (mindestens 4,5:1): weiße Schrift auf Akzent ${k.weissAufAkzent.toFixed(1)}:1, Akzent auf Hell ${k.akzentAufHell.toFixed(1)}:1, Dunkelvariante auf Dunkel ${k.dunkelAufDunkel.toFixed(1)}:1.`
 		);
 	}
+	const bg = input.bg.trim();
+	const bgDark = input.bgDark.trim();
+	if ((bg && !HEX.test(bg)) || (bgDark && !HEX.test(bgDark)))
+		throw new TenantError('Hintergrundfarben bitte als #RRGGBB angeben oder leer lassen.');
+	const h = checkBackground(
+		bg || BG_DEFAULT,
+		bgDark || BG_DEFAULT_DARK,
+		input.accent,
+		input.accentDark
+	);
+	if (!h.ok) {
+		const z = (n: number) => `${n.toFixed(1)}:1`;
+		throw new TenantError(
+			`Zu wenig Kontrast auf dem Hintergrund (mindestens 4,5:1): hell Text ${z(h.hell.text)}, grauer Text ${z(h.hell.gedaempft)}, Akzent ${z(h.hell.akzent)}; dunkel Text ${z(h.dunkel.text)}, grauer Text ${z(h.dunkel.gedaempft)}, Akzent ${z(h.dunkel.akzent)}.`
+		);
+	}
 	return {
 		name,
 		shortName,
 		accentColor: input.accent.toUpperCase(),
-		accentColorDark: input.accentDark.toUpperCase()
+		accentColorDark: input.accentDark.toUpperCase(),
+		bgColor: bg ? bg.toUpperCase() : null,
+		bgColorDark: bgDark ? bgDark.toUpperCase() : null
 	};
 }
 
@@ -143,6 +167,7 @@ export async function updateTenant(p: Principal, id: string, input: TenantInput,
 	const values = checkInput(input);
 	await uniqueShort(values.shortName, id);
 	await db.update(tenants).set(values).where(eq(tenants.id, id));
+	forgetBranding();
 	await audit({
 		category: 'admin',
 		action: 'tenant.update',

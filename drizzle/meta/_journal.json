@@ -190,6 +190,13 @@
       "when": 1795208930611,
       "tag": "0026_neuigkeiten_gesehen",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1795212872849,
+      "tag": "0027_mandanten_marke",
+      "breakpoints": true
     }
   ]
 }

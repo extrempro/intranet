@@ -12,7 +12,11 @@
  */
 import nodemailer, { type Transporter } from 'nodemailer';
 import { effectiveMail, type MailEnv, type StoredMail } from '../mail-config.ts';
+import { eq, sql } from 'drizzle-orm';
 import { decryptSecret } from './crypto.ts';
+import { db } from './db/index.ts';
+import { persons, tenants } from './db/schema.ts';
+import { readImage } from './marke.ts';
 import { getSetting } from './settings.ts';
 
 export interface MailMessage {
@@ -88,15 +92,56 @@ async function transport(): Promise<{
 	};
 }
 
+/**
+ * Logo des Mandanten der Empfängerin (sonst des Hauptmandanten) als
+ * eingebettetes Bild; ohne Logo bleibt die E-Mail unverändert.
+ */
+async function logoFor(to: string): Promise<{ name: string; data: Uint8Array } | null> {
+	try {
+		const [person] = await db
+			.select({ tenantId: persons.tenantId })
+			.from(persons)
+			.where(sql`lower(${persons.email}) = ${to.toLowerCase()}`)
+			.limit(1);
+		const [tenant] = person
+			? await db
+					.select({ id: tenants.id, name: tenants.name })
+					.from(tenants)
+					.where(eq(tenants.id, person.tenantId))
+			: await db
+					.select({ id: tenants.id, name: tenants.name })
+					.from(tenants)
+					.where(eq(tenants.isMain, true));
+		if (!tenant) return null;
+		const bild = await readImage(tenant.id, 'logo_hell');
+		return bild ? { name: tenant.name, data: bild.data } : null;
+	} catch {
+		return null;
+	}
+}
+
 export async function sendMail(msg: MailMessage): Promise<void> {
 	const t = await transport();
+	const logo = await logoFor(msg.to);
 	await t.transport.sendMail({
 		from: t.from,
 		to: msg.to,
 		replyTo: t.replyTo ?? undefined,
 		subject: msg.subject,
 		text: msg.text,
-		html: msg.html
+		html: logo
+			? `<p><img src="cid:logo@intranet" alt="${escapeHtml(logo.name)}" style="max-height:48px;width:auto"></p>${msg.html}`
+			: msg.html,
+		attachments: logo
+			? [
+					{
+						filename: 'logo.png',
+						content: Buffer.from(logo.data),
+						contentType: 'image/png',
+						cid: 'logo@intranet'
+					}
+				]
+			: undefined
 	});
 }
 

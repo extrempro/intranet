@@ -67,7 +67,7 @@
 			</label>
 		</form>
 		<details class="auf">
-			<summary class="pille">{ausLabel} ▾</summary>
+			<summary class="pille">{ausLabel}</summary>
 			<form method="POST" action="?/aus" class="liste-auf">
 				<input type="hidden" name="zurueck" value={page.url.search} />
 				{#each data.mandanten as m (m.id)}

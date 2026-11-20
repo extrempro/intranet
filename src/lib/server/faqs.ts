@@ -55,6 +55,7 @@ export async function listFaqs(p: Principal, opts: { unitId?: string | null; q?:
 				answerHtml: faqs.answerHtml,
 				unitId: units.id,
 				unitName: units.name,
+				unitSlug: units.slug,
 				unitType: units.type,
 				unitTitle: units.title
 			})
@@ -92,12 +93,14 @@ export async function listFaqs(p: Principal, opts: { unitId?: string | null; q?:
 				.orderBy(asc(faqAttachments.position))
 		: [];
 
-	const groups: (FaqUnit & { items: FaqItem[] })[] = [];
+	const groups: (FaqUnit & { slug: string; hub: boolean; items: FaqItem[] })[] = [];
 	for (const r of rows) {
 		let g = groups.find((x) => x.id === r.unitId);
 		if (!g) {
 			g = {
 				id: r.unitId,
+				slug: r.unitSlug,
+				hub: r.unitType === 'hub',
 				name: r.unitName,
 				label: unitTypeLabel({ type: r.unitType, title: r.unitTitle }),
 				items: []
