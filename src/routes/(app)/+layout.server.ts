@@ -1,31 +1,28 @@
+import { initials } from '#lib/format.ts';
 import { canSeeAdministration } from '#lib/server/auth/access.ts';
+import { photosOf } from '#lib/server/people.ts';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import { unreadConversations } from '#lib/server/messages.ts';
 import { unreadCount } from '#lib/server/notify.ts';
 import { accentStyle, brandingFor } from '#lib/server/tenant-branding.ts';
 import type { LayoutServerLoad } from './$types';
 
-function initials(name: string): string {
-	const parts = name.trim().split(/\s+/).filter(Boolean);
-	const first = parts[0]?.[0] ?? '?';
-	const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
-	return (first + last).toUpperCase();
-}
-
 export const load: LayoutServerLoad = async ({ locals, url }) => {
 	// Zähler der Glocke bei jedem Seitenwechsel neu laden
 	void url.pathname;
 	const principal = requirePrincipal(locals);
 	const person = locals.person!;
-	const [branding, ungelesen, nachrichten] = await Promise.all([
+	const [branding, ungelesen, nachrichten, fotos] = await Promise.all([
 		brandingFor(person.tenantId),
 		unreadCount(person.id),
-		unreadConversations(principal)
+		unreadConversations(principal),
+		photosOf([person.id])
 	]);
 	return {
 		ich: {
 			name: person.displayName,
 			kuerzel: initials(person.displayName),
+			foto: fotos.get(person.id) ?? null,
 			mandant: branding.name,
 			mandantKurz: branding.short
 		},

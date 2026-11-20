@@ -231,6 +231,10 @@ export const persons = pgTable(
 		mobile: text('mobile'),
 		mobileVisibility: mobileVisibility('mobile_visibility').notNull().default('team'),
 		room: text('room'),
+		/** Profilfoto (freiwillig, verschlüsselt, ohne Metadaten; Kap. 8.13) */
+		photoFileId: uuid('photo_file_id').references((): AnyPgColumn => files.id, {
+			onDelete: 'set null'
+		}),
 		lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
 		createdAt: createdAt(),
 		updatedAt: updatedAt()

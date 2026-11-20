@@ -37,6 +37,7 @@ import {
 } from './db/schema.ts';
 import { notify } from './notify.ts';
 import { getContentRules } from './rules.ts';
+import { photosOf } from './people.ts';
 import { hasOwnMaintenance } from './units.ts';
 
 export class DepartmentError extends Error {}
@@ -138,7 +139,7 @@ type ResponsibilityRow = Awaited<ReturnType<typeof responsibilityRows>>[number];
 /** Angezeigte Ansprechperson: ist sie inaktiv, die Vertretung (Kap. 8.11). */
 function contactOf(r: ResponsibilityRow) {
 	const pick = (x: ResponsibilityRow['person']) =>
-		x ? { name: x.name, email: x.email, phone: x.phone, room: x.room } : null;
+		x ? { id: x.id, name: x.name, email: x.email, phone: x.phone, room: x.room } : null;
 	if (r.person && !r.person.disabled) return { ...pick(r.person)!, vertretung: false };
 	if (r.deputy && !r.deputy.disabled) return { ...pick(r.deputy)!, vertretung: true };
 	return null;
@@ -284,8 +285,10 @@ async function teamOf(p: Principal, unitId: string) {
 				).map((r) => r.personId)
 			: []
 	);
+	const fotos = await photosOf(rows.map((r) => r.id));
 	return rows.map(({ mobile, mobileVisibility, ...r }) => ({
 		...r,
+		foto: fotos.get(r.id) ?? null,
 		mobile:
 			mobile &&
 			(r.id === p.personId ||
