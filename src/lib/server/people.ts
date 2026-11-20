@@ -3,7 +3,7 @@
  * und Profilfoto. Sichtbar ist eine Person im eigenen Mandanten oder als
  * Mitglied einer zentralen Einheit – geprüft per Row-Level Security.
  */
-import { and, asc, eq, inArray, isNotNull, isNull, ne, notInArray, or, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNotNull, isNull, lt, ne, notInArray, or, sql } from 'drizzle-orm';
 import {
 	mobileVisible,
 	validateContact,
@@ -11,9 +11,12 @@ import {
 	type ContactInput
 } from '../profile.ts';
 import { unitTypeLabel } from '../roles.ts';
+import { audit } from './audit.ts';
 import type { Principal } from './auth/access.ts';
 import { db, scoped } from './db/index.ts';
 import {
+	boardAdPhotos,
+	boardAds,
 	locationOperators,
 	locations,
 	personLocations,
@@ -25,6 +28,7 @@ import {
 } from './db/schema.ts';
 import { deleteStored, storeBytes } from './files/store.ts';
 import { JpegError, stripJpeg } from './files/jpeg.ts';
+import { getRetention } from './retention.ts';
 
 export class ProfileError extends Error {}
 
@@ -309,4 +313,41 @@ export async function searchPersons(p: Principal, q: string, tsq: string, limit 
 			.limit(limit)
 	);
 	return rows.map(({ photoFileId, ...r }) => ({ ...r, foto: photoUrl({ id: r.id, photoFileId }) }));
+}
+
+/**
+ * Deaktivierte Konten nach der Löschfrist löschen (Kap. 15). Beiträge, FAQs
+ * und Termine gehören der Einheit und bleiben; Anzeigen am Schwarzen Brett,
+ * Mitgliedschaften, Rollen, Abos, Benachrichtigungen und Reaktionen gehen mit.
+ */
+export async function deleteDisabledAccounts() {
+	const days = await getRetention('disabled_accounts_days');
+	const due = await db
+		.select({ id: persons.id, tenantId: persons.tenantId })
+		.from(persons)
+		.where(
+			and(
+				eq(persons.status, 'disabled'),
+				lt(persons.disabledAt, sql`now() - make_interval(days => ${days})`)
+			)
+		);
+	for (const x of due) {
+		const fotos = await db
+			.select({ fileId: boardAdPhotos.fileId })
+			.from(boardAdPhotos)
+			.innerJoin(boardAds, eq(boardAds.id, boardAdPhotos.adId))
+			.where(eq(boardAds.personId, x.id));
+		await removePhoto(x.id);
+		await db.delete(persons).where(eq(persons.id, x.id));
+		await deleteStored(fotos.map((f) => f.fileId));
+		await audit({
+			category: 'admin',
+			action: 'person.delete_retention',
+			tenantId: x.tenantId,
+			entityType: 'person',
+			entityId: x.id,
+			details: { nachTagen: days }
+		});
+	}
+	return due.length;
 }

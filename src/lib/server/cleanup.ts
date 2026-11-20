@@ -8,7 +8,7 @@ import { deleteOrphans } from './files/store.ts';
 import { boardRetention } from './board.ts';
 import { calendarRetention } from './calendar.ts';
 import { hubRetention } from './hubs.ts';
-import { deletePhotosOfDisabled } from './people.ts';
+import { deleteDisabledAccounts, deletePhotosOfDisabled } from './people.ts';
 import { remindResponsibilityReviews } from './departments.ts';
 import { deleteClosedConversations } from './messages.ts';
 import { deleteExpiredCanteenData } from './canteen.ts';
@@ -16,10 +16,7 @@ import { deleteOldNotifications } from './notify.ts';
 import { deleteForgottenPlans } from './plans.ts';
 import { db } from './db/index.ts';
 import { auditLog, invitations, pendingLogins } from './db/schema.ts';
-import { getSetting } from './settings.ts';
-
-/** Fristen in Tagen (Standardwerte aus Kap. 15). */
-const AUDIT_DEFAULTS = { admin: 365, security: 30 };
+import { allRetention } from './retention.ts';
 
 export async function cleanup(): Promise<void> {
 	await deleteExpiredSessions();
@@ -44,15 +41,18 @@ export async function cleanup(): Promise<void> {
 			)
 		);
 
-	const days = await getSetting('retention.audit', AUDIT_DEFAULTS);
-	for (const category of ['admin', 'security'] as const) {
-		const d = Math.max(1, Number(days[category]) || AUDIT_DEFAULTS[category]);
+	await deleteDisabledAccounts();
+	const fristen = await allRetention();
+	for (const [category, d] of [
+		['admin', fristen.audit_admin_days],
+		['security', fristen.audit_security_days]
+	] as const) {
 		await db
 			.delete(auditLog)
 			.where(
 				and(
 					sql`${auditLog.category} = ${category}`,
-					lt(auditLog.at, sql`now() - ${`${d} days`}::interval`)
+					lt(auditLog.at, sql`now() - make_interval(days => ${d})`)
 				)
 			);
 	}
