@@ -4,20 +4,57 @@
 
 <div class="flaeche akzent" style={data.akzent}>
 	<main class="karte auth" id="inhalt">
-		<div class="marke">
-			<div class="logo" aria-hidden="true">{data.marke.kurz}</div>
-			<div>
+		{#if data.marke.logoHell}
+			<div class="marke mit-logo">
+				<img class="logobild logo-hell" src={data.marke.logoHell} alt={data.marke.name} />
+				<img class="logobild logo-dunkel" src={data.marke.logoDunkel} alt={data.marke.name} />
 				<div class="titel">Intranet</div>
-				<div class="mandant">{data.marke.name}</div>
 			</div>
-		</div>
+		{:else}
+			<div class="marke">
+				<div class="logo" aria-hidden="true">{data.marke.kurz}</div>
+				<div>
+					<div class="titel">Intranet</div>
+					<div class="mandant">{data.marke.name}</div>
+				</div>
+			</div>
+		{/if}
 		{@render children()}
 	</main>
 </div>
 
 <style>
+	.mit-logo {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 10px;
+	}
+	.logobild {
+		max-height: 56px;
+		max-width: 100%;
+		width: auto;
+		object-fit: contain;
+	}
+	.logo-dunkel {
+		display: none;
+	}
+	:global([data-theme='dunkel']) .logo-hell {
+		display: none;
+	}
+	:global([data-theme='dunkel']) .logo-dunkel {
+		display: block;
+	}
+	@media (prefers-color-scheme: dark) {
+		:global([data-theme='auto']) .logo-hell {
+			display: none;
+		}
+		:global([data-theme='auto']) .logo-dunkel {
+			display: block;
+		}
+	}
 	.flaeche {
 		min-height: 100vh;
+		background: var(--bg);
 		box-sizing: border-box;
 		display: flex;
 		align-items: center;

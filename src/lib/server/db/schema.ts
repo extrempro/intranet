@@ -56,6 +56,9 @@ export const tenants = pgTable(
 		accentColor: text('accent_color'),
 		/** Hellere Variante der Akzentfarbe für die dunkle Darstellung. */
 		accentColorDark: text('accent_color_dark'),
+		/** Seitenhintergrund hell/dunkel; null = Standard der App. */
+		bgColor: text('bg_color'),
+		bgColorDark: text('bg_color_dark'),
 		/** Startseite für neue Personen (Kap. 3.1, 7): Reihenfolge und Sichtbarkeit der Karten. */
 		homeDefault: jsonb('home_default').$type<HomeLayout>(),
 		/** Favoriten für neue Personen (Schlüssel wie in favorites.key); null = Standard */
@@ -79,7 +82,9 @@ export const tenants = pgTable(
 			.on(t.isMain)
 			.where(sql`${t.isMain}`),
 		check('tenants_accent_color_hex', sql`${t.accentColor} ~ '^#[0-9a-fA-F]{6}$'`),
-		check('tenants_accent_color_dark_hex', sql`${t.accentColorDark} ~ '^#[0-9a-fA-F]{6}$'`)
+		check('tenants_accent_color_dark_hex', sql`${t.accentColorDark} ~ '^#[0-9a-fA-F]{6}$'`),
+		check('tenants_bg_color_hex', sql`${t.bgColor} ~ '^#[0-9a-fA-F]{6}$'`),
+		check('tenants_bg_color_dark_hex', sql`${t.bgColorDark} ~ '^#[0-9a-fA-F]{6}$'`)
 	]
 );
 
@@ -1378,4 +1383,26 @@ export const feedback = pgTable(
 		index('feedback_tenant_status').on(t.tenantId, t.status),
 		index('feedback_person').on(t.personId)
 	]
+);
+
+/**
+ * Bilder des Mandanten (Logo hell/dunkel, App-Symbol in festen Größen).
+ * Nur PNG, im Browser umgerechnet und auf dem Server geprüft. Öffentlich
+ * abrufbar (Anmeldeseite, Favicon), daher nicht verschlüsselt.
+ */
+export const tenantAssets = pgTable(
+	'tenant_assets',
+	{
+		tenantId: uuid('tenant_id')
+			.notNull()
+			.references(() => tenants.id, { onDelete: 'cascade' }),
+		art: text('art', {
+			enum: ['logo_hell', 'logo_dunkel', 'symbol_32', 'symbol_180', 'symbol_192', 'symbol_512']
+		}).notNull(),
+		data: bytea('data').notNull(),
+		width: integer('width').notNull(),
+		height: integer('height').notNull(),
+		updatedAt: updatedAt()
+	},
+	(t) => [primaryKey({ columns: [t.tenantId, t.art] })]
 );

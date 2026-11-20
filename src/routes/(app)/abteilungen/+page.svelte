@@ -47,13 +47,17 @@
 	</div>
 	{#if form && 'fehler' in form}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
 
-	<div class="karte stapel suche">
-		<label for="suche"><strong>Wer hilft bei was?</strong></label>
+	<p class="untertitel">
+		Zentrale Einheiten und die Abteilungen von {data.ich.mandant}. Suchst du jemanden für ein Thema?
+		Gib es einfach ein.
+	</p>
+	<div class="suche">
+		<label class="sr-only" for="suche">Abteilung, Thema oder Person suchen</label>
 		<input
 			id="suche"
 			type="search"
 			bind:value={suche}
-			placeholder="Thema, Stichwort, Person oder Abteilung"
+			placeholder="Abteilung, Thema oder Person suchen …"
 			autocomplete="off"
 			maxlength="100"
 		/>
@@ -113,17 +117,22 @@
 {#snippet kachel(e: (typeof data.einheiten)[number])}
 	<a class="karte kachel" href={resolve('/(app)/abteilungen/[slug]', { slug: e.slug })}>
 		<strong>{e.name}</strong>
-		<span class="hinweis">
-			{[e.type === 'abteilung' ? null : e.label, e.isCentral ? 'für alle Mandanten' : e.tenantShort]
+		{#if e.title}<span class="titelzeile">{e.title}</span>{/if}
+		<span class="zahlen">
+			{[
+				e.personen ? (e.personen === 1 ? '1 Person' : `${e.personen} Personen`) : null,
+				e.zustaendigkeiten.length
+					? e.zustaendigkeiten.length === 1
+						? '1 Zuständigkeit'
+						: `${e.zustaendigkeiten.length} Zuständigkeiten`
+					: null
+			]
 				.filter(Boolean)
 				.join(' · ')}
 		</span>
-		{#if e.zustaendigkeiten.length}
-			<span class="hinweis">
-				{e.zustaendigkeiten.length}
-				{e.zustaendigkeiten.length === 1 ? 'Zuständigkeit' : 'Zuständigkeiten'}
-			</span>
-		{/if}
+		<span class="schild" class:rand={!e.isCentral}>
+			{e.isCentral ? 'Alle Mandanten' : e.tenantShort}
+		</span>
 	</a>
 {/snippet}
 
@@ -138,7 +147,31 @@
 		margin: 0;
 	}
 	h2 {
-		font-size: 1.1rem;
+		font-size: 13px;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: var(--mu);
+	}
+	.untertitel {
+		margin: -6px 0 0;
+		color: var(--mu);
+	}
+	.suche {
+		max-width: 560px;
+	}
+	.titelzeile {
+		font-size: 13px;
+		font-weight: 600;
+		color: var(--ac);
+	}
+	.zahlen {
+		font-size: 13px;
+		color: var(--mu);
+	}
+	.kachel .schild {
+		align-self: flex-start;
+		margin-top: 4px;
 	}
 	.stern {
 		width: 44px;
@@ -149,13 +182,10 @@
 		font-size: 24px;
 		cursor: pointer;
 	}
-	.suche input {
-		width: 100%;
-	}
 	.raster {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-		gap: 10px;
+		gap: 12px;
 	}
 	.kachel {
 		display: flex;
@@ -164,8 +194,11 @@
 		color: var(--tx);
 		text-decoration: none;
 	}
+	.kachel strong {
+		font-size: 16px;
+	}
 	.kachel:hover {
-		box-shadow: 0 6px 20px rgb(0 0 0 / 0.1);
+		box-shadow: 0 6px 20px rgb(0 0 0 / 0.08);
 	}
 	.liste {
 		list-style: none;

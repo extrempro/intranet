@@ -53,7 +53,7 @@
 			</form>
 		</div>
 		{#if data.darfSchreiben}
-			<a class="knopf" href={resolve('/(app)/neuigkeiten/neu')} data-tour="schreiben">
+			<a class="knopf hauptaktion" href={resolve('/(app)/neuigkeiten/neu')} data-tour="schreiben">
 				Beitrag erstellen
 			</a>
 		{/if}
@@ -197,25 +197,6 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 8px;
-	}
-	select.pille {
-		width: auto;
-		min-height: 44px;
-		padding: 8px 36px 8px 16px;
-		border-color: var(--bd);
-		border-radius: 999px;
-		background: var(--sf)
-			url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23525c57' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6l6 -6'/%3E%3C/svg%3E")
-			no-repeat right 14px center / 14px;
-		appearance: none;
-		font-weight: 500;
-	}
-	select.pille.an {
-		background-color: var(--fill);
-		border-color: var(--fill);
-		color: #fff;
-		font-weight: 600;
-		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6l6 -6'/%3E%3C/svg%3E");
 	}
 	.leer {
 		display: flex;

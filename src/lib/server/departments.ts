@@ -76,10 +76,21 @@ export async function listDepartments(p: Principal) {
 		.where(and(inScope(p), eq(units.hidden, false)))
 		.orderBy(asc(units.name));
 	const ids = rows.map((r) => r.id);
-	const topics = ids.length ? await responsibilityRows(ids) : [];
+	const [topics, counts] = ids.length
+		? await Promise.all([
+				responsibilityRows(ids),
+				db
+					.select({ unitId: unitMembers.unitId, n: sql<number>`count(*)::int` })
+					.from(unitMembers)
+					.innerJoin(persons, eq(persons.id, unitMembers.personId))
+					.where(and(inArray(unitMembers.unitId, ids), active))
+					.groupBy(unitMembers.unitId)
+			])
+		: [[], []];
 	return rows.map((r) => ({
 		...r,
 		label: unitTypeLabel(r),
+		personen: counts.find((c) => c.unitId === r.id)?.n ?? 0,
 		zustaendigkeiten: topics
 			.filter((t) => t.unitId === r.id)
 			.map((t) => ({

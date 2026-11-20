@@ -47,8 +47,8 @@
 	}
 	button {
 		position: relative;
-		width: 44px;
-		height: 44px;
+		width: 40px;
+		height: 40px;
 		border-radius: 999px;
 		border: 1px solid var(--bd);
 		background: var(--sf);
@@ -59,8 +59,9 @@
 		cursor: pointer;
 	}
 	button.an {
-		color: var(--ac);
-		border-color: var(--ac);
+		background: var(--fill);
+		border-color: var(--fill);
+		color: #fff;
 	}
 	button:disabled {
 		cursor: default;

@@ -8,6 +8,11 @@
 	import StandortWahl from '#lib/components/StandortWahl.svelte';
 	import { closureRange, closureTitle, dayLabel, hoursSummary } from '#lib/canteen.ts';
 	import { formatRange } from '#lib/plans.ts';
+	import Icon from '#lib/components/Icon.svelte';
+	const KALENDER =
+		'M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2zM16 3v4M8 3v4M4 11h16';
+	const ORT =
+		'M12 11m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M17.66 16.66l-4.24 4.24a2 2 0 0 1 -2.83 0l-4.25 -4.24a8 8 0 1 1 11.31 0z';
 
 	let { data, form } = $props();
 	const a = $derived(data.ansicht);
@@ -81,28 +86,33 @@
 		{/if}
 		{#each a.announced as c (c.id)}
 			<p class="demnaechst" role="status">
-				<strong>Demnächst geschlossen:</strong>
-				{closureRange(c)}
+				<Icon d={KALENDER} size={18} stroke={1.8} />
+				<span><strong>Demnächst geschlossen:</strong> {closureRange(c)}</span>
 			</p>
 		{/each}
 
 		<section class="karte info" aria-labelledby="h-kantine">
-			<div class="kopf">
-				<div>
-					<h2 id="h-kantine">{a.name}</h2>
-					{#if a.address}<span class="hinweis">{a.address}</span>{/if}
-				</div>
-				<span class="schild" class:rand={!a.status.open}>{a.status.text}</span>
+			<div class="links">
+				{#if data.meine.some((m) => m.id === a.id)}<span class="marke">Mein Standort</span>{/if}
+				<h2 id="h-kantine">{a.name}</h2>
+				{#if a.address}<span class="hinweis">{a.address}</span>{/if}
+				{#if a.note}<span class="hinweis">{a.note}</span>{/if}
+				{#if a.contact}<span class="hinweis">Kontakt: {a.contact}</span>{/if}
 			</div>
-			<dl class="zeiten">
-				{#each hoursSummary(a.hours) as z (z.days)}
-					<dt>{z.days}</dt>
-					<dd>{z.time}</dd>
-				{/each}
-			</dl>
-			{#if a.place}<p><strong>Lage:</strong> {a.place}</p>{/if}
-			{#if a.note}<p><strong>Hinweis:</strong> {a.note}</p>{/if}
-			{#if a.contact}<p><strong>Kontakt:</strong> {a.contact}</p>{/if}
+			<div class="rechts">
+				<span class="status" class:offen={a.status.open}>
+					<span class="punkt" aria-hidden="true"></span>{a.status.text}
+				</span>
+				<dl class="zeiten">
+					{#each hoursSummary(a.hours) as z (z.days)}
+						<dt>{z.days}</dt>
+						<dd>{z.time}</dd>
+					{/each}
+				</dl>
+				{#if a.place}<span class="lage">
+						<Icon d={ORT} size={14} stroke={2} />{a.place}
+					</span>{/if}
+			</div>
 		</section>
 
 		{#if data.plan}
@@ -195,38 +205,65 @@
 		font-weight: 600;
 	}
 	.demnaechst {
+		display: flex;
+		align-items: center;
+		gap: 10px;
 		margin: 0;
 		padding: 12px 16px;
 		border-radius: 14px;
 		background: var(--tint);
-		border: 1px solid var(--bd);
+	}
+	.demnaechst :global(svg) {
+		flex: none;
+		color: var(--ac);
 	}
 	.info {
-		display: grid;
-		gap: 10px;
-	}
-	.info p {
-		margin: 0;
-	}
-	.kopf {
 		display: flex;
 		flex-wrap: wrap;
 		justify-content: space-between;
-		align-items: flex-start;
-		gap: 8px;
+		gap: 12px 24px;
 	}
-	.kopf h2 {
-		margin: 0;
-		font-size: 1.2rem;
-	}
-	.kopf > div {
+	.links {
+		flex: 1 1 260px;
 		display: flex;
 		flex-direction: column;
+		gap: 2px;
+	}
+	.marke {
+		font-size: 12px;
+		font-weight: 700;
+		color: var(--ac);
+	}
+	.links h2 {
+		margin: 0;
+		font-size: 18px;
+	}
+	.rechts {
+		flex: 0 1 260px;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		font-size: 14px;
+	}
+	.status {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		font-weight: 600;
+	}
+	.punkt {
+		width: 8px;
+		height: 8px;
+		border-radius: 999px;
+		background: var(--mu);
+	}
+	.status.offen .punkt {
+		background: #12a150;
 	}
 	.zeiten {
 		display: grid;
 		grid-template-columns: max-content 1fr;
-		gap: 2px 16px;
+		gap: 2px 12px;
 		margin: 0;
 	}
 	.zeiten dt {
@@ -234,6 +271,12 @@
 	}
 	.zeiten dd {
 		margin: 0;
+	}
+	.lage {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		color: var(--mu);
 	}
 	.plantitel {
 		margin: 0;

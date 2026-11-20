@@ -1,3 +1,4 @@
+import { brandingFor, headLinks, mainBranding } from '#lib/server/tenant-branding.ts';
 import { redirect } from '@sveltejs/kit';
 import type { Handle, ServerInit } from '@sveltejs/kit/hooks';
 import { loadPrincipal } from '#lib/server/auth/access.ts';
@@ -38,7 +39,7 @@ const securityHeaders: Record<string, string> = {
 /** Ohne Anmeldung erreichbar. Alles andere nur mit gültiger Sitzung. */
 /** /ical: persönliches Kalender-Abo, geschützt durch den geheimen Link (Kap. 8.8). */
 /** /teams/tab: Tab der Teams-App, zeigt nur einen Link (Kap. 11.1). */
-const PUBLIC_PATHS = ['/anmelden', '/einladung', '/health', '/ical', '/teams/tab'];
+const PUBLIC_PATHS = ['/anmelden', '/einladung', '/health', '/ical', '/teams/tab', '/marke'];
 
 function isPublic(pathname: string): boolean {
 	return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -91,14 +92,24 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 
 	const theme = event.locals.theme;
+	// Favicon und App-Symbol des Mandanten (vor der Anmeldung: Hauptmandant)
+	let symbole: string | null = null;
 	const response = await resolve(event, {
 		// Darstellung schon im HTML setzen, damit nichts flackert
-		transformPageChunk: ({ html }) => html.replace('%intranet.theme%', theme)
+		transformPageChunk: async ({ html }) => {
+			if (!html.includes('%intranet.')) return html;
+			symbole ??= headLinks(
+				event.locals.person ? await brandingFor(event.locals.person.tenantId) : await mainBranding()
+			);
+			return html.replace('%intranet.theme%', theme).replace('%intranet.symbole%', symbole);
+		}
 	});
 	for (const [name, value] of Object.entries(securityHeaders)) {
 		response.headers.set(name, value);
 	}
 	// Angemeldete Inhalte nicht in gemeinsamen Caches ablegen
-	if (event.locals.person) response.headers.set('Cache-Control', 'private, no-store');
+	// (Mandantenbilder unter /marke sind öffentlich und dürfen zwischengespeichert werden)
+	if (event.locals.person && !event.url.pathname.startsWith('/marke/'))
+		response.headers.set('Cache-Control', 'private, no-store');
 	return response;
 };
