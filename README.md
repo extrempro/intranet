@@ -47,6 +47,9 @@ Web Push braucht ausgehend HTTPS zu den Push-Diensten der Browser: `fcm.googleap
 erzeugt die Anwendung beim ersten Start selbst und speichert sie verschlüsselt (`ENCRYPTION_KEY`).
 Installierbar ist das Intranet nur über HTTPS (über den Reverse Proxy gegeben).
 
+Sicherungen macht der Dienst `backup` (täglich, verschlüsselt, mit wöchentlichem
+Wiederherstellungstest). Einrichten und Wiederherstellen: [backup/README.md](backup/README.md).
+
 ## Aktualität der Pakete
 
 - **Wöchentlich** (montags) hebt der Workflow *Abhängigkeiten aktualisieren* alle npm-Pakete auf die neueste Version,

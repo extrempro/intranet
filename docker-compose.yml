@@ -10,6 +10,7 @@ services:
       ORIGIN: ${ORIGIN}
       BODY_SIZE_LIMIT: ${BODY_SIZE_LIMIT:-21M}
       FILES_DIR: /data/files
+      BACKUP_DIR: /data/backups
       ENTRA_TENANT_ID: ${ENTRA_TENANT_ID:-}
       ENTRA_CLIENT_ID: ${ENTRA_CLIENT_ID:-}
       ENTRA_CLIENT_SECRET: ${ENTRA_CLIENT_SECRET:-}
@@ -33,8 +34,10 @@ services:
     tmpfs:
       - /tmp
     volumes:
-      # Verschlüsselte Dateien (Anhänge, PDFs, Fotos) – zusammen mit der Datenbank sichern
+      # Verschlüsselte Dateien (Anhänge, PDFs, Fotos) – sichert der Dienst backup
       - files-data:/data/files
+      # Nur lesend: Zustand der Sicherungen für Verwaltung → System
+      - backup-data:/data/backups:ro
     security_opt:
       - no-new-privileges:true
 
@@ -55,6 +58,66 @@ services:
     security_opt:
       - no-new-privileges:true
 
+  # Tägliche Sicherung von Datenbank und Dateien (backup/README.md)
+  backup:
+    build: ./backup
+    restart: unless-stopped
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+      # Fehlt der Wert, meldet die Sicherung das unter Verwaltung → System
+      BACKUP_AGE_RECIPIENTS: ${BACKUP_AGE_RECIPIENTS:-}
+      BACKUP_TIME: ${BACKUP_TIME:-01:15}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-30}
+      RESTORE_TEST_DAYS: ${RESTORE_TEST_DAYS:-7}
+    depends_on:
+      db:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      # Wiederherstellungstest und unverschlüsselter Zwischenstand nur im Arbeitsspeicher
+      - /tmp
+    volumes:
+      - files-data:/data/files:ro
+      - backup-data:/backups
+    cap_drop:
+      - ALL
+    cap_add:
+      # Dateien der Anwendung lesen, Test-Datenbank als Benutzer postgres starten
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETUID
+      - SETGID
+    security_opt:
+      - no-new-privileges:true
+
+  # Nur bei Bedarf (backup/README.md): ersetzt Datenbank und Dateien durch eine Sicherung
+  wiederherstellen:
+    build: ./backup
+    profiles: ['wiederherstellen']
+    entrypoint: ['/usr/local/bin/wiederherstellen.sh']
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+    depends_on:
+      db:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - files-data:/data/files
+      - backup-data:/backups:ro
+    security_opt:
+      - no-new-privileges:true
+
 volumes:
   db-data:
   files-data:
+  # Auf einen anderen Datenträger legen bzw. regelmäßig nach außen kopieren
+  backup-data:
