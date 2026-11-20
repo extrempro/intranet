@@ -48,6 +48,12 @@ export const TOPICS: TopicDefinition[] = [
 		hint: 'neue Anzeigen',
 		defaults: { bell: false, email: false }
 	},
+	{
+		key: 'vereinbarungen',
+		label: 'Vereinbarungen',
+		hint: 'neue und ersetzte Fassungen',
+		defaults: { bell: true, email: false }
+	},
 	{ key: 'nachrichten', label: 'Nachrichten', defaults: { bell: true, email: true } },
 	{
 		key: 'moderation',

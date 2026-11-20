@@ -1229,3 +1229,65 @@ export const responsibilities = pgTable(
 	},
 	(t) => [index('responsibilities_unit').on(t.unitId, t.position)]
 );
+
+// ---------------------------------------------------------------------------
+// Rechtliches (Kap. 8.10)
+// ---------------------------------------------------------------------------
+
+/**
+ * Betriebs- und Dienstvereinbarungen je Mandant. Keine Entwürfe, keine
+ * früheren Fassungen: Eine neue Fassung ersetzt die alte vollständig.
+ */
+export const agreements = pgTable(
+	'agreements',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		tenantId: uuid('tenant_id')
+			.notNull()
+			.references(() => tenants.id, { onDelete: 'cascade' }),
+		kind: text('kind', { enum: ['betrieb', 'dienst'] }).notNull(),
+		title: text('title').notNull(),
+		description: text('description'),
+		/** Stand der Fassung */
+		versionDate: date('version_date').notNull(),
+		validFrom: date('valid_from').notNull(),
+		updatedBy: uuid('updated_by').references(() => persons.id, { onDelete: 'set null' }),
+		createdAt: createdAt(),
+		updatedAt: updatedAt()
+	},
+	(t) => [index('agreements_tenant').on(t.tenantId, t.kind)]
+);
+
+export const agreementAttachments = pgTable(
+	'agreement_attachments',
+	{
+		agreementId: uuid('agreement_id')
+			.notNull()
+			.references(() => agreements.id, { onDelete: 'cascade' }),
+		fileId: uuid('file_id')
+			.notNull()
+			.references(() => files.id, { onDelete: 'cascade' }),
+		position: integer('position').notNull().default(0)
+	},
+	(t) => [primaryKey({ columns: [t.agreementId, t.fileId] })]
+);
+
+/** Gesetze und Tarifverträge: einfache Liste je Mandant (Link oder Datei). */
+export const legalLinks = pgTable(
+	'legal_links',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		tenantId: uuid('tenant_id')
+			.notNull()
+			.references(() => tenants.id, { onDelete: 'cascade' }),
+		kind: text('kind', { enum: ['gesetz', 'tarif'] }).notNull(),
+		title: text('title').notNull(),
+		description: text('description'),
+		url: text('url'),
+		fileId: uuid('file_id').references(() => files.id, { onDelete: 'set null' }),
+		position: integer('position').notNull().default(0),
+		createdAt: createdAt(),
+		updatedAt: updatedAt()
+	},
+	(t) => [index('legal_links_tenant').on(t.tenantId, t.kind, t.position)]
+);
