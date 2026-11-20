@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { hierBleiben } from '#lib/formular.ts';
 	/** „Mein Standort“: Auswahl der Kantinen-Standorte (Kap. 8.7, 12). */
 	import { enhance } from '$app/forms';
 
@@ -13,14 +14,7 @@
 	} = $props();
 </script>
 
-<form
-	method="POST"
-	{action}
-	class="felder"
-	use:enhance={() =>
-		({ update }) =>
-			update({ reset: false })}
->
+<form method="POST" {action} class="felder" use:enhance={hierBleiben}>
 	<fieldset class="wahl">
 		<legend>Meine Standorte</legend>
 		<p class="hinweis">Du siehst dann Speiseplan und Öffnungszeiten dieser Kantinen.</p>

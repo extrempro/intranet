@@ -39,7 +39,6 @@
 <svelte:head><title>System · Verwaltung · Intranet</title></svelte:head>
 
 <div class="stapel seite">
-	<a class="zurueck" href={resolve('/(app)/verwaltung')}>← Verwaltung</a>
 	<div class="kopf">
 		<h1>System</h1>
 		<button
@@ -274,11 +273,6 @@
 <style>
 	.seite {
 		max-width: 52rem;
-	}
-	.zurueck {
-		min-height: 44px;
-		display: inline-flex;
-		align-items: center;
 	}
 	.kopf {
 		display: flex;

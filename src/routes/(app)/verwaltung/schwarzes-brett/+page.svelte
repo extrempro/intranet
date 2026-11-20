@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { resolve } from '$app/paths';
 
 	let { data, form } = $props();
 	const frei = $derived(data.kategorien.filter((k) => !k.fixed));
@@ -9,7 +8,6 @@
 <svelte:head><title>Schwarzes Brett · Verwaltung · Intranet</title></svelte:head>
 
 <div class="stapel schmal">
-	<a class="zurueck" href={resolve('/(app)/verwaltung')}>← Verwaltung</a>
 	<h1>Schwarzes Brett: Kategorien</h1>
 	<p class="hinweis">
 		Gilt für alle Mandanten. „Sonstiges“ ist fest und steht immer am Ende; Anzeigen gelöschter
@@ -66,11 +64,6 @@
 	}
 	h1 {
 		margin: 0;
-	}
-	.zurueck {
-		min-height: 44px;
-		display: inline-flex;
-		align-items: center;
 	}
 	.liste {
 		list-style: none;

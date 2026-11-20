@@ -1,6 +1,5 @@
 <script lang="ts">
 	/* eslint-disable svelte/no-navigation-without-resolve -- nur Suchparameter der eigenen Seite */
-	import { resolve } from '$app/paths';
 
 	let { data } = $props();
 	const zeit = new Intl.DateTimeFormat('de-DE', {
@@ -23,7 +22,6 @@
 <svelte:head><title>Protokoll · Verwaltung · Intranet</title></svelte:head>
 
 <div class="stapel">
-	<a class="zurueck" href={resolve('/(app)/verwaltung')}>← Verwaltung</a>
 	<div>
 		<h1>Protokoll</h1>
 		<p class="hinweis">
@@ -86,11 +84,6 @@
 </div>
 
 <style>
-	.zurueck {
-		min-height: 44px;
-		display: inline-flex;
-		align-items: center;
-	}
 	h1 {
 		margin: 0;
 	}
