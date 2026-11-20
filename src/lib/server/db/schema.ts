@@ -997,7 +997,7 @@ export const conversations = pgTable(
 	{
 		id: uuid('id').primaryKey().defaultRandom(),
 		/** anzeige = Interessierte ↔ Anzeigende; moderation = Moderation ↔ Anzeigende */
-		kind: text('kind', { enum: ['anzeige', 'moderation', 'hub_antrag'] }).notNull(),
+		kind: text('kind', { enum: ['anzeige', 'moderation', 'hub_antrag', 'rueckmeldung'] }).notNull(),
 		subject: text('subject').notNull(),
 		/** Vorgang, z. B. die Anzeige */
 		refId: uuid('ref_id'),
@@ -1322,4 +1322,36 @@ export const pushSubscriptions = pgTable(
 		createdAt: createdAt()
 	},
 	(t) => [index('push_subscriptions_person').on(t.personId)]
+);
+
+// ---------------------------------------------------------------------------
+// Rückmeldungen (Kap. 13)
+// ---------------------------------------------------------------------------
+
+/** Fehler oder Idee mit Angabe der Seite; Bearbeitung durch die Verwaltung des Mandanten. */
+export const feedback = pgTable(
+	'feedback',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		personId: uuid('person_id').references(() => persons.id, { onDelete: 'set null' }),
+		tenantId: uuid('tenant_id')
+			.notNull()
+			.references(() => tenants.id, { onDelete: 'cascade' }),
+		kind: text('kind', { enum: ['fehler', 'idee'] }).notNull(),
+		text: text('text').notNull(),
+		/** Seite, von der die Rückmeldung kam (interner Pfad) */
+		page: text('page'),
+		status: text('status', { enum: ['neu', 'in_arbeit', 'erledigt', 'abgelehnt'] })
+			.notNull()
+			.default('neu'),
+		/** Kurze Antwort beim Abschluss (für „Meine Meldungen“) */
+		answer: text('answer'),
+		closedAt: timestamp('closed_at', { withTimezone: true }),
+		createdAt: createdAt(),
+		updatedAt: updatedAt()
+	},
+	(t) => [
+		index('feedback_tenant_status').on(t.tenantId, t.status),
+		index('feedback_person').on(t.personId)
+	]
 );

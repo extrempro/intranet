@@ -308,6 +308,13 @@ export const RETENTION_FIELDS: RetentionField[] = [
 		options: [d(30, '30 Tage'), d(90, '90 Tage'), d(180, '180 Tage')]
 	},
 	{
+		key: 'feedback_days',
+		label: 'Rückmeldungen',
+		hint: 'nach Abschluss',
+		default: 90,
+		options: [d(30, '30 Tage'), d(90, '90 Tage'), d(365, '1 Jahr')]
+	},
+	{
 		key: 'notifications_days',
 		label: 'Benachrichtigungen (Glocke)',
 		default: 90,

@@ -62,7 +62,8 @@ const AREAS: NavArea[] = [
 		href: '',
 		pages: [
 			{ key: 'faqs', label: 'FAQs', href: '/faqs' },
-			{ key: 'rechtliches', label: 'Rechtliches', href: '/rechtliches' }
+			{ key: 'rechtliches', label: 'Rechtliches', href: '/rechtliches' },
+			{ key: 'handbuch', label: 'Handbuch', href: '/handbuch' }
 		]
 	}
 ];
