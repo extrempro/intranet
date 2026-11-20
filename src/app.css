@@ -220,7 +220,7 @@ html {
 	gap: 6px;
 }
 
-.feld > span,
+.feld > span:first-child,
 .feld > label,
 legend {
 	font-weight: 600;
