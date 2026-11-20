@@ -68,7 +68,12 @@ export const actions: Actions = {
 						about: str(f, 'ueber', 4000),
 						lead: str(f, 'leitung', 40),
 						secondLead: str(f, 'zweite', 40),
-						deputy: str(f, 'stellvertretung', 40)
+						deputy: str(f, 'stellvertretung', 40),
+						tagline: str(f, 'kurz', 200),
+						email: str(f, 'funktionsadresse', 300),
+						phone: str(f, 'telefon', 60),
+						hours: str(f, 'sprechzeiten', 200),
+						room: str(f, 'raum', 100)
 					},
 					getClientAddress()
 				),

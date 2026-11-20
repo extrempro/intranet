@@ -147,21 +147,35 @@ html {
  */
 .akzent {
 	--ac: var(--ac-hell);
-	--fill: var(--ac-hell);
-	--tint: color-mix(in srgb, var(--ac) 15%, var(--sf));
-	/* Seitenhintergrund des Mandanten (--bg-hell/--bg-dunkel), sonst Standard */
+	--fill: var(--fill-hell, var(--ac-hell));
 	--bg: var(--bg-hell, #f4f6f5);
+	--sf: var(--sf-hell, #ffffff);
+	--bd: var(--bd-hell, #d9dfdb);
+	--tx: var(--tx-hell, #18201c);
+	--mu: var(--mu-hell, #525c57);
+	--tint: color-mix(in srgb, var(--ac) 15%, var(--sf));
+	color: var(--tx);
 }
 
 [data-theme='dunkel'] .akzent {
 	--ac: var(--ac-dunkel);
+	--fill: var(--fill-dunkel, var(--ac-hell));
 	--bg: var(--bg-dunkel, #111614);
+	--sf: var(--sf-dunkel, #1a201d);
+	--bd: var(--bd-dunkel, #2f3733);
+	--tx: var(--tx-dunkel, #eaefec);
+	--mu: var(--mu-dunkel, #a6b0ab);
 }
 
 @media (prefers-color-scheme: dark) {
 	[data-theme='auto'] .akzent {
 		--ac: var(--ac-dunkel);
+		--fill: var(--fill-dunkel, var(--ac-hell));
 		--bg: var(--bg-dunkel, #111614);
+		--sf: var(--sf-dunkel, #1a201d);
+		--bd: var(--bd-dunkel, #2f3733);
+		--tx: var(--tx-dunkel, #eaefec);
+		--mu: var(--mu-dunkel, #a6b0ab);
 	}
 }
 
