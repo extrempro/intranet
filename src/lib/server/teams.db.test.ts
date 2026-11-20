@@ -3,7 +3,16 @@
  * Läuft nur mit TEST_DATABASE_URL; eigene Datenbank <name>_teams.
  */
 import { sql } from 'drizzle-orm';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+
+// Kein echter Aufruf bei Microsoft: Der Sofortversand nach notify() läuft im
+// Hintergrund und würde sonst je nach Netz unterschiedlich lange dauern.
+vi.mock('./auth/entra.ts', async (original) => ({
+	...(await original<typeof import('./auth/entra.ts')>()),
+	graphAppPost: async () => {
+		throw new Error('Im Test kein Aufruf bei Microsoft');
+	}
+}));
 
 const url = process.env.TEST_DATABASE_URL;
 const T = '00000000-0000-0000-0000-000000000001';
@@ -20,6 +29,15 @@ const calls: {
 const post = async (path: string, body: unknown) => {
 	calls.push({ path, body: body as (typeof calls)[number]['body'] });
 };
+
+/** Wartet, bis kein Versand im Hintergrund mehr läuft. */
+async function idle() {
+	const { teamsBusy } = await import('./teams.ts');
+	for (let i = 0; i < 100 && teamsBusy(); i++) await new Promise((r) => setTimeout(r, 50));
+	// Einen Moment für einen eben angestoßenen Lauf
+	await new Promise((r) => setTimeout(r, 50));
+	for (let i = 0; i < 100 && teamsBusy(); i++) await new Promise((r) => setTimeout(r, 50));
+}
 
 describe.skipIf(!url)('Teams-Benachrichtigungen', () => {
 	let db: typeof import('./db/index.ts').db;
@@ -93,8 +111,8 @@ describe.skipIf(!url)('Teams-Benachrichtigungen', () => {
 	});
 
 	it('sendet fällige Meldungen gesammelt und markiert sie', async () => {
-		// Sofortversand aus notify() abwarten bzw. vorwegnehmen
-		await new Promise((r) => setTimeout(r, 200));
+		// Sofortversand aus notify() abwarten, dann neu auf „offen“ setzen
+		await idle();
 		await db.execute(
 			sql`update notifications set teams = 'pending' where title = 'WLAN fällt aus' and teams is not null`
 		);
@@ -112,6 +130,7 @@ describe.skipIf(!url)('Teams-Benachrichtigungen', () => {
 		expect(b.teams).toBe('pending');
 		// Nach der Ruhezeit: zusammengefasst, wenn mehrere offen sind
 		await notify.notify('dringend', [P.entraRuhe], { title: 'Zweite', detail: 'IT', link: '/z' });
+		await idle();
 		await db.execute(
 			sql`update notifications set push_after = now() - interval '1 minute' where person_id = ${P.entraRuhe}`
 		);

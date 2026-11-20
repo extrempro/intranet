@@ -49,6 +49,11 @@ export function teamsFehlertext(err: unknown): string {
 
 let laeuft = false;
 
+/** Läuft gerade ein Versand? (für Tests) */
+export function teamsBusy(): boolean {
+	return laeuft;
+}
+
 /** Fällige Teams-Meldungen senden (minütlich und sofort nach dem Anlegen). */
 export async function sendDueTeams(
 	post: GraphPost = graphAppPost,
