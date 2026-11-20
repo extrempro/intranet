@@ -13,7 +13,10 @@ export interface CardDefinition {
 }
 
 /** Bekannte Karten in Standardreihenfolge. */
-export const HOME_CARDS: CardDefinition[] = [{ id: 'neuigkeiten', label: 'Neuigkeiten' }];
+export const HOME_CARDS: CardDefinition[] = [
+	{ id: 'neuigkeiten', label: 'Neuigkeiten' },
+	{ id: 'plaene', label: 'Neueste Pläne (KBB)' }
+];
 
 export const FAVORITES_MAX = 8;
 

@@ -3,6 +3,7 @@ import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import { readStored } from '#lib/server/files/store.ts';
 import { contentDisposition, INLINE } from '#lib/server/files/types.ts';
 import { newsOfFile } from '#lib/server/news.ts';
+import { isPublicDocument } from '#lib/server/plans.ts';
 import type { RequestHandler } from './$types';
 
 /**
@@ -11,7 +12,11 @@ import type { RequestHandler } from './$types';
  */
 export const GET: RequestHandler = async ({ locals, params, url }) => {
 	const p = requirePrincipal(locals);
-	if (!(await newsOfFile(p, params.id))) error(404, 'Diese Datei gibt es nicht oder nicht mehr.');
+	// Anhang eines sichtbaren Beitrags, oder Plan/Organigramm (für alle Angemeldeten)
+	const allowed =
+		/^[0-9a-f-]{36}$/i.test(params.id) &&
+		((await isPublicDocument(params.id)) || (await newsOfFile(p, params.id)));
+	if (!allowed) error(404, 'Diese Datei gibt es nicht oder nicht mehr.');
 	const file = await readStored(params.id);
 	if (!file) error(404, 'Diese Datei gibt es nicht oder nicht mehr.');
 	const inline = INLINE.has(file.kind) && url.searchParams.get('download') === null;

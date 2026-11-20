@@ -4,9 +4,9 @@
  */
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { and, eq, inArray, isNull, lt, sql } from 'drizzle-orm';
+import { and, eq, inArray, lt, sql } from 'drizzle-orm';
 import { db } from '../db/index.ts';
-import { files, newsAttachments } from '../db/schema.ts';
+import { files } from '../db/schema.ts';
 import { decryptFile, encryptFile, newFileKey, unwrapFileKey } from './crypto.ts';
 import { detectKind, MIME, safeFileName, type FileKind } from './types.ts';
 
@@ -73,14 +73,31 @@ export async function deleteStored(ids: string[]) {
 	await Promise.all(ids.map((id) => rm(pathFor(id), { force: true })));
 }
 
-/** Hochgeladene, aber nie verknüpfte Dateien nach 24 Stunden löschen. */
+/**
+ * Hochgeladene, aber nie verknüpfte Dateien nach 24 Stunden löschen.
+ * Jede Tabelle, die auf Dateien verweist, muss hier stehen.
+ */
 export async function deleteOrphans() {
 	const rows = await db
 		.select({ id: files.id })
 		.from(files)
-		.leftJoin(newsAttachments, eq(newsAttachments.fileId, files.id))
 		.where(
-			and(isNull(newsAttachments.fileId), lt(files.createdAt, sql`now() - interval '24 hours'`))
+			and(
+				lt(files.createdAt, sql`now() - interval '24 hours'`),
+				sql`not exists (select 1 from news_attachments a where a.file_id = ${files.id})`,
+				sql`not exists (select 1 from plans pl where pl.file_id = ${files.id})`,
+				sql`not exists (select 1 from org_chart o where o.file_id = ${files.id})`
+			)
 		);
 	await deleteStored(rows.map((r) => r.id));
+}
+
+/** PDF hochladen (Pläne, Organigramm): andere Typen werden sofort wieder gelöscht. */
+export async function storePdf(file: File, personId: string) {
+	const stored = await storeUpload(file, personId);
+	if (stored.kind !== 'pdf') {
+		await deleteStored([stored.id]);
+		throw new FileError('Hier sind nur PDF-Dateien erlaubt.');
+	}
+	return stored;
 }

@@ -34,9 +34,18 @@ const AREAS: NavArea[] = [
 		label: 'Aktuelles',
 		icon: ICONS.aktuelles,
 		href: '',
-		pages: [{ key: 'neuigkeiten', label: 'Neuigkeiten', href: '/neuigkeiten' }]
+		pages: [
+			{ key: 'neuigkeiten', label: 'Neuigkeiten', href: '/neuigkeiten' },
+			{ key: 'plaene', label: 'Pläne (KBB)', href: '/plaene' }
+		]
 	},
-	{ key: 'organisation', label: 'Organisation', icon: ICONS.organisation, href: '', pages: [] },
+	{
+		key: 'organisation',
+		label: 'Organisation',
+		icon: ICONS.organisation,
+		href: '',
+		pages: [{ key: 'organigramm', label: 'Organigramm', href: '/organigramm' }]
+	},
 	{ key: 'wissen', label: 'Wissen', icon: ICONS.wissen, href: '', pages: [] }
 ];
 

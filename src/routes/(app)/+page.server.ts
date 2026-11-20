@@ -4,6 +4,7 @@ import { greeting, HOME_CARDS, resolveLayout } from '#lib/home.ts';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import { db } from '#lib/server/db/index.ts';
 import { listNews, urgentForBanner } from '#lib/server/news.ts';
+import { latestPlans } from '#lib/server/plans.ts';
 import { tenants } from '#lib/server/db/schema.ts';
 import {
 	getPreferences,
@@ -18,7 +19,7 @@ const ZONE = 'Europe/Berlin';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const principal = requirePrincipal(locals);
-	const [prefs, favs, [tenant], dringend, neuigkeiten] = await Promise.all([
+	const [prefs, favs, [tenant], dringend, neuigkeiten, plaene] = await Promise.all([
 		getPreferences(principal.personId),
 		listFavorites(principal.personId),
 		db
@@ -26,7 +27,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.from(tenants)
 			.where(eq(tenants.id, principal.tenantId)),
 		urgentForBanner(principal),
-		listNews(principal, { limit: 5 })
+		listNews(principal, { limit: 5 }),
+		latestPlans(principal)
 	]);
 	const now = new Date();
 	const hour = Number(
@@ -52,7 +54,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 		karten: resolveLayout(HOME_CARDS, prefs.homeLayout, tenant?.homeDefault),
 		eigeneEinstellung: prefs.homeLayout !== null,
 		dringend,
-		neuigkeiten: neuigkeiten.filter((n) => !n.planned)
+		neuigkeiten: neuigkeiten.filter((n) => !n.planned),
+		plaene
 	};
 };
 

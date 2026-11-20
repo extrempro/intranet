@@ -14,6 +14,7 @@ import {
 	boolean,
 	check,
 	customType,
+	date,
 	index,
 	integer,
 	jsonb,
@@ -490,6 +491,56 @@ export const newsAttachments = pgTable(
 		position: integer('position').notNull()
 	},
 	(t) => [primaryKey({ columns: [t.newsId, t.fileId] })]
+);
+
+// ---------------------------------------------------------------------------
+// Pläne des KBB und Organigramm (Kap. 3.3, 8.6)
+// ---------------------------------------------------------------------------
+
+/** Wochen- und Monatspläne je KBB als PDF; für alle Angemeldeten sichtbar. */
+export const plans = pgTable(
+	'plans',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		/** Das KBB (Einheit, die bei ihrem Mandanten als KBB eingetragen ist). */
+		unitId: uuid('unit_id')
+			.notNull()
+			.references(() => units.id, { onDelete: 'cascade' }),
+		title: text('title').notNull(),
+		validFrom: date('valid_from').notNull(),
+		validUntil: date('valid_until').notNull(),
+		fileId: uuid('file_id')
+			.notNull()
+			.unique()
+			.references(() => files.id, { onDelete: 'restrict' }),
+		uploadedBy: uuid('uploaded_by').references(() => persons.id, { onDelete: 'set null' }),
+		createdAt: createdAt(),
+		updatedAt: updatedAt()
+	},
+	(t) => [
+		index('plans_unit_from').on(t.unitId, t.validFrom),
+		check('plans_valid_range', sql`${t.validUntil} >= ${t.validFrom}`)
+	]
+);
+
+/** Ein Organigramm für alle Mandanten; neue Fassung ersetzt die alte. */
+export const orgChart = pgTable(
+	'org_chart',
+	{
+		id: integer('id').primaryKey().default(1),
+		fileId: uuid('file_id')
+			.notNull()
+			.unique()
+			.references(() => files.id, { onDelete: 'restrict' }),
+		/** Stand als Monat, z. B. 2026-11 */
+		stand: text('stand').notNull(),
+		updatedBy: uuid('updated_by').references(() => persons.id, { onDelete: 'set null' }),
+		updatedAt: updatedAt()
+	},
+	(t) => [
+		check('org_chart_singleton', sql`${t.id} = 1`),
+		check('org_chart_stand', sql`${t.stand} ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'`)
+	]
 );
 
 // ---------------------------------------------------------------------------
