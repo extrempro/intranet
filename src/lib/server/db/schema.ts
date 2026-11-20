@@ -363,6 +363,100 @@ export const sessions = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// Neuigkeiten (Kap. 8.1, 8.2)
+// ---------------------------------------------------------------------------
+
+export const news = pgTable(
+	'news',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		/** Absender ist immer die Einheit, nie die Person (Kap. 5.2). */
+		unitId: uuid('unit_id')
+			.notNull()
+			.references(() => units.id, { onDelete: 'cascade' }),
+		/** Mandant der Einheit (für RLS und Auswertung). */
+		tenantId: uuid('tenant_id')
+			.notNull()
+			.references(() => tenants.id, { onDelete: 'cascade' }),
+		title: text('title').notNull(),
+		/** Bereinigtes HTML aus dem Editor. */
+		bodyHtml: text('body_html').notNull(),
+		/** Reiner Text für Suche und Vorschau. */
+		bodyText: text('body_text').notNull(),
+		/** Freigabe: vorher nur für Schreibende der Einheit und die Redaktion sichtbar. */
+		publishAt: timestamp('publish_at', { withTimezone: true }).notNull(),
+		expiresAt: timestamp('expires_at', { withTimezone: true }),
+		/** Für alle Mandanten, auch künftige; sonst die Liste in news_tenants. */
+		allTenants: boolean('all_tenants').notNull().default(false),
+		pinnedUntil: timestamp('pinned_until', { withTimezone: true }),
+		/** Von der Redaktion angeheftet (eigene Obergrenze). */
+		pinnedByEditorial: boolean('pinned_by_editorial').notNull().default(false),
+		urgentUntil: timestamp('urgent_until', { withTimezone: true }),
+		/** Kurztext für das rote Banner. */
+		urgentText: text('urgent_text'),
+		/** Nur intern protokolliert, nie angezeigt. */
+		createdBy: uuid('created_by').references(() => persons.id, { onDelete: 'set null' }),
+		updatedBy: uuid('updated_by').references(() => persons.id, { onDelete: 'set null' }),
+		createdAt: createdAt(),
+		updatedAt: updatedAt()
+	},
+	(t) => [
+		index('news_publish').on(t.publishAt),
+		index('news_unit').on(t.unitId),
+		check('news_urgent_text', sql`(${t.urgentUntil} is null) = (${t.urgentText} is null)`),
+		check(
+			'news_expiry_after_urgent',
+			sql`${t.expiresAt} is null or ${t.urgentUntil} is null or ${t.expiresAt} >= ${t.urgentUntil}`
+		)
+	]
+);
+
+export const newsTenants = pgTable(
+	'news_tenants',
+	{
+		newsId: uuid('news_id')
+			.notNull()
+			.references(() => news.id, { onDelete: 'cascade' }),
+		tenantId: uuid('tenant_id')
+			.notNull()
+			.references(() => tenants.id, { onDelete: 'cascade' })
+	},
+	(t) => [
+		primaryKey({ columns: [t.newsId, t.tenantId] }),
+		index('news_tenants_tenant').on(t.tenantId)
+	]
+);
+
+/** Eine Reaktion je Person und Beitrag; angezeigt wird nur die Anzahl (Kap. 8.1). */
+export const newsReactions = pgTable(
+	'news_reactions',
+	{
+		newsId: uuid('news_id')
+			.notNull()
+			.references(() => news.id, { onDelete: 'cascade' }),
+		personId: uuid('person_id')
+			.notNull()
+			.references(() => persons.id, { onDelete: 'cascade' }),
+		emoji: text('emoji').notNull()
+	},
+	(t) => [primaryKey({ columns: [t.newsId, t.personId] })]
+);
+
+/** „Gelesen, zuklappen“ beim roten Banner, je Person. */
+export const urgentDismissals = pgTable(
+	'urgent_dismissals',
+	{
+		newsId: uuid('news_id')
+			.notNull()
+			.references(() => news.id, { onDelete: 'cascade' }),
+		personId: uuid('person_id')
+			.notNull()
+			.references(() => persons.id, { onDelete: 'cascade' })
+	},
+	(t) => [primaryKey({ columns: [t.newsId, t.personId] })]
+);
+
+// ---------------------------------------------------------------------------
 // Lokale Konten (Kap. 4.2)
 // ---------------------------------------------------------------------------
 

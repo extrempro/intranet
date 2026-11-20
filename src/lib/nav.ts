@@ -29,7 +29,13 @@ const ICONS = {
 /** Alle Bereiche in Reihenfolge; Unterseiten nur, wenn fertig. */
 const AREAS: NavArea[] = [
 	{ key: 'start', label: 'Start', icon: ICONS.start, href: '/', pages: [] },
-	{ key: 'aktuelles', label: 'Aktuelles', icon: ICONS.aktuelles, href: '', pages: [] },
+	{
+		key: 'aktuelles',
+		label: 'Aktuelles',
+		icon: ICONS.aktuelles,
+		href: '',
+		pages: [{ key: 'neuigkeiten', label: 'Neuigkeiten', href: '/neuigkeiten' }]
+	},
 	{ key: 'organisation', label: 'Organisation', icon: ICONS.organisation, href: '', pages: [] },
 	{ key: 'wissen', label: 'Wissen', icon: ICONS.wissen, href: '', pages: [] }
 ];
@@ -56,9 +62,4 @@ export function currentNav(
 		area: pathname === '/' ? (areas.find((a) => a.key === 'start') ?? null) : null,
 		page: null
 	};
-}
-
-export function registerPage(areaKey: string, page: NavPage) {
-	const area = AREAS.find((a) => a.key === areaKey);
-	if (area && !area.pages.some((p) => p.key === page.key)) area.pages.push(page);
 }

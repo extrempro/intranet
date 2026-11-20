@@ -54,5 +54,5 @@ export async function mainBranding(): Promise<Branding> {
 
 /** Inline-Stil mit den Akzentfarben; Werte sind oben auf Hex geprüft. */
 export function accentStyle(b: Branding): string {
-	return `--ac-hell: ${b.accent}; --ac-dunkel: ${b.accentDark}; --fill: ${b.accent};`;
+	return `--ac-hell: ${b.accent}; --ac-dunkel: ${b.accentDark};`;
 }

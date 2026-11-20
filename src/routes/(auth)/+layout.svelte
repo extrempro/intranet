@@ -2,7 +2,7 @@
 	let { data, children } = $props();
 </script>
 
-<div class="flaeche" style={data.akzent}>
+<div class="flaeche akzent" style={data.akzent}>
 	<main class="karte auth" id="inhalt">
 		<div class="marke">
 			<div class="logo" aria-hidden="true">{data.marke.kurz}</div>

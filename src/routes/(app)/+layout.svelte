@@ -31,7 +31,7 @@
 
 <a class="skip" href="#inhalt">Zum Inhalt springen</a>
 
-<div class="app" style={data.akzent}>
+<div class="app akzent" style={data.akzent}>
 	<header class="kopf">
 		<a class="marke" href={resolve('/(app)')} aria-label="Intranet, zur Startseite">
 			<span class="logo" aria-hidden="true">{data.ich.mandantKurz}</span>
