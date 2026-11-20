@@ -134,6 +134,13 @@
       "when": 1795188310675,
       "tag": "0018_rechtliches",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1795189705606,
+      "tag": "0019_standard_favoriten",
+      "breakpoints": true
     }
   ]
 }

@@ -8,6 +8,7 @@
 import { and, asc, desc, eq, gt, inArray, isNull, lt, lte, or, sql } from 'drizzle-orm';
 import { berlinNow } from '../canteen.ts';
 import { digestModesDue, resolveNotify, TOPICS, type NotifySettings } from '../notify.ts';
+import { getRetention } from './retention.ts';
 import { db } from './db/index.ts';
 import { news, notifications, personPreferences, persons, units } from './db/schema.ts';
 import { escapeHtml, mailConfigured, sendMail } from './mail.ts';
@@ -362,7 +363,7 @@ export async function sendEmails(now = new Date()) {
 
 /** Löschfrist Glocke: 90 Tage (einstellbar, Kap. 15). */
 export async function deleteOldNotifications() {
-	const days = Math.max(1, Number(await getSetting('retention.notifications_days', 90)) || 90);
+	const days = await getRetention('notifications_days');
 	await db
 		.delete(notifications)
 		.where(lt(notifications.createdAt, sql`now() - make_interval(days => ${days})`));

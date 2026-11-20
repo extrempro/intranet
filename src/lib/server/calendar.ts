@@ -11,6 +11,7 @@ import { mayCreateEvents, unitTypeLabel } from '../roles.ts';
 import { canWriteEvents, eventUnitIds, type Principal } from './auth/access.ts';
 import { decryptSecret, encryptSecret, randomToken, sha256Hex } from './crypto.ts';
 import { doc, matches } from './fts.ts';
+import { getRetention } from './retention.ts';
 import { db } from './db/index.ts';
 import {
 	calendarFeeds,
@@ -24,7 +25,6 @@ import {
 	type CalendarFeedConfig
 } from './db/schema.ts';
 import { getContentRules } from './rules.ts';
-import { getSetting } from './settings.ts';
 
 export class CalendarError extends Error {}
 
@@ -482,7 +482,7 @@ export async function feedEvents(token: string) {
 
 /** Vergangene Termine nach 3 Monaten (einstellbar), Abo-Links nach 12 Monaten ohne Abruf. */
 export async function calendarRetention(now = new Date()) {
-	const months = Math.max(1, Number(await getSetting('retention.events_months', 3)) || 3);
+	const months = await getRetention('events_months');
 	await db
 		.delete(events)
 		.where(lt(events.date, sql`(current_date - make_interval(months => ${months}))::date`));

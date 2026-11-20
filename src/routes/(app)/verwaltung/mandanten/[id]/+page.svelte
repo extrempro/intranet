@@ -31,6 +31,14 @@
 		</form>
 	</section>
 
+	<a
+		class="karte kachel"
+		href={resolve('/(app)/verwaltung/mandanten/[id]/startseite', { id: m.id })}
+	>
+		<strong>Startseite für neue Personen</strong>
+		<span class="hinweis">Standard-Favoriten und Karten für {m.name}</span>
+	</a>
+
 	<section class="karte stapel" aria-labelledby="h-domains">
 		<h2 id="h-domains">E-Mail-Domains</h2>
 		<p class="hinweis">
@@ -150,5 +158,15 @@
 	}
 	.knopf {
 		justify-self: start;
+	}
+	.kachel {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		color: var(--tx);
+		text-decoration: none;
+	}
+	.kachel:hover {
+		box-shadow: 0 6px 20px rgb(0 0 0 / 0.1);
 	}
 </style>
