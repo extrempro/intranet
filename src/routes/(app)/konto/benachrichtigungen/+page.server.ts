@@ -1,5 +1,5 @@
 import { CHANNELS, TOPICS, type Channel, type EmailMode } from '#lib/notify.ts';
-import type { Principal } from '#lib/server/auth/access.ts';
+import { canSeeAdministration, type Principal } from '#lib/server/auth/access.ts';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import { mailConfigured } from '#lib/server/mail.ts';
 import { getNotify, setNotify } from '#lib/server/notify.ts';
@@ -7,9 +7,10 @@ import { listDevices, removeDevice, vapidKeys } from '#lib/server/push.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 /** Themen nur für bestimmte Aufgaben (Moderation, Pflege einer Einheit) */
-function allowed(p: Principal, onlyFor: 'moderation' | 'pflege' | undefined) {
+function allowed(p: Principal, onlyFor: 'moderation' | 'pflege' | 'verwaltung' | undefined) {
 	if (!onlyFor) return true;
 	if (onlyFor === 'moderation') return p.roles.some((r) => r.role === 'moderation_schwarzes_brett');
+	if (onlyFor === 'verwaltung') return canSeeAdministration(p);
 	return p.roles.some((r) => r.role === 'abteilungsverwaltung' || r.role === 'redaktion');
 }
 

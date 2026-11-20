@@ -43,6 +43,15 @@
 			</a>
 		</li>
 		<li>
+			<a class="karte kachel" href={resolve('/(app)/verwaltung/rueckmeldungen')}>
+				<strong>Rückmeldungen</strong><span class="hinweis">
+					{data.offeneRueckmeldungen
+						? `${data.offeneRueckmeldungen} neu`
+						: 'Fehler und Ideen bearbeiten'}
+				</span>
+			</a>
+		</li>
+		<li>
 			<a class="karte kachel" href={resolve('/(app)/verwaltung/benachrichtigungen')}>
 				<strong>Benachrichtigungen</strong><span class="hinweis">
 					Web Push, E-Mail, Testnachricht

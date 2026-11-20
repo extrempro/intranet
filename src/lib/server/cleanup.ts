@@ -8,6 +8,7 @@ import { deleteOrphans } from './files/store.ts';
 import { boardRetention } from './board.ts';
 import { calendarRetention } from './calendar.ts';
 import { hubRetention } from './hubs.ts';
+import { feedbackRetention } from './feedback.ts';
 import { deleteDisabledAccounts, deletePhotosOfDisabled } from './people.ts';
 import { remindResponsibilityReviews } from './departments.ts';
 import { deleteClosedConversations } from './messages.ts';
@@ -27,6 +28,7 @@ export async function cleanup(): Promise<void> {
 	await deleteOldNotifications();
 	await boardRetention();
 	await hubRetention();
+	await feedbackRetention();
 	await deletePhotosOfDisabled();
 	await remindResponsibilityReviews();
 	await deleteClosedConversations();

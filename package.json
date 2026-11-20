@@ -31,6 +31,7 @@
 		"@simplewebauthn/browser": "^14.0.0",
 		"@simplewebauthn/server": "^14.1.0",
 		"drizzle-orm": "^0.45.4",
+		"marked": "^18.2.1",
 		"openid-client": "^6.9.0",
 		"postgres": "^4.1.1",
 		"sanitize-html": "^2.18.2",

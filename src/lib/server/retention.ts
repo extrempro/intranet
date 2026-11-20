@@ -18,6 +18,7 @@ export type RetentionKey =
 	| 'plans_months'
 	| 'disabled_accounts_days'
 	| 'notifications_days'
+	| 'feedback_days'
 	| 'audit_admin_days'
 	| 'audit_security_days';
 

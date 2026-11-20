@@ -32,6 +32,21 @@
 			</a>
 		</li>
 	</ul>
+	<h2>Hilfe</h2>
+	<ul class="kacheln">
+		<li>
+			<a class="karte kachel" href={resolve('/(app)/handbuch')}>
+				<strong>Handbuch</strong><span class="hinweis">Anleitungen passend zu deinen Aufgaben</span>
+			</a>
+		</li>
+		<li>
+			<a class="karte kachel" href={resolve('/(app)/rueckmeldung')}>
+				<strong>Meine Meldungen</strong><span class="hinweis">
+					Fehler und Ideen, die du gemeldet hast
+				</span>
+			</a>
+		</li>
+	</ul>
 	<h2>Weitere Einstellungen</h2>
 	<ul class="kacheln">
 		<li>
