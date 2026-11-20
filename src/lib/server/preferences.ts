@@ -49,6 +49,24 @@ export interface FavoriteTarget {
  */
 const TARGETS = new Map<string, FavoriteTarget>([
 	[
+		'plaene',
+		{
+			label: 'Pläne (KBB)',
+			description: 'Wochen- und Monatspläne',
+			href: '/plaene',
+			icon: 'M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2zM16 3v4M8 3v4M4 11h16'
+		}
+	],
+	[
+		'organigramm',
+		{
+			label: 'Organigramm',
+			description: 'Aufbau aller Häuser',
+			href: '/organigramm',
+			icon: 'M3 21h18M5 21v-14l8 -4v18M19 21v-10l-6 -4'
+		}
+	],
+	[
 		'neuigkeiten',
 		{
 			label: 'Neuigkeiten',
