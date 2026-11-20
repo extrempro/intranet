@@ -110,7 +110,7 @@
 
 <svelte:window onkeydown={global} onclick={klick} />
 
-<div class="kopfsuche" class:offen bind:this={box}>
+<div class="kopfsuche" class:offen bind:this={box} data-tour="suche">
 	<button
 		type="button"
 		class="symbolknopf lupe"

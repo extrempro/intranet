@@ -349,3 +349,34 @@ export async function seedFavorites(personId: string, tenantId: string) {
 		.values(keys.map((key, position) => ({ personId, key, position })))
 		.onConflictDoNothing();
 }
+
+// ---------------------------------------------------------------------------
+// Führung und Einführungen (Kap. 13)
+// ---------------------------------------------------------------------------
+
+export async function getHelpSeen(personId: string): Promise<string[]> {
+	const [row] = await db
+		.select({ seen: personPreferences.helpSeen })
+		.from(personPreferences)
+		.where(eq(personPreferences.personId, personId));
+	return row?.seen ?? [];
+}
+
+export async function markHelpSeen(personId: string, key: string) {
+	const seen = await getHelpSeen(personId);
+	if (seen.includes(key)) return;
+	const next = [...seen, key].slice(-50);
+	await db
+		.insert(personPreferences)
+		.values({ personId, helpSeen: next })
+		.onConflictDoUpdate({ target: personPreferences.personId, set: { helpSeen: next } });
+}
+
+/** „Einführungen wieder anbieten“: alles außer der Führung zurücksetzen. */
+export async function resetHelpSeen(personId: string) {
+	const keep = (await getHelpSeen(personId)).filter((k) => k === 'fuehrung');
+	await db
+		.insert(personPreferences)
+		.values({ personId, helpSeen: keep })
+		.onConflictDoUpdate({ target: personPreferences.personId, set: { helpSeen: keep } });
+}

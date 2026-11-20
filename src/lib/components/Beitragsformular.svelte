@@ -2,6 +2,7 @@
 	import { untrack } from 'svelte';
 	import Anhaenge from './Anhaenge.svelte';
 	import Editor from './Editor.svelte';
+	import Info from './Info.svelte';
 	import { berlinToDate, endOfBerlinDay, lifecycle } from '#lib/news.ts';
 
 	interface Einheit {
@@ -108,7 +109,13 @@
 
 {#if einheit?.isCentral}
 	<fieldset class="gruppe">
-		<legend>Wer sieht das?</legend>
+		<legend>
+			Wer sieht das?
+			<Info
+				thema="Wer sieht das?"
+				text="Du kannst für alle Mandanten schreiben oder nur für einzelne. Wer nicht dazugehört, sieht den Beitrag nicht, auch nicht in der Suche."
+			/>
+		</legend>
 		<label class="option">
 			<input
 				type="radio"
@@ -150,7 +157,13 @@
 
 <div class="zeile">
 	<label class="feld">
-		<span>Freigabe</span>
+		<span>
+			Freigabe
+			<Info
+				thema="Freigabe"
+				text="Ab diesem Zeitpunkt sehen alle den Beitrag. Liegt er in der Zukunft, ist der Beitrag geplant: Bis dahin sehen ihn nur die Schreibenden deiner Einheit und die Redaktion."
+			/>
+		</span>
 		<input
 			type="datetime-local"
 			name="freigabe"
@@ -161,7 +174,13 @@
 		{#if fehler.publishAt}<span id="f-publishAt" class="feldfehler">{fehler.publishAt}</span>{/if}
 	</label>
 	<label class="feld">
-		<span>Ablauf (optional)</span>
+		<span>
+			Ablauf (optional)
+			<Info
+				thema="Ablauf"
+				text="Nach diesem Tag verschwindet der Beitrag aus den Neuigkeiten. Ohne Ablauf bleibt er stehen."
+			/>
+		</span>
 		<input type="date" name="ablauf" bind:value={v.expiresAt} aria-describedby={fid('expiresAt')} />
 		{#if fehler.expiresAt}<span id="f-expiresAt" class="feldfehler">{fehler.expiresAt}</span>{/if}
 	</label>
@@ -169,7 +188,13 @@
 
 {#if !einheit?.isHub}
 	<fieldset class="gruppe">
-		<legend>Anheften</legend>
+		<legend>
+			Anheften
+			<Info
+				thema="Anheften"
+				text="Angeheftete Beiträge stehen oben in den Neuigkeiten, bis zum Datum unter „Angeheftet bis“. Jeder Absender kann nur eine begrenzte Zahl gleichzeitig anheften."
+			/>
+		</legend>
 		<label class="option">
 			<input type="checkbox" name="anheften" bind:checked={v.pin} /> Oben in den Neuigkeiten anheften
 		</label>
@@ -199,7 +224,13 @@
 
 {#if einheit?.mayUrgent}
 	<fieldset class="gruppe dringend">
-		<legend>Dringende Meldung</legend>
+		<legend>
+			Dringende Meldung
+			<Info
+				thema="Dringende Meldung"
+				text="Nur für Wichtiges, das alle sofort wissen müssen. Die Meldung erscheint als rotes Banner auf der Startseite und kommt immer als Push, auch in Ruhezeiten, wenn die Person das nicht ausgeschaltet hat. Nach „Dringend bis“ wird sie zum normalen Beitrag."
+			/>
+		</legend>
 		<label class="option">
 			<input type="checkbox" name="dringend" bind:checked={v.urgent} /> Als rotes Banner oben auf der
 			Startseite zeigen

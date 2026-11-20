@@ -42,7 +42,7 @@
 
 <svelte:window onkeydown={aufTaste} onclick={aufKlick} />
 
-<div class="konto">
+<div class="konto" data-tour="konto">
 	<button
 		bind:this={knopf}
 		type="button"
@@ -66,6 +66,7 @@
 			<a href={resolve('/(app)/konto/profil')} class="eintrag">Mein Profil</a>
 			<a href={resolve('/(app)/konto')} class="eintrag">Konto und Einstellungen</a>
 			<a href={resolve('/(app)/handbuch')} class="eintrag">Handbuch</a>
+			<a href="{resolve('/(app)')}?fuehrung=1" class="eintrag">Führung starten</a>
 			<a href={resolve('/(app)/rueckmeldung/neu')} class="eintrag">Rückmeldung geben</a>
 			{#if darfRedaktion}
 				<a href={resolve('/(app)/redaktion')} class="eintrag">Redaktion</a>

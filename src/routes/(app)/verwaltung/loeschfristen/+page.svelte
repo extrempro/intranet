@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import Info from '#lib/components/Info.svelte';
 	import { RETENTION_FIELDS, RETENTION_FIXED } from '#lib/rules-config.ts';
 
 	let { data, form } = $props();
@@ -18,7 +19,13 @@
 
 <div class="stapel seite">
 	<a class="zurueck" href={resolve('/(app)/verwaltung')}>← Verwaltung</a>
-	<h1>Löschfristen</h1>
+	<h1 class="mit-hilfe">
+		Löschfristen
+		<Info
+			thema="Löschfristen"
+			text="Eine kürzere Frist gilt beim nächsten Aufräumen auch für ältere Einträge. Gelöschtes lässt sich im Intranet nicht wiederherstellen."
+		/>
+	</h1>
 	<p class="hinweis">
 		Gelten für alle Mandanten. Gelöscht wird beim stündlichen Aufräumen.
 		{data.darfAendern ? '' : 'Ändern können nur System-Admins.'}

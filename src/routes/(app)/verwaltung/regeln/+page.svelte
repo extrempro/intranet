@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import Info from '#lib/components/Info.svelte';
 	import { RULE_GROUPS } from '#lib/rules-config.ts';
 
 	let { data, form } = $props();
@@ -43,7 +44,10 @@
 			<legend class="sr-only">Regeln</legend>
 			{#each RULE_GROUPS as g (g.id)}
 				<section class="karte stapel" aria-labelledby="h-{g.id}">
-					<h2 id="h-{g.id}">{g.title}</h2>
+					<h2 id="h-{g.id}">
+						{g.title}
+						{#if g.info}<Info thema={g.title} text={g.info} />{/if}
+					</h2>
 					{#each g.fields as f (f.key)}
 						{#if f.type === 'bool'}
 							<label class="option">

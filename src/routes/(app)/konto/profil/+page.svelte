@@ -5,6 +5,7 @@
 	import { untrack } from 'svelte';
 	import Avatar from '#lib/components/Avatar.svelte';
 	import FotoZuschnitt from '#lib/components/FotoZuschnitt.svelte';
+	import Info from '#lib/components/Info.svelte';
 	import { MOBILE_VISIBILITY, type ContactErrors } from '#lib/profile.ts';
 
 	let { data, form } = $props();
@@ -112,7 +113,13 @@
 				{#if f.mobile}<span id="f-mobil" class="feldfehler">{f.mobile}</span>{/if}
 			</label>
 			<fieldset class="feld">
-				<legend>Wer sieht deine Mobilnummer?</legend>
+				<legend>
+					Wer sieht deine Mobilnummer?
+					<Info
+						thema="Wer sieht deine Mobilnummer?"
+						text="Alle: jede Person, die dein Profil sieht. Nur mein Team: Personen aus deinen Abteilungen und Hubs. Niemand: Die Nummer bleibt gespeichert, wird aber nirgends angezeigt, auch nicht in der Suche."
+					/>
+				</legend>
 				<div class="optionen">
 					{#each MOBILE_VISIBILITY as v (v.key)}
 						<label class="option">
@@ -123,9 +130,6 @@
 				</div>
 				{#if f.mobileVisibility}<span class="feldfehler">{f.mobileVisibility}</span>{/if}
 			</fieldset>
-			<p class="hinweis">
-				„Nur mein Team“: Personen, mit denen du in einer Abteilung oder einem Hub bist.
-			</p>
 			<button class="knopf" type="submit">Speichern</button>
 		</form>
 		<p class="hinweis">

@@ -3,10 +3,14 @@
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import { untrack } from 'svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import Kontomenue from '#lib/components/Kontomenue.svelte';
 	import Kopfsuche from '#lib/components/Kopfsuche.svelte';
 	import OfflineHinweis from '#lib/components/OfflineHinweis.svelte';
+	import Tour from '#lib/components/Tour.svelte';
+	import { hilfe } from '#lib/hilfe.svelte.ts';
+	import { FUEHRUNG } from '#lib/tours.ts';
 	import { currentNav, navAreas } from '#lib/nav.ts';
 
 	let { data, children } = $props();
@@ -33,11 +37,31 @@
 	const GLOCKE =
 		'M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6M9 17v1a3 3 0 0 0 6 0v-1';
 	const dunkel = $derived(istDunkel(theme));
+
+	// Führung beim ersten Start bzw. auf Wunsch (?fuehrung=1) – Kap. 13
+	$effect.pre(() => {
+		hilfe.setzeGesehen(data.hilfeGesehen);
+	});
+	let gestartetFuer = '';
+	$effect(() => {
+		const href = page.url.href;
+		if (page.url.pathname !== '/' || gestartetFuer === href) return;
+		const gewuenscht = page.url.searchParams.get('fuehrung') === '1';
+		if (gewuenscht || !untrack(() => hilfe.istGesehen(FUEHRUNG.key))) {
+			gestartetFuer = href;
+			// Erst wenn die Startseite steht
+			setTimeout(() => hilfe.starten(FUEHRUNG), 300);
+		}
+	});
 	const SPRECHBLASE =
 		'M8 9h8M8 13h6M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-5l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12z';
 </script>
 
 <a class="skip" href="#inhalt">Zum Inhalt springen</a>
+
+{#if hilfe.aktiv}
+	{#key hilfe.aktiv.key}<Tour tour={hilfe.aktiv} />{/key}
+{/if}
 
 <div class="app akzent" style={data.akzent}>
 	<header class="kopf">
@@ -73,6 +97,7 @@
 
 		<a
 			class="symbolknopf nur-gross"
+			data-tour="rueckmeldung"
 			href="{resolve('/(app)/rueckmeldung/neu')}?von={encodeURIComponent(
 				page.url.pathname + page.url.search
 			)}"
@@ -84,6 +109,7 @@
 
 		<a
 			class="symbolknopf glocke"
+			data-tour="nachrichten"
 			href={resolve('/(app)/nachrichten')}
 			aria-label={data.nachrichten
 				? `Nachrichten, ${data.nachrichten} mit neuen Antworten`
@@ -99,6 +125,7 @@
 
 		<a
 			class="symbolknopf glocke"
+			data-tour="glocke"
 			href={resolve('/(app)/benachrichtigungen')}
 			aria-label={data.ungelesen
 				? `Benachrichtigungen, ${data.ungelesen} ungelesen`
@@ -124,7 +151,7 @@
 
 	<div class="rumpf">
 		<!-- PC: Seitenleiste mit Bereichen und Unterseiten -->
-		<nav class="seitenleiste" aria-label="Hauptnavigation">
+		<nav class="seitenleiste" aria-label="Hauptnavigation" data-tour="navigation">
 			<ul>
 				{#each areas as area (area.key)}
 					{@const an = aktuell.area?.key === area.key}
@@ -221,7 +248,7 @@
 	</div>
 
 	<!-- Handy: Leiste unten -->
-	<nav class="unten" aria-label="Hauptnavigation">
+	<nav class="unten" aria-label="Hauptnavigation" data-tour="navigation">
 		{#each areas as area (area.key)}
 			{@const an = aktuell.area?.key === area.key}
 			<a href={area.href} class:an aria-current={an ? 'page' : undefined}>

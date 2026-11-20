@@ -68,7 +68,7 @@
 		</section>
 	{/each}
 
-	<section aria-labelledby="fav-h">
+	<section aria-labelledby="fav-h" data-tour="favoriten">
 		<h2 id="fav-h">Favoriten</h2>
 		{#if (bearbeiten ? favoriten : data.favoriten).length === 0}
 			<p class="hinweis">

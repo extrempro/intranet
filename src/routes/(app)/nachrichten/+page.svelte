@@ -12,18 +12,25 @@
 	});
 	const q = (box: string, erledigt: boolean) =>
 		`?postfach=${box}${erledigt ? '&status=erledigt' : ''}`;
+	import EinfuehrungAngebot from '#lib/components/EinfuehrungAngebot.svelte';
+	import EinfuehrungKnopf from '#lib/components/EinfuehrungKnopf.svelte';
+	import { SEITEN } from '#lib/tours.ts';
 </script>
 
 <svelte:head><title>Nachrichten · Intranet</title></svelte:head>
 
 <div class="stapel schmal">
 	<div>
-		<h1>Nachrichten</h1>
+		<h1 class="mit-hilfe">
+			Nachrichten <EinfuehrungKnopf tour={SEITEN.nachrichten} />
+		</h1>
 		<p class="hinweis">Gespräche zu Anzeigen am Schwarzen Brett, Hub-Anträgen und Rückmeldungen.</p>
 	</div>
 
+	<EinfuehrungAngebot tour={SEITEN.nachrichten} />
+
 	{#if data.boxes.length > 1}
-		<nav class="pillen" aria-label="Postfach">
+		<nav class="pillen" aria-label="Postfach" data-tour="postfaecher">
 			{#each data.boxes as b (b.key)}
 				<a
 					class="pille"
@@ -40,7 +47,7 @@
 			Gemeinsames Postfach: Alle mit dieser Rolle sehen und beantworten dieselben Gespräche.
 		</p>
 	{/if}
-	<nav class="pillen klein" aria-label="Filtern">
+	<nav class="pillen klein" aria-label="Filtern" data-tour="stand">
 		<a class="pille" href={q(data.box, false)} aria-current={!data.erledigt ? 'true' : undefined}>
 			Offen
 		</a>
@@ -50,9 +57,9 @@
 	</nav>
 
 	{#if data.liste.length === 0}
-		<p class="karte hinweis">Keine Gespräche.</p>
+		<p class="karte hinweis" data-tour="liste">Keine Gespräche.</p>
 	{:else}
-		<ul class="liste karte">
+		<ul class="liste karte" data-tour="liste">
 			{#each data.liste as g (g.id)}
 				<li class:neu={g.unread}>
 					<a href={resolve('/(app)/nachrichten/[id]', { id: g.id })}>

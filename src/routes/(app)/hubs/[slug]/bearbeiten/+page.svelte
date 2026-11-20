@@ -2,6 +2,9 @@
 	import { untrack } from 'svelte';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import EinfuehrungAngebot from '#lib/components/EinfuehrungAngebot.svelte';
+	import EinfuehrungKnopf from '#lib/components/EinfuehrungKnopf.svelte';
+	import { ROLLEN } from '#lib/tours.ts';
 	import { HUB_SECTIONS, type HubLayout, type HubSection } from '#lib/hubs.ts';
 
 	let { data, form } = $props();
@@ -42,15 +45,23 @@
 
 <div class="stapel schmal">
 	<a class="zurueck" href={resolve('/(app)/hubs/[slug]', { slug: h.slug })}>← {h.name}</a>
-	<h1>Hub bearbeiten</h1>
+	<h1 class="mit-hilfe">
+		Hub bearbeiten
+		{#if h.canManage}<EinfuehrungKnopf tour={ROLLEN.hub_team} />{/if}
+	</h1>
 	{#if form && 'fehler' in form}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
 	{#if form && 'gespeichert' in form}<p class="meldung" role="status">Gespeichert.</p>{/if}
 
 	{#if h.canManage}
+		<EinfuehrungAngebot
+			tour={ROLLEN.hub_team}
+			text="Du bist im Hub-Team. Eine kurze Einführung zeigt dir, wie du den Hub gestaltest."
+		/>
 		<form
 			method="POST"
 			action="?/speichern"
 			class="karte felder"
+			data-tour="hinweis"
 			use:enhance={() =>
 				({ update }) =>
 					update({ reset: false })}
@@ -65,7 +76,7 @@
 				<textarea name="ueber" rows="5" maxlength="2000">{h.about ?? ''}</textarea>
 			</label>
 
-			<fieldset class="aufbau">
+			<fieldset class="aufbau" data-tour="aufbau">
 				<legend>Aufbau der Seite</legend>
 				<p class="hinweis">Abschnitte ein- und ausblenden und sortieren.</p>
 				<input type="hidden" name="aufbau" value={json} />
@@ -101,7 +112,7 @@
 			<div><button class="knopf" type="submit">Speichern</button></div>
 		</form>
 
-		<form method="POST" action="?/ruhen" class="karte stapel" use:enhance>
+		<form method="POST" action="?/ruhen" class="karte stapel" data-tour="ruhen" use:enhance>
 			<h2>Ruhen lassen</h2>
 			<p class="hinweis">
 				Ein ruhender Hub bleibt sichtbar, aber es erscheinen keine neuen Beiträge. Abos bleiben
