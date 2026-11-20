@@ -8,7 +8,7 @@
 import { eq } from 'drizzle-orm';
 import type { Role } from '../../roles.ts';
 import { db } from '../db/index.ts';
-import { roleAssignments, unitMembers } from '../db/schema.ts';
+import { locationOperators, roleAssignments, unitMembers } from '../db/schema.ts';
 
 export interface RoleGrant {
 	role: Role;
@@ -31,6 +31,8 @@ export interface Principal {
 	tenantId: string;
 	roles: RoleGrant[];
 	memberships: Membership[];
+	/** Betreiber-Konto: nur dieser Standort, sonst nichts (Kap. 4.3). */
+	operatorLocationId?: string | null;
 }
 
 /** Die für Rechte nötigen Angaben einer Einheit. */
@@ -41,7 +43,7 @@ export interface UnitRef {
 }
 
 export async function loadPrincipal(person: { id: string; tenantId: string }): Promise<Principal> {
-	const [roles, memberships] = await Promise.all([
+	const [roles, memberships, operator] = await Promise.all([
 		db
 			.select({
 				role: roleAssignments.role,
@@ -61,9 +63,19 @@ export async function loadPrincipal(person: { id: string; tenantId: string }): P
 				mayWriteBehindScenes: unitMembers.mayWriteBehindScenes
 			})
 			.from(unitMembers)
-			.where(eq(unitMembers.personId, person.id))
+			.where(eq(unitMembers.personId, person.id)),
+		db
+			.select({ locationId: locationOperators.locationId })
+			.from(locationOperators)
+			.where(eq(locationOperators.personId, person.id))
 	]);
-	return { personId: person.id, tenantId: person.tenantId, roles, memberships };
+	return {
+		personId: person.id,
+		tenantId: person.tenantId,
+		roles,
+		memberships,
+		operatorLocationId: operator[0]?.locationId ?? null
+	};
 }
 
 // ---------------------------------------------------------------------------
@@ -145,10 +157,29 @@ export function canWriteNews(p: Principal, unit: UnitRef): boolean {
 	);
 }
 
+/** Darf FAQs der Einheit anlegen, ändern und löschen. */
+export function canWriteFaqs(p: Principal, unit: UnitRef): boolean {
+	if (!canSeeUnit(p, unit)) return false;
+	return (
+		hasDelegated(p, unit.id, 'mayWriteFaqs') ||
+		hasUnitRole(p, 'abteilungsverwaltung', unit.id) ||
+		hasUnitRole(p, 'hub_team', unit.id)
+	);
+}
+
 /** Einheiten, für die die Person Neuigkeiten schreiben darf (IDs). */
 export function newsUnitIds(p: Principal): Set<string> {
+	return writeUnitIds(p, 'mayWriteNews');
+}
+
+/** Einheiten, für die die Person FAQs pflegen darf (IDs). */
+export function faqUnitIds(p: Principal): Set<string> {
+	return writeUnitIds(p, 'mayWriteFaqs');
+}
+
+function writeUnitIds(p: Principal, right: WriteRight): Set<string> {
 	const ids = new Set<string>();
-	for (const m of p.memberships) if (m.mayWriteNews) ids.add(m.unitId);
+	for (const m of p.memberships) if (m[right]) ids.add(m.unitId);
 	for (const r of p.roles) {
 		if ((r.role === 'abteilungsverwaltung' || r.role === 'hub_team') && r.scopeUnitId) {
 			ids.add(r.scopeUnitId);

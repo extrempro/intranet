@@ -55,6 +55,8 @@ export async function listPersons(p: Principal, q: string) {
 		.where(
 			and(
 				inArray(persons.tenantId, tenantIds),
+				// Betreiber-Konten verwaltet Verwaltung → Standorte (Kap. 4.3)
+				sql`not exists (select 1 from location_operators lo where lo.person_id = ${persons.id})`,
 				term ? or(ilike(persons.displayName, like), ilike(persons.email, like)) : undefined
 			)
 		)
@@ -68,7 +70,12 @@ async function loadPerson(p: Principal, id: string) {
 		.select({ person: persons, tenantName: tenants.name })
 		.from(persons)
 		.innerJoin(tenants, eq(tenants.id, persons.tenantId))
-		.where(eq(persons.id, id));
+		.where(
+			and(
+				eq(persons.id, id),
+				sql`not exists (select 1 from location_operators lo where lo.person_id = ${persons.id})`
+			)
+		);
 	if (!row || !canAdministerTenant(p, row.person.tenantId))
 		throw new UserError('Person nicht gefunden.');
 	return row;

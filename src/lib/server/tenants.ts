@@ -210,7 +210,12 @@ export async function addAdmin(p: Principal, id: string, email: string, ip: stri
 	const [person] = await db
 		.select({ id: persons.id, tenantId: persons.tenantId })
 		.from(persons)
-		.where(sql`lower(${persons.email}) = lower(${email.trim()})`);
+		.where(
+			and(
+				sql`lower(${persons.email}) = lower(${email.trim()})`,
+				sql`not exists (select 1 from location_operators lo where lo.person_id = ${persons.id})`
+			)
+		);
 	if (!person || person.tenantId !== id) {
 		throw new TenantError(
 			'Keine Person mit dieser E-Mail-Adresse in diesem Mandanten. Sie muss sich vorher einmal angemeldet haben.'

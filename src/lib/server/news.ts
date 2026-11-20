@@ -41,7 +41,7 @@ import {
 	units,
 	urgentDismissals
 } from './db/schema.ts';
-import { deleteStored, MAX_ATTACHMENTS } from './files/store.ts';
+import { deleteStored, MAX_ATTACHMENTS, ownUnlinkedFiles } from './files/store.ts';
 import { cleanHtml, excerpt, htmlToText } from './html.ts';
 import { getContentRules } from './rules.ts';
 
@@ -368,17 +368,7 @@ async function checkAttachments(p: Principal, ids: string[], newsId: string | un
 		: [];
 	const fresh = wanted.filter((id) => !current.includes(id));
 	if (fresh.length) {
-		const ok = await db
-			.select({ id: files.id })
-			.from(files)
-			.leftJoin(newsAttachments, eq(newsAttachments.fileId, files.id))
-			.where(
-				and(
-					inArray(files.id, fresh),
-					eq(files.createdBy, p.personId),
-					isNull(newsAttachments.fileId)
-				)
-			);
+		const ok = await ownUnlinkedFiles(p.personId, fresh);
 		if (ok.length !== fresh.length)
 			return { error: 'Ein Anhang ist nicht mehr verfügbar. Lade ihn bitte erneut hoch.' };
 	}
