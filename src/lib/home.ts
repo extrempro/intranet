@@ -16,6 +16,7 @@ export interface CardDefinition {
 export const HOME_CARDS: CardDefinition[] = [
 	{ id: 'neuigkeiten', label: 'Neuigkeiten' },
 	{ id: 'termine', label: 'Heute und morgen' },
+	{ id: 'hubs', label: 'Neu in deinen Hubs' },
 	{ id: 'speiseplan', label: 'Speiseplan' },
 	{ id: 'plaene', label: 'Neueste Pläne (KBB)' }
 ];

@@ -6,12 +6,15 @@ import {
 	MessageError,
 	sendMessage
 } from '#lib/server/messages.ts';
+import { answerDeadline } from '#lib/server/hubs.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	const g = await getConversation(requirePrincipal(locals), params.id);
 	if (!g) error(404, 'Dieses Gespräch gibt es nicht.');
-	return { gespraech: g };
+	// Hub-Anträge: Antwortfrist, wenn die Rolle zuletzt geschrieben hat (Kap. 8.12)
+	const frist = g.kind === 'hub_antrag' && !g.closedAt ? await answerDeadline(g.id) : null;
+	return { gespraech: g, frist };
 };
 
 export const actions: Actions = {

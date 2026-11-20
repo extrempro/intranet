@@ -90,6 +90,7 @@ const columns = {
 	description: events.description,
 	unitId: events.unitId,
 	unitName: units.name,
+	isHub: sql<boolean>`${units.type} = 'hub'`,
 	tenantId: events.tenantId,
 	tenantShort: tenants.shortName,
 	updatedAt: events.updatedAt
@@ -126,10 +127,14 @@ export async function listEvents(p: Principal, o: ListOptions) {
 		.orderBy(asc(events.date), sql`${events.allDay} desc`, asc(events.startTime), asc(events.title))
 		.limit(Math.min(o.limit ?? 500, 1000));
 	const writable = new Set((await eventWritableUnits(p)).map((u) => u.id));
+	// Abonnierte Hubs markieren (Kap. 8.8)
+	const { subscribedHubIds } = await import('./hubs.ts');
+	const abos = new Set(await subscribedHubIds(p));
 	return rows.map((r) => ({
 		...r,
 		canEdit: writable.has(r.unitId),
-		own: r.tenantId === p.tenantId
+		own: r.tenantId === p.tenantId,
+		subscribed: abos.has(r.unitId)
 	}));
 }
 
@@ -281,7 +286,12 @@ export async function deleteEvent(p: Principal, id: string) {
 // Persönliches iCal-Abo
 // ---------------------------------------------------------------------------
 
-export const DEFAULT_FEED: CalendarFeedConfig = { tenants: [], departments: 'all', unitIds: [] };
+export const DEFAULT_FEED: CalendarFeedConfig = {
+	tenants: [],
+	departments: 'all',
+	unitIds: [],
+	hubs: 'mine'
+};
 
 function feedUrl(origin: string, token: string) {
 	return `${origin}/ical/${token}.ics`;
@@ -307,7 +317,8 @@ async function cleanConfig(p: Principal, c: CalendarFeedConfig): Promise<Calenda
 			? [...new Set(c.unitIds)].filter((u) => GUID.test(u)).slice(0, 200)
 			: [];
 	const departments = ['all', 'selected', 'none'].includes(c.departments) ? c.departments : 'all';
-	return { tenants: tenantIds, departments, unitIds };
+	const hubs = c.hubs === 'all' || c.hubs === 'none' ? c.hubs : 'mine';
+	return { tenants: tenantIds, departments, unitIds, hubs };
 }
 
 function newToken() {
@@ -409,8 +420,34 @@ export async function feedEvents(token: string) {
 			.where(eq(calendarFeeds.personId, row.feed.personId));
 
 	const c = row.feed.config;
-	if (c.departments === 'none') return [];
+	const hubMode = c.hubs ?? 'mine';
+	if (c.departments === 'none' && hubMode === 'none') return [];
 	const today = berlinNow(now).date;
+	// Abteilungen (alles außer Hubs) und Hubs getrennt auswählbar
+	const departments =
+		c.departments === 'none'
+			? sql`false`
+			: c.departments === 'selected'
+				? and(
+						sql`${units.type} <> 'hub'`,
+						inArray(events.unitId, c.unitIds.length ? c.unitIds : [GUID_NONE])
+					)
+				: sql`${units.type} <> 'hub'`;
+	const hubs =
+		hubMode === 'none'
+			? sql`false`
+			: hubMode === 'all'
+				? sql`${units.type} = 'hub'`
+				: and(
+						sql`${units.type} = 'hub'`,
+						or(
+							sql`exists (select 1 from hub_subscriptions s where s.unit_id = ${units.id} and s.person_id = ${row.feed.personId})`,
+							and(
+								eq(units.mandatorySubscription, true),
+								or(eq(units.isCentral, true), eq(units.tenantId, row.tenantId))
+							)
+						)
+					);
 	return db
 		.select({
 			id: events.id,
@@ -430,9 +467,8 @@ export async function feedEvents(token: string) {
 				gte(events.date, addDays(today, -30)),
 				lte(events.date, addDays(today, 365)),
 				forTenants([row.tenantId, ...c.tenants]),
-				c.departments === 'selected'
-					? inArray(events.unitId, c.unitIds.length ? c.unitIds : [GUID_NONE])
-					: undefined
+				isNull(units.archivedAt),
+				or(departments, hubs)
 			)
 		)
 		.orderBy(asc(events.date), asc(events.startTime))

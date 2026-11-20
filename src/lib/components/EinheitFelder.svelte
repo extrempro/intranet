@@ -10,6 +10,7 @@
 		hidden: boolean;
 		mayPostUrgent: boolean | null;
 		mayCreateEvents: boolean | null;
+		mandatorySubscription?: boolean;
 		isKbb: boolean;
 	}
 
@@ -106,6 +107,15 @@
 			</label>
 		{/each}
 	</fieldset>
+{/if}
+
+{#if typ === 'hub'}
+	<label class="option">
+		<input type="checkbox" name="pflichtabo" checked={werte.mandatorySubscription ?? false} />
+		<span>
+			Pflicht-Abo – alle im Zuständigkeitsbereich bekommen die Beiträge, Abmelden geht nicht
+		</span>
+	</label>
 {/if}
 
 <fieldset class="gruppe">

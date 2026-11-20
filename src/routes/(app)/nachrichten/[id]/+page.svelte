@@ -11,11 +11,13 @@
 		timeZone: 'Europe/Berlin'
 	});
 	const vorgang = $derived(
-		g.kind === 'moderation' && g.viaRole
-			? `${resolve('/(app)/schwarzes-brett')}?ansicht=moderation`
-			: g.kind === 'moderation'
-				? `${resolve('/(app)/schwarzes-brett')}?ansicht=meine`
-				: resolve('/(app)/schwarzes-brett')
+		g.kind === 'hub_antrag'
+			? resolve('/(app)/hubs/antraege')
+			: g.kind === 'moderation' && g.viaRole
+				? `${resolve('/(app)/schwarzes-brett')}?ansicht=moderation`
+				: g.kind === 'moderation'
+					? `${resolve('/(app)/schwarzes-brett')}?ansicht=meine`
+					: resolve('/(app)/schwarzes-brett')
 	);
 </script>
 
@@ -30,9 +32,17 @@
 		</div>
 		<h1>{g.subject}</h1>
 		<p class="hinweis">
-			{g.withLabel}{g.withLabel ? ' · ' : ''}<a href={vorgang}>Zum Schwarzen Brett</a>
+			{g.withLabel}{g.withLabel ? ' · ' : ''}<a href={vorgang}>
+				{g.kind === 'hub_antrag' ? 'Zum Antrag' : 'Zum Schwarzen Brett'}
+			</a>
 		</p>
 	</div>
+
+	{#if data.frist}
+		<p class="meldung" role="note">
+			Bitte antworte bis {zeit.format(data.frist)}. Ohne Antwort wird der Antrag danach geschlossen.
+		</p>
+	{/if}
 
 	<section class="karte verlauf" aria-label="Verlauf">
 		{#each g.messages as m (m.id)}

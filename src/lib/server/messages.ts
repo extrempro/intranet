@@ -3,8 +3,8 @@
  * Postfächer: persönlich und gemeinsam je Rolle (vorerst Moderation
  * Schwarzes Brett je Mandant). Alle mit der Rolle sehen dieselben Gespräche.
  */
-import { and, asc, desc, eq, inArray, isNotNull, isNull, lt, or, sql } from 'drizzle-orm';
-import { hasTenantRole, type Principal } from './auth/access.ts';
+import { and, asc, desc, eq, isNotNull, isNull, lt, or, sql } from 'drizzle-orm';
+import { canAdministerTenant, hasTenantRole, isEditorial, type Principal } from './auth/access.ts';
 import { db } from './db/index.ts';
 import {
 	conversationMembers,
@@ -23,7 +23,25 @@ export class MessageError extends Error {}
 const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const MESSAGE_MAX = 1000;
 
-const KIND_LABEL = { anzeige: 'Anzeige', moderation: 'Moderation' } as const;
+const KIND_LABEL = {
+	anzeige: 'Anzeige',
+	moderation: 'Moderation',
+	hub_antrag: 'Hub-Antrag'
+} as const;
+
+export type RoleBox = 'moderation' | 'redaktion' | 'verwaltung';
+export const ROLE_LABEL: Record<RoleBox, string> = {
+	moderation: 'Moderation',
+	redaktion: 'Redaktion',
+	verwaltung: 'Verwaltung'
+};
+
+/** Darf die Person im Rollen-Postfach dieses Mandanten lesen und schreiben? */
+export function roleAllows(p: Principal, box: RoleBox, tenantId: string): boolean {
+	if (box === 'moderation') return hasTenantRole(p, 'moderation_schwarzes_brett', tenantId);
+	if (box === 'redaktion') return isEditorial(p, tenantId);
+	return canAdministerTenant(p, tenantId);
+}
 
 // ---------------------------------------------------------------------------
 // Rollen-Postfächer
@@ -38,21 +56,34 @@ export async function moderatedTenants(p: Principal) {
 	return all.filter((t) => hasTenantRole(p, 'moderation_schwarzes_brett', t.id));
 }
 
-/** Personen mit der Rolle Moderation für den Mandanten (für Benachrichtigungen). */
-export async function moderatorsOf(tenantId: string): Promise<string[]> {
+/** Personen, die das Rollen-Postfach dieses Mandanten bedienen (für Benachrichtigungen). */
+export async function roleMembers(box: RoleBox, tenantId: string): Promise<string[]> {
+	const role =
+		box === 'moderation'
+			? 'moderation_schwarzes_brett'
+			: box === 'redaktion'
+				? 'redaktion'
+				: 'mandanten_admin';
 	const rows = await db
 		.selectDistinct({ id: roleAssignments.personId })
 		.from(roleAssignments)
 		.where(
-			and(
-				eq(roleAssignments.role, 'moderation_schwarzes_brett'),
-				or(
-					eq(roleAssignments.scope, 'all'),
-					and(eq(roleAssignments.scope, 'tenant'), eq(roleAssignments.scopeTenantId, tenantId))
-				)
+			or(
+				and(
+					eq(roleAssignments.role, role),
+					or(
+						eq(roleAssignments.scope, 'all'),
+						and(eq(roleAssignments.scope, 'tenant'), eq(roleAssignments.scopeTenantId, tenantId))
+					)
+				),
+				box === 'verwaltung' ? eq(roleAssignments.role, 'system_admin') : sql`false`
 			)
 		);
 	return rows.map((r) => r.id);
+}
+
+export async function moderatorsOf(tenantId: string): Promise<string[]> {
+	return roleMembers('moderation', tenantId);
 }
 
 async function access(p: Principal, conversationId: string) {
@@ -69,9 +100,7 @@ async function access(p: Principal, conversationId: string) {
 			)
 		);
 	const viaRole =
-		c.roleBox === 'moderation' &&
-		c.roleTenantId !== null &&
-		hasTenantRole(p, 'moderation_schwarzes_brett', c.roleTenantId);
+		c.roleBox !== null && c.roleTenantId !== null && roleAllows(p, c.roleBox, c.roleTenantId);
 	if (!m && !viaRole) return null;
 	return { conv: c, member: Boolean(m), viaRole };
 }
@@ -80,11 +109,9 @@ async function access(p: Principal, conversationId: string) {
 // Anlegen (intern, von den Vorgängen)
 // ---------------------------------------------------------------------------
 
-export async function findConversation(
-	kind: 'anzeige' | 'moderation',
-	refId: string,
-	personId?: string
-) {
+export type Kind = 'anzeige' | 'moderation' | 'hub_antrag';
+
+export async function findConversation(kind: Kind, refId: string, personId?: string) {
 	const rows = await db
 		.select({ id: conversations.id, closedAt: conversations.closedAt })
 		.from(conversations)
@@ -103,11 +130,11 @@ export async function findConversation(
 }
 
 export async function startConversation(input: {
-	kind: 'anzeige' | 'moderation';
+	kind: Kind;
 	subject: string;
 	refId: string;
 	memberIds: string[];
-	roleBox?: 'moderation';
+	roleBox?: RoleBox;
 	roleTenantId?: string;
 }) {
 	return db.transaction(async (tx) => {
@@ -153,18 +180,28 @@ export async function closeByRef(refId: string) {
 // Lesen
 // ---------------------------------------------------------------------------
 
-export type Box = { key: string; label: string; tenantId: string | null };
+export type Box = { key: string; label: string; role: RoleBox | null; tenantId: string | null };
 
+/** Persönliches Postfach und alle Rollen-Postfächer der Person. */
 export async function boxesFor(p: Principal): Promise<Box[]> {
-	const mod = await moderatedTenants(p);
-	return [
-		{ key: 'persoenlich', label: 'Persönlich', tenantId: null },
-		...mod.map((t) => ({
-			key: `moderation-${t.short.toLowerCase()}`,
-			label: mod.length > 1 ? `Moderation ${t.short}` : 'Moderation Schwarzes Brett',
-			tenantId: t.id
-		}))
-	];
+	const all = await db
+		.select({ id: tenants.id, short: tenants.shortName })
+		.from(tenants)
+		.orderBy(asc(tenants.name));
+	const boxes: Box[] = [{ key: 'persoenlich', label: 'Persönlich', role: null, tenantId: null }];
+	for (const role of ['redaktion', 'moderation', 'verwaltung'] as const) {
+		const ts = all.filter((t) => roleAllows(p, role, t.id));
+		for (const t of ts)
+			boxes.push({
+				key: `${role}-${t.short.toLowerCase()}`,
+				label:
+					(role === 'moderation' ? 'Moderation Schwarzes Brett' : ROLE_LABEL[role]) +
+					(ts.length > 1 ? ` ${t.short}` : ''),
+				role,
+				tenantId: t.id
+			});
+	}
+	return boxes;
 }
 
 const unreadSql = (personId: string) => sql<boolean>`coalesce((
@@ -174,9 +211,10 @@ const unreadSql = (personId: string) => sql<boolean>`coalesce((
 	and (mm.author_id is null or mm.author_id <> ${personId}))`;
 
 export async function listConversations(p: Principal, box: Box, closed: boolean) {
-	const where = box.tenantId
-		? and(eq(conversations.roleBox, 'moderation'), eq(conversations.roleTenantId, box.tenantId))
-		: sql`exists (select 1 from conversation_members m where m.conversation_id = ${conversations.id} and m.person_id = ${p.personId})`;
+	const where =
+		box.role && box.tenantId
+			? and(eq(conversations.roleBox, box.role), eq(conversations.roleTenantId, box.tenantId))
+			: sql`exists (select 1 from conversation_members m where m.conversation_id = ${conversations.id} and m.person_id = ${p.personId})`;
 	const rows = await db
 		.select({
 			id: conversations.id,
@@ -184,6 +222,7 @@ export async function listConversations(p: Principal, box: Box, closed: boolean)
 			subject: conversations.subject,
 			closedAt: conversations.closedAt,
 			lastMessageAt: conversations.lastMessageAt,
+			roleBox: conversations.roleBox,
 			unread: unreadSql(p.personId),
 			preview: sql<
 				string | null
@@ -210,7 +249,7 @@ export async function listConversations(p: Principal, box: Box, closed: boolean)
 
 /** Zähler in der Kopfzeile: Gespräche mit ungelesenen Nachrichten anderer. */
 export async function unreadConversations(p: Principal): Promise<number> {
-	const mod = (await moderatedTenants(p)).map((t) => t.id);
+	const roleBoxes = (await boxesFor(p)).filter((b) => b.role && b.tenantId);
 	const [row] = await db
 		.select({ n: sql<number>`count(*)::int` })
 		.from(conversations)
@@ -219,9 +258,9 @@ export async function unreadConversations(p: Principal): Promise<number> {
 				isNull(conversations.closedAt),
 				or(
 					sql`exists (select 1 from conversation_members m where m.conversation_id = ${conversations.id} and m.person_id = ${p.personId})`,
-					mod.length
-						? and(eq(conversations.roleBox, 'moderation'), inArray(conversations.roleTenantId, mod))
-						: sql`false`
+					...roleBoxes.map((b) =>
+						and(eq(conversations.roleBox, b.role!), eq(conversations.roleTenantId, b.tenantId!))
+					)
 				),
 				unreadSql(p.personId)
 			)
@@ -256,16 +295,20 @@ export async function getConversation(p: Principal, id: string) {
 			)
 		);
 	await markRead(p.personId, id);
-	const roleName = 'Moderation';
+	const roleName = a.conv.roleBox ? ROLE_LABEL[a.conv.roleBox] : '';
 	return {
 		...a.conv,
 		kindLabel: KIND_LABEL[a.conv.kind],
 		withLabel:
-			a.conv.kind === 'moderation' && !a.viaRole
-				? 'mit der Moderation'
-				: others.length
+			a.conv.roleBox && !a.member
+				? others.length
 					? `mit ${others.map((o) => o.name).join(', ')}`
-					: '',
+					: ''
+				: a.conv.roleBox
+					? `mit der ${roleName}`
+					: others.length
+						? `mit ${others.map((o) => o.name).join(', ')}`
+						: '',
 		canClose: a.viaRole && !a.conv.closedAt,
 		viaRole: a.viaRole,
 		messages: list.map((m) => ({
@@ -320,13 +363,13 @@ export async function sendMessage(p: Principal, id: string, body: string) {
 			.where(eq(conversationMembers.conversationId, id))
 	).map((m) => m.id);
 	const roleSide =
-		a.conv.roleBox === 'moderation' && a.conv.roleTenantId && !asRole
-			? await moderatorsOf(a.conv.roleTenantId)
+		a.conv.roleBox && a.conv.roleTenantId && !asRole
+			? await roleMembers(a.conv.roleBox, a.conv.roleTenantId)
 			: [];
 	const recipients = [...new Set([...members, ...roleSide])].filter((x) => x !== p.personId);
 	await notify('nachrichten', recipients, {
 		title: a.conv.subject,
-		detail: asRole ? 'Moderation' : null,
+		detail: asRole && a.conv.roleBox ? ROLE_LABEL[a.conv.roleBox] : null,
 		link: `/nachrichten/${id}`
 	});
 }
@@ -334,7 +377,7 @@ export async function sendMessage(p: Principal, id: string, body: string) {
 /** Nur die Rolle schließt Gespräche als erledigt. */
 export async function closeConversation(p: Principal, id: string) {
 	const a = await access(p, id);
-	if (!a?.viaRole) throw new MessageError('Das darf nur die Moderation.');
+	if (!a?.viaRole) throw new MessageError('Das darf nur die zuständige Rolle.');
 	await db.update(conversations).set({ closedAt: new Date() }).where(eq(conversations.id, id));
 }
 

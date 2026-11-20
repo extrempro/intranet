@@ -155,6 +155,9 @@
 									<strong>{t.title}</strong>
 									<span class="hinweis">{[t.unitName, t.place].filter(Boolean).join(' · ')}</span>
 								</span>
+								{#if t.subscribed}<span class="schild" title="Du hast diesen Hub abonniert">
+										Abo
+									</span>{/if}
 								{#if !t.own}<span class="schild rand">{t.tenantShort}</span>{/if}
 							</summary>
 							<div class="mehr">
