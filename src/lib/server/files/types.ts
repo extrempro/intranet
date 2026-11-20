@@ -77,8 +77,4 @@ export function contentDisposition(name: string, inline: boolean): string {
 	return `${inline ? 'inline' : 'attachment'}; filename="${fallback}"; filename*=UTF-8''${encodeURIComponent(name)}`;
 }
 
-export function formatSize(bytes: number): string {
-	if (bytes < 1024) return `${bytes} B`;
-	if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-	return `${(bytes / 1024 / 1024).toFixed(1).replace('.', ',')} MB`;
-}
+export { formatSize } from '../../format.ts';

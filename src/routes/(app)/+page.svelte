@@ -5,6 +5,7 @@
 	import Icon from '#lib/components/Icon.svelte';
 	import { moveItem } from '#lib/home.ts';
 	import { formatWhen } from '#lib/news.ts';
+	import { formatRange } from '#lib/plans.ts';
 
 	let { data, form } = $props();
 
@@ -220,6 +221,27 @@
 							/>{/each}
 					{/if}
 				</section>
+			{:else if k.id === 'plaene'}
+				<section aria-labelledby="karte-plaene" class="stapel">
+					<div class="kartenkopf">
+						<h2 id="karte-plaene">Neueste Pläne (KBB)</h2>
+						<a href={resolve('/(app)/plaene')}>Alle Pläne</a>
+					</div>
+					{#if data.plaene.length === 0}
+						<p class="hinweis">Gerade keine aktuellen Pläne deines KBB.</p>
+					{:else}
+						<ul class="karte planliste">
+							{#each data.plaene as pl (pl.id)}
+								<li>
+									<a href={resolve('/(app)/plaene/[id]', { id: pl.id })}>
+										<strong>{pl.title}</strong>
+									</a>
+									<span class="hinweis">gültig {formatRange(pl.validFrom, pl.validUntil)}</span>
+								</li>
+							{/each}
+						</ul>
+					{/if}
+				</section>
 			{/if}
 		{/each}
 	{/if}
@@ -350,6 +372,21 @@
 	}
 	.rot {
 		color: var(--err-tx);
+	}
+	.planliste {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	.planliste li {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		gap: 4px 12px;
+		padding: 12px 16px;
+	}
+	.planliste li + li {
+		border-top: 1px solid var(--bd);
 	}
 	.kartenkopf {
 		display: flex;
