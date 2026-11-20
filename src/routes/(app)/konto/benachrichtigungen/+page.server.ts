@@ -1,68 +1,14 @@
-import {
-	CHANNELS,
-	TOPICS,
-	type Channel,
-	type EmailMode,
-	type TopicChannels,
-	type TopicDefinition
-} from '#lib/notify.ts';
-import { canSeeAdministration, isSystemAdmin, type Principal } from '#lib/server/auth/access.ts';
+import { CHANNELS, TOPICS, type Channel, type EmailMode, type TopicChannels } from '#lib/notify.ts';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
-import { mailConfigured } from '#lib/server/mail.ts';
+import { benachrichtigungsDaten, teamsFor, topicAllowed } from '#lib/server/konto.ts';
 import { getNotify, setNotify } from '#lib/server/notify.ts';
-import { listDevices, removeDevice, vapidKeys } from '#lib/server/push.ts';
-import { db } from '#lib/server/db/index.ts';
-import { persons } from '#lib/server/db/schema.ts';
-import { teamsActive } from '#lib/server/teams-config.ts';
-import { eq } from 'drizzle-orm';
+import { removeDevice } from '#lib/server/push.ts';
 import type { Actions, PageServerLoad } from './$types';
-
-/** Teams-Spalte nur mit Microsoft-Konto und eingeschalteten Teams-Benachrichtigungen */
-async function teamsFor(p: Principal): Promise<boolean> {
-	if (!(await teamsActive())) return false;
-	const [row] = await db
-		.select({ oid: persons.entraOid })
-		.from(persons)
-		.where(eq(persons.id, p.personId));
-	return Boolean(row?.oid);
-}
-
-/** Themen nur für bestimmte Aufgaben (Moderation, Pflege einer Einheit) */
-function allowed(p: Principal, onlyFor: TopicDefinition['onlyFor']) {
-	if (!onlyFor) return true;
-	if (onlyFor === 'system') return isSystemAdmin(p);
-	if (onlyFor === 'moderation') return p.roles.some((r) => r.role === 'moderation_schwarzes_brett');
-	if (onlyFor === 'verwaltung') return canSeeAdministration(p);
-	return p.roles.some((r) => r.role === 'abteilungsverwaltung' || r.role === 'redaktion');
-}
 
 const FIELD: Record<Channel, string> = { bell: 'glocke', push: 'push', email: 'mail' };
 
-export const load: PageServerLoad = async ({ locals }) => {
-	const p = requirePrincipal(locals);
-	const [einstellung, mailBereit, geraete, keys] = await Promise.all([
-		getNotify(p.personId),
-		mailConfigured(),
-		listDevices(p),
-		vapidKeys()
-	]);
-	return {
-		einstellung,
-		mailBereit,
-		geraete: geraete.map((g) => ({
-			id: g.id,
-			label: g.label,
-			endpoint: g.endpoint,
-			createdAt: g.createdAt,
-			lastSuccessAt: g.lastSuccessAt
-		})),
-		vapidKey: keys.publicKey,
-		teams: await teamsFor(p),
-		themen: TOPICS.filter((t) => !t.hidden)
-			.filter((t) => allowed(p, t.onlyFor))
-			.map((t) => t.key)
-	};
-};
+export const load: PageServerLoad = async ({ locals }) =>
+	benachrichtigungsDaten(requirePrincipal(locals));
 
 export const actions: Actions = {
 	speichern: async ({ request, locals }) => {
@@ -74,7 +20,7 @@ export const actions: Actions = {
 		for (const t of TOPICS)
 			// Nicht angezeigte Themen behalten ihre bisherige Einstellung
 			topics[t.key] =
-				t.hidden || !allowed(p, t.onlyFor)
+				t.hidden || !topicAllowed(p, t.onlyFor)
 					? vorher.topics[t.key]
 					: {
 							...(Object.fromEntries(
@@ -98,13 +44,13 @@ export const actions: Actions = {
 				urgent: f.get('ruhe_dringend') === 'on'
 			}
 		});
-		return { gespeichert: true };
+		return { bereich: 'benachrichtigungen', gespeichert: true };
 	},
 	geraetEntfernen: async ({ request, locals }) => {
 		await removeDevice(
 			requirePrincipal(locals),
 			String((await request.formData()).get('id') ?? '')
 		);
-		return { entfernt: true };
+		return { bereich: 'benachrichtigungen', entfernt: true };
 	}
 };

@@ -11,9 +11,10 @@ export const actions: Actions = {
 	setzen: async ({ request, locals }) => {
 		const principal = requirePrincipal(locals);
 		const wert = String((await request.formData()).get('wert') ?? '') as Theme;
-		if (!THEMES.includes(wert)) return fail(400, { fehler: 'Ungültige Auswahl.' });
+		if (!THEMES.includes(wert))
+			return fail(400, { bereich: 'darstellung', fehler: 'Ungültige Auswahl.' });
 		await setTheme(principal.personId, wert);
-		return { gespeichert: true };
+		return { bereich: 'darstellung', gespeichert: true };
 	},
 
 	/** Kopfzeile: mit JS kommt der Zielwert mit, ohne JS wird umgeschaltet. */
@@ -27,6 +28,6 @@ export const actions: Actions = {
 					? 'hell'
 					: 'dunkel';
 		await setTheme(principal.personId, neu);
-		return { gespeichert: true };
+		return { bereich: 'kopf', gespeichert: true };
 	}
 };
