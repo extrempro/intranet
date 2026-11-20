@@ -8,7 +8,10 @@
 		timeZone: 'Europe/Berlin'
 	});
 	const zuPruefen = $derived(
-		l.zuPruefen.ablaufend.length + l.zuPruefen.alteFaqs.length + l.zuPruefen.inaktiv.length
+		l.zuPruefen.ueberfaellig.length +
+			l.zuPruefen.ablaufend.length +
+			l.zuPruefen.alteFaqs.length +
+			l.zuPruefen.inaktiv.length
 	);
 	const abschnitte = $derived(
 		[
@@ -62,8 +65,10 @@
 						</span>
 						{#if u.type === 'hub'}
 							<a href={resolve('/(app)/hubs/[slug]/bearbeiten', { slug: u.slug })}>Bearbeiten</a>
-						{:else if data.verwaltung}
-							<a href={resolve('/(app)/verwaltung/abteilungen/[id]', { id: u.id })}>Bearbeiten</a>
+						{:else}
+							<a href={resolve('/(app)/abteilungen/[slug]/bearbeiten', { slug: u.slug })}>
+								Bearbeiten
+							</a>
 						{/if}
 					</li>
 				{/each}
@@ -73,6 +78,19 @@
 		<section id="zu-pruefen" class="karte stapel" aria-labelledby="h-pruefen">
 			<h2 id="h-pruefen">Zu prüfen</h2>
 			{#if zuPruefen === 0}<p class="hinweis">Nichts zu prüfen.</p>{/if}
+			{#if l.zuPruefen.ueberfaellig.length}
+				<h3>Überfällige Zuständigkeiten</h3>
+				<ul class="liste">
+					{#each l.zuPruefen.ueberfaellig as u (u.id)}
+						<li>
+							<a href={resolve('/(app)/abteilungen/[slug]/bearbeiten', { slug: u.slug })}>
+								{u.name}
+							</a>
+							<span class="hinweis">zuletzt geprüft am {datum.format(u.checkedAt!)}</span>
+						</li>
+					{/each}
+				</ul>
+			{/if}
 			{#if l.zuPruefen.ablaufend.length}
 				<h3>Bald ablaufende Beiträge</h3>
 				<ul class="liste">
@@ -103,16 +121,13 @@
 							<span><strong>{x.name}</strong> <span class="hinweis">· {x.unitName}</span></span>
 							{#if x.type === 'hub'}
 								<a href={resolve('/(app)/hubs/[slug]', { slug: x.slug })}>Zum Hub</a>
-							{:else if data.verwaltung}
-								<a href={resolve('/(app)/verwaltung/abteilungen/[id]', { id: x.unitId })}>
-									Zur Einheit
-								</a>
+							{:else}
+								<a href={resolve('/(app)/abteilungen/[slug]', { slug: x.slug })}>Zur Seite</a>
 							{/if}
 						</li>
 					{/each}
 				</ul>
 			{/if}
-			<p class="hinweis">Überfällige Zuständigkeiten folgen mit den Abteilungsseiten.</p>
 		</section>
 
 		<section id="hervorgehoben" class="karte stapel" aria-labelledby="h-hervor">

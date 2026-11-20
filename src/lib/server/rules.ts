@@ -16,6 +16,8 @@ export interface ContentRules {
 	/** Kalender: Dürfen Abteilungen bzw. Hubs überhaupt Termine eintragen? Ausnahme je Einheit. */
 	eventsDepartments: boolean;
 	eventsHubs: boolean;
+	/** Zuständigkeiten: Prüf-Erinnerung nach so vielen Monaten (Kap. 8.11) */
+	responsibilityReviewMonths: number;
 }
 
 export const DEFAULT_RULES: ContentRules = {
@@ -28,7 +30,8 @@ export const DEFAULT_RULES: ContentRules = {
 	writersMax: 10,
 	reactions: ['👍', '❤️', '👏', '😂', '😮'],
 	eventsDepartments: true,
-	eventsHubs: true
+	eventsHubs: true,
+	responsibilityReviewMonths: 12
 };
 
 export async function getContentRules(): Promise<ContentRules> {

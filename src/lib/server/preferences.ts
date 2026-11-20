@@ -1,7 +1,8 @@
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import { FAVORITES_MAX, type HomeLayout } from '../home.ts';
 import { db } from './db/index.ts';
-import { favorites, personPreferences } from './db/schema.ts';
+import { favorites, personPreferences, units } from './db/schema.ts';
+import { unitTypeLabel } from '../roles.ts';
 
 export type Theme = 'auto' | 'hell' | 'dunkel';
 
@@ -47,7 +48,24 @@ export interface FavoriteTarget {
  * Bekannte Ziele für Favoriten. Gespeichert wird nur der Schlüssel; Adresse
  * und Bezeichnung kommen immer von hier (keine freien Links, kein Open Redirect).
  */
+const UNIT_ICON = 'M3 21h18M5 21v-14l8 -4v18M19 21v-10l-6 -4';
+const UNIT_KEY = /^einheit:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/;
+
+/** Favorit für eine Abteilungsseite; ob die Person sie sehen darf, prüft der Aufrufer. */
+export function unitFavoriteKey(unitId: string): string {
+	return `einheit:${unitId}`;
+}
+
 const TARGETS = new Map<string, FavoriteTarget>([
+	[
+		'abteilungen',
+		{
+			label: 'Abteilungen',
+			description: 'Wer hilft bei was?',
+			href: '/abteilungen',
+			icon: UNIT_ICON
+		}
+	],
 	[
 		'kulissen',
 		{
@@ -141,7 +159,44 @@ const TARGETS = new Map<string, FavoriteTarget>([
 ]);
 
 export function isFavoriteTarget(key: string): boolean {
-	return TARGETS.has(key);
+	return TARGETS.has(key) || UNIT_KEY.test(key);
+}
+
+/** Abteilungsseiten als Favoriten: nur sichtbare, nicht archivierte Einheiten. */
+async function unitTargets(personId: string, keys: string[]) {
+	const ids = keys.flatMap((k) => UNIT_KEY.exec(k)?.[1] ?? []);
+	if (ids.length === 0) return new Map<string, FavoriteTarget>();
+	const rows = await db
+		.select({
+			id: units.id,
+			slug: units.slug,
+			name: units.name,
+			type: units.type,
+			title: units.title
+		})
+		.from(units)
+		.where(
+			and(
+				inArray(units.id, ids),
+				sql`${units.type} <> 'hub'`,
+				isNull(units.archivedAt),
+				or(
+					eq(units.isCentral, true),
+					sql`${units.tenantId} = (select tenant_id from persons where id = ${personId})`
+				)
+			)
+		);
+	return new Map(
+		rows.map((u) => [
+			unitFavoriteKey(u.id),
+			{
+				label: u.name,
+				description: unitTypeLabel(u),
+				href: `/abteilungen/${u.slug}`,
+				icon: UNIT_ICON
+			}
+		])
+	);
 }
 
 export async function listFavorites(personId: string) {
@@ -150,8 +205,12 @@ export async function listFavorites(personId: string) {
 		.from(favorites)
 		.where(eq(favorites.personId, personId))
 		.orderBy(asc(favorites.position));
+	const dyn = await unitTargets(
+		personId,
+		rows.map((r) => r.key)
+	);
 	return rows.flatMap((r) => {
-		const t = TARGETS.get(r.key);
+		const t = TARGETS.get(r.key) ?? dyn.get(r.key);
 		return t ? [{ key: r.key, ...t }] : [];
 	});
 }
@@ -159,7 +218,7 @@ export async function listFavorites(personId: string) {
 export type FavoriteResult = 'added' | 'removed' | 'full' | 'unknown';
 
 export async function toggleFavorite(personId: string, key: string): Promise<FavoriteResult> {
-	if (!TARGETS.has(key)) return 'unknown';
+	if (!isFavoriteTarget(key)) return 'unknown';
 	return db.transaction(async (tx) => {
 		const rows = await tx
 			.select({ key: favorites.key, position: favorites.position })

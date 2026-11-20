@@ -6,7 +6,7 @@ import { and, asc, eq, inArray, ne, notInArray, or, sql } from 'drizzle-orm';
 import { isValidRoleScope, type UnitType } from '../roles.ts';
 import { slugify } from '../slug.ts';
 import { audit } from './audit.ts';
-import { canAdministerTenant, type Principal } from './auth/access.ts';
+import { canAdministerTenant, canManageUnit, type Principal } from './auth/access.ts';
 import { db } from './db/index.ts';
 import { persons, roleAssignments, tenants, unitMembers, units } from './db/schema.ts';
 import { getContentRules } from './rules.ts';
@@ -60,6 +60,54 @@ async function loadForAdmin(p: Principal, unitId: string) {
 	if (!unit || !canAdministerTenant(p, unit.unit.tenantId))
 		throw new UnitError('Einheit nicht gefunden.');
 	return unit;
+}
+
+/** Eigene Pflege: mindestens eine Person mit Abteilungsverwaltung bzw. Hub-Team. */
+export async function hasOwnMaintenance(unitId: string): Promise<boolean> {
+	const [row] = await db
+		.select({ n: sql<number>`count(*)::int` })
+		.from(roleAssignments)
+		.where(
+			and(
+				eq(roleAssignments.scopeUnitId, unitId),
+				inArray(roleAssignments.role, ['abteilungsverwaltung', 'hub_team'])
+			)
+		);
+	return (row?.n ?? 0) > 0;
+}
+
+/**
+ * Team und Schreibrechte pflegen: Verwaltung des Mandanten oder die Pflege
+ * der Einheit (Abteilungsverwaltung, Hub-Team, Redaktion bei Einheiten ohne
+ * eigene Pflege). Die Pflege-Rolle selbst vergibt nur die Verwaltung.
+ */
+async function loadForTeam(p: Principal, unitId: string) {
+	const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+	if (!GUID.test(unitId)) throw new UnitError('Einheit nicht gefunden.');
+	const [row] = await db
+		.select({ unit: units, kbbUnitId: tenants.kbbUnitId })
+		.from(units)
+		.innerJoin(tenants, eq(tenants.id, units.tenantId))
+		.where(eq(units.id, unitId));
+	if (!row) throw new UnitError('Einheit nicht gefunden.');
+	const admin = canAdministerTenant(p, row.unit.tenantId);
+	if (!admin && !canManageUnit(p, row.unit, await hasOwnMaintenance(unitId)))
+		throw new UnitError('Einheit nicht gefunden.');
+	return { ...row, admin };
+}
+
+async function isManagerOf(unitId: string, personId: string) {
+	const [r] = await db
+		.select({ id: roleAssignments.id })
+		.from(roleAssignments)
+		.where(
+			and(
+				eq(roleAssignments.scopeUnitId, unitId),
+				eq(roleAssignments.personId, personId),
+				inArray(roleAssignments.role, ['abteilungsverwaltung', 'hub_team'])
+			)
+		);
+	return Boolean(r);
 }
 
 export async function getUnitForAdmin(p: Principal, unitId: string) {
@@ -246,7 +294,7 @@ export async function updateUnit(p: Principal, unitId: string, input: UnitInput,
 // ---------------------------------------------------------------------------
 
 export async function addMember(p: Principal, unitId: string, email: string, ip: string) {
-	const u = await loadForAdmin(p, unitId);
+	const u = await loadForTeam(p, unitId);
 	const [person] = await db
 		.select({ id: persons.id, tenantId: persons.tenantId })
 		.from(persons)
@@ -274,7 +322,9 @@ export async function addMember(p: Principal, unitId: string, email: string, ip:
 }
 
 export async function removeMember(p: Principal, unitId: string, personId: string, ip: string) {
-	const u = await loadForAdmin(p, unitId);
+	const u = await loadForTeam(p, unitId);
+	if (!u.admin && (await isManagerOf(unitId, personId)))
+		throw new UnitError('Personen mit Pflege-Rolle entfernt nur die Verwaltung.');
 	await db
 		.delete(unitMembers)
 		.where(and(eq(unitMembers.unitId, unitId), eq(unitMembers.personId, personId)));
@@ -318,7 +368,7 @@ export async function setMemberRights(
 	r: MemberRights,
 	ip: string
 ) {
-	const u = await loadForAdmin(p, unitId);
+	const u = await loadForTeam(p, unitId);
 	const isHub = u.unit.type === 'hub';
 	const rights = {
 		mayWriteNews: r.mayWriteNews,
@@ -328,6 +378,10 @@ export async function setMemberRights(
 		mayWriteBehindScenes: isHub ? false : r.mayWriteBehindScenes
 	};
 	const writes = Object.values(rights).some(Boolean);
+	// Die Pflege-Rolle und Fachpflege vergibt nur die Verwaltung
+	if (!u.admin) {
+		r = { ...r, verwaltet: await isManagerOf(unitId, personId), fachpflege: undefined };
+	}
 	const role = isHub ? 'hub_team' : 'abteilungsverwaltung';
 	if (!isValidRoleScope(role, 'unit', u.unit.type)) throw new UnitError('Ungültige Rolle.');
 
@@ -403,6 +457,7 @@ export async function setMemberRights(
 			eq(roleAssignments.role, role),
 			eq(roleAssignments.source, 'manual')
 		);
+		if (!u.admin) return;
 		if (r.verwaltet) {
 			const [has] = await tx.select({ id: roleAssignments.id }).from(roleAssignments).where(manual);
 			if (!has)
