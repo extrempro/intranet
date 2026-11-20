@@ -100,6 +100,7 @@
 			kuerzel={data.ich.kuerzel}
 			mandant={data.ich.mandant}
 			darfVerwaltung={data.darfVerwaltung}
+			darfRedaktion={data.darfRedaktion}
 		/>
 	</header>
 

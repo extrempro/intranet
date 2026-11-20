@@ -32,6 +32,10 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 		akzent: accentStyle(branding),
 		theme: locals.theme,
 		darfVerwaltung: canSeeAdministration(principal),
+		// Redaktion: ganze Arbeitsliste; Moderation: nur Abschnitt Schwarzes Brett (Kap. 10)
+		darfRedaktion: principal.roles.some(
+			(r) => r.role === 'redaktion' || r.role === 'moderation_schwarzes_brett'
+		),
 		ungelesen,
 		nachrichten
 	};
