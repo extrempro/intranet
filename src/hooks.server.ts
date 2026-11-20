@@ -4,6 +4,9 @@ import { deleteSessionCookie, SESSION_COOKIE, validateSession } from '#lib/serve
 
 /** Beim Start ausstehende Migrationen einspielen (abschaltbar mit MIGRATE_ON_START=false). */
 export const init: ServerInit = async () => {
+	if (!process.env.ENCRYPTION_KEY) {
+		console.warn('ENCRYPTION_KEY fehlt: Lokale Konten können keinen zweiten Faktor einrichten.');
+	}
 	if (process.env.MIGRATE_ON_START === 'false') return;
 	const { runMigrations } = await import('#lib/server/db/migrate.ts');
 	await runMigrations();
@@ -23,7 +26,7 @@ const securityHeaders: Record<string, string> = {
 };
 
 /** Ohne Anmeldung erreichbar. Alles andere nur mit gültiger Sitzung. */
-const PUBLIC_PATHS = ['/anmelden', '/health'];
+const PUBLIC_PATHS = ['/anmelden', '/einladung', '/health'];
 
 function isPublic(pathname: string): boolean {
 	return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
