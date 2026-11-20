@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { livesuche } from '#lib/livesuche.ts';
 	/* eslint-disable svelte/no-navigation-without-resolve -- Trefferlinks kommen vom Server (eigene Pfade), Filter sind Suchparameter */
 	import Avatar from '#lib/components/Avatar.svelte';
 	import { splitMarks } from '#lib/search.ts';
@@ -14,9 +15,16 @@
 
 <div class="stapel seite">
 	<h1>Suche</h1>
-	<form method="GET" role="search" class="suchzeile">
+	<form
+		method="GET"
+		role="search"
+		class="suchzeile"
+		data-sveltekit-reset="false"
+		data-sveltekit-replacestate
+	>
 		<label class="sr-only" for="suche-seite">Suchbegriff</label>
 		<input
+			use:livesuche
 			id="suche-seite"
 			type="search"
 			name="q"
@@ -26,7 +34,6 @@
 			autocomplete="off"
 		/>
 		{#if data.art}<input type="hidden" name="art" value={data.art} />{/if}
-		<button class="knopf" type="submit">Suchen</button>
 	</form>
 
 	{#if !t}

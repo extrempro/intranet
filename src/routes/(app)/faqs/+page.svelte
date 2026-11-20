@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { livesuche } from '#lib/livesuche.ts';
 	/* eslint-disable svelte/no-navigation-without-resolve, svelte/no-at-html-tags -- Suchparameter der eigenen Seite; Antwort-HTML ist serverseitig bereinigt */
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
@@ -35,10 +36,17 @@
 	</div>
 	{#if form?.fehler}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
 
-	<form method="GET" class="suche" role="search">
+	<form
+		method="GET"
+		class="suche"
+		role="search"
+		data-sveltekit-reset="false"
+		data-sveltekit-replacestate
+	>
 		<label class="feld">
 			<span class="sr-only">FAQs durchsuchen</span>
 			<input
+				use:livesuche
 				type="search"
 				name="q"
 				value={data.q}
@@ -49,13 +57,16 @@
 		{#if data.units.length > 1}
 			<label class="feld">
 				<span class="sr-only">Bereich</span>
-				<select name="einheit" value={data.unitId ?? ''}>
+				<select
+					name="einheit"
+					value={data.unitId ?? ''}
+					onchange={(e) => e.currentTarget.form?.requestSubmit()}
+				>
 					<option value="">Alle Bereiche</option>
 					{#each data.units as u (u.id)}<option value={u.id}>{u.name}</option>{/each}
 				</select>
 			</label>
 		{/if}
-		<button class="knopf zweit" type="submit">Suchen</button>
 	</form>
 
 	{#if anzahl === 0}
