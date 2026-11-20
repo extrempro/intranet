@@ -26,4 +26,16 @@ Unter **System** siehst du die Version, den Zustand von Datenbank, Dateien und H
 
 Schlägt eine Sicherung fehl oder ist die letzte erfolgreiche älter als 26 Stunden, bekommen alle System-Admins eine Benachrichtigung (Thema „Betrieb und Sicherungen“, höchstens einmal am Tag je Meldung).
 
+### Abgleich mit Entra
+
+Jede Nacht (Standard 02:30 Uhr) gleicht das Intranet Name, E-Mail, Mandant und Rollen aller Microsoft-Konten mit Entra ab:
+
+- In Entra **gelöschte oder deaktivierte** Konten und Personen **ohne Zugangsgruppe** werden gesperrt, ihre Sitzungen beendet.
+- Werden sie in Entra wieder gültig, gibt der Abgleich sie wieder frei. Konten, die die Verwaltung gesperrt hat, bleiben gesperrt.
+- Würde der Abgleich mehr als 10 % der Konten sperren, hält er an. Prüfe dann Zugangsgruppe und Domains; stimmt alles, startest du ihn unter System mit „Trotzdem abgleichen“.
+
+Gesperrte Konten stehen im Protokoll mit Grund. Schlägt der Abgleich fehl, bekommen die System-Admins eine Benachrichtigung.
+
+### Wiederherstellen
+
 Wiederherstellen geht nur auf dem Server, nicht im Intranet. Die Anleitung steht im Repo unter `backup/README.md`. Du brauchst dafür den privaten Schlüssel der Sicherung und den `ENCRYPTION_KEY`; beide liegen nicht auf dem Server.

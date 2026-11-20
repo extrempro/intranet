@@ -162,6 +162,13 @@
       "when": 1795195831734,
       "tag": "0022_hilfe_gesehen",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1795197817166,
+      "tag": "0023_sperre_herkunft",
+      "breakpoints": true
     }
   ]
 }
