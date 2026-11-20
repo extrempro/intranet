@@ -14,6 +14,19 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    services:
+      # Für den Test der Row-Level Security (src/lib/server/db/rls.db.test.ts)
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: intranet
+          POSTGRES_PASSWORD: ci-nur-zum-testen
+          POSTGRES_DB: intranet_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U intranet -d intranet_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -28,6 +41,9 @@ jobs:
         run: npm run lint
       - name: Tests
         run: npm test
+        env:
+          TEST_DATABASE_URL: postgres://intranet:ci-nur-zum-testen@localhost:5432/intranet_test
+          APP_DATABASE_PASSWORD: ci-app-nur-zum-testen
       - name: Bauen
         run: npm run build
       - name: Abhängigkeiten auf bekannte Sicherheitslücken prüfen

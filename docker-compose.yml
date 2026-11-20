@@ -6,6 +6,7 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      APP_DATABASE_PASSWORD: ${APP_DATABASE_PASSWORD:?APP_DATABASE_PASSWORD fehlt in .env}
       ORIGIN: ${ORIGIN}
       BODY_SIZE_LIMIT: ${BODY_SIZE_LIMIT:-20M}
       ENTRA_TENANT_ID: ${ENTRA_TENANT_ID:-}

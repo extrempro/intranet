@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { Handle, ServerInit } from '@sveltejs/kit/hooks';
+import { loadPrincipal } from '#lib/server/auth/access.ts';
 import { deleteSessionCookie, SESSION_COOKIE, validateSession } from '#lib/server/auth/session.ts';
 
 /** Beim Start ausstehende Migrationen einspielen (abschaltbar mit MIGRATE_ON_START=false). */
@@ -10,6 +11,8 @@ export const init: ServerInit = async () => {
 	if (process.env.MIGRATE_ON_START === 'false') return;
 	const { runMigrations } = await import('#lib/server/db/migrate.ts');
 	await runMigrations();
+	const { startCleanup } = await import('#lib/server/cleanup.ts');
+	startCleanup();
 };
 
 /**
@@ -35,6 +38,7 @@ function isPublic(pathname: string): boolean {
 export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.person = null;
 	event.locals.session = null;
+	event.locals.principal = null;
 
 	const token = event.cookies.get(SESSION_COOKIE);
 	if (token) {
@@ -42,6 +46,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 		if (session) {
 			event.locals.person = session.person;
 			event.locals.session = { id: session.id, authMethod: session.authMethod };
+			// Rollen und Mitgliedschaften je Anfrage frisch, damit Entzug sofort wirkt
+			event.locals.principal = await loadPrincipal(session.person);
 		} else {
 			deleteSessionCookie(event.cookies);
 		}
