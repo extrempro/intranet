@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { livesuche } from '#lib/livesuche.ts';
 	/* eslint-disable svelte/no-navigation-without-resolve -- nur Suchparameter der eigenen Seite */
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
@@ -64,11 +65,18 @@
 	</div>
 	{#if form && 'fehler' in form}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
 
-	<form method="GET" class="suche" role="search">
+	<form
+		method="GET"
+		class="suche"
+		role="search"
+		data-sveltekit-reset="false"
+		data-sveltekit-replacestate
+	>
 		{#if data.monatsansicht}<input type="hidden" name="ansicht" value="monat" />{/if}
 		<label class="feld">
 			<span class="sr-only">Im Kalender suchen</span>
 			<input
+				use:livesuche
 				type="search"
 				name="q"
 				value={data.q}
@@ -76,7 +84,6 @@
 				placeholder="Im Kalender suchen …"
 			/>
 		</label>
-		<button class="knopf zweit" type="submit">Suchen</button>
 	</form>
 
 	<div class="filter" role="group" aria-label="Kalender filtern" data-tour="ansicht">

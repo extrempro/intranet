@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { livesuche } from '#lib/livesuche.ts';
 	/* eslint-disable svelte/no-navigation-without-resolve -- Suchparameter der eigenen Seite, mailto/Teams-Links */
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
@@ -116,11 +117,18 @@
 	</nav>
 
 	{#if data.ansicht === 'alle'}
-		<form method="GET" class="suche" role="search">
+		<form
+			method="GET"
+			class="suche"
+			role="search"
+			data-sveltekit-reset="false"
+			data-sveltekit-replacestate
+		>
 			{#if data.kategorie}<input type="hidden" name="kategorie" value={data.kategorie} />{/if}
 			<label class="feld">
 				<span class="sr-only">Im Schwarzen Brett suchen</span>
 				<input
+					use:livesuche
 					type="search"
 					name="q"
 					value={data.q}
@@ -128,7 +136,6 @@
 					placeholder="Im Schwarzen Brett suchen …"
 				/>
 			</label>
-			<button class="knopf zweit" type="submit">Suchen</button>
 		</form>
 		<div class="filter" data-tour="kategorien">
 			<details class="auf">

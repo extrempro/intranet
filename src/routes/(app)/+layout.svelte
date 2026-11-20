@@ -20,6 +20,11 @@
 	const seitentitel = $derived(aktuell.page?.label ?? aktuell.area?.label ?? 'Intranet');
 	let wechselnOffen = $state(false);
 
+	/** Zähler „neu“ an Bereich und Unterseite (bisher: neue Neuigkeiten). */
+	function zahl(key: string): number {
+		return key === 'aktuelles' || key === 'neuigkeiten' ? (data.neueBeitraege ?? 0) : 0;
+	}
+
 	/** Tablet: drei Unterseiten sichtbar (plus die aktuelle), der Rest unter „Mehr“. */
 	const reiter = $derived.by(() => {
 		const alle = aktuell.area?.pages ?? [];
@@ -190,7 +195,10 @@
 								aria-current={an && !aktuell.page ? 'page' : undefined}
 							>
 								<Icon d={area.icon} size={22} stroke={1.6} />
-								<span>{area.label}</span>
+								<span class="bereichsname">{area.label}</span>
+								{#if zahl(area.key)}<span class="zahl" aria-label="{zahl(area.key)} neu">
+										{zahl(area.key)}
+									</span>{/if}
 							</a>
 							{#if an && area.pages.length > 1}
 								<ul class="unter">
@@ -201,7 +209,10 @@
 												class:an={aktuell.page?.key === p.key}
 												aria-current={aktuell.page?.key === p.key ? 'page' : undefined}
 											>
-												{p.label}
+												<span class="bereichsname">{p.label}</span>
+												{#if zahl(p.key)}<span class="zahl" aria-label="{zahl(p.key)} neu">
+														{zahl(p.key)}
+													</span>{/if}
 											</a>
 										</li>
 									{/each}
@@ -218,7 +229,14 @@
 			{#each areas as area (area.key)}
 				{@const an = aktuell.area?.key === area.key}
 				<a href={area.href} class:an aria-current={an ? 'page' : undefined}>
-					<Icon d={area.icon} />
+					<span class="symbol">
+						<Icon d={area.icon} />{#if zahl(area.key)}<span
+								class="zahl klein"
+								aria-label="{zahl(area.key)} neu"
+							>
+								{zahl(area.key)}
+							</span>{/if}
+					</span>
 					<span>{area.label}</span>
 				</a>
 			{/each}
@@ -314,7 +332,14 @@
 		{#each areas as area (area.key)}
 			{@const an = aktuell.area?.key === area.key}
 			<a href={area.href} class:an aria-current={an ? 'page' : undefined}>
-				<Icon d={area.icon} />
+				<span class="symbol">
+					<Icon d={area.icon} />{#if zahl(area.key)}<span
+							class="zahl klein"
+							aria-label="{zahl(area.key)} neu"
+						>
+							{zahl(area.key)}
+						</span>{/if}
+				</span>
 				<span>{area.label}</span>
 			</a>
 		{/each}
@@ -525,6 +550,37 @@
 	.unter a.an {
 		color: var(--ac);
 		font-weight: 600;
+	}
+
+	.bereichsname {
+		flex: 1;
+	}
+	.zahl {
+		min-width: 22px;
+		height: 22px;
+		padding: 0 6px;
+		box-sizing: border-box;
+		border-radius: 999px;
+		background: #f5a524;
+		color: #3a2300;
+		font-size: 12px;
+		font-weight: 700;
+		line-height: 22px;
+		text-align: center;
+	}
+	.symbol {
+		position: relative;
+		display: inline-flex;
+	}
+	.zahl.klein {
+		position: absolute;
+		top: -6px;
+		right: -10px;
+		min-width: 18px;
+		height: 18px;
+		padding: 0 4px;
+		font-size: 11px;
+		line-height: 18px;
 	}
 
 	/* Brotkrumen */

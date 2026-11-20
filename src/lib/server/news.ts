@@ -136,6 +136,7 @@ const columns = {
 	urgentText: news.urgentText,
 	allTenants: news.allTenants,
 	unitName: units.name,
+	unitSlug: units.slug,
 	unitType: units.type,
 	unitTitle: units.title,
 	unitTenantId: units.tenantId,
@@ -154,6 +155,7 @@ type Row = {
 	urgentText: string | null;
 	allTenants: boolean;
 	unitName: string;
+	unitSlug: string;
 	unitType: 'geschaeftsfuehrung' | 'stabsstelle' | 'abteilung' | 'hub';
 	unitTitle: string | null;
 	unitTenantId: string;
@@ -205,6 +207,8 @@ async function decorate(p: Principal, rows: Row[], now: Date) {
 			...state,
 			sender: {
 				id: r.unitId,
+				slug: r.unitSlug,
+				hub: r.unitType === 'hub',
 				name: r.unitName,
 				label: unitTypeLabel({ type: r.unitType, title: r.unitTitle })
 			},
@@ -264,6 +268,32 @@ export async function listNews(p: Principal, opts: ListOptions = {}) {
 	return decorate(p, rows, now);
 }
 
+/**
+ * Neue Neuigkeiten seit „since“ (Zähler in der Navigation): sichtbar,
+ * veröffentlicht, nicht aus Hubs und nicht Hinter den Kulissen.
+ */
+export async function countNewNews(p: Principal, since: Date): Promise<number> {
+	const now = new Date();
+	const writable = [...newsUnitIds(p)];
+	const [row] = await scoped(p, (tx) =>
+		tx
+			.select({ n: sql<number>`count(*)::int` })
+			.from(news)
+			.innerJoin(units, eq(units.id, news.unitId))
+			.where(
+				and(
+					readerVisible(p, writable, isEditorial(p), now),
+					lte(news.publishAt, now),
+					gt(news.publishAt, since),
+					sql`${units.type} <> 'hub'`,
+					isNull(units.archivedAt),
+					eq(news.channel, 'news')
+				)
+			)
+	);
+	return row?.n ?? 0;
+}
+
 export async function getNews(p: Principal, id: string) {
 	if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
 	const now = new Date();
@@ -315,7 +345,8 @@ export async function urgentForBanner(p: Principal) {
 		title: r.title,
 		text: r.urgentText ?? '',
 		until: r.urgentUntil!,
-		sender: r.unitName
+		sender: r.unitName,
+		audience: r.allTenants ? 'Alle Mandanten' : ''
 	}));
 }
 
