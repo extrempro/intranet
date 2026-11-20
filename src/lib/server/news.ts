@@ -243,6 +243,8 @@ export async function listNews(p: Principal, opts: ListOptions = {}) {
 	else conds.push(sql`${units.type} <> 'hub'`);
 	// Archivierte Hubs sind nirgends mehr sichtbar
 	conds.push(isNull(units.archivedAt));
+	// Hinter den Kulissen hat eine eigene Seite (Kap. 8.4)
+	conds.push(eq(news.channel, 'news'));
 	const q = opts.q?.trim().slice(0, 100);
 	if (q) {
 		const like = `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
@@ -270,7 +272,13 @@ export async function getNews(p: Principal, id: string) {
 			.select({ ...columns, bodyHtml: news.bodyHtml })
 			.from(news)
 			.innerJoin(units, eq(units.id, news.unitId))
-			.where(and(eq(news.id, id), readerVisible(p, writable, isEditorial(p), now)))
+			.where(
+				and(
+					eq(news.id, id),
+					eq(news.channel, 'news'),
+					readerVisible(p, writable, isEditorial(p), now)
+				)
+			)
 	);
 	if (!row) return null;
 	const [item] = await decorate(p, [row], now);
@@ -626,9 +634,14 @@ export async function deleteNews(p: Principal, id: string, ip: string) {
 
 /** Setzt, wechselt oder entfernt die eigene Reaktion. */
 export async function react(p: Principal, newsId: string, emoji: string) {
+	if (!(await getNews(p, newsId))) throw new NewsError('Beitrag nicht gefunden.');
+	await toggleReaction(p, newsId, emoji);
+}
+
+/** Reaktion setzen, wechseln oder (gleiche noch einmal) entfernen. Sichtbarkeit prüft der Aufrufer. */
+export async function toggleReaction(p: Principal, newsId: string, emoji: string) {
 	const rules = await getContentRules();
 	if (!rules.reactions.includes(emoji)) throw new NewsError('Unbekannte Reaktion.');
-	if (!(await getNews(p, newsId))) throw new NewsError('Beitrag nicht gefunden.');
 	const [current] = await db
 		.select({ emoji: newsReactions.emoji })
 		.from(newsReactions)

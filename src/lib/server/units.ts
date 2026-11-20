@@ -119,6 +119,8 @@ export interface UnitInput {
 	isKbb: boolean;
 	/** Nur Hubs */
 	mandatorySubscription?: boolean;
+	/** Hinter den Kulissen freigeschaltet (nicht für Hubs) */
+	behindScenes?: boolean;
 }
 
 async function checkInput(p: Principal, input: UnitInput) {
@@ -180,7 +182,8 @@ export async function createUnit(p: Principal, input: UnitInput, ip: string): Pr
 			hidden: input.hidden,
 			mayPostUrgent: input.mayPostUrgent,
 			mayCreateEvents: input.mayCreateEvents,
-			mandatorySubscription: input.type === 'hub' && Boolean(input.mandatorySubscription)
+			mandatorySubscription: input.type === 'hub' && Boolean(input.mandatorySubscription),
+			behindScenes: input.type !== 'hub' && Boolean(input.behindScenes)
 		})
 		.returning({ id: units.id });
 	if (input.type === 'abteilung') await setKbb(input.tenantId, row.id, input.isKbb);
@@ -213,7 +216,8 @@ export async function updateUnit(p: Principal, unitId: string, input: UnitInput,
 			hidden: input.hidden,
 			mayPostUrgent: input.mayPostUrgent,
 			mayCreateEvents: input.mayCreateEvents,
-			mandatorySubscription: input.type === 'hub' && Boolean(input.mandatorySubscription)
+			mandatorySubscription: input.type === 'hub' && Boolean(input.mandatorySubscription),
+			behindScenes: input.type !== 'hub' && Boolean(input.behindScenes)
 		})
 		.where(eq(units.id, unitId));
 	if (input.type === 'abteilung') await setKbb(input.tenantId, unitId, input.isKbb);

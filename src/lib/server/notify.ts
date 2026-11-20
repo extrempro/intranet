@@ -140,6 +140,7 @@ export async function dispatchNews(now = new Date()) {
 			title: news.title,
 			unitId: units.id,
 			unitType: units.type,
+			channel: news.channel,
 			unitName: units.name,
 			allTenants: news.allTenants,
 			pinnedUntil: news.pinnedUntil,
@@ -180,11 +181,14 @@ export async function dispatchNews(now = new Date()) {
 			});
 			continue;
 		}
-		const topic = urgent
-			? 'dringend'
-			: n.pinnedUntil !== null && n.pinnedUntil > now
-				? 'angeheftet'
-				: 'neuigkeiten';
+		const topic =
+			n.channel === 'kulissen'
+				? 'kulissen'
+				: urgent
+					? 'dringend'
+					: n.pinnedUntil !== null && n.pinnedUntil > now
+						? 'angeheftet'
+						: 'neuigkeiten';
 		let tenantIds: string[] | null = null;
 		if (!n.allTenants) {
 			const rows = await db.execute<{ tenant_id: string }>(
@@ -196,7 +200,7 @@ export async function dispatchNews(now = new Date()) {
 		await notify(topic, recipients, {
 			title: n.title,
 			detail: n.unitName,
-			link: `/neuigkeiten/${n.id}`
+			link: n.channel === 'kulissen' ? `/hinter-den-kulissen/${n.id}` : `/neuigkeiten/${n.id}`
 		});
 	}
 }
