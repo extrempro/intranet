@@ -1,8 +1,14 @@
 import { error, fail } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
 import { audit } from '#lib/server/audit.ts';
-import { remainingRecoveryCodes, replaceRecoveryCodes } from '#lib/server/auth/local.ts';
-import { verifyPassword } from '#lib/server/auth/password.ts';
+import {
+	changePassword,
+	checkCurrentPassword,
+	passwordPolicy,
+	remainingRecoveryCodes,
+	replaceRecoveryCodes
+} from '#lib/server/auth/local.ts';
+import { passwordMessage } from '#lib/password.ts';
 import { endOtherSessions, endOwnSession, listSessions } from '#lib/server/auth/session.ts';
 import { db } from '#lib/server/db/index.ts';
 import { localCredentials, passkeys } from '#lib/server/db/schema.ts';
@@ -35,6 +41,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 		.where(eq(passkeys.personId, locals.person.id));
 	return {
 		lokal: true as const,
+		email: locals.person.email,
+		min: (await passwordPolicy()).minLength,
 		sitzungen,
 		totp: Boolean(cred?.totp),
 		passkeys: keys,
@@ -76,14 +84,15 @@ export const actions: Actions = {
 
 	neueCodes: async ({ request, locals, getClientAddress }) => {
 		if (!locals.person || locals.session?.authMethod !== 'local') error(403);
-		const password = String((await request.formData()).get('passwort') ?? '');
-		const [cred] = await db
-			.select({ hash: localCredentials.passwordHash })
-			.from(localCredentials)
-			.where(eq(localCredentials.personId, locals.person.id));
-		if (!cred?.hash || !(await verifyPassword(cred.hash, password))) {
-			return fail(400, { fehler: 'Das Passwort stimmt nicht.' });
-		}
+		const password = String((await request.formData()).get('passwort') ?? '').slice(0, 512);
+		const check = await checkCurrentPassword(locals.person.id, password, getClientAddress());
+		if (!check.ok)
+			return fail(check.reason === 'wait' ? 429 : 400, {
+				fehler:
+					check.reason === 'wait'
+						? `Zu viele Fehlversuche. Warte bitte ${check.seconds} Sekunden.`
+						: 'Das Passwort stimmt nicht.'
+			});
 		const codes = await replaceRecoveryCodes(locals.person.id);
 		await audit({
 			category: 'security',
@@ -93,5 +102,36 @@ export const actions: Actions = {
 			ip: getClientAddress()
 		});
 		return { codes };
+	},
+
+	passwort: async ({ request, locals, getClientAddress }) => {
+		if (!locals.person || !locals.session || locals.session.authMethod !== 'local') error(403);
+		const f = await request.formData();
+		const r = await changePassword({
+			personId: locals.person.id,
+			current: String(f.get('aktuell') ?? '').slice(0, 512),
+			next: String(f.get('passwort') ?? '').slice(0, 512),
+			repeat: String(f.get('wiederholung') ?? '').slice(0, 512),
+			ip: getClientAddress(),
+			keepSessionId: locals.session.id
+		});
+		if (!r.ok) {
+			const fehler =
+				r.reason === 'wait'
+					? `Zu viele Fehlversuche. Warte bitte ${r.seconds} Sekunden.`
+					: r.reason === 'wrong'
+						? 'Dein aktuelles Passwort stimmt nicht.'
+						: r.reason === 'same'
+							? 'Das neue Passwort muss sich vom aktuellen unterscheiden.'
+							: passwordMessage(r.reason, (await passwordPolicy()).minLength);
+			return fail(r.reason === 'wait' ? 429 : 400, { bereich: 'passwort', fehler });
+		}
+		return {
+			bereich: 'passwort',
+			passwortGeaendert:
+				r.beendet > 0
+					? `Passwort geändert. ${r.beendet} ${r.beendet === 1 ? 'anderes Gerät wurde' : 'andere Geräte wurden'} abgemeldet.`
+					: 'Passwort geändert.'
+		};
 	}
 };

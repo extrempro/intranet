@@ -1,4 +1,5 @@
 <script lang="ts">
+	import NeuesPasswort from '#lib/components/NeuesPasswort.svelte';
 	let { data, form } = $props();
 	const datum = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium' });
 	const zeit = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' });
@@ -73,6 +74,29 @@
 			Du meldest dich mit deinem Microsoft-Konto an. Passwort und zweiten Faktor verwaltest du dort.
 		</p>
 	{:else}
+		<h2>Passwort ändern</h2>
+		{#if form && 'passwortGeaendert' in form}
+			<p class="meldung" role="status">{form.passwortGeaendert}</p>
+		{/if}
+		<form method="POST" action="?/passwort" class="felder">
+			{#if form && 'bereich' in form && form.bereich === 'passwort' && 'fehler' in form}
+				<p class="meldung fehler" role="alert">{form.fehler}</p>
+			{/if}
+			<label class="feld">
+				<span>Aktuelles Passwort</span>
+				<input
+					name="aktuell"
+					type="password"
+					autocomplete="current-password"
+					required
+					maxlength="512"
+				/>
+			</label>
+			<NeuesPasswort min={data.min} email={data.email} />
+			<p class="hinweis">Danach werden alle anderen Geräte abgemeldet.</p>
+			<button class="knopf" type="submit">Passwort ändern</button>
+		</form>
+
 		<h2>Zweiter Faktor</h2>
 		<ul>
 			<li>Authenticator-App: {data.totp ? 'eingerichtet' : 'nicht eingerichtet'}</li>
@@ -102,7 +126,9 @@
 		{:else}
 			<p>Noch {data.restCodes} von 10 Codes übrig.</p>
 			<form method="POST" action="?/neueCodes" class="felder">
-				{#if form?.fehler}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
+				{#if form && 'fehler' in form && !('bereich' in form)}
+					<p class="meldung fehler" role="alert">{form.fehler}</p>
+				{/if}
 				<label class="feld">
 					<span>Zur Bestätigung dein Passwort</span>
 					<input name="passwort" type="password" autocomplete="current-password" required />

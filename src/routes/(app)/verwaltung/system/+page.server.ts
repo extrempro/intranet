@@ -14,11 +14,21 @@ function requireSystemAdmin(locals: App.Locals) {
 }
 
 /** System (Kap. 14): Version, Zustand, Sicherungen; Entra-Abgleich nur als Zustand (Pflege unter Anmeldung). Betrifft alle Mandanten, daher nur System-Admins. */
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, getClientAddress }) => {
 	requireSystemAdmin(locals);
+	let adresse: string | null;
+	try {
+		adresse = getClientAddress();
+	} catch {
+		adresse = null;
+	}
 	return {
 		system: await systemStatus(version),
 		sicherung: await backupStatus(),
+		client: {
+			adresse,
+			header: process.env.ADDRESS_HEADER?.trim() || null
+		},
 		abgleich: {
 			eingerichtet: Boolean(await getEntraConfig()),
 			laeuft: syncRunning(),

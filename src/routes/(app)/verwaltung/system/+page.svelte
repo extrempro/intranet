@@ -216,6 +216,18 @@
 				</dd>
 			</div>
 			<div>
+				<dt>Erkannte Adresse</dt>
+				<dd class:warnung-text={!data.client.header}>
+					{data.client.adresse ?? 'nicht lesbar'}
+					{#if data.client.header}
+						· aus {data.client.header}
+					{:else}
+						· ADDRESS_HEADER nicht gesetzt: vermutlich die Adresse des Reverse Proxys. Dann gelten
+						Begrenzungen je IP für alle gemeinsam (siehe .env.example).
+					{/if}
+				</dd>
+			</div>
+			<div>
 				<dt>Abgleich mit Entra</dt>
 				<dd class:warnung-text={e.letzter && !e.letzter.ok}>
 					{#if !e.eingerichtet}nicht eingerichtet{:else if e.letzter}
