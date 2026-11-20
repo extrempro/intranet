@@ -70,3 +70,17 @@ export function unitTypeLabel(unit: { type: UnitType; title?: string | null }): 
 	if (title && (unit.type === 'geschaeftsfuehrung' || unit.type === 'stabsstelle')) return title;
 	return UNIT_TYPE_LABELS[unit.type];
 }
+
+/**
+ * Recht „Dringend“ (Kap. 8.2): ausdrücklich gesetzt oder Standard nach Typ.
+ * Standard: Geschäftsführung und das KBB des Mandanten. Den Betriebsrat
+ * schaltet die Verwaltung je Einheit frei.
+ */
+export function mayPostUrgent(unit: {
+	type: UnitType;
+	mayPostUrgent: boolean | null;
+	isKbb: boolean;
+}): boolean {
+	if (unit.mayPostUrgent !== null) return unit.mayPostUrgent;
+	return unit.type === 'geschaeftsfuehrung' || unit.isKbb;
+}
