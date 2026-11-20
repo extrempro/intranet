@@ -251,6 +251,14 @@ textarea {
 	width: 100%;
 }
 
+/* Überschrift mit „?“-Knopf für die Einführung */
+.mit-hilfe {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+}
+
 .hinweis {
 	color: var(--mu);
 	font-size: 0.93rem;

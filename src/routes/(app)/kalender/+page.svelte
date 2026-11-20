@@ -32,6 +32,9 @@
 	const monatHref = (monat: string, tag?: string) =>
 		`?ansicht=monat&monat=${monat}${tag ? `&tag=${tag}` : ''}`;
 	const wochentage = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+	import EinfuehrungAngebot from '#lib/components/EinfuehrungAngebot.svelte';
+	import EinfuehrungKnopf from '#lib/components/EinfuehrungKnopf.svelte';
+	import { SEITEN } from '#lib/tours.ts';
 </script>
 
 <svelte:head><title>Kalender · Intranet</title></svelte:head>
@@ -40,6 +43,7 @@
 	<div class="kopfzeile">
 		<div class="titel">
 			<h1>Kalender</h1>
+			<EinfuehrungKnopf tour={SEITEN.kalender} />
 			<form method="POST" action={actionUrl(page.url.search, 'favorit')} use:enhance>
 				<button
 					class="stern"
@@ -58,6 +62,7 @@
 		{/if}
 	</div>
 	{#if form && 'fehler' in form}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
+	<EinfuehrungAngebot tour={SEITEN.kalender} />
 
 	<form method="GET" class="suche" role="search">
 		{#if data.monatsansicht}<input type="hidden" name="ansicht" value="monat" />{/if}
@@ -74,7 +79,7 @@
 		<button class="knopf zweit" type="submit">Suchen</button>
 	</form>
 
-	<div class="filter" role="group" aria-label="Kalender filtern">
+	<div class="filter" role="group" aria-label="Kalender filtern" data-tour="ansicht">
 		<a class="pille" href="?" aria-current={!data.monatsansicht ? 'true' : undefined}>Liste</a>
 		<a
 			class="pille"
@@ -83,7 +88,7 @@
 		>
 			Monat
 		</a>
-		<details class="aus">
+		<details class="aus" data-tour="mandanten">
 			<summary class="pille">{ausLabel} ▾</summary>
 			<form method="POST" action={actionUrl(page.url.search, 'aus')} class="ausliste">
 				<input type="hidden" name="zurueck" value={page.url.search} />
@@ -97,7 +102,7 @@
 				<button class="knopf klein" type="submit">Übernehmen</button>
 			</form>
 		</details>
-		<a class="abo" href={resolve('/(app)/kalender/abo')}>Kalender abonnieren</a>
+		<a class="abo" href={resolve('/(app)/kalender/abo')} data-tour="abo">Kalender abonnieren</a>
 	</div>
 
 	{#if data.monatsansicht}

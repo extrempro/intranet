@@ -1,5 +1,8 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
+
+	let { form } = $props();
 </script>
 
 <svelte:head><title>Konto · Intranet</title></svelte:head>
@@ -46,6 +49,25 @@
 				</span>
 			</a>
 		</li>
+		<li>
+			<a class="karte kachel" href="{resolve('/(app)')}?fuehrung=1">
+				<strong>Führung erneut starten</strong><span class="hinweis">
+					Der kurze Rundgang durch das Intranet
+				</span>
+			</a>
+		</li>
+		<li>
+			<form method="POST" action="?/einfuehrungen" class="karte kachel" use:enhance>
+				<strong>Einführungen wieder anbieten</strong>
+				<span class="hinweis">Seiten bieten dir ihre kurze Einführung wieder an.</span>
+				<div>
+					<button class="knopf zweit klein" type="submit">Wieder anbieten</button>
+				</div>
+				{#if form?.zurueckgesetzt}
+					<p class="meldung" role="status">Erledigt. Die Einführungen erscheinen wieder.</p>
+				{/if}
+			</form>
+		</li>
 	</ul>
 	<h2>Weitere Einstellungen</h2>
 	<ul class="kacheln">
@@ -79,7 +101,7 @@
 		color: var(--tx);
 		text-decoration: none;
 	}
-	.kachel:hover {
+	a.kachel:hover {
 		box-shadow: 0 6px 20px rgb(0 0 0 / 0.1);
 	}
 </style>

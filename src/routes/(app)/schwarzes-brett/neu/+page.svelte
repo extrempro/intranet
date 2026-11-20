@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import Fotos from '#lib/components/Fotos.svelte';
+	import Info from '#lib/components/Info.svelte';
 
 	let { data, form } = $props();
 	const w = $derived(form?.werte);
@@ -109,7 +110,13 @@
 			</label>
 
 			<fieldset class="wahl">
-				<legend>Wer sieht das?</legend>
+				<legend>
+					Wer sieht das?
+					<Info
+						thema="Wer sieht das?"
+						text="Wähle weitere Mandanten, wenn deine Anzeige auch dort interessant ist. Nur Personen der gewählten Mandanten sehen sie, auch in der Suche."
+					/>
+				</legend>
 				<div class="chips">
 					{#each data.mandanten as m (m.id)}
 						<label class="chip">

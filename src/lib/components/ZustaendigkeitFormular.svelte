@@ -1,6 +1,7 @@
 <script lang="ts">
 	/** Felder einer Zuständigkeit (Kap. 8.11): Thema, Person, Vertretung, Gruppe, Stichwörter, Links. */
 	import { untrack } from 'svelte';
+	import Info from './Info.svelte';
 
 	interface Werte {
 		topic: string;
@@ -33,7 +34,13 @@
 </script>
 
 <label class="feld">
-	<span>Thema</span>
+	<span>
+		Thema
+		<Info
+			thema="Thema"
+			text="Wofür jemand ansprechbar ist, so wie Kolleginnen und Kollegen danach suchen würden. Das Thema erscheint unter „Wer hilft bei was?“ und in der Suche."
+		/>
+	</span>
 	<input
 		name="thema"
 		required
@@ -65,7 +72,13 @@
 			</span>{/if}
 	</label>
 	<label class="feld">
-		<span>Vertretung (optional)</span>
+		<span>
+			Vertretung (optional)
+			<Info
+				thema="Vertretung"
+				text="Ist die Ansprechperson inaktiv, zeigt die Seite stattdessen die Vertretung an."
+			/>
+		</span>
 		<select
 			name="vertretung"
 			bind:value={w.deputyId}
@@ -115,7 +128,13 @@
 			</span>{/if}
 	</label>
 	<label class="feld">
-		<span>Stichwörter (mit Komma getrennt)</span>
+		<span>
+			Stichwörter (mit Komma getrennt)
+			<Info
+				thema="Stichwörter"
+				text="Weitere Begriffe, unter denen die Suche diese Zuständigkeit findet, zum Beispiel andere Schreibweisen oder Abkürzungen. Sie stehen klein unter dem Eintrag."
+			/>
+		</span>
 		<input
 			name="stichwoerter"
 			maxlength="500"

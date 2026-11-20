@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import EinfuehrungAngebot from '#lib/components/EinfuehrungAngebot.svelte';
+	import EinfuehrungKnopf from '#lib/components/EinfuehrungKnopf.svelte';
+	import { ROLLEN } from '#lib/tours.ts';
 
 	let { data } = $props();
 	const l = $derived(data.liste);
@@ -32,7 +35,10 @@
 
 <div class="stapel">
 	<div>
-		<h1>Redaktion</h1>
+		<h1 class="mit-hilfe">
+			Redaktion
+			{#if l.redaktion}<EinfuehrungKnopf tour={ROLLEN.redaktion} />{/if}
+		</h1>
 		<p class="hinweis">
 			Arbeitsliste{l.mandanten.length
 				? ` für ${l.mandanten.join(', ')} und zentrale Einheiten`
@@ -40,7 +46,14 @@
 		</p>
 	</div>
 
-	<nav class="zaehler" aria-label="Abschnitte">
+	{#if l.redaktion}
+		<EinfuehrungAngebot
+			tour={ROLLEN.redaktion}
+			text="Neu in der Redaktion? Eine kurze Einführung zeigt dir die Arbeitsliste."
+		/>
+	{/if}
+
+	<nav class="zaehler" aria-label="Abschnitte" data-tour="zaehler">
 		{#each abschnitte as a (a.id)}
 			<a class="karte kachel" href="#{a.id}">
 				<span class="zahl" class:null={a.n === 0}>{a.n}</span>
@@ -50,7 +63,7 @@
 	</nav>
 
 	{#if l.redaktion}
-		<section id="ohne-pflege" class="karte stapel" aria-labelledby="h-ohne">
+		<section id="ohne-pflege" data-tour="ohne-pflege" class="karte stapel" aria-labelledby="h-ohne">
 			<h2 id="h-ohne">Ohne Pflege</h2>
 			<p class="hinweis">
 				Einheiten ohne eigene Pflegeperson pflegt die Redaktion. Einheiten mit eigener Pflege
@@ -75,7 +88,12 @@
 			</ul>
 		</section>
 
-		<section id="zu-pruefen" class="karte stapel" aria-labelledby="h-pruefen">
+		<section
+			id="zu-pruefen"
+			data-tour="zu-pruefen"
+			class="karte stapel"
+			aria-labelledby="h-pruefen"
+		>
 			<h2 id="h-pruefen">Zu prüfen</h2>
 			{#if zuPruefen === 0}<p class="hinweis">Nichts zu prüfen.</p>{/if}
 			{#if l.zuPruefen.ueberfaellig.length}

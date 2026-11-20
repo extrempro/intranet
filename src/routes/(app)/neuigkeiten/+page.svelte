@@ -24,6 +24,9 @@
 		].filter(Boolean);
 		return teile.length ? `?${teile.join('&')}` : '?';
 	}
+	import EinfuehrungAngebot from '#lib/components/EinfuehrungAngebot.svelte';
+	import EinfuehrungKnopf from '#lib/components/EinfuehrungKnopf.svelte';
+	import { SEITEN } from '#lib/tours.ts';
 </script>
 
 <svelte:head><title>Neuigkeiten · Intranet</title></svelte:head>
@@ -32,6 +35,7 @@
 	<div class="kopfzeile">
 		<div class="titel">
 			<h1>Neuigkeiten</h1>
+			<EinfuehrungKnopf tour={SEITEN.neuigkeiten} />
 			<form method="POST" action="?/favorit" use:enhance>
 				<button
 					class="stern"
@@ -45,13 +49,16 @@
 			</form>
 		</div>
 		{#if data.darfSchreiben}
-			<a class="knopf" href={resolve('/(app)/neuigkeiten/neu')}>Beitrag erstellen</a>
+			<a class="knopf" href={resolve('/(app)/neuigkeiten/neu')} data-tour="schreiben">
+				Beitrag erstellen
+			</a>
 		{/if}
 	</div>
 	{#if form?.fehler}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
+	<EinfuehrungAngebot tour={SEITEN.neuigkeiten} />
 
 	<form method="GET" class="filter" data-sveltekit-keepfocus data-sveltekit-noscroll>
-		<nav class="pillen" aria-label="Filter">
+		<nav class="pillen" aria-label="Filter" data-tour="filter">
 			{#each filter as f (f.k)}
 				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- nur Suchparameter der aktuellen Seite -->
 				<a href={href(f.k)} class="pille" aria-current={data.filter === f.k ? 'true' : undefined}>
@@ -91,7 +98,7 @@
 		</section>
 	{/if}
 
-	<section aria-label="Beiträge" class="liste">
+	<section aria-label="Beiträge" class="liste" data-tour="beitraege">
 		{#each rest as item (item.id)}<Beitragskarte {item} />{/each}
 	</section>
 </div>

@@ -1,0 +1,1 @@
+ALTER TABLE "person_preferences" ADD COLUMN "help_seen" jsonb;

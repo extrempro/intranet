@@ -5,6 +5,9 @@
 	import ZustaendigkeitFormular from '#lib/components/ZustaendigkeitFormular.svelte';
 	import { linksToText, type ResponsibilityErrors } from '#lib/departments.ts';
 	import { untrack } from 'svelte';
+	import EinfuehrungAngebot from '#lib/components/EinfuehrungAngebot.svelte';
+	import EinfuehrungKnopf from '#lib/components/EinfuehrungKnopf.svelte';
+	import { ROLLEN } from '#lib/tours.ts';
 
 	let { data, form } = $props();
 	const e = $derived(data.einheit);
@@ -53,13 +56,19 @@
 <div class="stapel seite">
 	<a class="zurueck" href={resolve('/(app)/abteilungen/[slug]', { slug: e.slug })}> ← Zur Seite </a>
 	<div>
-		<h1>{e.name} bearbeiten</h1>
+		<h1 class="mit-hilfe">
+			{e.name} bearbeiten <EinfuehrungKnopf tour={ROLLEN.abteilungsverwaltung} />
+		</h1>
 		<p class="hinweis">{e.label}</p>
 	</div>
 	{#if form && 'fehler' in form}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
 	{#if form && 'ok' in form}<p class="meldung" role="status">{form.ok}</p>{/if}
+	<EinfuehrungAngebot
+		tour={ROLLEN.abteilungsverwaltung}
+		text="Du pflegst diese Abteilung. Eine kurze Einführung zeigt dir, was du hier einstellen kannst."
+	/>
 
-	<details class="karte" open>
+	<details class="karte" open data-tour="seite">
 		<summary><h2>Seite</h2></summary>
 		<form method="POST" action="?/seite" class="stapel" use:enhance={behalten}>
 			<div class="zwei">
@@ -94,7 +103,7 @@
 		</form>
 	</details>
 
-	<details class="karte" open={leerAmAnfang || undefined}>
+	<details class="karte" open={leerAmAnfang || undefined} data-tour="zustaendigkeiten">
 		<summary><h2>Wer hilft bei was? ({e.zustaendigkeiten.length})</h2></summary>
 		<div class="stapel">
 			<div class="pruefzeile">
@@ -202,7 +211,7 @@
 		</div>
 	</details>
 
-	<details class="karte">
+	<details class="karte" data-tour="team">
 		<summary><h2>Team und Schreibrechte ({e.team.length})</h2></summary>
 		<div class="stapel">
 			<p class="hinweis">
