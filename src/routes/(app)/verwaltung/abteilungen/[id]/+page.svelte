@@ -106,6 +106,21 @@
 									{text}
 								</label>
 							{/each}
+							{#if e.isKbb}
+								<input type="hidden" name="fachpflege_feld" value="1" />
+								<label class="option">
+									<input
+										type="checkbox"
+										name="fachpflege"
+										checked={m.fachpflege}
+										disabled={m.fachpflegeAusEntra}
+									/>
+									Fachpflege (Pläne){#if m.fachpflegeAusEntra}<span class="schild rand">
+											aus Entra
+										</span>{/if}
+								</label>
+								{#if m.fachpflegeAusEntra}<input type="hidden" name="fachpflege" value="on" />{/if}
+							{/if}
 							<label class="option">
 								<input type="checkbox" name="primaer" checked={m.isPrimary} />
 								Eigene Abteilung der Person
