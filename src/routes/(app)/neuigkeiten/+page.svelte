@@ -32,6 +32,7 @@
 <svelte:head><title>Neuigkeiten · Intranet</title></svelte:head>
 
 <div class="stapel">
+	<EinfuehrungAngebot tour={SEITEN.neuigkeiten} />
 	<div class="kopfzeile">
 		<div class="titel">
 			<h1>Neuigkeiten</h1>
@@ -55,7 +56,6 @@
 		{/if}
 	</div>
 	{#if form?.fehler}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
-	<EinfuehrungAngebot tour={SEITEN.neuigkeiten} />
 
 	<form method="GET" class="filter" data-sveltekit-keepfocus data-sveltekit-noscroll>
 		<nav class="pillen" aria-label="Filter" data-tour="filter">
@@ -135,23 +135,6 @@
 	.pillen {
 		display: flex;
 		gap: 6px;
-	}
-	.pille {
-		display: inline-flex;
-		align-items: center;
-		min-height: 44px;
-		padding: 0 16px;
-		border-radius: 999px;
-		border: 1px solid var(--bd);
-		background: var(--sf);
-		color: var(--tx);
-		text-decoration: none;
-		font-weight: 600;
-	}
-	.pille[aria-current='true'] {
-		background: var(--fill);
-		border-color: var(--fill);
-		color: #fff;
 	}
 	.klein {
 		width: auto;

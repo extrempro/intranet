@@ -54,6 +54,10 @@
 <svelte:head><title>{e.name} bearbeiten · Intranet</title></svelte:head>
 
 <div class="stapel seite">
+	<EinfuehrungAngebot
+		tour={ROLLEN.abteilungsverwaltung}
+		text="Du pflegst diese Abteilung. Eine kurze Einführung zeigt dir, was du hier einstellen kannst."
+	/>
 	<a class="zurueck" href={resolve('/(app)/abteilungen/[slug]', { slug: e.slug })}> ← Zur Seite </a>
 	<div>
 		<h1 class="mit-hilfe">
@@ -63,10 +67,6 @@
 	</div>
 	{#if form && 'fehler' in form}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
 	{#if form && 'ok' in form}<p class="meldung" role="status">{form.ok}</p>{/if}
-	<EinfuehrungAngebot
-		tour={ROLLEN.abteilungsverwaltung}
-		text="Du pflegst diese Abteilung. Eine kurze Einführung zeigt dir, was du hier einstellen kannst."
-	/>
 
 	<details class="karte" open data-tour="seite">
 		<summary><h2>Seite</h2></summary>

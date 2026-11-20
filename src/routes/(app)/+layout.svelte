@@ -20,6 +20,30 @@
 	const seitentitel = $derived(aktuell.page?.label ?? aktuell.area?.label ?? 'Intranet');
 	let wechselnOffen = $state(false);
 
+	/** Tablet: drei Unterseiten sichtbar (plus die aktuelle), der Rest unter „Mehr“. */
+	const reiter = $derived.by(() => {
+		const alle = aktuell.area?.pages ?? [];
+		if (alle.length <= 4) return { sichtbar: alle, mehr: [] };
+		const sichtbar = alle.slice(0, 3);
+		const cur = aktuell.page;
+		if (cur && !sichtbar.some((p) => p.key === cur.key)) sichtbar.push(cur);
+		return { sichtbar, mehr: alle.filter((p) => !sichtbar.includes(p)) };
+	});
+	let mehrOffen = $state(false);
+	const PFEIL_RUNTER = 'M6 9l6 6l6 -6';
+
+	/** Brotkrumen wie im Entwurf: Bereich › Unterseite (auf dem Handy ausgeblendet). */
+	const krumen = $derived.by(() => {
+		const a = aktuell.area;
+		const p = aktuell.page;
+		if (!a || !p || a.pages.length < 2) return [];
+		const tiefer = page.url.pathname !== p.href;
+		return [
+			{ label: a.label, href: a.href, aktuell: false },
+			{ label: p.label, href: p.href, aktuell: !tiefer }
+		];
+	});
+
 	let theme = $derived(data.theme);
 
 	/** Wirksame Darstellung: bei „auto“ entscheidet das System. */
@@ -70,9 +94,9 @@
 			<span class="name nur-gross">Intranet</span>
 		</a>
 		<span class="titel nur-handy" aria-hidden="true">{seitentitel}</span>
-		<span class="luecke"></span>
 
-		<Kopfsuche />
+		<Kopfsuche ort="kopf" />
+		<span class="luecke nur-gross"></span>
 
 		<form
 			method="POST"
@@ -118,13 +142,13 @@
 			aria-current={page.url.pathname.startsWith('/nachrichten') ? 'page' : undefined}
 		>
 			<Icon d={BRIEF} size={20} stroke={1.8} />
-			{#if data.nachrichten}<span class="zaehler" aria-hidden="true">
+			{#if data.nachrichten}<span class="zaehler akzentzahl" aria-hidden="true">
 					{data.nachrichten > 99 ? '99+' : data.nachrichten}
 				</span>{/if}
 		</a>
 
 		<a
-			class="symbolknopf glocke"
+			class="symbolknopf glocke umrandet"
 			data-tour="glocke"
 			href={resolve('/(app)/benachrichtigungen')}
 			aria-label={data.ungelesen
@@ -151,38 +175,42 @@
 
 	<div class="rumpf">
 		<!-- PC: Seitenleiste mit Bereichen und Unterseiten -->
-		<nav class="seitenleiste" aria-label="Hauptnavigation" data-tour="navigation">
-			<ul>
-				{#each areas as area (area.key)}
-					{@const an = aktuell.area?.key === area.key}
-					<li>
-						<a
-							class="pille"
-							class:an
-							href={area.href}
-							aria-current={an && !aktuell.page ? 'page' : undefined}
-						>
-							<Icon d={area.icon} />
-							<span>{area.label}</span>
-						</a>
-						{#if an && area.pages.length > 1}
-							<ul class="unter">
-								{#each area.pages as p (p.key)}
-									<li>
-										<a
-											href={p.href}
-											class:an={aktuell.page?.key === p.key}
-											aria-current={aktuell.page?.key === p.key ? 'page' : undefined}
-										>
-											{p.label}
-										</a>
-									</li>
-								{/each}
-							</ul>
-						{/if}
-					</li>
-				{/each}
-			</ul>
+		<nav class="seitenleiste" aria-label="Hauptnavigation">
+			<div class="seiteninnen">
+				<Kopfsuche ort="seite" />
+				<div class="trenner" aria-hidden="true"></div>
+				<ul data-tour="navigation">
+					{#each areas as area (area.key)}
+						{@const an = aktuell.area?.key === area.key}
+						<li>
+							<a
+								class="bereich"
+								class:an
+								href={area.href}
+								aria-current={an && !aktuell.page ? 'page' : undefined}
+							>
+								<Icon d={area.icon} size={22} stroke={1.6} />
+								<span>{area.label}</span>
+							</a>
+							{#if an && area.pages.length > 1}
+								<ul class="unter">
+									{#each area.pages as p (p.key)}
+										<li>
+											<a
+												href={p.href}
+												class:an={aktuell.page?.key === p.key}
+												aria-current={aktuell.page?.key === p.key ? 'page' : undefined}
+											>
+												{p.label}
+											</a>
+										</li>
+									{/each}
+								</ul>
+							{/if}
+						</li>
+					{/each}
+				</ul>
+			</div>
 		</nav>
 
 		<!-- Tablet: schmale Leiste mit Bereichen -->
@@ -198,28 +226,22 @@
 
 		<div class="spalte">
 			{#if aktuell.area && aktuell.area.pages.length > 1}
-				<!-- Tablet: Unterseiten als Reiter -->
-				<nav class="reiter" aria-label="Unterseiten von {aktuell.area.label}">
-					{#each aktuell.area.pages as p (p.key)}
-						<a
-							href={p.href}
-							class:an={aktuell.page?.key === p.key}
-							aria-current={aktuell.page?.key === p.key ? 'page' : undefined}
-						>
-							{p.label}
-						</a>
-					{/each}
-				</nav>
 				<!-- Handy: Unterseite wechseln -->
 				<div class="wechseln">
 					<button
 						type="button"
-						class="knopf zweit"
+						class="wechselkarte"
 						aria-expanded={wechselnOffen}
 						aria-controls="unterseiten"
 						onclick={() => (wechselnOffen = !wechselnOffen)}
 					>
-						{aktuell.area.label} · {aktuell.page?.label ?? ''} – Wechseln
+						<span class="wk-text">
+							<span class="wk-bereich">{aktuell.area.label}</span>
+							<strong>{aktuell.page?.label ?? aktuell.area.label}</strong>
+						</span>
+						<span class="wk-aktion">
+							Wechseln <Icon d={PFEIL_RUNTER} size={16} stroke={2} />
+						</span>
 					</button>
 					{#if wechselnOffen}
 						<ul id="unterseiten" class="blatt">
@@ -240,6 +262,46 @@
 			{/if}
 
 			<main id="inhalt" tabindex="-1">
+				{#if krumen.length}
+					<nav class="krumen" aria-label="Pfad">
+						{#each krumen as k, i (i)}
+							{#if i}<span aria-hidden="true">›</span>{/if}
+							{#if k.aktuell}
+								<span aria-current="page">{k.label}</span>
+							{:else}
+								<a href={k.href}>{k.label}</a>
+							{/if}
+						{/each}
+					</nav>
+				{/if}
+				{#if aktuell.area && aktuell.area.pages.length > 1}
+					<!-- Tablet: Unterseiten als Pillen, der Rest unter „Mehr“ -->
+					<nav class="reiter" aria-label="Unterseiten von {aktuell.area.label}">
+						{#each reiter.sichtbar as p (p.key)}
+							<a
+								class="pille"
+								href={p.href}
+								aria-current={aktuell.page?.key === p.key ? 'page' : undefined}
+							>
+								{p.label}
+							</a>
+						{/each}
+						{#if reiter.mehr.length}
+							<details class="mehr" bind:open={mehrOffen}>
+								<summary class="pille">
+									Mehr <Icon d={PFEIL_RUNTER} size={14} stroke={2} />
+								</summary>
+								<ul class="mehrliste">
+									{#each reiter.mehr as p (p.key)}
+										<li>
+											<a href={p.href} onclick={() => (mehrOffen = false)}>{p.label}</a>
+										</li>
+									{/each}
+								</ul>
+							</details>
+						{/if}
+					</nav>
+				{/if}
 				<OfflineHinweis />
 				{#if data.meldung}<p class="meldung oben" role="status">{data.meldung}</p>{/if}
 				{@render children()}
@@ -321,10 +383,16 @@
 		justify-content: center;
 		background: transparent;
 		color: var(--tx);
-		border: 1px solid var(--bd);
+		border: 0;
 		border-radius: 10px;
 		cursor: pointer;
 		padding: 0;
+	}
+	.symbolknopf:hover {
+		background: var(--bg);
+	}
+	.umrandet {
+		border: 1px solid var(--bd);
 	}
 
 	.glocke {
@@ -333,19 +401,25 @@
 	}
 	.zaehler {
 		position: absolute;
-		top: -6px;
-		right: -6px;
+		top: -5px;
+		right: -5px;
 		min-width: 20px;
 		height: 20px;
 		padding: 0 5px;
 		box-sizing: border-box;
 		border-radius: 999px;
-		background: #b42318;
+		background: #c0392b;
 		color: #fff;
-		font-size: 12px;
+		font-size: 11px;
 		font-weight: 700;
 		line-height: 20px;
 		text-align: center;
+	}
+
+	.akzentzahl {
+		top: -3px;
+		right: -3px;
+		background: var(--fill);
 	}
 
 	/* ---- Rumpf ---- */
@@ -371,7 +445,7 @@
 		outline: none;
 	}
 
-	/* PC-Seitenleiste: „schwebende Pillen“ */
+	/* PC-Seitenleiste wie im Entwurf: Suche, Trenner, Bereiche */
 	.seitenleiste {
 		display: none;
 		flex: 0 0 260px;
@@ -379,32 +453,47 @@
 		background: var(--sf);
 		border-right: 1px solid var(--bd);
 	}
-	.seitenleiste > ul {
+	.seiteninnen {
 		position: sticky;
 		top: 61px;
+		display: flex;
+		flex-direction: column;
+		padding: 20px 16px;
+	}
+	.trenner {
+		height: 1px;
+		background: var(--bd);
+		margin: 18px 4px 14px;
+	}
+	.seiteninnen > ul {
 		list-style: none;
 		margin: 0;
-		padding: 20px 16px;
+		padding: 0;
 		display: flex;
 		flex-direction: column;
 		gap: 4px;
 	}
-	.pille {
+	.bereich {
 		display: flex;
 		align-items: center;
 		gap: 14px;
 		min-height: 48px;
 		padding: 11px 14px;
 		box-sizing: border-box;
-		border-radius: 999px;
-		color: var(--tx);
+		border-radius: 10px;
+		color: var(--mu);
 		text-decoration: none;
 		font-size: 15px;
+		font-weight: 500;
+		transition:
+			background 0.15s,
+			color 0.15s;
 	}
-	.pille:hover {
+	.bereich:hover {
 		background: var(--bg);
+		color: var(--tx);
 	}
-	.pille.an {
+	.bereich.an {
 		background: var(--tint);
 		color: var(--ac);
 		font-weight: 600;
@@ -422,22 +511,47 @@
 		display: flex;
 		align-items: center;
 		min-height: 40px;
-		padding: 6px 12px;
-		border-radius: 999px;
-		color: var(--tx);
+		padding: 8px 12px;
+		box-sizing: border-box;
+		border-radius: 8px;
+		color: var(--mu);
 		text-decoration: none;
 		font-size: 14px;
 	}
+	.unter a:hover {
+		background: var(--bg);
+		color: var(--tx);
+	}
 	.unter a.an {
-		background: var(--tint);
 		color: var(--ac);
 		font-weight: 600;
+	}
+
+	/* Brotkrumen */
+	.krumen {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 6px;
+		font-size: 13px;
+		color: var(--mu);
+		margin-bottom: 12px;
+	}
+	.krumen a {
+		color: var(--mu);
+		text-decoration: none;
+	}
+	.krumen a:hover {
+		text-decoration: underline;
+	}
+	.krumen [aria-current='page'] {
+		color: var(--tx);
 	}
 
 	/* Tablet-Leiste */
 	.leiste {
 		display: none;
-		flex: 0 0 88px;
+		flex: 0 0 92px;
 		flex-direction: column;
 		align-items: center;
 		gap: 6px;
@@ -476,29 +590,83 @@
 
 	.reiter {
 		display: none;
-		gap: 4px;
-		padding: 12px 24px 0;
-		overflow-x: auto;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 16px;
 	}
-	.reiter a {
-		display: inline-flex;
+	.mehr {
+		position: relative;
+	}
+	.mehrliste {
+		position: absolute;
+		top: calc(100% + 6px);
+		left: 0;
+		z-index: 30;
+		min-width: 220px;
+		list-style: none;
+		margin: 0;
+		padding: 6px;
+		background: var(--sf);
+		border: 1px solid var(--bd);
+		border-radius: 14px;
+		box-shadow: var(--shadow);
+	}
+	.mehrliste a {
+		display: flex;
 		align-items: center;
 		min-height: 44px;
-		padding: 0 16px;
-		border-radius: 999px;
+		padding: 0 12px;
+		border-radius: 10px;
 		color: var(--tx);
 		text-decoration: none;
-		white-space: nowrap;
 	}
-	.reiter a.an {
-		background: var(--tint);
-		color: var(--ac);
-		font-weight: 600;
+	.mehrliste a:hover {
+		background: var(--bg);
 	}
 
 	.wechseln {
 		display: none;
 		padding: 12px 14px 0;
+	}
+	.wechselkarte {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		width: 100%;
+		min-height: 56px;
+		padding: 10px 14px;
+		box-sizing: border-box;
+		border: 1px solid var(--bd);
+		border-radius: 14px;
+		background: var(--sf);
+		color: var(--tx);
+		font: inherit;
+		text-align: left;
+		cursor: pointer;
+		box-shadow: 0 2px 8px rgb(0 0 0 / 0.06);
+	}
+	.wk-text {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+	}
+	.wk-bereich {
+		font-size: 12px;
+		color: var(--mu);
+		font-weight: 600;
+	}
+	.wk-text strong {
+		font-size: 17px;
+	}
+	.wk-aktion {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		color: var(--ac);
+		font-weight: 600;
+		font-size: 14px;
 	}
 	.blatt {
 		list-style: none;
@@ -572,6 +740,12 @@
 		}
 		.nur-handy {
 			display: block;
+		}
+		.titel {
+			flex: 1;
+		}
+		.krumen {
+			display: none;
 		}
 		.kopf {
 			padding-left: 8px;
