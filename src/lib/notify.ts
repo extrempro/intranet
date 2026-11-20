@@ -29,6 +29,7 @@ export const TOPICS: TopicDefinition[] = [
 	},
 	{ key: 'angeheftet', label: 'Angeheftete Beiträge', defaults: { bell: true, email: false } },
 	{ key: 'neuigkeiten', label: 'Neuigkeiten', defaults: { bell: true, email: true } },
+	{ key: 'kulissen', label: 'Hinter den Kulissen', defaults: { bell: true, email: false } },
 	{
 		key: 'speiseplan',
 		label: 'Speiseplan',

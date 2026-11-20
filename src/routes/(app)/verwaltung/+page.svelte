@@ -51,6 +51,11 @@
 				</a>
 			</li>
 			<li>
+				<a class="karte kachel" href={resolve('/(app)/verwaltung/kulissen')}>
+					<strong>Hinter den Kulissen</strong><span class="hinweis">Hinweis „So geht’s“</span>
+				</a>
+			</li>
+			<li>
 				<a class="karte kachel" href={resolve('/(app)/verwaltung/schwarzes-brett')}>
 					<strong>Schwarzes Brett</strong><span class="hinweis">Kategorien</span>
 				</a>

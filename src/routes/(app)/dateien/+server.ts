@@ -13,7 +13,10 @@ import { formatSize } from '#lib/server/files/types.ts';
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const p = requirePrincipal(locals);
 	// Mit Schreibrecht alle erlaubten Typen; sonst nur Fotos (Schwarzes Brett)
-	const writer = newsUnitIds(p).size > 0 || faqUnitIds(p).size > 0;
+	const writer =
+		newsUnitIds(p).size > 0 ||
+		faqUnitIds(p).size > 0 ||
+		p.memberships.some((m) => m.mayWriteBehindScenes);
 	if (p.operatorLocationId) error(403, 'Dafür fehlt dir das Recht.');
 	const length = Number(request.headers.get('content-length') ?? 0);
 	if (length > MAX_FILE_BYTES + 64 * 1024)

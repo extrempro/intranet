@@ -39,6 +39,7 @@ const AREAS: NavArea[] = [
 			{ key: 'plaene', label: 'Pläne (KBB)', href: '/plaene' },
 			{ key: 'kalender', label: 'Kalender', href: '/kalender' },
 			{ key: 'aus-den-hubs', label: 'Aus den Hubs', href: '/aus-den-hubs' },
+			{ key: 'kulissen', label: 'Hinter den Kulissen', href: '/hinter-den-kulissen' },
 			{ key: 'schwarzes-brett', label: 'Schwarzes Brett', href: '/schwarzes-brett' },
 			{ key: 'speiseplan', label: 'Speiseplan', href: '/speiseplan' }
 		]

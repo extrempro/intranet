@@ -11,6 +11,7 @@
 		mayPostUrgent: boolean | null;
 		mayCreateEvents: boolean | null;
 		mandatorySubscription?: boolean;
+		behindScenes?: boolean;
 		isKbb: boolean;
 	}
 
@@ -107,6 +108,13 @@
 			</label>
 		{/each}
 	</fieldset>
+{/if}
+
+{#if typ !== 'hub'}
+	<label class="option">
+		<input type="checkbox" name="kulissen" checked={werte.behindScenes ?? false} />
+		<span>„Hinter den Kulissen“ freigeschaltet</span>
+	</label>
 {/if}
 
 {#if typ === 'hub'}
