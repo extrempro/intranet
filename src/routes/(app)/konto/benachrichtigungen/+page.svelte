@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import Info from '#lib/components/Info.svelte';
 	import PushGeraet from '#lib/components/PushGeraet.svelte';
 	import { EMAIL_MODES, TOPICS } from '#lib/notify.ts';
 
@@ -20,7 +21,13 @@
 	{#if form && 'gespeichert' in form}<p class="meldung" role="status">Gespeichert.</p>{/if}
 
 	<section class="karte stapel" aria-labelledby="h-push">
-		<h2 id="h-push">Push auf diesem Gerät</h2>
+		<h2 id="h-push">
+			Push auf diesem Gerät
+			<Info
+				thema="Push"
+				text="Push zeigt Benachrichtigungen auch an, wenn das Intranet geschlossen ist. Du schaltest Push je Gerät ein, also zum Beispiel am Handy an und am Arbeitsplatz aus. Welche Themen als Push kommen, stellst du unten ein."
+			/>
+		</h2>
 		<PushGeraet vapidKey={data.vapidKey} />
 		{#if data.geraete.length}
 			<details>
@@ -115,7 +122,13 @@
 		</section>
 
 		<fieldset class="karte modus">
-			<legend>Ruhezeiten</legend>
+			<legend>
+				Ruhezeiten
+				<Info
+					thema="Ruhezeiten"
+					text="Die Zeiten gelten in deutscher Zeit, auch wenn dein Gerät anders eingestellt ist. Über Mitternacht geht, zum Beispiel 20 bis 7 Uhr. Dringende Meldungen kommen trotzdem sofort, wenn du das unten nicht ausschaltest."
+				/>
+			</legend>
 			<p class="hinweis">
 				In Ruhezeiten kommen keine Push-Nachrichten; danach gesammelt als eine Nachricht. Glocke und
 				E-Mail sind nicht betroffen.
@@ -234,8 +247,12 @@
 		display: grid;
 		gap: 4px;
 	}
+	/* Überschrift innerhalb der Karte, damit die „i“-Erläuterung nicht auf dem Rahmen liegt */
 	.modus legend {
-		padding: 0 6px;
+		float: left;
+		width: 100%;
+		padding: 0;
+		margin-bottom: 4px;
 	}
 	.option {
 		display: flex;

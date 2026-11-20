@@ -1,6 +1,7 @@
 import { initials } from '#lib/format.ts';
 import { canSeeAdministration } from '#lib/server/auth/access.ts';
 import { photosOf } from '#lib/server/people.ts';
+import { getHelpSeen } from '#lib/server/preferences.ts';
 import { takeFlash } from '#lib/server/flash.ts';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import { unreadConversations } from '#lib/server/messages.ts';
@@ -13,11 +14,12 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 	void url.pathname;
 	const principal = requirePrincipal(locals);
 	const person = locals.person!;
-	const [branding, ungelesen, nachrichten, fotos] = await Promise.all([
+	const [branding, ungelesen, nachrichten, fotos, hilfeGesehen] = await Promise.all([
 		brandingFor(person.tenantId),
 		unreadCount(person.id),
 		unreadConversations(principal),
-		photosOf([person.id])
+		photosOf([person.id]),
+		getHelpSeen(person.id)
 	]);
 	return {
 		ich: {
@@ -36,6 +38,7 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		),
 		ungelesen,
 		nachrichten,
-		meldung: takeFlash(cookies)
+		meldung: takeFlash(cookies),
+		hilfeGesehen
 	};
 };

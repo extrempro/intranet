@@ -48,6 +48,9 @@
 			ablehnen = null;
 			loeschen = null;
 		};
+	import EinfuehrungAngebot from '#lib/components/EinfuehrungAngebot.svelte';
+	import EinfuehrungKnopf from '#lib/components/EinfuehrungKnopf.svelte';
+	import { ROLLEN, SEITEN } from '#lib/tours.ts';
 </script>
 
 <svelte:head><title>Schwarzes Brett · Intranet</title></svelte:head>
@@ -56,6 +59,7 @@
 	<div class="kopfzeile">
 		<div class="titel">
 			<h1>Schwarzes Brett</h1>
+			<EinfuehrungKnopf tour={data.ansicht === 'moderation' ? ROLLEN.moderation : SEITEN.brett} />
 			<form method="POST" action={aktion('favorit')} use:enhance>
 				<button
 					class="stern"
@@ -67,7 +71,9 @@
 				</button>
 			</form>
 		</div>
-		<a class="knopf" href={resolve('/(app)/schwarzes-brett/neu')}>Anzeige aufgeben</a>
+		<a class="knopf" href={resolve('/(app)/schwarzes-brett/neu')} data-tour="aufgeben">
+			Anzeige aufgeben
+		</a>
 	</div>
 
 	{#if form && 'fehler' in form}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
@@ -78,12 +84,22 @@
 		</p>
 	{/if}
 
+	{#if data.ansicht === 'moderation'}
+		<EinfuehrungAngebot
+			tour={ROLLEN.moderation}
+			text="Du moderierst das Schwarze Brett. Eine kurze Einführung zeigt dir, wie das geht."
+		/>
+	{:else}
+		<EinfuehrungAngebot tour={SEITEN.brett} />
+	{/if}
+
 	<nav class="pillen" aria-label="Ansicht">
 		<a class="pille" href="?" aria-current={data.ansicht === 'alle' ? 'true' : undefined}>
 			Alle Anzeigen
 		</a>
 		<a
 			class="pille"
+			data-tour="meine"
 			href="?ansicht=meine"
 			aria-current={data.ansicht === 'meine' ? 'true' : undefined}
 		>
@@ -115,7 +131,7 @@
 			</label>
 			<button class="knopf zweit" type="submit">Suchen</button>
 		</form>
-		<div class="filter">
+		<div class="filter" data-tour="kategorien">
 			<details class="auf">
 				<summary class="pille">{kat ? kat.name : 'Alle Kategorien'} ▾</summary>
 				<div class="liste-auf">
@@ -300,7 +316,7 @@
 			</div>
 		{/each}
 	{:else}
-		<p class="hinweis">
+		<p class="hinweis" data-tour="moderation">
 			<span class="schild warn">Nur Moderation</span>
 			Neue Anzeigen erscheinen erst nach Freigabe. Gemeldete bleiben sichtbar, bis du entscheidest.
 		</p>

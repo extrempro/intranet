@@ -60,10 +60,12 @@ export type RuleField =
 	| { type: 'bool'; key: BoolKey; label: string; hint?: string }
 	| { type: 'reactions'; key: 'reactions'; label: string; hint?: string };
 
-export const RULE_GROUPS: { id: string; title: string; fields: RuleField[] }[] = [
+/** `info`: Erläuterung hinter dem „i“ an der Gruppe (Kap. 13). */
+export const RULE_GROUPS: { id: string; title: string; info?: string; fields: RuleField[] }[] = [
 	{
 		id: 'anheften',
 		title: 'Anheften',
+		info: 'Grenzen gelten beim Anheften. Bereits angeheftete Beiträge bleiben bis zu ihrem Datum angeheftet. „Oben angezeigt“ wirkt sofort.',
 		fields: [
 			{
 				type: 'number',
@@ -125,6 +127,7 @@ export const RULE_GROUPS: { id: string; title: string; fields: RuleField[] }[] =
 	{
 		id: 'schreibrechte',
 		title: 'Schreibrechte',
+		info: 'Wer schon Schreibrecht hat, behält es, auch wenn du die Zahl senkst. Neue Schreibrechte lassen sich erst wieder vergeben, wenn die Einheit unter der Grenze liegt.',
 		fields: [
 			{
 				type: 'number',
@@ -153,6 +156,7 @@ export const RULE_GROUPS: { id: string; title: string; fields: RuleField[] }[] =
 	{
 		id: 'zustaendigkeiten',
 		title: 'Zuständigkeiten',
+		info: 'Ist eine Zuständigkeit so lange nicht geändert oder mit „Alles geprüft“ bestätigt, erinnert das Intranet die Pflege der Abteilung. Die Redaktion sieht sie unter „Zu prüfen“.',
 		fields: [
 			{
 				type: 'number',

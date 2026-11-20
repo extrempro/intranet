@@ -1,6 +1,7 @@
 <script lang="ts">
 	/** Formular für einen Termin (Kap. 8.8). */
 	import { untrack } from 'svelte';
+	import Info from './Info.svelte';
 	import { DESCRIPTION_MAX, PLACE_MAX, TITLE_MAX } from '#lib/calendar.ts';
 
 	interface Werte {
@@ -110,7 +111,13 @@
 
 {#if einheit?.isCentral}
 	<fieldset class="gruppe">
-		<legend>Wer sieht das?</legend>
+		<legend>
+			Wer sieht das?
+			<Info
+				thema="Wer sieht das?"
+				text="Der Termin steht im Kalender der gewählten Mandanten. Wer nicht dazugehört, sieht ihn nicht, auch nicht im Kalender-Abo."
+			/>
+		</legend>
 		<label class="option">
 			<input
 				type="radio"

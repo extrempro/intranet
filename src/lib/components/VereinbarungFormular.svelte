@@ -2,6 +2,7 @@
 	/** Felder einer Betriebs- oder Dienstvereinbarung (Kap. 8.10). */
 	import { AGREEMENT_KINDS, type AgreementErrors } from '#lib/legal.ts';
 	import Anhaenge from './Anhaenge.svelte';
+	import Info from './Info.svelte';
 
 	let {
 		werte,
@@ -72,7 +73,13 @@
 
 <div class="zwei">
 	<label class="feld">
-		<span>Stand</span>
+		<span>
+			Stand
+			<Info
+				thema="Stand"
+				text="Das Datum der Fassung, meist das Datum der Unterschrift. Eine neue Fassung ersetzt die alte vollständig, frühere Fassungen bleiben nicht erhalten."
+			/>
+		</span>
 		<input
 			name="stand"
 			type="date"
@@ -84,7 +91,13 @@
 		{#if fehler.versionDate}<span id="f-stand" class="feldfehler">{fehler.versionDate}</span>{/if}
 	</label>
 	<label class="feld">
-		<span>Gilt ab</span>
+		<span>
+			Gilt ab
+			<Info
+				thema="Gilt ab"
+				text="Ab wann die Vereinbarung wirkt. Das kann vor oder nach dem Stand liegen."
+			/>
+		</span>
 		<input
 			name="gilt_ab"
 			type="date"

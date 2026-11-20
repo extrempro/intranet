@@ -270,6 +270,8 @@ export const personPreferences = pgTable('person_preferences', {
 	boardTenants: jsonb('board_tenants').$type<string[]>(),
 	/** Hinter den Kulissen „Aus: …“ (weitere Mandanten) */
 	behindTenants: jsonb('behind_tenants').$type<string[]>(),
+	/** Gesehene Führung und Einführungen (Kap. 13), z. B. „fuehrung“, „seite:kalender“ */
+	helpSeen: jsonb('help_seen').$type<string[]>(),
 	updatedAt: updatedAt()
 });
 
