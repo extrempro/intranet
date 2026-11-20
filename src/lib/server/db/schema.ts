@@ -138,6 +138,8 @@ export const units = pgTable(
 		mayPostUrgent: boolean('may_post_urgent'),
 		/** Termine eintragen. null = Regel aus der Verwaltung (Kap. 8.8). */
 		mayCreateEvents: boolean('may_create_events'),
+		/** „Hinter den Kulissen“ für die Einheit freigeschaltet (Kap. 8.4) */
+		behindScenes: boolean('behind_scenes').notNull().default(false),
 		// --- Nur Hubs (Kap. 8.12) ---
 		/** Über uns */
 		about: text('about'),
@@ -255,6 +257,8 @@ export const personPreferences = pgTable('person_preferences', {
 	notify: jsonb('notify').$type<NotifySettings>(),
 	/** Schwarzes Brett „Anzeigen aus: …“ (weitere Mandanten) */
 	boardTenants: jsonb('board_tenants').$type<string[]>(),
+	/** Hinter den Kulissen „Aus: …“ (weitere Mandanten) */
+	behindTenants: jsonb('behind_tenants').$type<string[]>(),
 	updatedAt: updatedAt()
 });
 
@@ -420,6 +424,12 @@ export const news = pgTable(
 		/** Nur intern protokolliert, nie angezeigt. */
 		createdBy: uuid('created_by').references(() => persons.id, { onDelete: 'set null' }),
 		updatedBy: uuid('updated_by').references(() => persons.id, { onDelete: 'set null' }),
+		/** news = Neuigkeiten und Hubs; kulissen = Hinter den Kulissen (Kap. 8.4) */
+		channel: text('channel', { enum: ['news', 'kulissen'] })
+			.notNull()
+			.default('news'),
+		/** Hinter den Kulissen: Einwilligung der Abgebildeten bestätigt */
+		consentAt: timestamp('consent_at', { withTimezone: true }),
 		/** Benachrichtigt beim Veröffentlichen (Kap. 11); dringend ggf. später nachgeholt */
 		notifiedAt: timestamp('notified_at', { withTimezone: true }),
 		notifiedUrgent: boolean('notified_urgent').notNull().default(false),

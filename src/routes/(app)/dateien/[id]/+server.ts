@@ -4,6 +4,7 @@ import { ownUnlinkedFiles, readStored } from '#lib/server/files/store.ts';
 import { contentDisposition, INLINE } from '#lib/server/files/types.ts';
 import { boardPhotoAllowed } from '#lib/server/board.ts';
 import { menuFileAllowed } from '#lib/server/canteen.ts';
+import { kulissenFileAllowed } from '#lib/server/kulissen.ts';
 import { faqOfFile } from '#lib/server/faqs.ts';
 import { newsOfFile } from '#lib/server/news.ts';
 import { isPublicDocument } from '#lib/server/plans.ts';
@@ -27,6 +28,7 @@ export const GET: RequestHandler = async ({ locals, params, url }) => {
 				Boolean(await newsOfFile(p, id)) ||
 				(await faqOfFile(p, id)) ||
 				(await boardPhotoAllowed(p, id)) ||
+				(await kulissenFileAllowed(p, id)) ||
 				// Eigener, noch nicht verknüpfter Upload (Vorschau im Formular)
 				(await ownUnlinkedFiles(p.personId, [id])).length > 0);
 	if (!allowed) error(404, 'Diese Datei gibt es nicht oder nicht mehr.');

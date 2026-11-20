@@ -3,8 +3,14 @@
 
 	let {
 		newsId,
-		reaktionen
-	}: { newsId: string; reaktionen: { emoji: string; n: number; mine: boolean }[] } = $props();
+		reaktionen,
+		basis = '/neuigkeiten'
+	}: {
+		newsId: string;
+		reaktionen: { emoji: string; n: number; mine: boolean }[];
+		/** Seite mit der Aktion „reagieren“, z. B. /hinter-den-kulissen */
+		basis?: string;
+	} = $props();
 
 	const NAMEN: Record<string, string> = {
 		'👍': 'Daumen hoch',
@@ -17,7 +23,7 @@
 
 <form
 	method="POST"
-	action="/neuigkeiten/{newsId}?/reagieren"
+	action="{basis}/{newsId}?/reagieren"
 	use:enhance={() =>
 		async ({ update }) =>
 			update({ reset: false, invalidateAll: true })}
