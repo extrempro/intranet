@@ -50,6 +50,7 @@ const AREAS: NavArea[] = [
 		icon: ICONS.organisation,
 		href: '',
 		pages: [
+			{ key: 'abteilungen', label: 'Abteilungen', href: '/abteilungen' },
 			{ key: 'hubs', label: 'Hubs', href: '/hubs' },
 			{ key: 'organigramm', label: 'Organigramm', href: '/organigramm' }
 		]

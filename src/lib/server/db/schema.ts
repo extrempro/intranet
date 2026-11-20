@@ -153,6 +153,11 @@ export const units = pgTable(
 		archivedAt: timestamp('archived_at', { withTimezone: true }),
 		/** Aufbau der Hub-Seite: Abschnitte in Reihenfolge, ausgeblendete fehlen */
 		pageLayout: jsonb('page_layout').$type<HubLayout>(),
+		// --- Zuständigkeiten (Kap. 8.11) ---
+		/** Zuletzt „Alles geprüft“ (oder erste Zuständigkeit angelegt) */
+		responsibilitiesCheckedAt: timestamp('responsibilities_checked_at', { withTimezone: true }),
+		/** Prüf-Erinnerung verschickt (nur einmal je Prüfzeitraum) */
+		reviewRemindedAt: timestamp('review_reminded_at', { withTimezone: true }),
 		createdAt: createdAt(),
 		updatedAt: updatedAt()
 	},
@@ -1187,4 +1192,36 @@ export const hubApplications = pgTable(
 		updatedAt: updatedAt()
 	},
 	(t) => [index('hub_applications_status').on(t.status, t.tenantId)]
+);
+
+// ---------------------------------------------------------------------------
+// Abteilungsseiten: Wer hilft bei was? (Kap. 8.11)
+// ---------------------------------------------------------------------------
+
+export interface ResponsibilityLink {
+	label: string;
+	url: string;
+}
+
+/** Zuständigkeit einer Einheit: Thema mit einer Ansprechperson und Vertretung. */
+export const responsibilities = pgTable(
+	'responsibilities',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		unitId: uuid('unit_id')
+			.notNull()
+			.references(() => units.id, { onDelete: 'cascade' }),
+		topic: text('topic').notNull(),
+		description: text('description'),
+		keywords: jsonb('keywords').$type<string[]>().notNull().default([]),
+		/** Gruppe zum Gliedern, z. B. „Arbeitsplatz“ */
+		groupName: text('group_name'),
+		personId: uuid('person_id').references(() => persons.id, { onDelete: 'set null' }),
+		deputyId: uuid('deputy_id').references(() => persons.id, { onDelete: 'set null' }),
+		links: jsonb('links').$type<ResponsibilityLink[]>().notNull().default([]),
+		position: integer('position').notNull().default(0),
+		createdAt: createdAt(),
+		updatedAt: updatedAt()
+	},
+	(t) => [index('responsibilities_unit').on(t.unitId, t.position)]
 );

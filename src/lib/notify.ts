@@ -14,7 +14,7 @@ export interface TopicDefinition {
 	/** Kanäle, die sich nicht abschalten lassen */
 	fixed?: Channel[];
 	/** Nur für Personen mit dieser Aufgabe sichtbar */
-	onlyFor?: 'moderation';
+	onlyFor?: 'moderation' | 'pflege';
 	/** Nicht in der Tabelle: Einstellung woanders (Hubs: „Meine Hubs“) */
 	hidden?: boolean;
 }
@@ -55,6 +55,13 @@ export const TOPICS: TopicDefinition[] = [
 		hint: 'nur Moderation',
 		defaults: { bell: true, email: true },
 		onlyFor: 'moderation'
+	},
+	{
+		key: 'pflege',
+		label: 'Zuständigkeiten prüfen',
+		hint: 'nur Pflege von Abteilungen',
+		defaults: { bell: true, email: true },
+		onlyFor: 'pflege'
 	},
 	{ key: 'hubs', label: 'Aus den Hubs', defaults: { bell: true, email: false }, hidden: true }
 ];
