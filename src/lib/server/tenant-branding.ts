@@ -1,58 +1,144 @@
+/**
+ * Erscheinungsbild je Mandant: Akzentfarben, Seitenhintergrund, Logos für
+ * hell und dunkel und App-Symbol (Favicon, Startbildschirm). Kurz gepuffert,
+ * weil jede Seite (auch das HTML-Grundgerüst) es braucht.
+ */
 import { eq } from 'drizzle-orm';
 import { db } from './db/index.ts';
 import { tenants } from './db/schema.ts';
+import { imageVersions } from './marke.ts';
 
 export interface Branding {
+	id: string | null;
 	name: string;
 	short: string;
 	accent: string;
 	accentDark: string;
+	/** null = Standard der App */
+	bg: string | null;
+	bgDark: string | null;
+	/** Adressen der Logos (mit Stand), null = Kürzel anzeigen */
+	logoHell: string | null;
+	logoDunkel: string | null;
+	/** Basisadresse der App-Symbole, null = Standard-Symbole */
+	symbol: string | null;
+	symbolStand: number | null;
 }
 
 const DEFAULT: Branding = {
+	id: null,
 	name: 'Intranet',
 	short: 'IN',
 	accent: '#0F6E56',
-	accentDark: '#5DCAA5'
+	accentDark: '#5DCAA5',
+	bg: null,
+	bgDark: null,
+	logoHell: null,
+	logoDunkel: null,
+	symbol: null,
+	symbolStand: null
 };
 const HEX = /^#[0-9a-fA-F]{6}$/;
+const hex = (v: string | null) => (v && HEX.test(v) ? v : null);
 
-function toBranding(row: {
+const columns = {
+	id: tenants.id,
+	name: tenants.name,
+	shortName: tenants.shortName,
+	accentColor: tenants.accentColor,
+	accentColorDark: tenants.accentColorDark,
+	bgColor: tenants.bgColor,
+	bgColorDark: tenants.bgColorDark
+};
+
+async function toBranding(row: {
+	id: string;
 	name: string;
 	shortName: string;
 	accentColor: string | null;
 	accentColorDark: string | null;
-}): Branding {
+	bgColor: string | null;
+	bgColorDark: string | null;
+}): Promise<Branding> {
+	const v = await imageVersions(row.id);
+	const url = (datei: string, stand?: number) =>
+		stand ? `/marke/${row.id}/${datei}?v=${stand}` : null;
 	return {
+		id: row.id,
 		name: row.name,
 		short: row.shortName.slice(0, 3).toUpperCase(),
-		accent: row.accentColor && HEX.test(row.accentColor) ? row.accentColor : DEFAULT.accent,
-		accentDark:
-			row.accentColorDark && HEX.test(row.accentColorDark)
-				? row.accentColorDark
-				: DEFAULT.accentDark
+		accent: hex(row.accentColor) ?? DEFAULT.accent,
+		accentDark: hex(row.accentColorDark) ?? DEFAULT.accentDark,
+		bg: hex(row.bgColor),
+		bgDark: hex(row.bgColorDark),
+		logoHell: url('logo-hell.png', v.logo_hell),
+		// Ohne eigenes dunkles Logo wird das helle auch im Dunkeln gezeigt
+		logoDunkel: url('logo-dunkel.png', v.logo_dunkel) ?? url('logo-hell.png', v.logo_hell),
+		symbol: v.symbol_512 ? `/marke/${row.id}` : null,
+		symbolStand: v.symbol_512 ?? null
 	};
 }
 
-const columns = {
-	name: tenants.name,
-	shortName: tenants.shortName,
-	accentColor: tenants.accentColor,
-	accentColorDark: tenants.accentColorDark
-};
+const PUFFER_MS = 30_000;
+const puffer = new Map<string, { zeit: number; wert: Branding }>();
+
+/** Nach Änderungen in der Verwaltung sofort neu laden. */
+export function forgetBranding() {
+	puffer.clear();
+}
+
+async function gepuffert(key: string, laden: () => Promise<Branding>): Promise<Branding> {
+	const hit = puffer.get(key);
+	if (hit && Date.now() - hit.zeit < PUFFER_MS) return hit.wert;
+	const wert = await laden();
+	puffer.set(key, { zeit: Date.now(), wert });
+	return wert;
+}
 
 export async function brandingFor(tenantId: string): Promise<Branding> {
-	const [row] = await db.select(columns).from(tenants).where(eq(tenants.id, tenantId));
-	return row ? toBranding(row) : DEFAULT;
+	return gepuffert(tenantId, async () => {
+		const [row] = await db.select(columns).from(tenants).where(eq(tenants.id, tenantId));
+		return row ? toBranding(row) : DEFAULT;
+	});
 }
 
 /** Für Seiten vor der Anmeldung: Branding des Hauptmandanten. */
 export async function mainBranding(): Promise<Branding> {
-	const [row] = await db.select(columns).from(tenants).where(eq(tenants.isMain, true));
-	return row ? toBranding(row) : DEFAULT;
+	return gepuffert('haupt', async () => {
+		const [row] = await db.select(columns).from(tenants).where(eq(tenants.isMain, true));
+		return row ? toBranding(row) : DEFAULT;
+	});
 }
 
-/** Inline-Stil mit den Akzentfarben; Werte sind oben auf Hex geprüft. */
+/** Inline-Stil mit Akzent- und Hintergrundfarben; Werte sind oben auf Hex geprüft. */
 export function accentStyle(b: Branding): string {
-	return `--ac-hell: ${b.accent}; --ac-dunkel: ${b.accentDark};`;
+	return [
+		`--ac-hell: ${b.accent}`,
+		`--ac-dunkel: ${b.accentDark}`,
+		b.bg ? `--bg-hell: ${b.bg}` : '',
+		b.bgDark ? `--bg-dunkel: ${b.bgDark}` : ''
+	]
+		.filter(Boolean)
+		.join('; ')
+		.concat(';');
+}
+
+/** Favicon, Manifest und Symbol für den Kopf des HTML-Dokuments. */
+export function headLinks(b: Branding): string {
+	const theme = `<meta name="theme-color" content="${b.accent}" />`;
+	if (!b.symbol) {
+		return [
+			'<link rel="icon" href="/favicon.svg" />',
+			'<link rel="manifest" href="/manifest.webmanifest" />',
+			'<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />',
+			theme
+		].join('\n\t\t');
+	}
+	const v = b.symbolStand ?? 0;
+	return [
+		`<link rel="icon" type="image/png" sizes="32x32" href="${b.symbol}/symbol-32.png?v=${v}" />`,
+		`<link rel="manifest" href="${b.symbol}/manifest.webmanifest?v=${v}" />`,
+		`<link rel="apple-touch-icon" href="${b.symbol}/symbol-180.png?v=${v}" />`,
+		theme
+	].join('\n\t\t');
 }

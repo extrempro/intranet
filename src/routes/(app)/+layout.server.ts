@@ -31,6 +31,7 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 			mandant: branding.name,
 			mandantKurz: branding.short
 		},
+		logo: { hell: branding.logoHell, dunkel: branding.logoDunkel },
 		akzent: accentStyle(branding),
 		theme: locals.theme,
 		darfVerwaltung: canSeeAdministration(principal),

@@ -149,15 +149,19 @@ html {
 	--ac: var(--ac-hell);
 	--fill: var(--ac-hell);
 	--tint: color-mix(in srgb, var(--ac) 15%, var(--sf));
+	/* Seitenhintergrund des Mandanten (--bg-hell/--bg-dunkel), sonst Standard */
+	--bg: var(--bg-hell, #f4f6f5);
 }
 
 [data-theme='dunkel'] .akzent {
 	--ac: var(--ac-dunkel);
+	--bg: var(--bg-dunkel, #111614);
 }
 
 @media (prefers-color-scheme: dark) {
 	[data-theme='auto'] .akzent {
 		--ac: var(--ac-dunkel);
+		--bg: var(--bg-dunkel, #111614);
 	}
 }
 

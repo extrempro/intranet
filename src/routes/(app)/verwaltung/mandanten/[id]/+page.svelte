@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import MandantFelder from '#lib/components/MandantFelder.svelte';
+	import MarkeBild from '#lib/components/MarkeBild.svelte';
 
 	let { data, form } = $props();
 	const m = $derived(data.mandant);
@@ -29,6 +30,41 @@
 			{#key m}<MandantFelder werte={m} />{/key}
 			<button class="knopf" type="submit">Speichern</button>
 		</form>
+	</section>
+
+	<section class="karte stapel" aria-labelledby="h-bilder">
+		<h2 id="h-bilder">Logos und App-Symbol</h2>
+		<p class="hinweis">
+			Das Logo ersetzt oben links das Kürzel und erscheint auf der Anmeldeseite{m.isMain
+				? ''
+				: ' (dort nur das des Hauptmandanten)'} und in E-Mails. Das App-Symbol ist Favicon und Symbol
+			auf dem Startbildschirm. PNG, JPEG, WebP oder SVG; wird beim Hochladen in PNG umgerechnet.
+		</p>
+		<div class="bilder">
+			<MarkeBild
+				art="logo_hell"
+				titel="Logo für hell"
+				hinweis="Auf heller Fläche, höchstens 1200 × 400 px"
+				bild={data.marke.logoHell}
+				flaeche="#ffffff"
+			/>
+			<MarkeBild
+				art="logo_dunkel"
+				titel="Logo für dunkel"
+				hinweis="Ohne eigenes dunkles Logo wird das helle gezeigt"
+				bild={data.marke.logoDunkel !== data.marke.logoHell ? data.marke.logoDunkel : null}
+				flaeche="#1a201d"
+			/>
+			<MarkeBild
+				art="symbol"
+				titel="App-Symbol und Favicon"
+				hinweis="Quadratisch, am besten 512 × 512 px; wird mittig zugeschnitten"
+				bild={data.marke.symbol
+					? `${data.marke.symbol}/symbol-512.png?v=${data.marke.symbolStand}`
+					: null}
+				flaeche="#ffffff"
+			/>
+		</div>
 	</section>
 
 	<a
@@ -133,6 +169,11 @@
 	}
 	h2 {
 		margin: 0;
+	}
+	.bilder {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		gap: 16px;
 	}
 	.liste {
 		list-style: none;

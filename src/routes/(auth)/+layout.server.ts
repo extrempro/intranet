@@ -3,5 +3,13 @@ import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async () => {
 	const branding = await mainBranding();
-	return { marke: { name: branding.name, kurz: branding.short }, akzent: accentStyle(branding) };
+	return {
+		marke: {
+			name: branding.name,
+			kurz: branding.short,
+			logoHell: branding.logoHell,
+			logoDunkel: branding.logoDunkel
+		},
+		akzent: accentStyle(branding)
+	};
 };

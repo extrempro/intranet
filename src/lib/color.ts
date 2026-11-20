@@ -39,3 +39,38 @@ export function checkAccent(accent: string, accentDark: string): AccentCheck {
 		dunkelAufDunkel
 	};
 }
+
+/** Standard-Seitenhintergrund aus app.css */
+export const BG_DEFAULT = '#F4F6F5';
+export const BG_DEFAULT_DARK = '#111614';
+
+export interface BackgroundCheck {
+	ok: boolean;
+	/** Text, gedämpfter Text und Akzent auf dem hellen bzw. dunklen Hintergrund */
+	hell: { text: number; gedaempft: number; akzent: number };
+	dunkel: { text: number; gedaempft: number; akzent: number };
+}
+
+/**
+ * Seitenhintergrund prüfen: Überschriften, gedämpfte Texte und Links liegen
+ * direkt darauf und brauchen mindestens 4,5:1.
+ */
+export function checkBackground(
+	bg: string,
+	bgDark: string,
+	accent: string,
+	accentDark: string
+): BackgroundCheck {
+	const hell = {
+		text: contrastRatio('#18201c', bg),
+		gedaempft: contrastRatio('#525c57', bg),
+		akzent: contrastRatio(accent, bg)
+	};
+	const dunkel = {
+		text: contrastRatio('#eaefec', bgDark),
+		gedaempft: contrastRatio('#a6b0ab', bgDark),
+		akzent: contrastRatio(accentDark, bgDark)
+	};
+	const ok = [...Object.values(hell), ...Object.values(dunkel)].every((x) => x >= 4.5);
+	return { ok, hell, dunkel };
+}

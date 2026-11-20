@@ -118,7 +118,12 @@
 			href={resolve('/(app)')}
 			aria-label="Intranet, zur Startseite"
 		>
-			<span class="logo" aria-hidden="true">{data.ich.mandantKurz}</span>
+			{#if data.logo.hell}
+				<img class="logobild logo-hell" src={data.logo.hell} alt="" />
+				<img class="logobild logo-dunkel" src={data.logo.dunkel} alt="" />
+			{:else}
+				<span class="logo" aria-hidden="true">{data.ich.mandantKurz}</span>
+			{/if}
 			<span class="name nur-gross">Intranet</span>
 		</a>
 		<span class="titel nur-handy" aria-hidden="true">{seitentitel}</span>
@@ -386,6 +391,7 @@
 <style>
 	.app {
 		min-height: 100vh;
+		background: var(--bg);
 		display: flex;
 		flex-direction: column;
 	}
@@ -425,6 +431,29 @@
 	.name {
 		font-weight: 700;
 		font-size: 17px;
+	}
+	.logobild {
+		height: 34px;
+		width: auto;
+		max-width: 160px;
+		object-fit: contain;
+	}
+	.logo-dunkel {
+		display: none;
+	}
+	:global([data-theme='dunkel']) .logo-hell {
+		display: none;
+	}
+	:global([data-theme='dunkel']) .logo-dunkel {
+		display: block;
+	}
+	@media (prefers-color-scheme: dark) {
+		:global([data-theme='auto']) .logo-hell {
+			display: none;
+		}
+		:global([data-theme='auto']) .logo-dunkel {
+			display: block;
+		}
 	}
 	.titel {
 		font-weight: 700;
