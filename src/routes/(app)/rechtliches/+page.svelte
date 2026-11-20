@@ -2,9 +2,10 @@
 	/* eslint-disable svelte/no-navigation-without-resolve -- Links von Einträgen (geprüft: https/http oder eigene Pfade) und Suchparameter */
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import Icon from '#lib/components/Icon.svelte';
 	import RechtlichEintrag from '#lib/components/RechtlichEintrag.svelte';
 	import { matchesSearch } from '#lib/departments.ts';
-	import { formatIsoDate, formatSize } from '#lib/format.ts';
+	import { formatIsoDate } from '#lib/format.ts';
 	import { AGREEMENT_KINDS, LEGAL_KINDS, type LegalLinkErrors } from '#lib/legal.ts';
 
 	let { data, form } = $props();
@@ -27,6 +28,19 @@
 			? (form.felder as LegalLinkErrors)
 			: {};
 	const extern = (url: string) => !url.startsWith('/');
+	const heute = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date());
+	const KLAMMER =
+		'M15 7l-6.5 6.5a1.5 1.5 0 0 0 3 3l6.5 -6.5a3 3 0 0 0 -6 -6l-6.5 6.5a4.5 4.5 0 0 0 9 9l6.5 -6.5';
+	const sprungziele = $derived(
+		[
+			...AGREEMENT_KINDS.map((k) => ({
+				id: `h-${k.key}`,
+				label: k.label,
+				n: data.vereinbarungen.filter((v) => v.kind === k.key).length
+			})),
+			{ id: 'h-gesetze', label: 'Gesetze und Tarifverträge', n: data.links.length }
+		].filter((z) => z.n > 0)
+	);
 </script>
 
 <svelte:head><title>Rechtliches · Intranet</title></svelte:head>
@@ -47,7 +61,10 @@
 			</form>
 		</div>
 		{#if data.canWrite}
-			<a class="knopf" href="{resolve('/(app)/rechtliches/neu')}?mandant={data.tenantId}">
+			<a
+				class="knopf hauptaktion"
+				href="{resolve('/(app)/rechtliches/neu')}?mandant={data.tenantId}"
+			>
 				Vereinbarung einstellen
 			</a>
 		{/if}
@@ -81,13 +98,21 @@
 	{/if}
 	{#if form && 'ok' in form}<p class="meldung" role="status">{form.ok}</p>{/if}
 
-	<div class="karte">
+	{#if sprungziele.length > 1}
+		<nav class="pillen" aria-label="Abschnitte">
+			{#each sprungziele as z (z.id)}
+				<a class="pille" href="#{z.id}">{z.label} <span class="anzahl">{z.n}</span></a>
+			{/each}
+		</nav>
+	{/if}
+
+	<div class="suchfeld">
 		<label class="sr-only" for="suche-recht">Rechtliches durchsuchen</label>
 		<input
 			id="suche-recht"
 			type="search"
 			bind:value={suche}
-			placeholder="Vereinbarung, Gesetz oder Tarifvertrag suchen"
+			placeholder="Titel, Inhalt oder Anlage suchen …"
 			autocomplete="off"
 			maxlength="100"
 		/>
@@ -99,25 +124,33 @@
 			<section class="stapel" aria-labelledby="h-{k.key}">
 				<h2 id="h-{k.key}">{k.label}</h2>
 				{#if liste.length === 0}<p class="karte hinweis">Noch keine eingestellt.</p>{/if}
-				{#each liste as v (v.id)}
-					<article class="karte stapel eng" aria-labelledby="v-{v.id}">
-						<h3 id="v-{v.id}">
-							<a href={resolve('/(app)/rechtliches/[id]', { id: v.id })}>{v.title}</a>
-						</h3>
-						<p class="hinweis">
-							Stand {formatIsoDate(v.versionDate)} · gilt ab {formatIsoDate(v.validFrom)}
-						</p>
-						{#if v.description}<p class="text">{v.description}</p>{/if}
-						<ul class="dateien">
-							{#each v.attachments as a (a.id)}
-								<li>
-									<a href="/dateien/{a.id}" target="_blank" rel="noopener">{a.name}</a>
-									<span class="hinweis">{formatSize(a.size)}</span>
-								</li>
-							{/each}
-						</ul>
-					</article>
-				{/each}
+				{#if liste.length}
+					<ul class="vliste">
+						{#each liste as v (v.id)}
+							<li>
+								<a href={resolve('/(app)/rechtliches/[id]', { id: v.id })}>
+									<span class="vtext">
+										<span class="vtitel">
+											<strong>{v.title}</strong>
+											{#if v.validFrom > heute}<span class="schild warn">
+													Gilt ab {formatIsoDate(v.validFrom)}
+												</span>{/if}
+										</span>
+										<span class="unter">
+											Gilt ab {formatIsoDate(v.validFrom)} · Stand {formatIsoDate(v.versionDate)}
+										</span>
+									</span>
+									{#if v.attachments.length}
+										<span class="anlagen" aria-label="{v.attachments.length} Dateien">
+											<Icon d={KLAMMER} size={14} stroke={2} />{v.attachments.length}
+										</span>
+									{/if}
+									<Icon d="M9 6l6 6l-6 6" size={18} stroke={2} />
+								</a>
+							</li>
+						{/each}
+					</ul>
+				{/if}
 			</section>
 		{/if}
 	{/each}
@@ -268,12 +301,8 @@
 	.eng {
 		gap: 4px;
 	}
-	.hinweis,
-	.text {
+	.hinweis {
 		margin: 0;
-	}
-	.text {
-		white-space: pre-line;
 	}
 	.stern {
 		width: 44px;
@@ -287,23 +316,85 @@
 	input[type='search'] {
 		width: 100%;
 	}
+	.suchfeld {
+		max-width: 560px;
+	}
+	.anzahl {
+		font-size: 12px;
+		font-weight: 700;
+		opacity: 0.75;
+	}
+	.vliste {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		background: var(--sf);
+		border: 1px solid var(--bd);
+		border-radius: var(--radius);
+		overflow: hidden;
+	}
+	.vliste li + li {
+		border-top: 1px solid var(--bd);
+	}
+	.vliste a {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		min-height: 56px;
+		padding: 10px 14px;
+		box-sizing: border-box;
+		color: var(--tx);
+		text-decoration: none;
+	}
+	.vliste a:hover {
+		background: var(--bg);
+	}
+	.vliste a > :global(svg) {
+		flex: none;
+		color: var(--mu);
+	}
+	.vtext {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+	}
+	.vtitel {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 4px 8px;
+	}
+	.vtitel strong {
+		text-decoration: underline;
+		text-decoration-color: var(--bd);
+		text-underline-offset: 4px;
+	}
+	.unter {
+		font-size: 13px;
+		color: var(--mu);
+	}
+	.anlagen {
+		display: inline-flex;
+		align-items: center;
+		gap: 2px;
+		font-size: 13px;
+		color: var(--mu);
+	}
+	.schild.warn {
+		background: var(--warn-bg);
+		color: var(--warn-tx);
+	}
 	.pillen {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 8px;
 	}
-	.dateien,
 	.eintraege {
 		list-style: none;
 		margin: 0;
 		padding: 0;
 		display: grid;
-	}
-	.dateien li {
-		display: flex;
-		gap: 8px;
-		align-items: baseline;
-		flex-wrap: wrap;
 	}
 	.eintraege li {
 		padding: 10px 0;

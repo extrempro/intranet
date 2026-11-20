@@ -334,6 +334,16 @@ textarea {
 	display: none;
 }
 
+/* Aufklapp-Pille (details/summary) mit Pfeil */
+summary.pille::after {
+	content: '';
+	width: 14px;
+	height: 14px;
+	background: currentColor;
+	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6l6 -6'/%3E%3C/svg%3E")
+		center / contain no-repeat;
+}
+
 .pille:hover {
 	border-color: var(--mu);
 }
@@ -345,6 +355,27 @@ textarea {
 	border-color: var(--fill);
 	color: #fff;
 	font-weight: 600;
+}
+
+/* Auswahl als Pille (z. B. „Von: alle“) */
+select.pille {
+	width: auto;
+	min-height: 44px;
+	padding: 8px 36px 8px 16px;
+	border-color: var(--bd);
+	border-radius: 999px;
+	background: var(--sf)
+		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23525c57' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6l6 -6'/%3E%3C/svg%3E")
+		no-repeat right 14px center / 14px;
+	appearance: none;
+	font-weight: 500;
+}
+select.pille.an {
+	background-color: var(--fill);
+	border-color: var(--fill);
+	color: #fff;
+	font-weight: 600;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6l6 -6'/%3E%3C/svg%3E");
 }
 
 /* Suchfelder im Inhalt: Pille mit Lupe (Entwurf) */
@@ -393,6 +424,20 @@ main input[type='search'] {
 
 .titellink:hover {
 	text-decoration-color: currentColor;
+}
+
+/* Handy: Hauptaktion einer Seite schwebt über der unteren Leiste (Entwurf) */
+@media (max-width: 599px) {
+	.hauptaktion {
+		position: fixed;
+		right: 16px;
+		bottom: calc(84px + env(safe-area-inset-bottom));
+		z-index: 25;
+		border-radius: 999px;
+		min-height: 52px;
+		padding: 12px 20px;
+		box-shadow: 0 8px 24px rgb(0 0 0 / 0.22);
+	}
 }
 
 @media (prefers-reduced-motion: reduce) {

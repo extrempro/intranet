@@ -58,7 +58,10 @@
 			</form>
 		</div>
 		{#if data.darfAnlegen}
-			<a class="knopf" href="{resolve('/(app)/kalender/neu')}{data.tag ? `?tag=${data.tag}` : ''}">
+			<a
+				class="knopf hauptaktion"
+				href="{resolve('/(app)/kalender/neu')}{data.tag ? `?tag=${data.tag}` : ''}"
+			>
 				Termin anlegen
 			</a>
 		{/if}
@@ -96,7 +99,7 @@
 			Monat
 		</a>
 		<details class="aus" data-tour="mandanten">
-			<summary class="pille">{ausLabel} ▾</summary>
+			<summary class="pille">{ausLabel}</summary>
 			<form method="POST" action={actionUrl(page.url.search, 'aus')} class="ausliste">
 				<input type="hidden" name="zurueck" value={page.url.search} />
 				{#each data.mandanten as m (m.id)}

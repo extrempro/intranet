@@ -3,6 +3,7 @@
 	/* eslint-disable svelte/no-navigation-without-resolve, svelte/no-at-html-tags -- Suchparameter der eigenen Seite; Antwort-HTML ist serverseitig bereinigt */
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import Icon from '#lib/components/Icon.svelte';
 	import { actionUrl } from '#lib/action-url.ts';
 	import { page } from '$app/state';
 	import { formatSize } from '#lib/format.ts';
@@ -32,7 +33,7 @@
 				</button>
 			</form>
 		</div>
-		{#if data.canWrite}<a class="knopf" href={neuHref}>Neue FAQ</a>{/if}
+		{#if data.canWrite}<a class="knopf hauptaktion" href={neuHref}>FAQ erstellen</a>{/if}
 	</div>
 	{#if form?.fehler}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
 
@@ -59,11 +60,13 @@
 				<span class="sr-only">Bereich</span>
 				<select
 					name="einheit"
+					class="pille"
+					class:an={!!data.unitId}
 					value={data.unitId ?? ''}
 					onchange={(e) => e.currentTarget.form?.requestSubmit()}
 				>
-					<option value="">Alle Bereiche</option>
-					{#each data.units as u (u.id)}<option value={u.id}>{u.name}</option>{/each}
+					<option value="">Von: alle</option>
+					{#each data.units as u (u.id)}<option value={u.id}>Von: {u.name}</option>{/each}
 				</select>
 			</label>
 		{/if}
@@ -81,7 +84,28 @@
 		{#if data.q}<p class="hinweis" role="status">{anzahl} Treffer</p>{/if}
 		{#each data.groups as g (g.id)}
 			<section class="karte gruppe" aria-labelledby="g-{g.id}">
-				<h2 id="g-{g.id}">{g.name} <span class="hinweis">· {g.label}</span></h2>
+				<div class="gruppenkopf">
+					<span class="kuerzel" aria-hidden="true">
+						{g.name.length <= 3 ? g.name : g.name.charAt(0)}
+					</span>
+					<div class="gruppenname">
+						<span class="art">{g.label}</span>
+						<h2 id="g-{g.id}">{g.name}</h2>
+					</div>
+					<span class="anzahl">
+						{g.items.length === 1 ? '1 Frage' : `${g.items.length} Fragen`}
+					</span>
+					<a
+						class="rund"
+						href={g.hub
+							? resolve('/(app)/hubs/[slug]', { slug: g.slug })
+							: resolve('/(app)/abteilungen/[slug]', { slug: g.slug })}
+						aria-label="Zur Seite {g.name}"
+						title="Zur Seite {g.name}"
+					>
+						<Icon d="M9 6l6 6l-6 6" size={18} stroke={2} />
+					</a>
+				</div>
 				<ul class="fragen">
 					{#each g.items as f, i (f.id)}
 						<li id="faq-{f.id}">
@@ -183,23 +207,76 @@
 	.suche .feld:first-child {
 		flex: 1 1 260px;
 	}
-	.gruppe h2 {
-		font-size: 1.1rem;
-		margin: 0 0 4px;
+	.gruppe {
+		padding: 0;
+		border-radius: 20px;
+		overflow: hidden;
+	}
+	.gruppenkopf {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 14px 18px;
+		background: var(--tint);
+	}
+	.kuerzel {
+		flex: none;
+		width: 44px;
+		height: 44px;
+		border-radius: 14px;
+		background: var(--fill);
+		color: #fff;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: 700;
+	}
+	.gruppenname {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+	}
+	.art {
+		font-size: 12px;
+		font-weight: 700;
+		color: var(--ac);
+	}
+	.gruppenname h2 {
+		margin: 0;
+		font-size: 18px;
+	}
+	.anzahl {
+		font-size: 13px;
+		color: var(--mu);
+		white-space: nowrap;
+	}
+	.rund {
+		flex: none;
+		width: 44px;
+		height: 44px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 999px;
+		border: 1px solid var(--bd);
+		background: var(--sf);
+		color: var(--tx);
 	}
 	.fragen {
 		list-style: none;
 		margin: 0;
-		padding: 0;
+		padding: 0 18px;
 	}
-	.fragen > li + li {
+	.fragen > li {
 		border-top: 1px solid var(--bd);
 	}
 	summary {
-		min-height: 44px;
+		min-height: 52px;
 		display: flex;
 		align-items: center;
-		gap: 10px;
+		justify-content: space-between;
+		gap: 12px;
 		padding: 8px 0;
 		font-weight: 600;
 		cursor: pointer;
@@ -208,26 +285,22 @@
 	summary::-webkit-details-marker {
 		display: none;
 	}
-	summary::before {
-		content: '›';
+	summary::after {
+		content: '+';
 		flex: none;
-		width: 18px;
 		color: var(--ac);
-		font-size: 1.3rem;
-		transition: transform 0.15s ease;
+		font-size: 20px;
+		font-weight: 400;
+		line-height: 1;
 	}
-	details[open] > summary::before {
-		transform: rotate(90deg);
-	}
-	@media (prefers-reduced-motion: reduce) {
-		summary::before {
-			transition: none;
-		}
+	details[open] > summary::after {
+		content: '−';
 	}
 	.antwort {
 		display: grid;
 		gap: 10px;
-		padding: 0 0 14px 28px;
+		padding: 0 0 14px;
+		color: var(--mu);
 	}
 	.text :global(p) {
 		margin: 0 0 8px;
