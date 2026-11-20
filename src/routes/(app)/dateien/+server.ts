@@ -3,6 +3,7 @@ import { faqUnitIds, newsUnitIds } from '#lib/server/auth/access.ts';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import { deleteStored, FileError, MAX_FILE_BYTES, storeUpload } from '#lib/server/files/store.ts';
 import { formatSize } from '#lib/server/files/types.ts';
+import { uploadLimit } from '#lib/server/rate-limit.ts';
 
 /**
  * Hochladen einer Datei (einzeln, höchstens 20 MB). Alle Typen nur für Personen mit
@@ -18,6 +19,14 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		faqUnitIds(p).size > 0 ||
 		p.memberships.some((m) => m.mayWriteBehindScenes);
 	if (p.operatorLocationId) error(403, 'Dafür fehlt dir das Recht.');
+	if (!uploadLimit.hit(p.personId))
+		return json(
+			{
+				fehler:
+					'Du hast in der letzten Stunde sehr viele Dateien hochgeladen. Versuch es bitte später noch einmal.'
+			},
+			{ status: 429, headers: { 'Retry-After': String(uploadLimit.retryAfter(p.personId)) } }
+		);
 	const length = Number(request.headers.get('content-length') ?? 0);
 	if (length > MAX_FILE_BYTES + 64 * 1024)
 		return json({ fehler: 'Die Datei ist größer als 20 MB.' }, { status: 413 });

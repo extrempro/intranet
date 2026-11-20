@@ -7,6 +7,7 @@ import {
 	sendMessage
 } from '#lib/server/messages.ts';
 import { answerDeadline } from '#lib/server/hubs.ts';
+import { messageLimit } from '#lib/server/rate-limit.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
@@ -20,6 +21,12 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 export const actions: Actions = {
 	senden: async ({ request, locals, params }) => {
 		const text = String((await request.formData()).get('text') ?? '').slice(0, 5000);
+		const p = requirePrincipal(locals);
+		if (!messageLimit.hit(p.personId))
+			return fail(429, {
+				fehler: 'Du hast gerade sehr viele Nachrichten geschickt. Warte bitte kurz.',
+				text
+			});
 		try {
 			await sendMessage(requirePrincipal(locals), params.id, text);
 		} catch (err) {

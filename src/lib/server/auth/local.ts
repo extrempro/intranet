@@ -460,3 +460,90 @@ export async function personBasics(personId: string) {
 		.where(eq(persons.id, personId));
 	return p ?? null;
 }
+
+// ---------------------------------------------------------------------------
+// Passwort ändern (Konto → Sicherheit, ASVS V2.1.5/V2.1.6)
+// ---------------------------------------------------------------------------
+
+export type ChangePasswordResult =
+	| { ok: true; beendet: number }
+	| { ok: false; reason: 'wrong' | 'same' | NewPasswordProblem }
+	| { ok: false; reason: 'wait'; seconds: number };
+
+/**
+ * Aktuelles Passwort zur Bestätigung (Passwort ändern, neue Codes). Fehlversuche
+ * zählen wie bei der Anmeldung, damit eine übernommene Sitzung das Passwort
+ * nicht durchprobieren kann.
+ */
+export async function checkCurrentPassword(
+	personId: string,
+	password: string,
+	ip: string
+): Promise<
+	{ ok: true } | { ok: false; reason: 'wrong' } | { ok: false; reason: 'wait'; seconds: number }
+> {
+	const [cred] = await db
+		.select({
+			hash: localCredentials.passwordHash,
+			failed: localCredentials.failedAttempts,
+			lastFailedAt: localCredentials.lastFailedAt
+		})
+		.from(localCredentials)
+		.where(eq(localCredentials.personId, personId));
+	if (!cred?.hash) return { ok: false, reason: 'wrong' };
+	const wait = remainingWaitMs(cred.failed, cred.lastFailedAt);
+	if (wait > 0) return { ok: false, reason: 'wait', seconds: Math.ceil(wait / 1000) };
+	if (!(await verifyPassword(cred.hash, password))) {
+		await registerFailure(personId);
+		await audit({ category: 'security', action: 'password.confirm_failed', actorId: personId, ip });
+		return { ok: false, reason: 'wrong' };
+	}
+	return { ok: true };
+}
+
+/** Setzt ein neues Passwort und beendet alle anderen Sitzungen. */
+export async function changePassword(input: {
+	personId: string;
+	current: string;
+	next: string;
+	repeat: string;
+	ip: string;
+	keepSessionId: string;
+}): Promise<ChangePasswordResult> {
+	const check = await checkCurrentPassword(input.personId, input.current, input.ip);
+	if (!check.ok) return check;
+	if (input.next === input.current) return { ok: false, reason: 'same' };
+	const problem = await checkNewPassword(input.next, input.repeat, {
+		personId: input.personId,
+		ip: input.ip
+	});
+	if (problem) return { ok: false, reason: problem };
+
+	const passwordHash = await hashPassword(input.next);
+	await db
+		.update(localCredentials)
+		.set({ passwordHash, passwordChangedAt: new Date(), failedAttempts: 0, lastFailedAt: null })
+		.where(eq(localCredentials.personId, input.personId));
+	const { endOtherSessions } = await import('./session.ts');
+	const beendet = await endOtherSessions(input.personId, input.keepSessionId);
+	const [p] = await db
+		.select({ email: persons.email, name: persons.displayName, tenantId: persons.tenantId })
+		.from(persons)
+		.where(eq(persons.id, input.personId));
+	await audit({
+		category: 'security',
+		action: 'password.changed',
+		actorId: input.personId,
+		tenantId: p?.tenantId,
+		details: { andereSitzungenBeendet: beendet },
+		ip: input.ip
+	});
+	if (p)
+		await sendMail({
+			to: p.email,
+			subject: 'Dein Passwort für das Intranet wurde geändert',
+			text: `Hallo ${p.name},\n\ndein Passwort für das Intranet wurde soeben im Konto geändert. Andere Anmeldungen wurden beendet.\n\nWarst du das nicht? Dann wende dich bitte sofort an die IT.`,
+			html: `<p>Hallo ${escapeHtml(p.name)},</p><p>dein Passwort für das Intranet wurde soeben im Konto geändert. Andere Anmeldungen wurden beendet.</p><p>Warst du das nicht? Dann wende dich bitte sofort an die IT.</p>`
+		}).catch((err) => console.error('Bestätigung nicht verschickt:', err));
+	return { ok: true, beendet };
+}

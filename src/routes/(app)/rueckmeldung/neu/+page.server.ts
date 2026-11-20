@@ -3,6 +3,7 @@ import { safeReturnPath } from '#lib/feedback.ts';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import { createFeedback } from '#lib/server/feedback.ts';
 import { setFlash } from '#lib/server/flash.ts';
+import { feedbackLimit } from '#lib/server/rate-limit.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -19,6 +20,13 @@ export const actions: Actions = {
 			text: String(f.get('text') ?? '').slice(0, 4000),
 			page: String(f.get('seite') ?? '').slice(0, 500)
 		};
+		if (!feedbackLimit.hit(p.personId))
+			return fail(429, {
+				fehler: {
+					text: 'Du hast in der letzten Stunde schon viele Rückmeldungen geschickt. Danke! Versuch es bitte später noch einmal.'
+				} as { kind?: string; text?: string },
+				eingabe: input
+			});
 		const r = await createFeedback(p, input);
 		if (!r.ok) return fail(400, { fehler: r.errors, eingabe: input });
 		setFlash(cookies, 'rueckmeldung');
