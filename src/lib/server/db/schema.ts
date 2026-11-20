@@ -457,6 +457,42 @@ export const urgentDismissals = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// Dateien (Kap. 1.4, 15, 16)
+// ---------------------------------------------------------------------------
+
+/**
+ * Verschlüsselt im Volume FILES_DIR abgelegte Dateien. Der Dateischlüssel liegt
+ * nur hier (mit ENCRYPTION_KEY geschützt); wird die Zeile gelöscht, ist die
+ * Datei unlesbar. Ohne Verknüpfung (z. B. news_attachments) wird eine Datei
+ * nach 24 Stunden gelöscht.
+ */
+export const files = pgTable('files', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	name: text('name').notNull(),
+	mime: text('mime').notNull(),
+	kind: text('kind').notNull(),
+	size: integer('size').notNull(),
+	keyEnc: text('key_enc').notNull(),
+	createdBy: uuid('created_by').references(() => persons.id, { onDelete: 'set null' }),
+	createdAt: createdAt()
+});
+
+export const newsAttachments = pgTable(
+	'news_attachments',
+	{
+		newsId: uuid('news_id')
+			.notNull()
+			.references(() => news.id, { onDelete: 'cascade' }),
+		fileId: uuid('file_id')
+			.notNull()
+			.unique()
+			.references(() => files.id, { onDelete: 'cascade' }),
+		position: integer('position').notNull()
+	},
+	(t) => [primaryKey({ columns: [t.newsId, t.fileId] })]
+);
+
+// ---------------------------------------------------------------------------
 // Lokale Konten (Kap. 4.2)
 // ---------------------------------------------------------------------------
 

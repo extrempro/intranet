@@ -5,7 +5,13 @@ import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import { db } from '#lib/server/db/index.ts';
 import { tenants } from '#lib/server/db/schema.ts';
 import { readNewsForm, type NewsFormValues } from '#lib/server/news-form.ts';
-import { NewsError, newsForEdit, saveNews, writableUnits } from '#lib/server/news.ts';
+import {
+	describeAttachments,
+	NewsError,
+	newsForEdit,
+	saveNews,
+	writableUnits
+} from '#lib/server/news.ts';
 import { getContentRules } from '#lib/server/rules.ts';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -29,7 +35,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		urgentText: n.urgentText ?? '',
 		allTenants: n.allTenants,
 		tenantIds: n.tenantIds,
-		replacePin: false
+		replacePin: false,
+		attachments: n.attachments
 	};
 	return {
 		id: n.id,
@@ -53,8 +60,10 @@ export const actions: Actions = {
 		input.unitId = existing.unitId;
 		try {
 			const r = await saveNews(p, input, getClientAddress(), params.id);
-			if (!r.ok)
+			if (!r.ok) {
+				values.attachments = await describeAttachments(p, input.attachmentIds, params.id);
 				return fail(400, { werte: values, fehler: r.errors, pinKonflikt: r.pinConflict ?? null });
+			}
 			redirect(303, `/neuigkeiten/${r.id}`);
 		} catch (err) {
 			if (err instanceof NewsError)
