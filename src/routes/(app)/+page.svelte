@@ -5,6 +5,7 @@
 	import Icon from '#lib/components/Icon.svelte';
 	import { moveItem } from '#lib/home.ts';
 	import { formatWhen } from '#lib/news.ts';
+	import { timeLabel } from '#lib/calendar.ts';
 	import { closureRange, closureTitle } from '#lib/canteen.ts';
 	import { formatRange } from '#lib/plans.ts';
 
@@ -126,9 +127,7 @@
 		<section class="karte" aria-labelledby="karten-h">
 			<h2 id="karten-h">Karten</h2>
 			{#if karten.length === 0}
-				<p class="hinweis">
-					Weitere Karten wie Termine oder Speiseplan kommen dazu, sobald es sie gibt.
-				</p>
+				<p class="hinweis">Weitere Karten kommen dazu, sobald es die Funktionen gibt.</p>
 			{:else}
 				<ul class="kartenliste">
 					{#each karten as k, i (k.id)}
@@ -220,6 +219,32 @@
 								ebene={3}
 								mitReaktionen={false}
 							/>{/each}
+					{/if}
+				</section>
+			{:else if k.id === 'termine'}
+				<section aria-labelledby="karte-termine" class="stapel">
+					<div class="kartenkopf">
+						<h2 id="karte-termine">Heute und morgen</h2>
+						<a href={resolve('/(app)/kalender')}>Zum Kalender</a>
+					</div>
+					{#if data.termine.items.length === 0}
+						<p class="hinweis">Heute und morgen stehen keine Termine an.</p>
+					{:else}
+						<ul class="karte planliste">
+							{#each data.termine.items as t (t.id)}
+								<li>
+									<a href={resolve('/(app)/kalender/[id]', { id: t.id })}>
+										<strong>{t.title}</strong>
+									</a>
+									<span class="hinweis">
+										{t.date === data.termine.today ? 'Heute' : 'Morgen'}, {timeLabel(t)}
+									</span>
+									<span class="voll hinweis">
+										{[t.unitName, t.place].filter(Boolean).join(' · ')}
+									</span>
+								</li>
+							{/each}
+						</ul>
 					{/if}
 				</section>
 			{:else if k.id === 'speiseplan'}

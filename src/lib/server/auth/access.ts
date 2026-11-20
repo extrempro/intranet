@@ -172,6 +172,24 @@ export function newsUnitIds(p: Principal): Set<string> {
 	return writeUnitIds(p, 'mayWriteNews');
 }
 
+/**
+ * Darf im Namen der Einheit Termine anlegen. Ob die Einheit überhaupt Termine
+ * haben darf (Regel/Ausnahme), prüft der Aufrufer zusätzlich (roles.ts).
+ */
+export function canWriteEvents(p: Principal, unit: UnitRef): boolean {
+	if (!canSeeUnit(p, unit)) return false;
+	return (
+		hasDelegated(p, unit.id, 'mayWriteEvents') ||
+		hasUnitRole(p, 'abteilungsverwaltung', unit.id) ||
+		hasUnitRole(p, 'hub_team', unit.id)
+	);
+}
+
+/** Einheiten, für die die Person Termine anlegen darf (IDs, ohne Regelprüfung). */
+export function eventUnitIds(p: Principal): Set<string> {
+	return writeUnitIds(p, 'mayWriteEvents');
+}
+
 /** Einheiten, für die die Person FAQs pflegen darf (IDs). */
 export function faqUnitIds(p: Principal): Set<string> {
 	return writeUnitIds(p, 'mayWriteFaqs');

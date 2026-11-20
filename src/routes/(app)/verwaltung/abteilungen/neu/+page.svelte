@@ -10,6 +10,7 @@
 		isCentral: false,
 		hidden: false,
 		mayPostUrgent: null,
+		mayCreateEvents: null,
 		isKbb: false
 	};
 </script>
