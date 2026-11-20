@@ -1,10 +1,15 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import PushGeraet from '#lib/components/PushGeraet.svelte';
 	import { EMAIL_MODES, TOPICS } from '#lib/notify.ts';
 
 	let { data, form } = $props();
 	const e = $derived(data.einstellung);
+	const datum = new Intl.DateTimeFormat('de-DE', {
+		dateStyle: 'medium',
+		timeZone: 'Europe/Berlin'
+	});
 </script>
 
 <svelte:head><title>Benachrichtigungen · Konto · Intranet</title></svelte:head>
@@ -12,10 +17,39 @@
 <div class="stapel schmal">
 	<a class="zurueck" href={resolve('/(app)/konto')}>← Konto</a>
 	<h1>Benachrichtigungen</h1>
-	{#if form?.gespeichert}<p class="meldung" role="status">Gespeichert.</p>{/if}
+	{#if form && 'gespeichert' in form}<p class="meldung" role="status">Gespeichert.</p>{/if}
+
+	<section class="karte stapel" aria-labelledby="h-push">
+		<h2 id="h-push">Push auf diesem Gerät</h2>
+		<PushGeraet vapidKey={data.vapidKey} />
+		{#if data.geraete.length}
+			<details>
+				<summary>Geräte mit Push ({data.geraete.length})</summary>
+				<ul class="geraete">
+					{#each data.geraete as g (g.id)}
+						<li>
+							<span>
+								<strong>{g.label ?? 'Gerät'}</strong>
+								<span class="hinweis">
+									· seit {datum.format(g.createdAt)}{g.lastSuccessAt
+										? ` · zuletzt zugestellt ${datum.format(g.lastSuccessAt)}`
+										: ''}
+								</span>
+							</span>
+							<form method="POST" action="?/geraetEntfernen" use:enhance>
+								<input type="hidden" name="id" value={g.id} />
+								<button class="linkknopf" type="submit">Entfernen</button>
+							</form>
+						</li>
+					{/each}
+				</ul>
+			</details>
+		{/if}
+	</section>
 
 	<form
 		method="POST"
+		action="?/speichern"
 		class="stapel"
 		use:enhance={() =>
 			({ update }) =>
@@ -25,7 +59,12 @@
 			<table>
 				<caption class="sr-only">Benachrichtigungen je Thema</caption>
 				<thead>
-					<tr><th scope="col">Thema</th><th scope="col">Glocke</th><th scope="col">E-Mail</th></tr>
+					<tr>
+						<th scope="col">Thema</th>
+						<th scope="col">Glocke</th>
+						<th scope="col">Push</th>
+						<th scope="col">E-Mail</th>
+					</tr>
 				</thead>
 				<tbody>
 					{#each TOPICS.filter((x) => data.themen.includes(x.key)) as t (t.key)}
@@ -46,6 +85,20 @@
 							<td>
 								<input
 									type="checkbox"
+									name="{t.key}_push"
+									checked={e.topics[t.key].push}
+									disabled={t.fixed?.includes('push')}
+									aria-label="{t.label}: Push{t.fixed?.includes('push') ? ' (immer an)' : ''}"
+								/>
+								{#if t.fixed?.includes('push')}<input
+										type="hidden"
+										name="{t.key}_push"
+										value="on"
+									/>{/if}
+							</td>
+							<td>
+								<input
+									type="checkbox"
 									name="{t.key}_mail"
 									checked={e.topics[t.key].email}
 									aria-label="{t.label}: E-Mail"
@@ -56,10 +109,40 @@
 				</tbody>
 			</table>
 			<p class="hinweis">
-				Dringende Meldungen erscheinen immer in der Glocke. Web Push und Teams kommen mit der App
-				fürs Handy dazu.
+				Dringende Meldungen erscheinen immer in der Glocke und als Push. Push kommt nur auf Geräten
+				an, auf denen du ihn oben eingeschaltet hast. Hubs stellst du unter „Meine Hubs“ ein.
 			</p>
 		</section>
+
+		<fieldset class="karte modus">
+			<legend>Ruhezeiten</legend>
+			<p class="hinweis">
+				In Ruhezeiten kommen keine Push-Nachrichten; danach gesammelt als eine Nachricht. Glocke und
+				E-Mail sind nicht betroffen.
+			</p>
+			<label class="option">
+				<input type="checkbox" name="ruhe" checked={e.quiet.on} />
+				<span>Ruhezeiten einhalten</span>
+			</label>
+			<div class="zeiten">
+				<label class="feld">
+					<span>Werktags von</span>
+					<input type="time" name="ruhe_von" value={e.quiet.start} required />
+				</label>
+				<label class="feld">
+					<span>bis</span>
+					<input type="time" name="ruhe_bis" value={e.quiet.end} required />
+				</label>
+			</div>
+			<label class="option">
+				<input type="checkbox" name="ruhe_wochenende" checked={e.quiet.weekend} />
+				<span>Samstag und Sonntag ganztägig</span>
+			</label>
+			<label class="option">
+				<input type="checkbox" name="ruhe_dringend" checked={e.quiet.urgent} />
+				<span>Dringende Meldungen trotzdem sofort</span>
+			</label>
+		</fieldset>
 
 		<fieldset class="karte modus">
 			<legend>E-Mails</legend>
@@ -84,8 +167,38 @@
 	.schmal {
 		max-width: 720px;
 	}
-	h1 {
+	h1,
+	h2 {
 		margin: 0;
+	}
+	h2 {
+		font-size: 1.1rem;
+	}
+	.geraete {
+		list-style: none;
+		margin: 8px 0 0;
+		padding: 0;
+		display: grid;
+	}
+	.geraete li {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		align-items: center;
+		gap: 4px 12px;
+		padding: 6px 0;
+		border-top: 1px solid var(--bd);
+	}
+	summary {
+		cursor: pointer;
+		min-height: 44px;
+		display: flex;
+		align-items: center;
+	}
+	.zeiten {
+		display: flex;
+		gap: 12px;
+		flex-wrap: wrap;
 	}
 	.zurueck {
 		min-height: 44px;

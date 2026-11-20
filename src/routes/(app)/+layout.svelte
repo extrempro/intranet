@@ -6,6 +6,7 @@
 	import Icon from '#lib/components/Icon.svelte';
 	import Kontomenue from '#lib/components/Kontomenue.svelte';
 	import Kopfsuche from '#lib/components/Kopfsuche.svelte';
+	import OfflineHinweis from '#lib/components/OfflineHinweis.svelte';
 	import { currentNav, navAreas } from '#lib/nav.ts';
 
 	let { data, children } = $props();
@@ -199,6 +200,7 @@
 			{/if}
 
 			<main id="inhalt" tabindex="-1">
+				<OfflineHinweis />
 				{@render children()}
 			</main>
 		</div>

@@ -45,21 +45,19 @@ export function checkHours(days: OpeningDay[]): string | null {
 }
 
 /** Jetzt in Berlin: Tag, Wochentag (0 = Montag) und Uhrzeit HH:MM. */
+const BERLIN = new Intl.DateTimeFormat('en-GB', {
+	timeZone: 'Europe/Berlin',
+	year: 'numeric',
+	month: '2-digit',
+	day: '2-digit',
+	weekday: 'short',
+	hour: '2-digit',
+	minute: '2-digit',
+	hourCycle: 'h23'
+});
+
 export function berlinNow(now = new Date()): { date: string; weekday: number; time: string } {
-	const parts = Object.fromEntries(
-		new Intl.DateTimeFormat('en-GB', {
-			timeZone: 'Europe/Berlin',
-			year: 'numeric',
-			month: '2-digit',
-			day: '2-digit',
-			weekday: 'short',
-			hour: '2-digit',
-			minute: '2-digit',
-			hourCycle: 'h23'
-		})
-			.formatToParts(now)
-			.map((p) => [p.type, p.value])
-	);
+	const parts = Object.fromEntries(BERLIN.formatToParts(now).map((p) => [p.type, p.value]));
 	const weekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].indexOf(parts.weekday);
 	return {
 		date: `${parts.year}-${parts.month}-${parts.day}`,

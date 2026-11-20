@@ -42,6 +42,11 @@ docker compose up -d --build
 Die Anwendung hört im Container auf Port 3000 (`APP_PORT` auf dem Host). Der Zustand ist unter
 `/health` abrufbar. Die Datenbank ist nicht nach außen veröffentlicht.
 
+Web Push braucht ausgehend HTTPS zu den Push-Diensten der Browser: `fcm.googleapis.com`,
+`*.push.services.mozilla.com`, `*.push.apple.com` und `*.notify.windows.com`. Die VAPID-Schlüssel
+erzeugt die Anwendung beim ersten Start selbst und speichert sie verschlüsselt (`ENCRYPTION_KEY`).
+Installierbar ist das Intranet nur über HTTPS (über den Reverse Proxy gegeben).
+
 ## Aktualität der Pakete
 
 - **Wöchentlich** (montags) hebt der Workflow *Abhängigkeiten aktualisieren* alle npm-Pakete auf die neueste Version,
