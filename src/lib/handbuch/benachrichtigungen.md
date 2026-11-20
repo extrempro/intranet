@@ -3,7 +3,7 @@ titel: Benachrichtigungen
 kapitel: grundlagen
 rollen: alle
 reihenfolge: 4
-kurz: Glocke, Push und E-Mail je Thema, Ruhezeiten.
+kurz: Glocke, Push, E-Mail und Teams je Thema, Ruhezeiten.
 ---
 
 Unter **Konto → Benachrichtigungen** legst du je Thema fest, ob du per Glocke, Push oder E-Mail benachrichtigt wirst. Dringende Meldungen kommen immer in der Glocke und als Push.
@@ -14,7 +14,11 @@ Push-Nachrichten schaltest du je Gerät ein: „Push auf diesem Gerät einschalt
 
 ## Ruhezeiten
 
-In Ruhezeiten kommen keine Push-Nachrichten, danach gesammelt als eine Nachricht. Standard: werktags 20 bis 7 Uhr und das ganze Wochenende. Glocke und E-Mail sind nicht betroffen. „Dringende Meldungen trotzdem sofort“ ist voreingestellt.
+In Ruhezeiten kommen keine Push- und Teams-Nachrichten, danach gesammelt als eine Nachricht. Standard: werktags 20 bis 7 Uhr und das ganze Wochenende. Glocke und E-Mail sind nicht betroffen. „Dringende Meldungen trotzdem sofort“ ist voreingestellt.
+
+## Teams
+
+Mit einem Microsoft-Konto kommen **dringende Meldungen** auch in Teams unter „Aktivität“ an, **angeheftete Beiträge** auf Wunsch. Die Spalte „Teams“ erscheint, sobald die IT Teams eingerichtet hat. Ein Klick auf die Meldung öffnet in Teams einen kleinen Tab; mit „Im Intranet öffnen“ geht der Beitrag im Browser auf. Ruhezeiten gelten wie bei Push.
 
 ## E-Mails
 

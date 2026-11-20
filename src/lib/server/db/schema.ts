@@ -991,14 +991,17 @@ export const notifications = pgTable(
 		email: text('email', { enum: ['pending', 'sent'] }),
 		/** Web Push: pending = noch zu senden, sent, null = kein Push */
 		push: text('push', { enum: ['pending', 'sent'] }),
-		/** Ruhezeit: frühestens dann senden (null = sofort) */
+		/** Teams-Aktivitätsfeed: pending, sent, null = keiner (Kap. 11.1) */
+		teams: text('teams', { enum: ['pending', 'sent'] }),
+		/** Ruhezeit: frühestens dann senden (null = sofort); gilt für Push und Teams */
 		pushAfter: timestamp('push_after', { withTimezone: true }),
 		createdAt: createdAt()
 	},
 	(t) => [
 		index('notifications_person').on(t.personId, t.createdAt),
 		index('notifications_email').on(t.email),
-		index('notifications_push').on(t.push, t.pushAfter)
+		index('notifications_push').on(t.push, t.pushAfter),
+		index('notifications_teams').on(t.teams, t.pushAfter)
 	]
 );
 

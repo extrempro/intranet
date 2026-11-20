@@ -302,7 +302,7 @@ Arbeitsliste (keine Einstellungen). Sichtbar mit der Rolle Redaktion; mit der Ro
 - **Glocke** im Intranet.
 - **Web Push** (VAPID). Auf dem iPhone erst nach „Zum Home-Bildschirm“.
 - **E-Mail** per SMTP (STARTTLS, TLS oder interner Relay) mit in der Verwaltung festgelegtem Server, Absender (Anzeigename, optional „Antworten an“) und Zugangsdaten; das Passwort wird verschlüsselt gespeichert.
-- **Teams** über die Intranet-App im Tenant; Nachrichten enthalten nur Titel, Absender und Link.
+- **Teams** über die Intranet-App im Tenant als Eintrag im Aktivitätsfeed (Graph, Anwendungsberechtigung TeamsActivity.Send; App per Setup-Richtlinie verteilt); Nachrichten enthalten nur Titel, Absender und Link. Ein Klick öffnet einen Tab der App mit dem Link ins Intranet (Browser); das Intranet selbst läuft nicht in Teams.
 
 ### 11.2 Voreinstellungen je Thema
 | Thema | Glocke | Push | E-Mail | Teams |
