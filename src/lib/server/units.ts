@@ -88,6 +88,10 @@ export async function getUnitForAdmin(p: Principal, unitId: string) {
 				inArray(roleAssignments.role, ['abteilungsverwaltung', 'hub_team'])
 			)
 		);
+	const fach = await db
+		.select({ personId: roleAssignments.personId, source: roleAssignments.source })
+		.from(roleAssignments)
+		.where(and(eq(roleAssignments.scopeUnitId, unitId), eq(roleAssignments.role, 'fachpflege')));
 	return {
 		...u.unit,
 		tenantName: u.tenantName,
@@ -96,7 +100,9 @@ export async function getUnitForAdmin(p: Principal, unitId: string) {
 		team: team.map((m) => ({
 			...m,
 			verwaltet: managers.some((r) => r.personId === m.personId),
-			ausEntra: managers.some((r) => r.personId === m.personId && r.source === 'entra')
+			ausEntra: managers.some((r) => r.personId === m.personId && r.source === 'entra'),
+			fachpflege: fach.some((r) => r.personId === m.personId),
+			fachpflegeAusEntra: fach.some((r) => r.personId === m.personId && r.source === 'entra')
 		}))
 	};
 }
@@ -282,6 +288,8 @@ export interface MemberRights {
 	mayWriteEvents: boolean;
 	mayWriteBehindScenes: boolean;
 	verwaltet: boolean;
+	/** Nur beim KBB: Pläne hochladen und löschen (Kap. 8.6). */
+	fachpflege?: boolean;
 }
 
 /** Schreibrechte, eigene Abteilung und Verwaltung der Einheit für eine Person. */
@@ -352,6 +360,25 @@ export async function setMemberRights(
 			.set({ ...rights, isPrimary: r.isPrimary })
 			.where(and(eq(unitMembers.unitId, unitId), eq(unitMembers.personId, personId)));
 
+		if (u.kbbUnitId === unitId && r.fachpflege !== undefined) {
+			const fp = and(
+				eq(roleAssignments.personId, personId),
+				eq(roleAssignments.scopeUnitId, unitId),
+				eq(roleAssignments.role, 'fachpflege'),
+				eq(roleAssignments.source, 'manual')
+			);
+			const [hasFp] = await tx.select({ id: roleAssignments.id }).from(roleAssignments).where(fp);
+			if (r.fachpflege && !hasFp)
+				await tx.insert(roleAssignments).values({
+					personId,
+					role: 'fachpflege',
+					scope: 'unit',
+					scopeUnitId: unitId,
+					createdBy: p.personId
+				});
+			if (!r.fachpflege && hasFp) await tx.delete(roleAssignments).where(fp);
+		}
+
 		const manual = and(
 			eq(roleAssignments.personId, personId),
 			eq(roleAssignments.scopeUnitId, unitId),
@@ -375,7 +402,13 @@ export async function setMemberRights(
 		tenantId: u.unit.tenantId,
 		entityType: 'unit',
 		entityId: unitId,
-		details: { personId, ...rights, isPrimary: r.isPrimary, verwaltet: r.verwaltet },
+		details: {
+			personId,
+			...rights,
+			isPrimary: r.isPrimary,
+			verwaltet: r.verwaltet,
+			fachpflege: r.fachpflege
+		},
 		ip
 	});
 }

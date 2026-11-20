@@ -26,6 +26,13 @@
 	<h2>Zugänge</h2>
 	<ul class="kacheln">
 		<li>
+			<a class="karte kachel" href={resolve('/(app)/verwaltung/benutzer')}>
+				<strong>Benutzer und Rollen</strong><span class="hinweis">
+					Rollen vergeben, Konten sperren
+				</span>
+			</a>
+		</li>
+		<li>
 			<a class="karte kachel" href={resolve('/(app)/verwaltung/einladen')}>
 				<strong>Lokales Konto einladen</strong><span class="hinweis">
 					Für Personen ohne Microsoft-Konto
@@ -36,6 +43,13 @@
 			<li>
 				<a class="karte kachel" href={resolve('/(app)/verwaltung/anmeldung')}>
 					<strong>Anmeldung</strong><span class="hinweis">Abmelden nach Inaktivität</span>
+				</a>
+			</li>
+			<li>
+				<a class="karte kachel" href={resolve('/(app)/verwaltung/entra-gruppen')}>
+					<strong>Rollen aus Entra-Gruppen</strong><span class="hinweis">
+						Gruppe → Rolle zuordnen
+					</span>
 				</a>
 			</li>
 		{/if}

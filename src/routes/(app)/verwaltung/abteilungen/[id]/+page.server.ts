@@ -64,7 +64,8 @@ export const actions: Actions = {
 					mayWriteFaqs: on('faqs'),
 					mayWriteEvents: on('termine'),
 					mayWriteBehindScenes: on('kulissen'),
-					verwaltet: on('verwaltet')
+					verwaltet: on('verwaltet'),
+					fachpflege: f.has('fachpflege_feld') ? on('fachpflege') : undefined
 				},
 				getClientAddress()
 			)
