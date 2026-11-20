@@ -263,6 +263,41 @@ export const roleAssignments = pgTable(
 	]
 );
 
+/**
+ * Zuordnung Entra-Gruppe → Rolle mit Geltungsbereich (Kap. 4.1), z. B.
+ * IT-GRP-HSO-INTRANET-REDAKTION → Redaktion · alle Mandanten.
+ * Wird bei jeder Anmeldung angewendet; die daraus entstandenen Rollen
+ * (source = 'entra') werden dabei vollständig ersetzt.
+ */
+export const entraGroupRoles = pgTable(
+	'entra_group_roles',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		groupId: text('group_id').notNull(),
+		/** Anzeigename der Gruppe, nur zur Orientierung in der Verwaltung. */
+		groupName: text('group_name'),
+		role: roleName('role').notNull(),
+		scope: roleScope('scope').notNull(),
+		scopeTenantId: uuid('scope_tenant_id').references(() => tenants.id, {
+			onDelete: 'cascade'
+		}),
+		scopeUnitId: uuid('scope_unit_id').references(() => units.id, { onDelete: 'cascade' }),
+		createdAt: createdAt()
+	},
+	(t) => [
+		index('entra_group_roles_group').on(t.groupId),
+		unique('entra_group_roles_unique')
+			.on(t.groupId, t.role, t.scope, t.scopeTenantId, t.scopeUnitId)
+			.nullsNotDistinct(),
+		check(
+			'entra_group_roles_scope_columns',
+			sql`(${t.scope} = 'all' and ${t.scopeTenantId} is null and ${t.scopeUnitId} is null)
+			or (${t.scope} = 'tenant' and ${t.scopeTenantId} is not null and ${t.scopeUnitId} is null)
+			or (${t.scope} = 'unit' and ${t.scopeUnitId} is not null and ${t.scopeTenantId} is null)`
+		)
+	]
+);
+
 // ---------------------------------------------------------------------------
 // Sitzungen
 // ---------------------------------------------------------------------------
