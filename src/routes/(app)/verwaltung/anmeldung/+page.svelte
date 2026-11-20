@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { resolve } from '$app/paths';
 	import EntraAbgleich from '#lib/components/EntraAbgleich.svelte';
 	import Info from '#lib/components/Info.svelte';
 	import { PASSWORD_MIN_OPTIONS, RESET_MINUTES_OPTIONS } from '#lib/password.ts';
@@ -35,7 +34,6 @@
 </svelte:head>
 
 <div class="stapel seite">
-	<a class="zurueck" href={resolve('/(app)/verwaltung')}>← Verwaltung</a>
 	<h1>Anmeldung</h1>
 
 	<section class="karte stapel" aria-labelledby="h-entra-verbindung">
@@ -240,11 +238,6 @@
 <style>
 	.seite {
 		max-width: 48rem;
-	}
-	.zurueck {
-		min-height: 44px;
-		display: inline-flex;
-		align-items: center;
 	}
 	h1,
 	h2 {

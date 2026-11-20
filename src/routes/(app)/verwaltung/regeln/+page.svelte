@@ -28,7 +28,6 @@
 <svelte:head><title>Regeln für Inhalte · Verwaltung · Intranet</title></svelte:head>
 
 <div class="stapel seite">
-	<a class="zurueck" href={resolve('/(app)/verwaltung')}>← Verwaltung</a>
 	<h1>Regeln für Inhalte</h1>
 	<p class="hinweis">
 		Gelten für alle Mandanten.
@@ -110,11 +109,6 @@
 <style>
 	.seite {
 		max-width: 44rem;
-	}
-	.zurueck {
-		min-height: 44px;
-		display: inline-flex;
-		align-items: center;
 	}
 	h1,
 	h2 {

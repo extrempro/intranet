@@ -30,27 +30,28 @@ export const actions: Actions = {
 			});
 		} catch (err) {
 			if (err instanceof ContactValidationError)
-				return fail(400, { fehler: err.message, felder: err.errors });
+				return fail(400, { bereich: 'profil', fehler: err.message, felder: err.errors });
 			throw err;
 		}
-		return { ok: 'Kontaktdaten gespeichert.' };
+		return { bereich: 'profil', ok: 'Kontaktdaten gespeichert.' };
 	},
 	foto: async ({ request, locals }) => {
 		if (!uploadLimit.hit(requirePrincipal(locals).personId))
 			return fail(429, {
+				bereich: 'profil',
 				fehler: 'Zu viele Uploads in der letzten Stunde. Versuch es bitte später noch einmal.'
 			});
 		const datei = (await request.formData()).get('foto');
 		try {
 			await setPhoto(requirePrincipal(locals), datei as File);
 		} catch (err) {
-			if (err instanceof ProfileError) return fail(400, { fehler: err.message });
+			if (err instanceof ProfileError) return fail(400, { bereich: 'profil', fehler: err.message });
 			throw err;
 		}
-		return { ok: 'Foto gespeichert.' };
+		return { bereich: 'profil', ok: 'Foto gespeichert.' };
 	},
 	fotoLoeschen: async ({ locals }) => {
 		await removePhoto(requirePrincipal(locals).personId);
-		return { ok: 'Foto gelöscht.' };
+		return { bereich: 'profil', ok: 'Foto gelöscht.' };
 	}
 };

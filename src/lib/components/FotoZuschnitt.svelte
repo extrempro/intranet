@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { hierAnwenden } from '#lib/formular.ts';
 	/**
 	 * Profilfoto wählen und quadratisch zuschneiden (Kap. 8.13). Der Ausschnitt
 	 * wird im Browser auf höchstens 512 px verkleinert und als JPEG geschickt;
@@ -120,8 +121,8 @@
 	const absenden: SubmitFunction = ({ formData, cancel }) => {
 		if (!blob) return cancel();
 		formData.set('foto', blob, 'profilfoto.jpg');
-		return async ({ update, result }) => {
-			await update();
+		return async ({ result }) => {
+			await hierAnwenden(result);
 			if (result.type === 'success') abbrechen();
 		};
 	};

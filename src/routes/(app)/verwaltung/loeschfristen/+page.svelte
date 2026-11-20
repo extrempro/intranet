@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '$app/forms';
-	import { resolve } from '$app/paths';
 	import Info from '#lib/components/Info.svelte';
 	import { RETENTION_FIELDS, RETENTION_FIXED } from '#lib/rules-config.ts';
 
@@ -18,7 +17,6 @@
 <svelte:head><title>Löschfristen · Verwaltung · Intranet</title></svelte:head>
 
 <div class="stapel seite">
-	<a class="zurueck" href={resolve('/(app)/verwaltung')}>← Verwaltung</a>
 	<h1 class="mit-hilfe">
 		Löschfristen
 		<Info
@@ -74,11 +72,6 @@
 <style>
 	.seite {
 		max-width: 44rem;
-	}
-	.zurueck {
-		min-height: 44px;
-		display: inline-flex;
-		align-items: center;
 	}
 	h1,
 	h2 {

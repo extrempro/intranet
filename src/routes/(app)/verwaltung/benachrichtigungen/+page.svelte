@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { resolve } from '$app/paths';
 	import Info from '#lib/components/Info.svelte';
 	import { SMTP_SECURITY } from '#lib/mail-config.ts';
 
@@ -33,7 +32,6 @@
 <svelte:head><title>Benachrichtigungen · Verwaltung · Intranet</title></svelte:head>
 
 <div class="stapel seite">
-	<a class="zurueck" href={resolve('/(app)/verwaltung')}>← Verwaltung</a>
 	<h1>Benachrichtigungen</h1>
 	{#if form && 'ergebnis' in form && !('bereich' in form)}
 		<p class="meldung" role="status">{form.ergebnis}</p>
@@ -335,11 +333,6 @@
 <style>
 	.seite {
 		max-width: 44rem;
-	}
-	.zurueck {
-		min-height: 44px;
-		display: inline-flex;
-		align-items: center;
 	}
 	h1,
 	h2 {

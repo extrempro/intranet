@@ -21,7 +21,6 @@
 <svelte:head><title>Rückmeldungen · Verwaltung · Intranet</title></svelte:head>
 
 <div class="stapel">
-	<a class="zurueck" href={resolve('/(app)/verwaltung')}>← Verwaltung</a>
 	<h1>Rückmeldungen</h1>
 	<nav class="pillen" aria-label="Stand">
 		{#each STAENDE as [k, l] (k)}
@@ -69,11 +68,6 @@
 </div>
 
 <style>
-	.zurueck {
-		min-height: 44px;
-		display: inline-flex;
-		align-items: center;
-	}
 	h1 {
 		margin: 0;
 	}
