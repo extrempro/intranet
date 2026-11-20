@@ -653,6 +653,21 @@ export const recoveryCodes = pgTable(
 	(t) => [index('recovery_codes_person').on(t.personId)]
 );
 
+/** Links „Passwort vergessen“ (Kap. 4.2): nur der Hash, einmalig, kurz gültig. */
+export const passwordResets = pgTable(
+	'password_resets',
+	{
+		tokenHash: text('token_hash').primaryKey(),
+		personId: uuid('person_id')
+			.notNull()
+			.references(() => persons.id, { onDelete: 'cascade' }),
+		expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+		usedAt: timestamp('used_at', { withTimezone: true }),
+		createdAt: createdAt()
+	},
+	(t) => [index('password_resets_person').on(t.personId, t.createdAt)]
+);
+
 export const invitations = pgTable(
 	'invitations',
 	{

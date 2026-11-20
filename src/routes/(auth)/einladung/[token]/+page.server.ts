@@ -1,9 +1,10 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { PASSWORD_MESSAGES } from '#lib/password.ts';
+import { passwordMessage } from '#lib/password.ts';
 import {
 	acceptInvitation,
 	checkNewPassword,
 	findInvitation,
+	passwordPolicy,
 	startPending
 } from '#lib/server/auth/local.ts';
 import { audit } from '#lib/server/audit.ts';
@@ -15,7 +16,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	return {
 		gueltig: invitation !== null,
 		name: invitation?.displayName ?? '',
-		email: invitation?.email ?? ''
+		email: invitation?.email ?? '',
+		min: (await passwordPolicy()).minLength
 	};
 };
 
@@ -33,7 +35,8 @@ export const actions: Actions = {
 			personId: invitation.personId,
 			ip
 		});
-		if (problem) return fail(400, { fehler: PASSWORD_MESSAGES[problem] });
+		if (problem)
+			return fail(400, { fehler: passwordMessage(problem, (await passwordPolicy()).minLength) });
 
 		if (!(await acceptInvitation(params.token, invitation.personId, password))) {
 			return fail(410, { fehler: 'Diese Einladung gilt nicht mehr.' });

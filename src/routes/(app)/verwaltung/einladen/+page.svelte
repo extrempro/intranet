@@ -15,7 +15,7 @@
 
 	{#if !data.mailBereit}
 		<p class="meldung fehler" role="alert">
-			Der E-Mail-Versand ist noch nicht eingerichtet (MAIL_SENDER und Entra-App mit Mail.Send).
+			Der E-Mail-Versand ist noch nicht eingerichtet (Verwaltung → Benachrichtigungen → E-Mail).
 		</p>
 	{/if}
 	{#if form?.gesendet}

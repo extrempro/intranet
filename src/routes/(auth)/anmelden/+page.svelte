@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
+
 	let { data, form } = $props();
 	let lokalOffen = $derived(!data.entraAktiv || !!form?.lokalFehler);
 	const entraHref = $derived(
@@ -14,6 +16,10 @@
 
 {#if data.fehler}
 	<p class="meldung fehler" role="alert">{data.fehler}</p>
+{:else if data.passwortGeaendert}
+	<p class="meldung" role="status">
+		Dein Passwort ist geändert. Melde dich jetzt mit dem neuen Passwort an.
+	</p>
 {:else if data.abgemeldet}
 	<p class="meldung" role="status">Du bist abgemeldet.</p>
 {/if}
@@ -59,6 +65,9 @@
 			<input name="passwort" type="password" autocomplete="current-password" required />
 		</label>
 		<button class="knopf breit" type="submit">Weiter</button>
+		<a class="vergessen" href={resolve('/(auth)/anmelden/passwort-vergessen')}>
+			Passwort vergessen?
+		</a>
 	</form>
 {:else}
 	<button class="knopf zweit breit" type="button" onclick={() => (lokalOffen = true)}>
@@ -67,6 +76,12 @@
 {/if}
 
 <style>
+	.vergessen {
+		align-self: center;
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
 	h1 {
 		font-size: 24px;
 		margin: 0;

@@ -1,21 +1,19 @@
 /**
- * E-Mail über Microsoft Graph (Kap. 11.1) aus einem festgelegten Absenderpostfach.
+ * E-Mail per SMTP (Kap. 11.1) mit nodemailer.
  *
- * Nutzt dieselbe App-Registrierung wie die Anmeldung, aber mit der
- * Anwendungsberechtigung Mail.Send (Client Credentials). Diese Berechtigung
- * muss in Exchange Online auf das Absenderpostfach beschränkt werden
- * (RBAC für Anwendungen), sonst darf die App aus jedem Postfach senden.
+ * Einstellungen: Verwaltung → Benachrichtigungen (Einstellung „mail“), sonst
+ * .env (SMTP_HOST, SMTP_PORT, SMTP_SECURITY, SMTP_USER, SMTP_PASSWORD,
+ * MAIL_FROM, MAIL_FROM_NAME, MAIL_REPLY_TO). Das Passwort aus der Verwaltung
+ * liegt mit ENCRYPTION_KEY verschlüsselt in der Datenbank.
  *
- * Absender: Einstellung „mail“ (später in der Verwaltung), bis dahin MAIL_SENDER
- * und optional MAIL_REPLY_TO.
+ * Verbindung: STARTTLS (Pflicht, kein Rückfall auf unverschlüsselt), TLS oder
+ * ohne Verschlüsselung für einen internen Relay. Zertifikate werden geprüft,
+ * außer die Verwaltung schaltet das ausdrücklich ab.
  */
-import { getEntraConfig, graphAppToken as appToken } from './auth/entra.ts';
+import nodemailer, { type Transporter } from 'nodemailer';
+import { effectiveMail, type MailEnv, type StoredMail } from '../mail-config.ts';
+import { decryptSecret } from './crypto.ts';
 import { getSetting } from './settings.ts';
-
-interface MailSettings {
-	sender?: string;
-	replyTo?: string;
-}
 
 export interface MailMessage {
 	to: string;
@@ -24,37 +22,82 @@ export interface MailMessage {
 	html: string;
 }
 
+export async function storedMail(): Promise<StoredMail> {
+	return getSetting<StoredMail>('mail', {});
+}
+
+export async function mailSettings() {
+	return effectiveMail(await storedMail(), process.env as MailEnv);
+}
+
 export async function mailConfigured(): Promise<boolean> {
-	const s = await getSetting<MailSettings>('mail', {});
-	return Boolean((s.sender ?? process.env.MAIL_SENDER) && (await getEntraConfig()));
+	const m = await mailSettings();
+	return Boolean(m.host && m.from);
+}
+
+let cache: { key: string; transport: Transporter } | null = null;
+
+/** Nach dem Speichern in der Verwaltung: neue Verbindung aufbauen. */
+export function resetMailTransport() {
+	cache?.transport.close();
+	cache = null;
+}
+
+async function transport(): Promise<{
+	transport: Transporter;
+	from: string | { name: string; address: string };
+	replyTo: string | null;
+}> {
+	const stored = await storedMail();
+	const m = effectiveMail(stored, process.env as MailEnv);
+	if (!m.host || !m.from)
+		throw new Error('E-Mail ist nicht eingerichtet (SMTP-Server und Absender).');
+	const password =
+		m.password === 'gespeichert' && stored.passwordEnc
+			? Buffer.from(decryptSecret(stored.passwordEnc)).toString('utf8')
+			: m.password === 'env'
+				? (process.env.SMTP_PASSWORD ?? '')
+				: null;
+	const from = m.fromName ? { name: m.fromName, address: m.from } : m.from;
+	const key = JSON.stringify([m, stored.passwordEnc ?? null]);
+	if (cache?.key !== key) {
+		resetMailTransport();
+		cache = {
+			key,
+			transport: nodemailer.createTransport({
+				host: m.host,
+				port: m.port,
+				secure: m.security === 'tls',
+				requireTLS: m.security === 'starttls',
+				ignoreTLS: m.security === 'none',
+				auth: m.user && password !== null ? { user: m.user, pass: password } : undefined,
+				tls: { rejectUnauthorized: !m.insecure, minVersion: 'TLSv1.2' },
+				connectionTimeout: 10_000,
+				greetingTimeout: 10_000,
+				socketTimeout: 20_000,
+				pool: true,
+				maxConnections: 2
+			})
+		};
+	}
+	return {
+		transport: cache.transport,
+		// nodemailer kodiert den Namen selbst (RFC 2047)
+		from,
+		replyTo: m.replyTo
+	};
 }
 
 export async function sendMail(msg: MailMessage): Promise<void> {
-	const s = await getSetting<MailSettings>('mail', {});
-	const sender = (s.sender ?? process.env.MAIL_SENDER)?.trim();
-	const replyTo = (s.replyTo ?? process.env.MAIL_REPLY_TO)?.trim();
-	if (!sender) throw new Error('Kein Absenderpostfach festgelegt (MAIL_SENDER)');
-
-	const token = await appToken();
-	const res = await fetch(
-		`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(sender)}/sendMail`,
-		{
-			method: 'POST',
-			headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-			signal: AbortSignal.timeout(15_000),
-			redirect: 'error',
-			body: JSON.stringify({
-				message: {
-					subject: msg.subject,
-					body: { contentType: 'HTML', content: msg.html },
-					toRecipients: [{ emailAddress: { address: msg.to } }],
-					...(replyTo ? { replyTo: [{ emailAddress: { address: replyTo } }] } : {})
-				},
-				saveToSentItems: false
-			})
-		}
-	);
-	if (!res.ok) throw new Error(`Graph sendMail antwortet mit ${res.status}`);
+	const t = await transport();
+	await t.transport.sendMail({
+		from: t.from,
+		to: msg.to,
+		replyTo: t.replyTo ?? undefined,
+		subject: msg.subject,
+		text: msg.text,
+		html: msg.html
+	});
 }
 
 /** Text für HTML maskieren. */
