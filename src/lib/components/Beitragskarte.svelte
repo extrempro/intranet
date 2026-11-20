@@ -15,6 +15,7 @@
 		wasUrgent: boolean;
 		pinned: boolean;
 		audience: string;
+		attachmentCount: number;
 		sender: { name: string; label: string };
 		reactions: { emoji: string; n: number; mine: boolean }[];
 	}
@@ -54,6 +55,9 @@
 		{#if item.planned}<span class="schild rand">Geplant</span>{/if}
 		{#if item.audience}<span class="schild rand">{item.audience}</span>{/if}
 		{#if item.expiresAt}<span class="schild rand">bis {formatDay(item.expiresAt)}</span>{/if}
+		{#if item.attachmentCount}<span class="schild rand">
+				📎 {item.attachmentCount === 1 ? '1 Anhang' : `${item.attachmentCount} Anhänge`}
+			</span>{/if}
 	</div>
 	{#if item.wasUrgent && item.urgentUntil}
 		<p class="hinweis">War dringend bis {formatWhen(item.urgentUntil)}.</p>

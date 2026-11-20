@@ -16,6 +16,7 @@ export interface NewsFormValues {
 	allTenants: boolean;
 	tenantIds: string[];
 	replacePin: boolean;
+	attachments: { id: string; name: string; size: number; kind: string }[];
 }
 
 export function readNewsForm(form: FormData): { input: SaveInput; values: NewsFormValues } {
@@ -33,7 +34,8 @@ export function readNewsForm(form: FormData): { input: SaveInput; values: NewsFo
 		urgentText: s('bannertext', 400),
 		allTenants: form.get('zielgruppe') !== 'auswahl',
 		tenantIds: form.getAll('mandanten').map(String).slice(0, 50),
-		replacePin: form.get('ersetzen') === 'on'
+		replacePin: form.get('ersetzen') === 'on',
+		attachments: []
 	};
 	const input: SaveInput = {
 		unitId: values.unitId,
@@ -55,7 +57,8 @@ export function readNewsForm(form: FormData): { input: SaveInput; values: NewsFo
 		urgentText: values.urgent ? values.urgentText : null,
 		allTenants: values.allTenants,
 		tenantIds: values.tenantIds,
-		replacePin: values.replacePin
+		replacePin: values.replacePin,
+		attachmentIds: form.getAll('anhaenge').map(String).slice(0, 20)
 	};
 	// Anheften ohne Datum: Pflichtfeld (Kap. 8.1) – als ungültiges Datum melden
 	if (values.pin && !values.pinnedUntil) input.pinnedUntil = new Date(0);

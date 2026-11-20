@@ -118,7 +118,8 @@ export type NewsErrors = Partial<
 		| 'pinnedUntil'
 		| 'urgentUntil'
 		| 'urgentText'
-		| 'tenants',
+		| 'tenants'
+		| 'attachments',
 		string
 	>
 >;

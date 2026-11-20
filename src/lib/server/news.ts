@@ -31,7 +31,17 @@ import { mayPostUrgent, unitTypeLabel } from '../roles.ts';
 import { audit } from './audit.ts';
 import { canWriteNews, isEditorial, newsUnitIds, type Principal } from './auth/access.ts';
 import { db, scoped } from './db/index.ts';
-import { news, newsReactions, newsTenants, tenants, units, urgentDismissals } from './db/schema.ts';
+import {
+	files,
+	news,
+	newsAttachments,
+	newsReactions,
+	newsTenants,
+	tenants,
+	units,
+	urgentDismissals
+} from './db/schema.ts';
+import { deleteStored, MAX_ATTACHMENTS } from './files/store.ts';
 import { cleanHtml, excerpt, htmlToText } from './html.ts';
 import { getContentRules } from './rules.ts';
 
@@ -141,7 +151,7 @@ type Row = {
 async function decorate(p: Principal, rows: Row[], now: Date) {
 	if (rows.length === 0) return [];
 	const ids = rows.map((r) => r.id);
-	const [targets, counts, mine, rules] = await Promise.all([
+	const [targets, counts, mine, rules, attachmentCounts] = await Promise.all([
 		db
 			.select({ newsId: newsTenants.newsId, name: tenants.name })
 			.from(newsTenants)
@@ -160,7 +170,12 @@ async function decorate(p: Principal, rows: Row[], now: Date) {
 			.select({ newsId: newsReactions.newsId, emoji: newsReactions.emoji })
 			.from(newsReactions)
 			.where(and(inArray(newsReactions.newsId, ids), eq(newsReactions.personId, p.personId))),
-		getContentRules()
+		getContentRules(),
+		db
+			.select({ newsId: newsAttachments.newsId, n: sql<number>`count(*)::int` })
+			.from(newsAttachments)
+			.where(inArray(newsAttachments.newsId, ids))
+			.groupBy(newsAttachments.newsId)
 	]);
 	const writable = newsUnitIds(p);
 	return rows.map((r) => {
@@ -187,6 +202,7 @@ async function decorate(p: Principal, rows: Row[], now: Date) {
 					? tenantNames.join(', ')
 					: (tenantNames[0] ?? ''),
 			canEdit: writable.has(r.unitId),
+			attachmentCount: attachmentCounts.find((a) => a.newsId === r.id)?.n ?? 0,
 			reactions: rules.reactions.map((emoji) => ({
 				emoji,
 				n: counts.find((c) => c.newsId === r.id && c.emoji === emoji)?.n ?? 0,
@@ -241,7 +257,7 @@ export async function getNews(p: Principal, id: string) {
 	);
 	if (!row) return null;
 	const [item] = await decorate(p, [row], now);
-	return { ...item, bodyHtml: row.bodyHtml };
+	return { ...item, bodyHtml: row.bodyHtml, attachments: await attachmentsOf(id) };
 }
 
 /** Absender, die in der sichtbaren Liste vorkommen (Filter „Von: …“). */
@@ -277,6 +293,50 @@ export async function urgentForBanner(p: Principal) {
 	}));
 }
 
+export async function attachmentsOf(newsId: string) {
+	return db
+		.select({ id: files.id, name: files.name, size: files.size, kind: files.kind })
+		.from(newsAttachments)
+		.innerJoin(files, eq(files.id, newsAttachments.fileId))
+		.where(eq(newsAttachments.newsId, newsId))
+		.orderBy(asc(newsAttachments.position));
+}
+
+/** Angaben zu Anhängen für das erneute Anzeigen des Formulars (nur eigene oder dieses Beitrags). */
+export async function describeAttachments(p: Principal, ids: string[], newsId?: string) {
+	const valid = ids.filter((id) => /^[0-9a-f-]{36}$/i.test(id));
+	if (!valid.length) return [];
+	const rows = await db
+		.select({
+			id: files.id,
+			name: files.name,
+			size: files.size,
+			kind: files.kind,
+			createdBy: files.createdBy,
+			newsId: newsAttachments.newsId
+		})
+		.from(files)
+		.leftJoin(newsAttachments, eq(newsAttachments.fileId, files.id))
+		.where(inArray(files.id, valid));
+	return valid
+		.map((id) => rows.find((r) => r.id === id))
+		.filter(
+			(r) => r && ((newsId && r.newsId === newsId) || (!r.newsId && r.createdBy === p.personId))
+		)
+		.map((r) => ({ id: r!.id, name: r!.name, size: r!.size, kind: r!.kind }));
+}
+
+/** Zu welchem (sichtbaren) Beitrag gehört die Datei? Für den Download. */
+export async function newsOfFile(p: Principal, fileId: string) {
+	if (!/^[0-9a-f-]{36}$/i.test(fileId)) return null;
+	const [link] = await db
+		.select({ newsId: newsAttachments.newsId })
+		.from(newsAttachments)
+		.where(eq(newsAttachments.fileId, fileId));
+	if (!link) return null;
+	return (await getNews(p, link.newsId)) ? link.newsId : null;
+}
+
 // ---------------------------------------------------------------------------
 // Schreiben
 // ---------------------------------------------------------------------------
@@ -286,6 +346,43 @@ export interface SaveInput extends NewsDraft {
 	bodyHtml: string;
 	/** Bestehenden angehefteten Beitrag der Einheit ablösen. */
 	replacePin: boolean;
+	/** Anhänge in Reihenfolge: behaltene und neu hochgeladene Datei-IDs. */
+	attachmentIds: string[];
+}
+
+/**
+ * Prüft die Anhänge: vorhandene dieses Beitrags oder eigene, noch nicht
+ * verknüpfte Uploads. Liefert zusätzlich die zu löschenden alten Anhänge.
+ */
+async function checkAttachments(p: Principal, ids: string[], newsId: string | undefined) {
+	const wanted = [...new Set(ids.filter((id) => /^[0-9a-f-]{36}$/i.test(id)))];
+	if (wanted.length > MAX_ATTACHMENTS)
+		return { error: `Höchstens ${MAX_ATTACHMENTS} Anhänge je Beitrag.` };
+	const current = newsId
+		? (
+				await db
+					.select({ fileId: newsAttachments.fileId })
+					.from(newsAttachments)
+					.where(eq(newsAttachments.newsId, newsId))
+			).map((r) => r.fileId)
+		: [];
+	const fresh = wanted.filter((id) => !current.includes(id));
+	if (fresh.length) {
+		const ok = await db
+			.select({ id: files.id })
+			.from(files)
+			.leftJoin(newsAttachments, eq(newsAttachments.fileId, files.id))
+			.where(
+				and(
+					inArray(files.id, fresh),
+					eq(files.createdBy, p.personId),
+					isNull(newsAttachments.fileId)
+				)
+			);
+		if (ok.length !== fresh.length)
+			return { error: 'Ein Anhang ist nicht mehr verfügbar. Lade ihn bitte erneut hoch.' };
+	}
+	return { wanted, removed: current.filter((id) => !wanted.includes(id)) };
 }
 
 export type SaveResult =
@@ -392,7 +489,10 @@ export async function saveNews(
 		}
 	}
 
-	if (Object.keys(errors).length > 0) return { ok: false, errors, pinConflict };
+	const att = await checkAttachments(p, input.attachmentIds, newsId);
+	if ('error' in att) errors.attachments = att.error;
+
+	if (Object.keys(errors).length > 0 || 'error' in att) return { ok: false, errors, pinConflict };
 
 	const values = {
 		unitId: sender.id,
@@ -437,8 +537,16 @@ export async function saveNews(
 				.insert(newsTenants)
 				.values(targets.tenantIds.map((tenantId) => ({ newsId: id!, tenantId })));
 		}
+		await tx.delete(newsAttachments).where(eq(newsAttachments.newsId, id));
+		if (att.wanted.length) {
+			await tx
+				.insert(newsAttachments)
+				.values(att.wanted.map((fileId, position) => ({ newsId: id!, fileId, position })));
+		}
 		return id;
 	});
+	// Entfernte Anhänge sofort löschen (Schlüssel und Datei, Kap. 15)
+	await deleteStored(att.removed);
 
 	await audit({
 		category: 'admin',
@@ -452,7 +560,9 @@ export async function saveNews(
 			unitId: sender.id,
 			urgent: Boolean(values.urgentUntil),
 			pinned: Boolean(values.pinnedUntil),
-			unpinned: unpinIds
+			unpinned: unpinIds,
+			attachments: att.wanted.length,
+			attachmentsRemoved: att.removed.length
 		},
 		ip
 	});
@@ -468,7 +578,11 @@ export async function newsForEdit(p: Principal, id: string) {
 		.select({ tenantId: newsTenants.tenantId })
 		.from(newsTenants)
 		.where(eq(newsTenants.newsId, id));
-	return { ...row, tenantIds: targets.map((t) => t.tenantId) };
+	return {
+		...row,
+		tenantIds: targets.map((t) => t.tenantId),
+		attachments: await attachmentsOf(id)
+	};
 }
 
 export async function deleteNews(p: Principal, id: string, ip: string) {
@@ -477,7 +591,14 @@ export async function deleteNews(p: Principal, id: string, ip: string) {
 		.from(news)
 		.where(eq(news.id, id));
 	if (!row || !newsUnitIds(p).has(row.unitId)) throw new NewsError('Beitrag nicht gefunden.');
+	const fileIds = (
+		await db
+			.select({ fileId: newsAttachments.fileId })
+			.from(newsAttachments)
+			.where(eq(newsAttachments.newsId, id))
+	).map((r) => r.fileId);
 	await db.delete(news).where(eq(news.id, id));
+	await deleteStored(fileIds);
 	await audit({
 		category: 'admin',
 		action: 'news.delete',

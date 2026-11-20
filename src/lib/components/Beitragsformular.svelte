@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import Anhaenge from './Anhaenge.svelte';
 	import Editor from './Editor.svelte';
 	import { berlinToDate, endOfBerlinDay, lifecycle } from '#lib/news.ts';
 
@@ -24,6 +25,7 @@
 		allTenants: boolean;
 		tenantIds: string[];
 		replacePin: boolean;
+		attachments: { id: string; name: string; size: number }[];
 	}
 
 	let {
@@ -100,6 +102,8 @@
 	<Editor name="text" value={v.bodyHtml} label="Text des Beitrags" describedby={fid('body')} />
 	{#if fehler.body}<span id="f-body" class="feldfehler">{fehler.body}</span>{/if}
 </div>
+
+<Anhaenge start={werte.attachments} fehler={fehler.attachments} />
 
 {#if einheit?.isCentral}
 	<fieldset class="gruppe">

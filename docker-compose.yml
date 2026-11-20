@@ -8,7 +8,8 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       APP_DATABASE_PASSWORD: ${APP_DATABASE_PASSWORD:?APP_DATABASE_PASSWORD fehlt in .env}
       ORIGIN: ${ORIGIN}
-      BODY_SIZE_LIMIT: ${BODY_SIZE_LIMIT:-20M}
+      BODY_SIZE_LIMIT: ${BODY_SIZE_LIMIT:-21M}
+      FILES_DIR: /data/files
       ENTRA_TENANT_ID: ${ENTRA_TENANT_ID:-}
       ENTRA_CLIENT_ID: ${ENTRA_CLIENT_ID:-}
       ENTRA_CLIENT_SECRET: ${ENTRA_CLIENT_SECRET:-}
@@ -30,6 +31,9 @@ services:
     read_only: true
     tmpfs:
       - /tmp
+    volumes:
+      # Verschlüsselte Dateien (Anhänge, PDFs, Fotos) – zusammen mit der Datenbank sichern
+      - files-data:/data/files
     security_opt:
       - no-new-privileges:true
 
@@ -52,3 +56,4 @@ services:
 
 volumes:
   db-data:
+  files-data:
