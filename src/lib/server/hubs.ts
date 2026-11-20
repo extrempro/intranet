@@ -165,7 +165,7 @@ export async function getHub(p: Principal, slug: string) {
 		mandatory: u.mandatorySubscription,
 		layout: cleanLayout(u.pageLayout),
 		subscribed: Boolean(sub) || u.mandatorySubscription,
-		channels: { bell: sub?.bell ?? true, email: sub?.email ?? false },
+		channels: { bell: sub?.bell ?? true, push: sub?.push ?? false, email: sub?.email ?? false },
 		canManage,
 		canPost:
 			canManage ||
@@ -200,14 +200,20 @@ export async function unsubscribe(p: Principal, unitId: string) {
 		.where(and(eq(hubSubscriptions.personId, p.personId), eq(hubSubscriptions.unitId, unitId)));
 }
 
-export async function setChannels(p: Principal, unitId: string, bell: boolean, email: boolean) {
+export async function setChannels(
+	p: Principal,
+	unitId: string,
+	bell: boolean,
+	push: boolean,
+	email: boolean
+) {
 	await hubInScope(p, unitId);
 	await db
 		.insert(hubSubscriptions)
-		.values({ personId: p.personId, unitId, bell, email })
+		.values({ personId: p.personId, unitId, bell, push, email })
 		.onConflictDoUpdate({
 			target: [hubSubscriptions.personId, hubSubscriptions.unitId],
-			set: { bell, email }
+			set: { bell, push, email }
 		});
 }
 
@@ -220,7 +226,7 @@ export async function myHubs(p: Principal) {
 		.where(eq(hubSubscriptions.personId, p.personId));
 	return hubs.map((h) => {
 		const s = subs.find((x) => x.unitId === h.id);
-		return { ...h, bell: s?.bell ?? true, email: s?.email ?? false };
+		return { ...h, bell: s?.bell ?? true, push: s?.push ?? false, email: s?.email ?? false };
 	});
 }
 
@@ -230,7 +236,10 @@ export async function hubRecipients(unitId: string) {
 	if (!u || u.archivedAt) return [];
 	const subs = await db.select().from(hubSubscriptions).where(eq(hubSubscriptions.unitId, unitId));
 	const list = new Map(
-		subs.map((s) => [s.personId, { personId: s.personId, bell: s.bell, email: s.email }])
+		subs.map((s) => [
+			s.personId,
+			{ personId: s.personId, bell: s.bell, push: s.push, email: s.email }
+		])
 	);
 	if (u.mandatorySubscription) {
 		const all = await db
@@ -243,7 +252,8 @@ export async function hubRecipients(unitId: string) {
 				)
 			);
 		for (const a of all)
-			if (!list.has(a.id)) list.set(a.id, { personId: a.id, bell: true, email: false });
+			if (!list.has(a.id))
+				list.set(a.id, { personId: a.id, bell: true, push: false, email: false });
 	} else if (!u.isCentral) {
 		// Abos aus anderen Mandanten gelten nicht (nur eigener Mandant und zentrale Hubs)
 		const keys = [...list.keys()];

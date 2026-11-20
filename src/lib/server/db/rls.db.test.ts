@@ -164,7 +164,8 @@ describe.skipIf(!url)('Row-Level Security', () => {
 			'hub_applications',
 			'responsibilities',
 			'agreements',
-			'legal_links'
+			'legal_links',
+			'push_subscriptions'
 		]) {
 			await expect(
 				mod.scoped(asB, (tx) => tx.execute(sql.raw(`select * from ${table}`)))

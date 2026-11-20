@@ -32,6 +32,7 @@
 					<form method="POST" action="?/kanaele" class="kanaele" use:enhance>
 						<input type="hidden" name="hub" value={h.id} />
 						<label><input type="checkbox" name="glocke" checked={h.bell} /> Glocke</label>
+						<label><input type="checkbox" name="push" checked={h.push} /> Push</label>
 						<label><input type="checkbox" name="mail" checked={h.email} /> E-Mail</label>
 						<button class="knopf zweit klein" type="submit">Speichern</button>
 					</form>

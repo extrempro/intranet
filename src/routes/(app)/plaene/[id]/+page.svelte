@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import OfflinePlan from '#lib/components/OfflinePlan.svelte';
 	import PdfAnsicht from '#lib/components/PdfAnsicht.svelte';
 	import { formatRange, planState } from '#lib/plans.ts';
 
@@ -32,6 +33,16 @@
 	{/if}
 	{#if form?.fehler}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
 	{#if form?.gespeichert}<p class="meldung" role="status">Neue Fassung gespeichert.</p>{/if}
+
+	<OfflinePlan
+		plan={{
+			id: pl.id,
+			fileId: pl.fileId,
+			title: pl.title,
+			kbb: pl.kbb.unitName,
+			validUntil: pl.validUntil
+		}}
+	/>
 
 	{#key pl.fileId}
 		<PdfAnsicht src={datei} titel={pl.title} download="{datei}?download" />

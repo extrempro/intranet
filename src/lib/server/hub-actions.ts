@@ -34,6 +34,7 @@ export const subscriptionActions: Record<string, Action> = {
 					requirePrincipal(locals),
 					String(f.get('hub') ?? ''),
 					f.get('glocke') === 'on',
+					f.get('push') === 'on',
 					f.get('mail') === 'on'
 				),
 			{ ok: 'Gespeichert.' }

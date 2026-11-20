@@ -1,0 +1,50 @@
+:root {
+	font-family: system-ui, sans-serif;
+	color-scheme: light dark;
+	--ac: #0f6b55;
+}
+body {
+	margin: 0;
+	background: Canvas;
+	color: CanvasText;
+}
+main {
+	max-width: 40rem;
+	margin: 0 auto;
+	padding: 32px 20px;
+}
+h1 {
+	margin-top: 0;
+}
+a {
+	color: var(--ac);
+}
+@media (prefers-color-scheme: dark) {
+	a {
+		color: #5fd0b0;
+	}
+}
+.knopf {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+	padding: 0 18px;
+	border-radius: 12px;
+	background: var(--ac);
+	color: #fff;
+	text-decoration: none;
+	font-weight: 600;
+}
+ul {
+	padding: 0;
+	list-style: none;
+}
+li {
+	padding: 10px 0;
+	border-top: 1px solid color-mix(in srgb, CanvasText 15%, transparent);
+}
+li span {
+	display: block;
+	font-size: 14px;
+	opacity: 0.75;
+}
