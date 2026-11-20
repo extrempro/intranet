@@ -78,6 +78,13 @@
       "when": 1795170296849,
       "tag": "0010_kalender",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1795172274969,
+      "tag": "0011_benachrichtigungen",
+      "breakpoints": true
     }
   ]
 }

@@ -35,6 +35,7 @@ import {
 	tenants
 } from './db/schema.ts';
 import { deleteStored, FileError, storePdf } from './files/store.ts';
+import { notify } from './notify.ts';
 import { administrableTenants } from './units.ts';
 
 export class CanteenError extends Error {}
@@ -547,7 +548,18 @@ export async function uploadMenu(
 		details: { locationId: loc.id, validFrom: input.validFrom, validUntil: input.validUntil },
 		ip
 	});
-	return menuTitle(input.validFrom, input.validUntil);
+	// Thema „Speiseplan (eigener Standort)“
+	const readers = await db
+		.select({ id: personLocations.personId })
+		.from(personLocations)
+		.where(eq(personLocations.locationId, loc.id));
+	const title = menuTitle(input.validFrom, input.validUntil);
+	await notify(
+		'speiseplan',
+		readers.map((r) => r.id),
+		{ title, detail: loc.name, link: `/speiseplan?standort=${loc.id}&plan=${row.id}` }
+	);
+	return title;
 }
 
 /** Neue Datei für einen Speiseplan; die alte wird gelöscht. */

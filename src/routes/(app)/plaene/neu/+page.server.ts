@@ -29,7 +29,8 @@ export const actions: Actions = {
 				url.searchParams.get('kbb') ?? '',
 				input,
 				datei instanceof File ? datei : null,
-				getClientAddress()
+				getClientAddress(),
+				f.get('informieren') === 'on'
 			);
 		} catch (err) {
 			if (err instanceof PlanError) return fail(400, { fehler: err.message, werte: input });

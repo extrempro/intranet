@@ -26,6 +26,8 @@
 	const SONNE =
 		'M12 8a4 4 0 1 0 0 8a4 4 0 0 0 0 -8M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7';
 	const MOND = 'M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z';
+	const GLOCKE =
+		'M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6M9 17v1a3 3 0 0 0 6 0v-1';
 	const dunkel = $derived(istDunkel(theme));
 </script>
 
@@ -60,6 +62,21 @@
 				<Icon d={dunkel ? SONNE : MOND} size={20} stroke={1.8} />
 			</button>
 		</form>
+
+		<a
+			class="symbolknopf glocke"
+			href={resolve('/(app)/benachrichtigungen')}
+			aria-label={data.ungelesen
+				? `Benachrichtigungen, ${data.ungelesen} ungelesen`
+				: 'Benachrichtigungen'}
+			title="Benachrichtigungen"
+			aria-current={page.url.pathname === '/benachrichtigungen' ? 'page' : undefined}
+		>
+			<Icon d={GLOCKE} size={20} stroke={1.8} />
+			{#if data.ungelesen}<span class="zaehler" aria-hidden="true">
+					{data.ungelesen > 99 ? '99+' : data.ungelesen}
+				</span>{/if}
+		</a>
 
 		<Kontomenue
 			name={data.ich.name}
@@ -243,6 +260,27 @@
 		border-radius: 10px;
 		cursor: pointer;
 		padding: 0;
+	}
+
+	.glocke {
+		position: relative;
+		text-decoration: none;
+	}
+	.zaehler {
+		position: absolute;
+		top: -6px;
+		right: -6px;
+		min-width: 20px;
+		height: 20px;
+		padding: 0 5px;
+		box-sizing: border-box;
+		border-radius: 999px;
+		background: #b42318;
+		color: #fff;
+		font-size: 12px;
+		font-weight: 700;
+		line-height: 20px;
+		text-align: center;
 	}
 
 	/* ---- Rumpf ---- */

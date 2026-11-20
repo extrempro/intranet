@@ -29,6 +29,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import type { OpeningDay } from '../../canteen';
 import type { HomeLayout } from '../../home';
+import type { NotifySettings } from '../../notify';
 import { ROLES } from '../../roles';
 
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
@@ -236,6 +237,8 @@ export const personPreferences = pgTable('person_preferences', {
 	homeLayout: jsonb('home_layout').$type<HomeLayout>(),
 	/** Kalender „Aus: …“: weitere Mandanten (der eigene ist immer dabei). */
 	calendarTenants: jsonb('calendar_tenants').$type<string[]>(),
+	/** Benachrichtigungen (Kap. 11); null = Voreinstellungen */
+	notify: jsonb('notify').$type<NotifySettings>(),
 	updatedAt: updatedAt()
 });
 
@@ -401,6 +404,9 @@ export const news = pgTable(
 		/** Nur intern protokolliert, nie angezeigt. */
 		createdBy: uuid('created_by').references(() => persons.id, { onDelete: 'set null' }),
 		updatedBy: uuid('updated_by').references(() => persons.id, { onDelete: 'set null' }),
+		/** Benachrichtigt beim Veröffentlichen (Kap. 11); dringend ggf. später nachgeholt */
+		notifiedAt: timestamp('notified_at', { withTimezone: true }),
+		notifiedUrgent: boolean('notified_urgent').notNull().default(false),
 		createdAt: createdAt(),
 		updatedAt: updatedAt()
 	},
@@ -901,3 +907,34 @@ export const calendarFeeds = pgTable('calendar_feeds', {
 	/** Gesperrt von der Person oder nach 12 Monaten ohne Abruf */
 	revokedAt: timestamp('revoked_at', { withTimezone: true })
 });
+
+// ---------------------------------------------------------------------------
+// Benachrichtigungen (Kap. 11)
+// ---------------------------------------------------------------------------
+
+/** Einträge der Glocke; zugleich Warteschlange für E-Mails. */
+export const notifications = pgTable(
+	'notifications',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		personId: uuid('person_id')
+			.notNull()
+			.references(() => persons.id, { onDelete: 'cascade' }),
+		topic: text('topic').notNull(),
+		title: text('title').notNull(),
+		/** Absender bzw. kurzer Zusatz, z. B. „IT“ */
+		detail: text('detail'),
+		/** Interner Pfad, z. B. /neuigkeiten/<id> */
+		link: text('link').notNull(),
+		/** In der Glocke sichtbar */
+		bell: boolean('bell').notNull().default(true),
+		readAt: timestamp('read_at', { withTimezone: true }),
+		/** E-Mail: pending = noch zu senden, sent, null = keine E-Mail */
+		email: text('email', { enum: ['pending', 'sent'] }),
+		createdAt: createdAt()
+	},
+	(t) => [
+		index('notifications_person').on(t.personId, t.createdAt),
+		index('notifications_email').on(t.email)
+	]
+);
