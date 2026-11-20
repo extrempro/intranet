@@ -3,7 +3,7 @@
  * und Profilfoto. Sichtbar ist eine Person im eigenen Mandanten oder als
  * Mitglied einer zentralen Einheit – geprüft per Row-Level Security.
  */
-import { and, asc, eq, inArray, isNotNull, isNull, ne, or, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNotNull, isNull, ne, notInArray, or, sql } from 'drizzle-orm';
 import {
 	mobileVisible,
 	validateContact,
@@ -274,4 +274,39 @@ export async function photosOf(personIds: string[]): Promise<Map<string, string>
 		.from(persons)
 		.where(and(inArray(persons.id, personIds), isNotNull(persons.photoFileId)));
 	return new Map(rows.map((r) => [r.id, photoUrl(r)!]));
+}
+
+/**
+ * Personen suchen (Kap. 8.14): Name und Position, Präfix je Wort, dazu
+ * Ähnlichkeit für Tippfehler im Namen. Sichtbarkeit per RLS.
+ */
+export async function searchPersons(p: Principal, q: string, tsq: string, limit = 20) {
+	const document = sql`to_tsvector('intranet_simple', ${persons.displayName} || ' ' || coalesce(${persons.position}, ''))`;
+	const query = sql`to_tsquery('intranet_simple', ${tsq})`;
+	const plain = q.trim().slice(0, 60);
+	const similar = sql`word_similarity(unaccent(lower(${plain})), unaccent(lower(${persons.displayName})))`;
+	// Betreiber-Konten erscheinen nicht (die App-Rolle liest location_operators nicht)
+	const operators = (
+		await db.select({ id: locationOperators.personId }).from(locationOperators)
+	).map((r) => r.id);
+	const rows = await scoped(p, (tx) =>
+		tx
+			.select({
+				id: persons.id,
+				name: persons.displayName,
+				position: persons.position,
+				photoFileId: persons.photoFileId
+			})
+			.from(persons)
+			.where(
+				and(
+					ne(persons.status, 'disabled'),
+					operators.length ? notInArray(persons.id, operators) : undefined,
+					or(sql`${document} @@ ${query}`, sql`${similar} > 0.55`)
+				)
+			)
+			.orderBy(sql`(${document} @@ ${query}) desc`, sql`${similar} desc`, asc(persons.displayName))
+			.limit(limit)
+	);
+	return rows.map(({ photoFileId, ...r }) => ({ ...r, foto: photoUrl({ id: r.id, photoFileId }) }));
 }

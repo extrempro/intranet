@@ -5,6 +5,7 @@
 	import { page } from '$app/state';
 	import Icon from '#lib/components/Icon.svelte';
 	import Kontomenue from '#lib/components/Kontomenue.svelte';
+	import Kopfsuche from '#lib/components/Kopfsuche.svelte';
 	import { currentNav, navAreas } from '#lib/nav.ts';
 
 	let { data, children } = $props();
@@ -43,6 +44,8 @@
 		</a>
 		<span class="titel nur-handy" aria-hidden="true">{seitentitel}</span>
 		<span class="luecke"></span>
+
+		<Kopfsuche />
 
 		<form
 			method="POST"

@@ -157,7 +157,7 @@
 		{:else}
 			<div class="raster">
 				{#each data.anzeigen as a (a.id)}
-					<article class="karte anzeige" aria-labelledby="a-{a.id}">
+					<article class="karte anzeige" id="anzeige-{a.id}" aria-labelledby="a-{a.id}">
 						{#if a.photos.length}
 							<div class="bilder">
 								{#each a.photos as f (f.id)}

@@ -10,6 +10,7 @@ import { validateEvent, type EventErrors, type EventInput } from '../calendar.ts
 import { mayCreateEvents, unitTypeLabel } from '../roles.ts';
 import { canWriteEvents, eventUnitIds, type Principal } from './auth/access.ts';
 import { decryptSecret, encryptSecret, randomToken, sha256Hex } from './crypto.ts';
+import { doc, matches } from './fts.ts';
 import { db } from './db/index.ts';
 import {
 	calendarFeeds,
@@ -497,4 +498,35 @@ export async function calendarRetention(now = new Date()) {
 				)
 			)
 		);
+}
+
+/** Globale Suche (Kap. 8.14): kommende Termine aus dem eigenen und den gewählten Mandanten. */
+export async function searchEvents(p: Principal, tsq: string, limit = 20) {
+	const document = doc(
+		events.title,
+		sql`coalesce(${events.place}, '') || ' ' || coalesce(${events.description}, '')`
+	);
+	return db
+		.select({
+			id: events.id,
+			title: events.title,
+			date: events.date,
+			allDay: events.allDay,
+			startTime: events.startTime,
+			endTime: events.endTime,
+			place: events.place,
+			unitName: units.name
+		})
+		.from(events)
+		.innerJoin(units, eq(units.id, events.unitId))
+		.where(
+			and(
+				gte(events.date, berlinNow().date),
+				forTenants([p.tenantId, ...(await getCalendarTenants(p))]),
+				isNull(units.archivedAt),
+				matches(document, tsq)
+			)
+		)
+		.orderBy(asc(events.date), asc(events.startTime))
+		.limit(limit);
 }
