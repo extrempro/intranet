@@ -1,6 +1,9 @@
 <script lang="ts">
 	let { data, form } = $props();
 	let lokalOffen = $derived(!data.entraAktiv || !!form?.lokalFehler);
+	const entraHref = $derived(
+		data.ziel === '/' ? '/anmelden/entra' : `/anmelden/entra?ziel=${encodeURIComponent(data.ziel)}`
+	);
 </script>
 
 <svelte:head>
@@ -16,27 +19,29 @@
 {/if}
 
 {#if data.entraAktiv}
-	<form method="GET" action="/anmelden/entra" data-sveltekit-reload>
-		{#if data.ziel !== '/'}<input type="hidden" name="ziel" value={data.ziel} />{/if}
-		<button class="knopf dunkel breit" type="submit">
-			<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-				<rect x="2" y="2" width="9" height="9" fill="#F25022" /><rect
-					x="13"
-					y="2"
-					width="9"
-					height="9"
-					fill="#7FBA00"
-				/><rect x="2" y="13" width="9" height="9" fill="#00A4EF" /><rect
-					x="13"
-					y="13"
-					width="9"
-					height="9"
-					fill="#FFB900"
-				/>
-			</svg>
-			Mit Microsoft anmelden
-		</button>
-	</form>
+	<!--
+		Bewusst ein Link, kein Formular: Die CSP „form-action 'self'“ würde in Chrome
+		die Weiterleitung eines Formulars zu login.microsoftonline.com blockieren.
+	-->
+	<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- Ziel ist eine eigene Route mit geprüftem Rücksprung -->
+	<a class="knopf dunkel breit" href={entraHref} data-sveltekit-reload>
+		<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+			<rect x="2" y="2" width="9" height="9" fill="#F25022" /><rect
+				x="13"
+				y="2"
+				width="9"
+				height="9"
+				fill="#7FBA00"
+			/><rect x="2" y="13" width="9" height="9" fill="#00A4EF" /><rect
+				x="13"
+				y="13"
+				width="9"
+				height="9"
+				fill="#FFB900"
+			/>
+		</svg>
+		Mit Microsoft anmelden
+	</a>
 	<p class="hinweis">Mit deinem Firmenkonto. Die Zwei-Faktor-Prüfung erledigt Microsoft.</p>
 	<div class="trenner"><span></span>oder lokales Konto<span></span></div>
 {/if}
