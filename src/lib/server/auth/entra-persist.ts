@@ -56,7 +56,10 @@ export async function upsertEntraPerson(input: {
 		let personId: string;
 		let created = false;
 		if (byOid) {
-			if (byOid.status === 'disabled') return { ok: false, reason: 'account_disabled' } as const;
+			// Von der Verwaltung gesperrt: bleibt gesperrt. Vom Abgleich gesperrt
+			// (Kap. 4.1): Die Anmeldung zeigt, dass Entra das Konto wieder zulässt.
+			if (byOid.status === 'disabled' && byOid.disabledBy !== 'entra')
+				return { ok: false, reason: 'account_disabled' } as const;
 			personId = byOid.id;
 			await tx
 				.update(persons)
@@ -65,6 +68,8 @@ export async function upsertEntraPerson(input: {
 					displayName: input.displayName,
 					tenantId: input.tenantId,
 					status: 'active',
+					disabledAt: null,
+					disabledBy: null,
 					lastLoginAt: new Date()
 				})
 				.where(eq(persons.id, personId));
@@ -85,22 +90,29 @@ export async function upsertEntraPerson(input: {
 			created = true;
 		}
 
-		await tx
-			.delete(roleAssignments)
-			.where(and(eq(roleAssignments.personId, personId), eq(roleAssignments.source, 'entra')));
-		if (input.roles.length > 0) {
-			await tx.insert(roleAssignments).values(
-				input.roles.map((r) => ({
-					personId,
-					role: r.role,
-					scope: r.scope,
-					scopeTenantId: r.scopeTenantId,
-					scopeUnitId: r.scopeUnitId,
-					source: 'entra' as const,
-					entraGroupId: r.groupId
-				}))
-			);
-		}
+		await replaceEntraRoles(tx, personId, input.roles);
 		return { ok: true, personId, created } as const;
 	});
+}
+
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+/** Ersetzt die aus Entra stammenden Rollen; von Hand vergebene bleiben. */
+export async function replaceEntraRoles(tx: Tx, personId: string, roles: DerivedRole[]) {
+	await tx
+		.delete(roleAssignments)
+		.where(and(eq(roleAssignments.personId, personId), eq(roleAssignments.source, 'entra')));
+	if (roles.length > 0) {
+		await tx.insert(roleAssignments).values(
+			roles.map((r) => ({
+				personId,
+				role: r.role,
+				scope: r.scope,
+				scopeTenantId: r.scopeTenantId,
+				scopeUnitId: r.scopeUnitId,
+				source: 'entra' as const,
+				entraGroupId: r.groupId
+			}))
+		);
+	}
 }

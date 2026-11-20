@@ -47,6 +47,12 @@ Web Push braucht ausgehend HTTPS zu den Push-Diensten der Browser: `fcm.googleap
 erzeugt die Anwendung beim ersten Start selbst und speichert sie verschlüsselt (`ENCRYPTION_KEY`).
 Installierbar ist das Intranet nur über HTTPS (über den Reverse Proxy gegeben).
 
+Die Anmeldung mit Microsoft braucht eine App-Registrierung in Entra (Werte in `.env.example`).
+Der nächtliche Abgleich (02:30, `ENTRA_SYNC_TIME`) liest mit den **Anwendungsberechtigungen**
+`User.Read.All` und `GroupMember.Read.All` Profile und Gruppen aller Microsoft-Konten. Er sperrt
+in Entra gelöschte oder deaktivierte Konten und Personen ohne Zugangsgruppe; würde er mehr als
+10 % sperren, hält er an. Zustand und „Jetzt abgleichen“: Verwaltung → System.
+
 Sicherungen macht der Dienst `backup` (täglich, verschlüsselt, mit wöchentlichem
 Wiederherstellungstest). Einrichten und Wiederherstellen: [backup/README.md](backup/README.md).
 

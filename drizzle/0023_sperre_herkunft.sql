@@ -1,0 +1,1 @@
+ALTER TABLE "persons" ADD COLUMN "disabled_by" text;

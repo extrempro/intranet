@@ -1,6 +1,8 @@
 /** Lesbare Bezeichnungen für Einträge im Protokoll (Kap. 14). */
 const LABELS: Record<string, string> = {
 	'board_category.anlegen': 'Kategorie Schwarzes Brett angelegt',
+	'entra.sync': 'Abgleich mit Entra',
+	'entra.sync_start': 'Abgleich mit Entra von Hand gestartet',
 	'entra_group_role.add': 'Rolle aus Entra-Gruppe hinzugefügt',
 	'entra_group_role.remove': 'Rolle aus Entra-Gruppe entfernt',
 	'hub.application_accept': 'Hub-Antrag angenommen',

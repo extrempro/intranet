@@ -131,32 +131,36 @@ async function systemAdmins(): Promise<string[]> {
 }
 
 /**
- * Stündlich (Aufräumen): Fehler bei der Sicherung an die System-Admins melden,
- * dieselbe Meldung höchstens einmal am Tag. Warnungen nur auf der Seite.
+ * Meldung an alle System-Admins (Thema „Betrieb und Sicherungen“), dieselbe
+ * Meldung höchstens einmal in 23 Stunden.
  */
+export async function notifySystemAdmins(text: string): Promise<boolean> {
+	const title = text.slice(0, 200);
+	const [schon] = await db
+		.select({ id: notifications.id })
+		.from(notifications)
+		.where(
+			and(
+				eq(notifications.topic, 'system'),
+				eq(notifications.title, title),
+				gt(notifications.createdAt, sql`now() - interval '23 hours'`)
+			)
+		)
+		.limit(1);
+	if (schon) return false;
+	await notify('system', await systemAdmins(), {
+		title,
+		detail: 'System',
+		link: '/verwaltung/system'
+	});
+	return true;
+}
+
+/** Stündlich (Aufräumen): Fehler bei der Sicherung an die System-Admins melden. Warnungen nur auf der Seite. */
 export async function checkBackups(): Promise<Befund[]> {
 	const status = await backupStatus();
 	if (!status) return [];
 	const fehler = status.befunde.filter((b) => b.stufe === 'fehler');
-	for (const b of fehler) {
-		const title = `Sicherung: ${b.text}`.slice(0, 200);
-		const [schon] = await db
-			.select({ id: notifications.id })
-			.from(notifications)
-			.where(
-				and(
-					eq(notifications.topic, 'system'),
-					eq(notifications.title, title),
-					gt(notifications.createdAt, sql`now() - interval '23 hours'`)
-				)
-			)
-			.limit(1);
-		if (schon) continue;
-		await notify('system', await systemAdmins(), {
-			title,
-			detail: 'System',
-			link: '/verwaltung/system'
-		});
-	}
+	for (const b of fehler) await notifySystemAdmins(`Sicherung: ${b.text}`);
 	return fehler;
 }

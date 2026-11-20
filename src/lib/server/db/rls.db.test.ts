@@ -40,7 +40,8 @@ describe.skipIf(!url)('Row-Level Security', () => {
 		await db.execute(sql`drop schema if exists drizzle cascade`);
 		await db.execute(sql`create schema public`);
 		const { runMigrations } = await import('./migrate.ts');
-		await runMigrations();
+		const { migrateWithRetry } = await import('./test-db.ts');
+		await migrateWithRetry(() => runMigrations());
 
 		await db.execute(sql`
 			insert into tenants (id, name, short_name, is_main) values

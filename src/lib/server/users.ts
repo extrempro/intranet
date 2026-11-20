@@ -322,11 +322,14 @@ export async function setPersonActive(p: Principal, personId: string, active: bo
 				.where(eq(localCredentials.personId, personId));
 			if (!c?.hash) status = 'invited';
 		}
-		await db.update(persons).set({ status, disabledAt: null }).where(eq(persons.id, personId));
+		await db
+			.update(persons)
+			.set({ status, disabledAt: null, disabledBy: null })
+			.where(eq(persons.id, personId));
 	} else {
 		await db
 			.update(persons)
-			.set({ status: 'disabled', disabledAt: new Date() })
+			.set({ status: 'disabled', disabledAt: new Date(), disabledBy: 'verwaltung' })
 			.where(eq(persons.id, personId));
 		await endAllSessions(personId);
 		// Profilfoto sofort löschen (Kap. 15)
