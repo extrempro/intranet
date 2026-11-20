@@ -8,6 +8,7 @@ import {
 	setPhoto,
 	updateContact
 } from '#lib/server/people.ts';
+import { uploadLimit } from '#lib/server/rate-limit.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => ({
@@ -35,6 +36,10 @@ export const actions: Actions = {
 		return { ok: 'Kontaktdaten gespeichert.' };
 	},
 	foto: async ({ request, locals }) => {
+		if (!uploadLimit.hit(requirePrincipal(locals).personId))
+			return fail(429, {
+				fehler: 'Zu viele Uploads in der letzten Stunde. Versuch es bitte später noch einmal.'
+			});
 		const datei = (await request.formData()).get('foto');
 		try {
 			await setPhoto(requirePrincipal(locals), datei as File);

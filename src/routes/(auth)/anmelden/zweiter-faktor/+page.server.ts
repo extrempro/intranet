@@ -11,6 +11,7 @@ import { hasPasskeys } from '#lib/server/auth/passkey.ts';
 import { audit } from '#lib/server/audit.ts';
 import { db } from '#lib/server/db/index.ts';
 import { localCredentials } from '#lib/server/db/schema.ts';
+import { secondFactorLimit } from '#lib/server/rate-limit.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ cookies }) => {
@@ -28,6 +29,11 @@ export const actions: Actions = {
 		const pending = await getPending(cookies, 'mfa');
 		if (!pending) redirect(303, '/anmelden');
 		const ip = getClientAddress();
+		if (!secondFactorLimit.hit(ip))
+			return fail(429, {
+				art: null,
+				fehler: 'Zu viele Versuche von hier. Versuch es bitte in ein paar Minuten noch einmal.'
+			});
 
 		const wait = await secondFactorWait(pending.personId);
 		if (wait > 0) {

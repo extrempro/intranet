@@ -120,11 +120,14 @@ export interface IcsEvent {
 }
 
 export function icsEscape(v: string): string {
-	return v
-		.replace(/\\/g, '\\\\')
-		.replace(/;/g, '\\;')
-		.replace(/,/g, '\\,')
-		.replace(/\r?\n/g, '\\n');
+	return (
+		v
+			.replace(/\\/g, '\\\\')
+			.replace(/;/g, '\\;')
+			.replace(/,/g, '\\,')
+			// Auch einzelnes CR: manche Programme werten es als Zeilenende (Eigenschafts-Einschleusung)
+			.replace(/\r\n|\r|\n/g, '\\n')
+	);
 }
 
 /** Zeilen über 75 Byte falten (UTF-8-sicher). */

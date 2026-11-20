@@ -80,6 +80,13 @@
 		{#if data.smtp}
 			{@const g = data.smtp.gilt}
 			{@const v = data.smtp.gespeichert}
+			{#if g.security === 'none' || g.insecure}
+				<p class="meldung warnung">
+					{g.security === 'none'
+						? 'E-Mails gehen unverschlüsselt zum SMTP-Server. Das ist nur für einen Relay im internen Netz vertretbar: Einladungs- und Passwort-Links sind sonst mitlesbar.'
+						: 'Das Zertifikat des SMTP-Servers wird nicht geprüft. Ein Angreifer im Netz könnte sich dazwischenschalten und Einladungs- und Passwort-Links mitlesen.'}
+				</p>
+			{/if}
 			{#if bereich('smtp')?.gespeichert}<p class="meldung" role="status">Gespeichert.</p>{/if}
 			{#if bereich('smtp')?.fehler}<p class="meldung fehler" role="alert">
 					{bereich('smtp')?.fehler}

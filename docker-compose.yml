@@ -9,6 +9,9 @@ services:
       APP_DATABASE_PASSWORD: ${APP_DATABASE_PASSWORD:?APP_DATABASE_PASSWORD fehlt in .env}
       ORIGIN: ${ORIGIN}
       BODY_SIZE_LIMIT: ${BODY_SIZE_LIMIT:-21M}
+      # Echte Client-Adresse hinter dem Reverse Proxy (siehe .env.example)
+      ADDRESS_HEADER: ${ADDRESS_HEADER:-}
+      XFF_DEPTH: ${XFF_DEPTH:-}
       FILES_DIR: /data/files
       BACKUP_DIR: /data/backups
       ENTRA_TENANT_ID: ${ENTRA_TENANT_ID:-}

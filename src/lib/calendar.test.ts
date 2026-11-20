@@ -56,6 +56,7 @@ describe('Anzeige', () => {
 describe('iCalendar', () => {
 	it('maskiert und faltet', () => {
 		expect(icsEscape('a,b;c\\d\ne')).toBe('a\\,b\\;c\\\\d\\ne');
+		expect(icsEscape('x\rATTENDEE:mailto:a@b.de')).toBe('x\\nATTENDEE:mailto:a@b.de');
 		const folded = foldLine(`SUMMARY:${'ä'.repeat(60)}`);
 		for (const l of folded.split('\r\n'))
 			expect(new TextEncoder().encode(l).length).toBeLessThanOrEqual(75);

@@ -130,4 +130,59 @@ describe.skipIf(!url)('Passwort vergessen', () => {
 		);
 		expect(r.used_at).toBeNull();
 	});
+
+	it('Passwort ändern: altes Passwort nötig, Fehlversuche zählen, andere Sitzungen enden', async () => {
+		const local = await import('./local.ts');
+		await db.execute(
+			sql`update local_credentials set failed_attempts = 0, last_failed_at = null where person_id = ${P.lokal}`
+		);
+		await db.execute(sql`
+			insert into sessions (id, person_id, auth_method, expires_at) values
+				('lena-hier', ${P.lokal}, 'local', now() + interval '1 day'),
+				('lena-dort', ${P.lokal}, 'local', now() + interval '1 day')`);
+		const basis = { personId: P.lokal, ip: '203.0.113.1', keepSessionId: 'lena-hier' };
+		expect(
+			await local.changePassword({
+				...basis,
+				current: 'falsch falsch falsch',
+				next: 'x',
+				repeat: 'x'
+			})
+		).toEqual({ ok: false, reason: 'wrong' });
+		const [c] = await db.execute<{ n: number }>(
+			sql`select failed_attempts as n from local_credentials where person_id = ${P.lokal}`
+		);
+		expect(c.n).toBe(1);
+		expect(
+			await local.changePassword({
+				...basis,
+				current: 'neues passwort 456',
+				next: 'neues passwort 456',
+				repeat: 'neues passwort 456'
+			})
+		).toEqual({ ok: false, reason: 'same' });
+		expect(
+			await local.changePassword({
+				...basis,
+				current: 'neues passwort 456',
+				next: 'kurz',
+				repeat: 'kurz'
+			})
+		).toEqual({ ok: false, reason: 'too_short' });
+		const r = await local.changePassword({
+			...basis,
+			current: 'neues passwort 456',
+			next: 'ganz anderes passwort 789',
+			repeat: 'ganz anderes passwort 789'
+		});
+		expect(r).toEqual({ ok: true, beendet: 1 });
+		const rest = await db.execute<{ id: string }>(
+			sql`select id from sessions where person_id = ${P.lokal}`
+		);
+		expect(rest.map((x) => x.id)).toEqual(['lena-hier']);
+		expect(mails.at(-1)?.subject).toContain('geändert');
+		expect((await local.checkCurrentPassword(P.lokal, 'ganz anderes passwort 789', 'x')).ok).toBe(
+			true
+		);
+	});
 });

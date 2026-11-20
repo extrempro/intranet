@@ -22,6 +22,7 @@ import {
 	setBoardTenants
 } from '#lib/server/board.ts';
 import { listFavorites, toggleFavorite } from '#lib/server/preferences.ts';
+import { messageLimit } from '#lib/server/rate-limit.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -87,6 +88,10 @@ export const actions: Actions = {
 	},
 	nachricht: async ({ request, locals }) => {
 		const f = await request.formData();
+		if (!messageLimit.hit(requirePrincipal(locals).personId))
+			return fail(429, {
+				fehler: 'Du hast gerade sehr viele Nachrichten geschickt. Warte bitte kurz.'
+			});
 		let conv: string;
 		try {
 			conv = await contactAuthor(requirePrincipal(locals), id(f));
