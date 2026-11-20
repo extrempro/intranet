@@ -14,11 +14,13 @@
 	let {
 		start,
 		max = 10,
-		fehler
+		fehler,
+		legende = 'Dateianhänge'
 	}: {
 		start: { id: string; name: string; size: number }[];
 		max?: number;
 		fehler?: string;
+		legende?: string;
 	} = $props();
 
 	const groesse = (b: number) =>
@@ -71,10 +73,10 @@
 </script>
 
 <fieldset class="gruppe">
-	<legend>Dateianhänge</legend>
+	<legend>{legende}</legend>
 	<p class="hinweis">
 		PDF, Bilder (JPG, PNG, WebP), Word, Excel, PowerPoint ohne Makros; je Datei höchstens 20 MB,
-		höchstens {max} Anhänge. Herunterladen nur nach Anmeldung.
+		{max === 1 ? 'eine Datei' : `höchstens ${max} Anhänge`}. Herunterladen nur nach Anmeldung.
 	</p>
 
 	{#each liste as a (a.id)}

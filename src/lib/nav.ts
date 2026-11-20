@@ -60,7 +60,10 @@ const AREAS: NavArea[] = [
 		label: 'Wissen',
 		icon: ICONS.wissen,
 		href: '',
-		pages: [{ key: 'faqs', label: 'FAQs', href: '/faqs' }]
+		pages: [
+			{ key: 'faqs', label: 'FAQs', href: '/faqs' },
+			{ key: 'rechtliches', label: 'Rechtliches', href: '/rechtliches' }
+		]
 	}
 ];
 

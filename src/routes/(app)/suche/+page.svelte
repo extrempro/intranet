@@ -31,8 +31,8 @@
 
 	{#if !t}
 		<p class="hinweis">
-			Gesucht wird in Personen, Abteilungen, Zuständigkeiten, Beiträgen, FAQs, Terminen, Hubs, am
-			Schwarzen Brett und in „Hinter den Kulissen“ – nur was du sehen darfst.
+			Gesucht wird in Personen, Abteilungen, Zuständigkeiten, Beiträgen, FAQs, Rechtlichem,
+			Terminen, Hubs, am Schwarzen Brett und in „Hinter den Kulissen“ – nur was du sehen darfst.
 		</p>
 	{:else}
 		<nav class="pillen" aria-label="Trefferart">
