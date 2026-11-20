@@ -3,9 +3,10 @@
  * nur FAQs von Einheiten, die die Person sehen darf. Geschrieben wird nach
  * Rechteprüfung (Schreibrecht „FAQs“) mit der Besitzer-Rolle.
  */
-import { and, asc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
+import { and, asc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm';
 import { unitTypeLabel } from '../roles.ts';
 import { canWriteFaqs, faqUnitIds, type Principal } from './auth/access.ts';
+import { doc, headline, matches, rank } from './fts.ts';
 import { db, scoped } from './db/index.ts';
 import { faqAttachments, faqs, files, units } from './db/schema.ts';
 import { deleteStored, MAX_ATTACHMENTS, ownUnlinkedFiles } from './files/store.ts';
@@ -268,4 +269,24 @@ export async function describeFaqAttachments(p: Principal, ids: string[], faqId:
 		.from(files)
 		.where(inArray(files.id, allowed));
 	return allowed.map((x) => rows.find((r) => r.id === x)!).filter(Boolean);
+}
+
+/** Globale Suche (Kap. 8.14): FAQs sichtbarer Einheiten (RLS). */
+export async function searchFaqs(p: Principal, tsq: string, limit = 20) {
+	const document = doc(faqs.question, faqs.answerText);
+	return scoped(p, (tx) =>
+		tx
+			.select({
+				id: faqs.id,
+				question: faqs.question,
+				unitId: units.id,
+				unitName: units.name,
+				snippet: headline(faqs.answerText, tsq)
+			})
+			.from(faqs)
+			.innerJoin(units, eq(units.id, faqs.unitId))
+			.where(and(isNull(units.archivedAt), matches(document, tsq)))
+			.orderBy(sql`${rank(document, tsq)} desc`)
+			.limit(limit)
+	);
 }
