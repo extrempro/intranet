@@ -234,6 +234,8 @@ export const personPreferences = pgTable('person_preferences', {
 		.default('auto'),
 	/** null = Standard des Mandanten. */
 	homeLayout: jsonb('home_layout').$type<HomeLayout>(),
+	/** Kalender „Aus: …“: weitere Mandanten (der eigene ist immer dabei). */
+	calendarTenants: jsonb('calendar_tenants').$type<string[]>(),
 	updatedAt: updatedAt()
 });
 
@@ -823,3 +825,79 @@ export const personLocations = pgTable(
 	},
 	(t) => [primaryKey({ columns: [t.personId, t.locationId] })]
 );
+
+// ---------------------------------------------------------------------------
+// Kalender (Kap. 8.8)
+// ---------------------------------------------------------------------------
+
+/** Termine einer Einheit. Zielgruppe wie bei Neuigkeiten: eigener Mandant oder (zentral) alle/ausgewählte. */
+export const events = pgTable(
+	'events',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		unitId: uuid('unit_id')
+			.notNull()
+			.references(() => units.id, { onDelete: 'cascade' }),
+		/** Mandant der Einheit (Absender). */
+		tenantId: uuid('tenant_id')
+			.notNull()
+			.references(() => tenants.id, { onDelete: 'cascade' }),
+		title: text('title').notNull(),
+		date: date('date').notNull(),
+		allDay: boolean('all_day').notNull().default(false),
+		/** HH:MM in Berliner Zeit; leer bei ganztägig */
+		startTime: text('start_time'),
+		endTime: text('end_time'),
+		place: text('place'),
+		description: text('description'),
+		allTenants: boolean('all_tenants').notNull().default(false),
+		createdBy: uuid('created_by').references(() => persons.id, { onDelete: 'set null' }),
+		updatedBy: uuid('updated_by').references(() => persons.id, { onDelete: 'set null' }),
+		createdAt: createdAt(),
+		updatedAt: updatedAt()
+	},
+	(t) => [
+		index('events_date').on(t.date),
+		index('events_unit_date').on(t.unitId, t.date),
+		check(
+			'events_times',
+			sql`(${t.allDay} and ${t.startTime} is null and ${t.endTime} is null) or (not ${t.allDay} and ${t.startTime} is not null)`
+		)
+	]
+);
+
+export const eventTenants = pgTable(
+	'event_tenants',
+	{
+		eventId: uuid('event_id')
+			.notNull()
+			.references(() => events.id, { onDelete: 'cascade' }),
+		tenantId: uuid('tenant_id')
+			.notNull()
+			.references(() => tenants.id, { onDelete: 'cascade' })
+	},
+	(t) => [primaryKey({ columns: [t.eventId, t.tenantId] })]
+);
+
+export interface CalendarFeedConfig {
+	/** Weitere Mandanten; der eigene ist immer dabei. */
+	tenants: string[];
+	departments: 'all' | 'selected' | 'none';
+	unitIds: string[];
+}
+
+/** Persönliches iCal-Abo: Link ohne Anmeldung, sperrbar (Kap. 8.8, 15). */
+export const calendarFeeds = pgTable('calendar_feeds', {
+	personId: uuid('person_id')
+		.primaryKey()
+		.references(() => persons.id, { onDelete: 'cascade' }),
+	/** SHA-256 des Tokens für die Suche beim Abruf */
+	tokenHash: text('token_hash').notNull().unique(),
+	/** Token verschlüsselt, damit der Link im Konto wieder angezeigt werden kann */
+	tokenEnc: text('token_enc').notNull(),
+	config: jsonb('config').$type<CalendarFeedConfig>().notNull(),
+	createdAt: createdAt(),
+	lastFetchedAt: timestamp('last_fetched_at', { withTimezone: true }),
+	/** Gesperrt von der Person oder nach 12 Monaten ohne Abruf */
+	revokedAt: timestamp('revoked_at', { withTimezone: true })
+});

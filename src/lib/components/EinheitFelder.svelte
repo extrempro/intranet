@@ -9,6 +9,7 @@
 		isCentral: boolean;
 		hidden: boolean;
 		mayPostUrgent: boolean | null;
+		mayCreateEvents: boolean | null;
 		isKbb: boolean;
 	}
 
@@ -106,6 +107,23 @@
 		{/each}
 	</fieldset>
 {/if}
+
+<fieldset class="gruppe">
+	<legend>Termine im Kalender</legend>
+	{#each [['standard', 'Nach der Regel (Verwaltung → Regeln, Standard: erlaubt)'], ['ja', 'Erlaubt'], ['nein', 'Nicht erlaubt']] as [wert, text] (wert)}
+		<label class="option">
+			<input
+				type="radio"
+				name="termine"
+				value={wert}
+				checked={(werte.mayCreateEvents === null && wert === 'standard') ||
+					(werte.mayCreateEvents === true && wert === 'ja') ||
+					(werte.mayCreateEvents === false && wert === 'nein')}
+			/>
+			<span>{text}</span>
+		</label>
+	{/each}
+</fieldset>
 
 <label class="option">
 	<input type="checkbox" name="ausgeblendet" checked={werte.hidden} />

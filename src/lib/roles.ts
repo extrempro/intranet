@@ -84,3 +84,15 @@ export function mayPostUrgent(unit: {
 	if (unit.mayPostUrgent !== null) return unit.mayPostUrgent;
 	return unit.type === 'geschaeftsfuehrung' || unit.isKbb;
 }
+
+/**
+ * Recht „Termine“ der Einheit (Kap. 8.8): ausdrücklich gesetzt oder nach der
+ * Regel für Abteilungen bzw. Hubs (Verwaltung → Regeln).
+ */
+export function mayCreateEvents(
+	unit: { type: UnitType; mayCreateEvents: boolean | null },
+	rules: { eventsDepartments: boolean; eventsHubs: boolean }
+): boolean {
+	if (unit.mayCreateEvents !== null) return unit.mayCreateEvents;
+	return unit.type === 'hub' ? rules.eventsHubs : rules.eventsDepartments;
+}

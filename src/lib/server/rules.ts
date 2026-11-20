@@ -13,6 +13,9 @@ export interface ContentRules {
 	urgentPerUnit: number;
 	writersMax: number;
 	reactions: string[];
+	/** Kalender: Dürfen Abteilungen bzw. Hubs überhaupt Termine eintragen? Ausnahme je Einheit. */
+	eventsDepartments: boolean;
+	eventsHubs: boolean;
 }
 
 export const DEFAULT_RULES: ContentRules = {
@@ -23,7 +26,9 @@ export const DEFAULT_RULES: ContentRules = {
 	urgentMaxDays: 3,
 	urgentPerUnit: 1,
 	writersMax: 10,
-	reactions: ['👍', '❤️', '👏', '😂', '😮']
+	reactions: ['👍', '❤️', '👏', '😂', '😮'],
+	eventsDepartments: true,
+	eventsHubs: true
 };
 
 export async function getContentRules(): Promise<ContentRules> {
