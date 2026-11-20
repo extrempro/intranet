@@ -20,6 +20,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		ziel,
 		fehler,
 		abgemeldet: url.searchParams.has('abgemeldet'),
+		passwortGeaendert: url.searchParams.has('passwort-geaendert'),
 		entraAktiv: (await getEntraConfig()) !== null
 	};
 };
