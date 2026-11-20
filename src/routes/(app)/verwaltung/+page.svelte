@@ -28,6 +28,26 @@
 			</a>
 		</li>
 	</ul>
+	<h2>Regeln und Datenschutz</h2>
+	<ul class="kacheln">
+		<li>
+			<a class="karte kachel" href={resolve('/(app)/verwaltung/regeln')}>
+				<strong>Regeln für Inhalte</strong><span class="hinweis">
+					Anheften, Dringend, Schreibrechte, Reaktionen …
+				</span>
+			</a>
+		</li>
+		<li>
+			<a class="karte kachel" href={resolve('/(app)/verwaltung/loeschfristen')}>
+				<strong>Löschfristen</strong><span class="hinweis">Wann was gelöscht wird</span>
+			</a>
+		</li>
+		<li>
+			<a class="karte kachel" href={resolve('/(app)/verwaltung/protokoll')}>
+				<strong>Protokoll</strong><span class="hinweis">Änderungen in der Verwaltung</span>
+			</a>
+		</li>
+	</ul>
 	<h2>Zugänge</h2>
 	<ul class="kacheln">
 		<li>

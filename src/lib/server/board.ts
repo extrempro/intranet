@@ -7,6 +7,8 @@
 import { and, asc, desc, eq, inArray, isNull, lt, or, sql } from 'drizzle-orm';
 import { hasTenantRole, type Principal } from './auth/access.ts';
 import { doc, headline, matches, rank } from './fts.ts';
+import { getRetention } from './retention.ts';
+import { getContentRules } from './rules.ts';
 import { db } from './db/index.ts';
 import {
 	boardAdPhotos,
@@ -28,7 +30,6 @@ import {
 	startConversation
 } from './messages.ts';
 import { notify, personsOfTenants } from './notify.ts';
-import { getSetting } from './settings.ts';
 
 export class BoardError extends Error {}
 
@@ -178,7 +179,7 @@ export async function myAds(p: Principal) {
 }
 
 async function maxActive() {
-	return Math.max(1, Number(await getSetting('board.max_active', 3)) || 3);
+	return (await getContentRules()).boardMaxActive;
 }
 
 // ---------------------------------------------------------------------------
@@ -527,7 +528,7 @@ export async function boardRetention() {
 		.where(and(eq(boardAds.status, 'active'), lt(boardAds.expiresAt, new Date())))
 		.returning({ id: boardAds.id });
 	for (const e of expired) await closeByRef(e.id);
-	const keep = Math.max(0, Number(await getSetting('retention.board_days', 30)) || 30);
+	const keep = await getRetention('board_days');
 	const old = await db
 		.select({ id: boardAds.id })
 		.from(boardAds)

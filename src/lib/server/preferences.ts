@@ -1,7 +1,7 @@
 import { and, asc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import { FAVORITES_MAX, type HomeLayout } from '../home.ts';
 import { db } from './db/index.ts';
-import { favorites, personPreferences, units } from './db/schema.ts';
+import { favorites, personPreferences, tenants, units } from './db/schema.ts';
 import { unitTypeLabel } from '../roles.ts';
 
 export type Theme = 'auto' | 'hell' | 'dunkel';
@@ -277,4 +277,75 @@ export async function reorderFavorites(personId: string, keys: string[]) {
 export async function removeFavorite(personId: string, key: string) {
 	const rest = (await listFavorites(personId)).map((f) => f.key).filter((k) => k !== key);
 	await db.transaction((tx) => saveOrder(tx, personId, rest));
+}
+
+// ---------------------------------------------------------------------------
+// Standard-Favoriten je Mandant (Kap. 7: Rechtliches, IT, FAQs, Pläne)
+// ---------------------------------------------------------------------------
+
+/** Wählbare Favoriten für einen Mandanten: feste Ziele und sichtbare Abteilungsseiten. */
+export async function favoriteChoices(tenantId: string) {
+	const einheiten = await db
+		.select({ id: units.id, name: units.name, type: units.type, title: units.title })
+		.from(units)
+		.where(
+			and(
+				sql`${units.type} <> 'hub'`,
+				isNull(units.archivedAt),
+				eq(units.hidden, false),
+				or(eq(units.isCentral, true), eq(units.tenantId, tenantId))
+			)
+		)
+		.orderBy(asc(units.name));
+	return [
+		...[...TARGETS.entries()].map(([key, t]) => ({
+			key,
+			label: t.label,
+			description: t.description
+		})),
+		...einheiten.map((u) => ({
+			key: unitFavoriteKey(u.id),
+			label: u.name,
+			description: unitTypeLabel(u)
+		}))
+	];
+}
+
+/** Standard ohne Einstellung: Rechtliches, IT (falls vorhanden), FAQs, Pläne. */
+export async function defaultFavoritesFor(tenantId: string): Promise<string[]> {
+	const [t] = await db
+		.select({ favs: tenants.defaultFavorites })
+		.from(tenants)
+		.where(eq(tenants.id, tenantId));
+	const choices = new Set((await favoriteChoices(tenantId)).map((c) => c.key));
+	if (t?.favs) return t.favs.filter((k) => choices.has(k)).slice(0, FAVORITES_MAX);
+	const [it] = await db
+		.select({ id: units.id })
+		.from(units)
+		.where(
+			and(
+				eq(units.slug, 'it'),
+				isNull(units.archivedAt),
+				or(eq(units.isCentral, true), eq(units.tenantId, tenantId))
+			)
+		);
+	return ['rechtliches', it ? unitFavoriteKey(it.id) : null, 'faqs', 'plaene'].filter(
+		(k): k is string => !!k && choices.has(k)
+	);
+}
+
+/** Neue Person: Standard-Favoriten ihres Mandanten übernehmen (nur wenn noch keine da sind). */
+export async function seedFavorites(personId: string, tenantId: string) {
+	const keys = await defaultFavoritesFor(tenantId);
+	if (keys.length === 0) return;
+	const [has] = await db
+		.select({ key: favorites.key })
+		.from(favorites)
+		.where(eq(favorites.personId, personId))
+		.limit(1);
+	if (has) return;
+	await db
+		.insert(favorites)
+		.values(keys.map((key, position) => ({ personId, key, position })))
+		.onConflictDoNothing();
 }

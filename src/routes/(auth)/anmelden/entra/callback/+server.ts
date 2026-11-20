@@ -12,6 +12,7 @@ import {
 import { resolveEntraLogin } from '#lib/server/auth/entra-login.ts';
 import { loadLoginContext, upsertEntraPerson } from '#lib/server/auth/entra-persist.ts';
 import { createSession, setSessionCookie } from '#lib/server/auth/session.ts';
+import { seedFavorites } from '#lib/server/preferences.ts';
 
 interface OidcCookie {
 	verifier: string;
@@ -111,6 +112,8 @@ export const GET: RequestHandler = async ({ url, cookies, request, getClientAddr
 		roles: decision.roles
 	});
 	if (!saved.ok) return deny(saved.reason, { oid });
+	// Neue Person: Standard-Favoriten ihres Mandanten (Kap. 7)
+	if (saved.created) await seedFavorites(saved.personId, decision.tenantId);
 
 	const session = await createSession(saved.personId, 'entra', {
 		userAgent: request.headers.get('user-agent'),

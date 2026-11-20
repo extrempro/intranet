@@ -5,6 +5,7 @@
  */
 import { and, asc, desc, eq, isNotNull, isNull, lt, or, sql } from 'drizzle-orm';
 import { canAdministerTenant, hasTenantRole, isEditorial, type Principal } from './auth/access.ts';
+import { getRetention } from './retention.ts';
 import { db } from './db/index.ts';
 import {
 	conversationMembers,
@@ -16,7 +17,6 @@ import {
 	tenants
 } from './db/schema.ts';
 import { notify } from './notify.ts';
-import { getSetting } from './settings.ts';
 
 export class MessageError extends Error {}
 
@@ -383,7 +383,7 @@ export async function closeConversation(p: Principal, id: string) {
 
 /** Löschfrist geschlossener Gespräche: 90 Tage (einstellbar, Kap. 15). */
 export async function deleteClosedConversations() {
-	const days = Math.max(1, Number(await getSetting('retention.conversations_days', 90)) || 90);
+	const days = await getRetention('conversations_days');
 	await db
 		.delete(conversations)
 		.where(lt(conversations.closedAt, sql`now() - make_interval(days => ${days})`));

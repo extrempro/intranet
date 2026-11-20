@@ -8,6 +8,7 @@ import { and, eq, gt, isNull, lt, sql } from 'drizzle-orm';
 import { checkPasswordPolicy, type PasswordProblem } from '../../password.ts';
 import { tenantFromEmail } from '../../tenant.ts';
 import { audit } from '../audit.ts';
+import { seedFavorites } from '../preferences.ts';
 import { decryptSecret, encryptSecret, randomToken, sha256Hex } from '../crypto.ts';
 import { db } from '../db/index.ts';
 import {
@@ -92,6 +93,8 @@ export async function inviteLocalPerson(input: {
 		});
 		return id;
 	});
+	// Neue Person: Standard-Favoriten ihres Mandanten (Kap. 7)
+	if (!existing) await seedFavorites(personId, tenantId);
 
 	const link = new URL(`/einladung/${token}`, input.origin).href;
 	const name = input.displayName.trim();

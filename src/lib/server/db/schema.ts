@@ -58,6 +58,8 @@ export const tenants = pgTable(
 		accentColorDark: text('accent_color_dark'),
 		/** Startseite für neue Personen (Kap. 3.1, 7): Reihenfolge und Sichtbarkeit der Karten. */
 		homeDefault: jsonb('home_default').$type<HomeLayout>(),
+		/** Favoriten für neue Personen (Schlüssel wie in favorites.key); null = Standard */
+		defaultFavorites: jsonb('default_favorites').$type<string[]>(),
 		/** Leitung des Mandanten (Kap. 3.1), jeweils eine Einheit vom Typ Geschäftsführung. */
 		artisticLeadUnitId: uuid('artistic_lead_unit_id').references((): AnyPgColumn => units.id, {
 			onDelete: 'set null'

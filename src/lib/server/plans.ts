@@ -8,11 +8,11 @@ import { and, asc, desc, eq, gte, inArray, isNotNull, lt, sql } from 'drizzle-or
 import { validatePlan, type PlanInput } from '../plans.ts';
 import { audit } from './audit.ts';
 import { hasUnitRole, type Principal } from './auth/access.ts';
+import { getRetention } from './retention.ts';
 import { db } from './db/index.ts';
 import { files, orgChart, persons, plans, tenants, units } from './db/schema.ts';
 import { deleteStored, FileError, storePdf } from './files/store.ts';
 import { notify, personsOfTenants } from './notify.ts';
-import { getSetting } from './settings.ts';
 
 export class PlanError extends Error {}
 
@@ -253,7 +253,7 @@ export async function deletePlan(p: Principal, id: string, ip: string) {
 
 /** Löschfrist „Vergessene Pläne“: Standard 3 Monate nach „Gültig bis“ (Kap. 15). */
 export async function deleteForgottenPlans() {
-	const months = Math.max(1, Number(await getSetting('retention.plans_months', 3)) || 3);
+	const months = await getRetention('plans_months');
 	const old = await db
 		.select({ id: plans.id, fileId: plans.fileId })
 		.from(plans)

@@ -22,6 +22,8 @@ import {
 	isEditorial,
 	type Principal
 } from './auth/access.ts';
+import { getRetention } from './retention.ts';
+import { getContentRules } from './rules.ts';
 import { db } from './db/index.ts';
 import {
 	conversations,
@@ -44,7 +46,6 @@ import {
 	type RoleBox
 } from './messages.ts';
 import { notify } from './notify.ts';
-import { getSetting } from './settings.ts';
 import { createUnit, UnitError } from './units.ts';
 
 export class HubError extends Error {}
@@ -625,7 +626,7 @@ export async function rejectApplication(p: Principal, id: string, reason: string
  * nach 2 Jahren gelöscht.
  */
 export async function hubRetention() {
-	const answerDays = Math.max(1, Number(await getSetting('hub.answer_days', 30)) || 30);
+	const answerDays = (await getContentRules()).hubAnswerDays;
 	const waiting = await db.execute<{ ref_id: string; id: string }>(sql`
 		select c.ref_id, c.id from conversations c
 		join hub_applications a on a.id = c.ref_id and a.status in ('neu', 'bei_verwaltung')
@@ -643,10 +644,7 @@ export async function hubRetention() {
 			.where(eq(hubApplications.id, w.ref_id));
 		await closeByRef(w.ref_id);
 	}
-	const keepDays = Math.max(
-		1,
-		Number(await getSetting('retention.hub_applications_days', 90)) || 90
-	);
+	const keepDays = await getRetention('hub_applications_days');
 	await db
 		.delete(hubApplications)
 		.where(
@@ -655,7 +653,7 @@ export async function hubRetention() {
 				lt(hubApplications.endedAt, sql`now() - make_interval(days => ${keepDays})`)
 			)
 		);
-	const years = Math.max(1, Number(await getSetting('retention.archived_hubs_years', 2)) || 2);
+	const years = await getRetention('archived_hubs_years');
 	await db
 		.delete(units)
 		.where(
@@ -675,6 +673,6 @@ export async function answerDeadline(conversationId: string): Promise<Date | nul
 		.orderBy(desc(messages.createdAt))
 		.limit(1);
 	if (!last?.asRole) return null;
-	const days = Math.max(1, Number(await getSetting('hub.answer_days', 30)) || 30);
+	const days = (await getContentRules()).hubAnswerDays;
 	return new Date(last.at.getTime() + days * 86400_000);
 }
