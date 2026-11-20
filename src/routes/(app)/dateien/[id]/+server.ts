@@ -1,7 +1,8 @@
 import { error } from '@sveltejs/kit';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
-import { readStored } from '#lib/server/files/store.ts';
+import { ownUnlinkedFiles, readStored } from '#lib/server/files/store.ts';
 import { contentDisposition, INLINE } from '#lib/server/files/types.ts';
+import { boardPhotoAllowed } from '#lib/server/board.ts';
 import { menuFileAllowed } from '#lib/server/canteen.ts';
 import { faqOfFile } from '#lib/server/faqs.ts';
 import { newsOfFile } from '#lib/server/news.ts';
@@ -24,7 +25,10 @@ export const GET: RequestHandler = async ({ locals, params, url }) => {
 			: (await isPublicDocument(id)) ||
 				(await menuFileAllowed(p, id)) ||
 				Boolean(await newsOfFile(p, id)) ||
-				(await faqOfFile(p, id)));
+				(await faqOfFile(p, id)) ||
+				(await boardPhotoAllowed(p, id)) ||
+				// Eigener, noch nicht verknüpfter Upload (Vorschau im Formular)
+				(await ownUnlinkedFiles(p.personId, [id])).length > 0);
 	if (!allowed) error(404, 'Diese Datei gibt es nicht oder nicht mehr.');
 	const file = await readStored(params.id);
 	if (!file) error(404, 'Diese Datei gibt es nicht oder nicht mehr.');

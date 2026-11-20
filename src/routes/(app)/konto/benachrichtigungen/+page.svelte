@@ -28,7 +28,7 @@
 					<tr><th scope="col">Thema</th><th scope="col">Glocke</th><th scope="col">E-Mail</th></tr>
 				</thead>
 				<tbody>
-					{#each TOPICS as t (t.key)}
+					{#each TOPICS.filter((x) => data.themen.includes(x.key)) as t (t.key)}
 						<tr>
 							<th scope="row">
 								{t.label}

@@ -90,7 +90,8 @@ const unlinked = sql`not exists (select 1 from news_attachments a where a.file_i
 	and not exists (select 1 from faq_attachments fa where fa.file_id = ${files.id})
 	and not exists (select 1 from plans pl where pl.file_id = ${files.id})
 	and not exists (select 1 from org_chart o where o.file_id = ${files.id})
-	and not exists (select 1 from menus m where m.file_id = ${files.id})`;
+	and not exists (select 1 from menus m where m.file_id = ${files.id})
+	and not exists (select 1 from board_ad_photos bp where bp.file_id = ${files.id})`;
 
 /** Eigene, noch nirgends verknüpfte Uploads (für Anhänge). Liefert die gültigen IDs. */
 export async function ownUnlinkedFiles(personId: string, ids: string[]): Promise<string[]> {

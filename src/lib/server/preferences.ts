@@ -49,6 +49,15 @@ export interface FavoriteTarget {
  */
 const TARGETS = new Map<string, FavoriteTarget>([
 	[
+		'schwarzes-brett',
+		{
+			label: 'Schwarzes Brett',
+			description: 'Anzeigen von Kolleginnen und Kollegen',
+			href: '/schwarzes-brett',
+			icon: 'M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-14a1 1 0 0 1 -1 -1v-14a1 1 0 0 1 1 -1zM8 8h4M8 12h8M8 16h6'
+		}
+	],
+	[
 		'kalender',
 		{
 			label: 'Kalender',
