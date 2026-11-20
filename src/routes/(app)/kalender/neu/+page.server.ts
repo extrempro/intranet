@@ -14,7 +14,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		einheiten,
 		mandanten: await allTenants(),
 		werte: {
-			unitId: einheiten[0].id,
+			unitId:
+				einheiten.find((e) => e.id === url.searchParams.get('absender'))?.id ?? einheiten[0].id,
 			title: '',
 			date: tag && /^\d{4}-\d{2}-\d{2}$/.test(tag) ? tag : berlinNow().date,
 			allDay: false,

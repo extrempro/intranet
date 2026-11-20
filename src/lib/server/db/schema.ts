@@ -29,6 +29,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import type { OpeningDay } from '../../canteen';
 import type { HomeLayout } from '../../home';
+import type { HubLayout } from '../../hubs';
 import type { NotifySettings } from '../../notify';
 import { ROLES } from '../../roles';
 
@@ -137,6 +138,19 @@ export const units = pgTable(
 		mayPostUrgent: boolean('may_post_urgent'),
 		/** Termine eintragen. null = Regel aus der Verwaltung (Kap. 8.8). */
 		mayCreateEvents: boolean('may_create_events'),
+		// --- Nur Hubs (Kap. 8.12) ---
+		/** Über uns */
+		about: text('about'),
+		/** Hinweis oben auf der Hub-Seite */
+		notice: text('notice'),
+		/** Pflicht-Abo: alle im Zuständigkeitsbereich, Glocke gesperrt */
+		mandatorySubscription: boolean('mandatory_subscription').notNull().default(false),
+		/** Ruhen (Hub-Team): keine neuen Beiträge */
+		restingSince: timestamp('resting_since', { withTimezone: true }),
+		/** Archiviert (Verwaltung): nirgends mehr sichtbar, Löschung nach Frist */
+		archivedAt: timestamp('archived_at', { withTimezone: true }),
+		/** Aufbau der Hub-Seite: Abschnitte in Reihenfolge, ausgeblendete fehlen */
+		pageLayout: jsonb('page_layout').$type<HubLayout>(),
 		createdAt: createdAt(),
 		updatedAt: updatedAt()
 	},
@@ -892,6 +906,8 @@ export interface CalendarFeedConfig {
 	tenants: string[];
 	departments: 'all' | 'selected' | 'none';
 	unitIds: string[];
+	/** Hubs: meine Abos (Standard), alle oder keine */
+	hubs?: 'mine' | 'all' | 'none';
 }
 
 /** Persönliches iCal-Abo: Link ohne Anmeldung, sperrbar (Kap. 8.8, 15). */
@@ -955,11 +971,11 @@ export const conversations = pgTable(
 	{
 		id: uuid('id').primaryKey().defaultRandom(),
 		/** anzeige = Interessierte ↔ Anzeigende; moderation = Moderation ↔ Anzeigende */
-		kind: text('kind', { enum: ['anzeige', 'moderation'] }).notNull(),
+		kind: text('kind', { enum: ['anzeige', 'moderation', 'hub_antrag'] }).notNull(),
 		subject: text('subject').notNull(),
 		/** Vorgang, z. B. die Anzeige */
 		refId: uuid('ref_id'),
-		roleBox: text('role_box', { enum: ['moderation'] }),
+		roleBox: text('role_box', { enum: ['moderation', 'redaktion', 'verwaltung'] }),
 		roleTenantId: uuid('role_tenant_id').references(() => tenants.id, { onDelete: 'cascade' }),
 		closedAt: timestamp('closed_at', { withTimezone: true }),
 		lastMessageAt: timestamp('last_message_at', { withTimezone: true }).notNull().defaultNow(),
@@ -1109,4 +1125,56 @@ export const boardReports = pgTable(
 		resolvedAt: timestamp('resolved_at', { withTimezone: true })
 	},
 	(t) => [unique('board_reports_once').on(t.adId, t.reporterId)]
+);
+
+// ---------------------------------------------------------------------------
+// Hubs (Kap. 8.3, 8.12)
+// ---------------------------------------------------------------------------
+
+/** Abo je Hub mit Kanälen (Meine Hubs, Kap. 11). Bei Pflicht-Abos nur die Kanäle. */
+export const hubSubscriptions = pgTable(
+	'hub_subscriptions',
+	{
+		personId: uuid('person_id')
+			.notNull()
+			.references(() => persons.id, { onDelete: 'cascade' }),
+		unitId: uuid('unit_id')
+			.notNull()
+			.references(() => units.id, { onDelete: 'cascade' }),
+		bell: boolean('bell').notNull().default(true),
+		email: boolean('email').notNull().default(false),
+		createdAt: createdAt()
+	},
+	(t) => [
+		primaryKey({ columns: [t.personId, t.unitId] }),
+		index('hub_subscriptions_unit').on(t.unitId)
+	]
+);
+
+export const hubApplications = pgTable(
+	'hub_applications',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		applicantId: uuid('applicant_id').references(() => persons.id, { onDelete: 'set null' }),
+		/** Mandant der antragstellenden Person (Redaktion und Verwaltung dieses Mandanten) */
+		tenantId: uuid('tenant_id')
+			.notNull()
+			.references(() => tenants.id, { onDelete: 'cascade' }),
+		name: text('name').notNull(),
+		description: text('description').notNull(),
+		reason: text('reason').notNull(),
+		/** E-Mail-Adressen für das Hub-Team */
+		team: jsonb('team').$type<string[]>().notNull(),
+		/** Zuständigkeit: nur der eigene Mandant oder zentral (alle) */
+		central: boolean('central').notNull().default(false),
+		status: text('status', {
+			enum: ['neu', 'bei_verwaltung', 'angelegt', 'abgelehnt', 'geschlossen']
+		}).notNull(),
+		decisionReason: text('decision_reason'),
+		unitId: uuid('unit_id').references(() => units.id, { onDelete: 'set null' }),
+		endedAt: timestamp('ended_at', { withTimezone: true }),
+		createdAt: createdAt(),
+		updatedAt: updatedAt()
+	},
+	(t) => [index('hub_applications_status').on(t.status, t.tenantId)]
 );

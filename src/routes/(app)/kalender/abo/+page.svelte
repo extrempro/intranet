@@ -91,7 +91,23 @@
 				</div>
 			{/if}
 		</fieldset>
-		<p class="hinweis">Spielplan und Hubs kommen dazu, sobald es sie im Intranet gibt.</p>
+		<fieldset class="zeile">
+			<legend>Termine von Hubs</legend>
+			<div class="chips">
+				{#each [['mine', 'Meine Abos'], ['all', 'Alle'], ['none', 'Keine']] as [wert, text] (wert)}
+					<label class="chip">
+						<input
+							type="radio"
+							name="hubs"
+							value={wert}
+							checked={(data.feed.config.hubs ?? 'mine') === wert}
+						/>
+						<span>{text}</span>
+					</label>
+				{/each}
+			</div>
+		</fieldset>
+		<p class="hinweis">Der Spielplan kommt dazu, sobald es ihn im Intranet gibt.</p>
 		<div>
 			<button class="knopf" type="submit">
 				{data.feed.url ? 'Auswahl speichern' : 'Speichern und Link erzeugen'}

@@ -10,6 +10,7 @@
 		label: string;
 		isCentral: boolean;
 		mayUrgent: boolean;
+		isHub: boolean;
 	}
 	interface Werte {
 		unitId: string;
@@ -166,33 +167,35 @@
 	</label>
 </div>
 
-<fieldset class="gruppe">
-	<legend>Anheften</legend>
-	<label class="option">
-		<input type="checkbox" name="anheften" bind:checked={v.pin} /> Oben in den Neuigkeiten anheften
-	</label>
-	{#if v.pin}
-		<label class="feld einzug">
-			<span>Angeheftet bis (höchstens {regeln.pinMaxDays} Tage)</span>
-			<input
-				type="date"
-				name="angeheftet_bis"
-				bind:value={v.pinnedUntil}
-				required
-				aria-describedby={fid('pinnedUntil')}
-			/>
-			{#if fehler.pinnedUntil}<span id="f-pinnedUntil" class="feldfehler">
-					{fehler.pinnedUntil}
-				</span>{/if}
+{#if !einheit?.isHub}
+	<fieldset class="gruppe">
+		<legend>Anheften</legend>
+		<label class="option">
+			<input type="checkbox" name="anheften" bind:checked={v.pin} /> Oben in den Neuigkeiten anheften
 		</label>
-		{#if pinKonflikt}
-			<label class="option einzug">
-				<input type="checkbox" name="ersetzen" bind:checked={v.replacePin} /> „{pinKonflikt.title}“
-				lösen und diesen Beitrag anheften
+		{#if v.pin}
+			<label class="feld einzug">
+				<span>Angeheftet bis (höchstens {regeln.pinMaxDays} Tage)</span>
+				<input
+					type="date"
+					name="angeheftet_bis"
+					bind:value={v.pinnedUntil}
+					required
+					aria-describedby={fid('pinnedUntil')}
+				/>
+				{#if fehler.pinnedUntil}<span id="f-pinnedUntil" class="feldfehler">
+						{fehler.pinnedUntil}
+					</span>{/if}
 			</label>
+			{#if pinKonflikt}
+				<label class="option einzug">
+					<input type="checkbox" name="ersetzen" bind:checked={v.replacePin} />
+					„{pinKonflikt.title}“ lösen und diesen Beitrag anheften
+				</label>
+			{/if}
 		{/if}
-	{/if}
-</fieldset>
+	</fieldset>
+{/if}
 
 {#if einheit?.mayUrgent}
 	<fieldset class="gruppe dringend">

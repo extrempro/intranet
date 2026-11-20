@@ -14,6 +14,7 @@ export function readUnitForm(form: FormData): UnitInput {
 		hidden: form.get('ausgeblendet') === 'on',
 		mayPostUrgent: urgent === 'ja' ? true : urgent === 'nein' ? false : null,
 		mayCreateEvents: events === 'ja' ? true : events === 'nein' ? false : null,
-		isKbb: form.get('kbb') === 'on'
+		isKbb: form.get('kbb') === 'on',
+		mandatorySubscription: form.get('pflichtabo') === 'on'
 	};
 }

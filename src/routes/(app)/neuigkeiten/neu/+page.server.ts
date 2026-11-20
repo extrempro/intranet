@@ -9,12 +9,13 @@ import { describeAttachments, NewsError, saveNews, writableUnits } from '#lib/se
 import { getContentRules } from '#lib/server/rules.ts';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
 	const p = requirePrincipal(locals);
 	const einheiten = await writableUnits(p);
 	if (einheiten.length === 0) error(403, 'Dafür fehlt dir das Recht.');
 	const werte: NewsFormValues = {
-		unitId: einheiten[0].id,
+		// ?absender= z. B. vom Hub aus
+		unitId: einheiten.find((e) => e.id === url.searchParams.get('absender'))?.id ?? einheiten[0].id,
 		title: '',
 		bodyHtml: '',
 		publishAt: dateToBerlinInput(new Date()),

@@ -21,6 +21,11 @@
 				<strong>Benachrichtigungen</strong><span class="hinweis">Glocke und E-Mail je Thema</span>
 			</a>
 		</li>
+		<li>
+			<a class="karte kachel" href={resolve('/(app)/konto/hubs')}>
+				<strong>Meine Hubs</strong><span class="hinweis">Abos und Benachrichtigung je Hub</span>
+			</a>
+		</li>
 	</ul>
 	<h2>Weitere Einstellungen</h2>
 	<ul class="kacheln">

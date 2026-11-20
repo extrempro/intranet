@@ -10,9 +10,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 	return {
 		einstellung: await getNotify(p.personId),
 		mailBereit: await mailConfigured(),
-		themen: TOPICS.filter((t) => !t.onlyFor || (t.onlyFor === 'moderation' && moderation)).map(
-			(t) => t.key
-		)
+		themen: TOPICS.filter((t) => !t.hidden)
+			.filter((t) => !t.onlyFor || (t.onlyFor === 'moderation' && moderation))
+			.map((t) => t.key)
 	};
 };
 
@@ -26,7 +26,7 @@ export const actions: Actions = {
 		for (const t of TOPICS)
 			// Nicht angezeigte Themen behalten ihre bisherige Einstellung
 			topics[t.key] =
-				t.onlyFor && !(t.onlyFor === 'moderation' && moderation)
+				t.hidden || (t.onlyFor && !(t.onlyFor === 'moderation' && moderation))
 					? vorher.topics[t.key]
 					: {
 							bell: f.get(`${t.key}_glocke`) === 'on',

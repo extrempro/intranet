@@ -31,7 +31,8 @@ export const actions: Actions = {
 		await saveFeed(p, {
 			tenants: f.getAll('mandanten').map(String),
 			departments: mode === 'selected' || mode === 'none' ? mode : 'all',
-			unitIds: f.getAll('einheiten').map(String)
+			unitIds: f.getAll('einheiten').map(String),
+			hubs: (['mine', 'all', 'none'] as const).find((h) => h === f.get('hubs')) ?? 'mine'
 		});
 		return { gespeichert: true };
 	},

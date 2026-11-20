@@ -58,6 +58,8 @@ export interface SenderUnit {
 	tenantId: string;
 	isCentral: boolean;
 	mayUrgent: boolean;
+	/** Hub: Beiträge erscheinen unter „Aus den Hubs“, ohne Anheften und Dringend */
+	isHub: boolean;
 }
 
 /** Einheiten, für die die Person schreiben darf (Kap. 5.2). */
@@ -70,16 +72,22 @@ export async function writableUnits(p: Principal): Promise<SenderUnit[]> {
 		.innerJoin(tenants, eq(tenants.id, units.tenantId))
 		.where(inArray(units.id, ids))
 		.orderBy(asc(units.name));
-	return rows
-		.filter((r) => canWriteNews(p, r.unit))
-		.map((r) => ({
-			id: r.unit.id,
-			name: r.unit.name,
-			label: unitTypeLabel(r.unit),
-			tenantId: r.unit.tenantId,
-			isCentral: r.unit.isCentral,
-			mayUrgent: mayPostUrgent({ ...r.unit, isKbb: r.kbbUnitId === r.unit.id })
-		}));
+	return (
+		rows
+			.filter((r) => canWriteNews(p, r.unit))
+			// Ruhende und archivierte Hubs schreiben nicht (Kap. 8.12)
+			.filter((r) => !r.unit.archivedAt && !(r.unit.type === 'hub' && r.unit.restingSince))
+			.map((r) => ({
+				id: r.unit.id,
+				name: r.unit.name,
+				label: unitTypeLabel(r.unit),
+				tenantId: r.unit.tenantId,
+				isCentral: r.unit.isCentral,
+				mayUrgent:
+					r.unit.type !== 'hub' && mayPostUrgent({ ...r.unit, isKbb: r.kbbUnitId === r.unit.id }),
+				isHub: r.unit.type === 'hub'
+			}))
+	);
 }
 
 // ---------------------------------------------------------------------------
@@ -93,6 +101,9 @@ export interface ListOptions {
 	from?: string | null;
 	q?: string | null;
 	limit?: number;
+	/** Neuigkeiten ohne Hubs (Standard), nur Hubs oder bestimmte Einheiten */
+	hubs?: 'exclude' | 'only';
+	unitIds?: string[];
 }
 
 /** Sichtbar für Lesende: Zielgruppe passt, freigegeben, nicht abgelaufen. */
@@ -226,6 +237,12 @@ export async function listNews(p: Principal, opts: ListOptions = {}) {
 	}
 	if (opts.filter === 'geplant') conds.push(gt(news.publishAt, now));
 	if (opts.from) conds.push(eq(news.unitId, opts.from));
+	if (opts.unitIds)
+		conds.push(opts.unitIds.length ? inArray(news.unitId, opts.unitIds) : sql`false`);
+	else if (opts.hubs === 'only') conds.push(sql`${units.type} = 'hub'`);
+	else conds.push(sql`${units.type} <> 'hub'`);
+	// Archivierte Hubs sind nirgends mehr sichtbar
+	conds.push(isNull(units.archivedAt));
 	const q = opts.q?.trim().slice(0, 100);
 	if (q) {
 		const like = `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
@@ -405,7 +422,10 @@ export async function saveNews(
 
 	const bodyHtml = cleanHtml(input.bodyHtml);
 	const bodyText = htmlToText(bodyHtml);
-	const draft: NewsDraft = { ...input, bodyText };
+	// Hubs: weder anheften noch dringend (Kap. 8.3)
+	const draft: NewsDraft = sender.isHub
+		? { ...input, bodyText, pinnedUntil: null, urgentUntil: null, urgentText: null }
+		: { ...input, bodyText };
 
 	const [{ n: otherUrgent }] = await db
 		.select({ n: sql<number>`count(*)::int` })
@@ -450,7 +470,7 @@ export async function saveNews(
 	const editorial = isEditorial(p);
 	let pinConflict: { id: string; title: string } | undefined;
 	let unpinIds: string[] = [];
-	if (input.pinnedUntil && !errors.pinnedUntil) {
+	if (draft.pinnedUntil && !errors.pinnedUntil) {
 		const activePins = await db
 			.select({
 				id: news.id,
