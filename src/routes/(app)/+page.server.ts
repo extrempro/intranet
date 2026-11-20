@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 import { greeting, HOME_CARDS, resolveLayout } from '#lib/home.ts';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import { db } from '#lib/server/db/index.ts';
+import { listNews, urgentForBanner } from '#lib/server/news.ts';
 import { tenants } from '#lib/server/db/schema.ts';
 import {
 	getPreferences,
@@ -17,13 +18,15 @@ const ZONE = 'Europe/Berlin';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const principal = requirePrincipal(locals);
-	const [prefs, favs, [tenant]] = await Promise.all([
+	const [prefs, favs, [tenant], dringend, neuigkeiten] = await Promise.all([
 		getPreferences(principal.personId),
 		listFavorites(principal.personId),
 		db
 			.select({ homeDefault: tenants.homeDefault })
 			.from(tenants)
-			.where(eq(tenants.id, principal.tenantId))
+			.where(eq(tenants.id, principal.tenantId)),
+		urgentForBanner(principal),
+		listNews(principal, { limit: 5 })
 	]);
 	const now = new Date();
 	const hour = Number(
@@ -47,7 +50,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 			icon: f.icon
 		})),
 		karten: resolveLayout(HOME_CARDS, prefs.homeLayout, tenant?.homeDefault),
-		eigeneEinstellung: prefs.homeLayout !== null
+		eigeneEinstellung: prefs.homeLayout !== null,
+		dringend,
+		neuigkeiten: neuigkeiten.filter((n) => !n.planned)
 	};
 };
 

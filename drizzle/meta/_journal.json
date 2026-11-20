@@ -36,6 +36,20 @@
       "when": 1795154035208,
       "tag": "0004_darstellung_startseite",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795154853001,
+      "tag": "0005_neuigkeiten",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795154853873,
+      "tag": "0006_neuigkeiten_rls",
+      "breakpoints": true
     }
   ]
 }

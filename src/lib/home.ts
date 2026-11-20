@@ -13,7 +13,7 @@ export interface CardDefinition {
 }
 
 /** Bekannte Karten in Standardreihenfolge. */
-export const HOME_CARDS: CardDefinition[] = [];
+export const HOME_CARDS: CardDefinition[] = [{ id: 'neuigkeiten', label: 'Neuigkeiten' }];
 
 export const FAVORITES_MAX = 8;
 

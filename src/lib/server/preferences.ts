@@ -47,11 +47,17 @@ export interface FavoriteTarget {
  * Bekannte Ziele für Favoriten. Gespeichert wird nur der Schlüssel; Adresse
  * und Bezeichnung kommen immer von hier (keine freien Links, kein Open Redirect).
  */
-const TARGETS = new Map<string, FavoriteTarget>();
-
-export function registerFavoriteTarget(key: string, target: FavoriteTarget) {
-	TARGETS.set(key, target);
-}
+const TARGETS = new Map<string, FavoriteTarget>([
+	[
+		'neuigkeiten',
+		{
+			label: 'Neuigkeiten',
+			description: 'Aktuelles aus allen Bereichen',
+			href: '/neuigkeiten',
+			icon: 'M16 6h3a1 1 0 0 1 1 1v11a2 2 0 0 1 -4 0v-13a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1v12a3 3 0 0 0 3 3h11M8 8h4M8 12h4M8 16h4'
+		}
+	]
+]);
 
 export function isFavoriteTarget(key: string): boolean {
 	return TARGETS.has(key);

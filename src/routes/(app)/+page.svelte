@@ -1,7 +1,10 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { resolve } from '$app/paths';
+	import Beitragskarte from '#lib/components/Beitragskarte.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import { moveItem } from '#lib/home.ts';
+	import { formatWhen } from '#lib/news.ts';
 
 	let { data, form } = $props();
 
@@ -38,6 +41,29 @@
 	{#if form?.fehler}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
 
 	<!-- Dringende Meldungen stehen immer oben (Kap. 8.2) -->
+	{#each data.dringend as d (d.id)}
+		<section class="banner" aria-labelledby="dr-{d.id}">
+			<div>
+				<h2 id="dr-{d.id}">{d.title}</h2>
+				<p>{d.text}</p>
+				<p class="klein">{d.sender} · dringend bis {formatWhen(d.until)}</p>
+			</div>
+			<div class="banner-aktionen">
+				<a class="knopf zweit" href={resolve('/(app)/neuigkeiten/[id]', { id: d.id })}>
+					Zum Beitrag
+				</a>
+				<form
+					method="POST"
+					action="/neuigkeiten/{d.id}?/zuklappen"
+					use:enhance={() =>
+						async ({ update }) =>
+							update({ invalidateAll: true })}
+				>
+					<button class="linkknopf rot" type="submit">Gelesen, zuklappen</button>
+				</form>
+			</div>
+		</section>
+	{/each}
 
 	<section aria-labelledby="fav-h">
 		<h2 id="fav-h">Favoriten</h2>
@@ -176,10 +202,27 @@
 		</section>
 	{/if}
 
-	{#each sichtbareKarten as k (k.id)}
-		<!-- Karten folgen mit ihren Funktionen -->
-		<section class="karte" aria-label={k.label}></section>
-	{/each}
+	{#if !bearbeiten}
+		{#each sichtbareKarten as k (k.id)}
+			{#if k.id === 'neuigkeiten'}
+				<section aria-labelledby="karte-neuigkeiten" class="stapel">
+					<div class="kartenkopf">
+						<h2 id="karte-neuigkeiten">Neuigkeiten</h2>
+						<a href={resolve('/(app)/neuigkeiten')}>Alle Neuigkeiten</a>
+					</div>
+					{#if data.neuigkeiten.length === 0}
+						<p class="hinweis">Gerade gibt es keine Neuigkeiten für dich.</p>
+					{:else}
+						{#each data.neuigkeiten as item (item.id)}<Beitragskarte
+								{item}
+								ebene={3}
+								mitReaktionen={false}
+							/>{/each}
+					{/if}
+				</section>
+			{/if}
+		{/each}
+	{/if}
 </div>
 
 <style>
@@ -274,6 +317,48 @@
 		width: 20px;
 		height: 20px;
 		accent-color: var(--fill);
+	}
+	.banner {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		gap: 12px;
+		padding: 16px 18px;
+		border-radius: var(--radius);
+		background: var(--err-bg);
+		border: 2px solid var(--err-bd);
+		color: var(--err-tx);
+	}
+	.banner h2 {
+		margin: 0 0 4px;
+		font-size: 1.1rem;
+	}
+	.banner p {
+		margin: 0;
+		color: var(--tx);
+	}
+	.banner .klein {
+		font-size: 0.9rem;
+		color: var(--err-tx);
+		margin-top: 6px;
+	}
+	.banner-aktionen {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px;
+	}
+	.rot {
+		color: var(--err-tx);
+	}
+	.kartenkopf {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		gap: 12px;
+	}
+	.kartenkopf h2 {
+		margin: 0;
 	}
 	.aktionen {
 		display: flex;

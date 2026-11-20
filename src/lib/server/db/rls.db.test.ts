@@ -22,6 +22,12 @@ const P = {
 	hso: '00000000-0000-0000-0000-0000000000b3'
 };
 
+const N = {
+	oper: '00000000-0000-0000-0000-0000000000c1',
+	zentralB: '00000000-0000-0000-0000-0000000000c2',
+	zentralAlle: '00000000-0000-0000-0000-0000000000c3'
+};
+
 describe.skipIf(!url)('Row-Level Security', () => {
 	let mod: typeof import('./index.ts');
 
@@ -55,6 +61,16 @@ describe.skipIf(!url)('Row-Level Security', () => {
 		await db.execute(
 			sql`insert into local_credentials (person_id, password_hash) values (${P.b}, 'geheim')`
 		);
+		await db.execute(sql`
+			insert into news (id, unit_id, tenant_id, title, body_html, body_text, publish_at, all_tenants) values
+				(${N.oper}, ${U.kbbHso}, ${T.hso}, 'Nur Oper', '<p>x</p>', 'x', now(), false),
+				(${N.zentralB}, ${U.it}, ${T.hso}, 'Zentral für B', '<p>x</p>', 'x', now(), false),
+				(${N.zentralAlle}, ${U.it}, ${T.hso}, 'Zentral für alle', '<p>x</p>', 'x', now(), true)`);
+		await db.execute(sql`
+			insert into news_tenants (news_id, tenant_id) values
+				(${N.oper}, ${T.hso}), (${N.zentralB}, ${T.b})`);
+		await db.execute(sql`
+			insert into urgent_dismissals (news_id, person_id) values (${N.zentralAlle}, ${P.itPerson})`);
 	});
 
 	afterAll(async () => {
@@ -121,6 +137,31 @@ describe.skipIf(!url)('Row-Level Security', () => {
 				mod.scoped(asB, (tx) => tx.execute(sql.raw(`select * from ${table}`)))
 			).rejects.toMatchObject({ cause: { code: '42501' } });
 		}
+	});
+
+	it('zeigt nur Neuigkeiten für den eigenen Mandanten', async () => {
+		const rows = await mod.scoped(asB, (tx) =>
+			tx.execute<{ title: string }>(sql`select title from news order by title`)
+		);
+		expect(rows.map((r) => r.title).sort()).toEqual(['Zentral für B', 'Zentral für alle'].sort());
+	});
+
+	it('zeigt keine fremden Zielzuordnungen und keine fremden zugeklappten Banner', async () => {
+		const targets = await mod.scoped(asB, (tx) => tx.execute(sql`select * from news_tenants`));
+		expect(targets.length).toBe(1);
+		const dismissed = await mod.scoped(asB, (tx) =>
+			tx.execute(sql`select * from urgent_dismissals`)
+		);
+		expect(dismissed.length).toBe(0);
+	});
+
+	it('verbietet Schreiben in Neuigkeiten und Reaktionen', async () => {
+		await expect(
+			mod.scoped(asB, (tx) => tx.execute(sql`update news set title = 'x'`))
+		).rejects.toMatchObject({ cause: { code: '42501' } });
+		await expect(
+			mod.scoped(asB, (tx) => tx.execute(sql`select * from news_reactions`))
+		).rejects.toMatchObject({ cause: { code: '42501' } });
 	});
 
 	it('zeigt ohne gesetzten Mandanten nichts', async () => {
