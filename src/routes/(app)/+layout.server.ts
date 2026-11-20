@@ -1,5 +1,6 @@
 import { canSeeAdministration } from '#lib/server/auth/access.ts';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
+import { unreadConversations } from '#lib/server/messages.ts';
 import { unreadCount } from '#lib/server/notify.ts';
 import { accentStyle, brandingFor } from '#lib/server/tenant-branding.ts';
 import type { LayoutServerLoad } from './$types';
@@ -16,9 +17,10 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 	void url.pathname;
 	const principal = requirePrincipal(locals);
 	const person = locals.person!;
-	const [branding, ungelesen] = await Promise.all([
+	const [branding, ungelesen, nachrichten] = await Promise.all([
 		brandingFor(person.tenantId),
-		unreadCount(person.id)
+		unreadCount(person.id),
+		unreadConversations(principal)
 	]);
 	return {
 		ich: {
@@ -30,6 +32,7 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 		akzent: accentStyle(branding),
 		theme: locals.theme,
 		darfVerwaltung: canSeeAdministration(principal),
-		ungelesen
+		ungelesen,
+		nachrichten
 	};
 };

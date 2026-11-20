@@ -2,6 +2,7 @@
 	/* eslint-disable svelte/no-navigation-without-resolve, svelte/no-at-html-tags -- Suchparameter der eigenen Seite; Antwort-HTML ist serverseitig bereinigt */
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import { actionUrl } from '#lib/action-url.ts';
 	import { page } from '$app/state';
 	import { formatSize } from '#lib/format.ts';
 
@@ -19,7 +20,7 @@
 	<div class="kopfzeile">
 		<div class="titel">
 			<h1>FAQs</h1>
-			<form method="POST" action="?/favorit" use:enhance>
+			<form method="POST" action={actionUrl(page.url.search, 'favorit')} use:enhance>
 				<button
 					class="stern"
 					type="submit"
@@ -99,7 +100,11 @@
 												Bearbeiten
 											</a>
 											{#if !data.q}
-												<form method="POST" action="?/verschieben" use:enhance>
+												<form
+													method="POST"
+													action={actionUrl(page.url.search, 'verschieben')}
+													use:enhance
+												>
 													<input type="hidden" name="id" value={f.id} />
 													<button
 														class="knopf zweit klein"

@@ -13,6 +13,8 @@ export interface TopicDefinition {
 	defaults: Record<Channel, boolean>;
 	/** Kanäle, die sich nicht abschalten lassen */
 	fixed?: Channel[];
+	/** Nur für Personen mit dieser Aufgabe sichtbar */
+	onlyFor?: 'moderation';
 }
 
 /** Reihenfolge und Voreinstellungen nach Tabelle 11.2 */
@@ -36,6 +38,20 @@ export const TOPICS: TopicDefinition[] = [
 		label: 'Pläne (KBB)',
 		hint: 'KBB deines Mandanten',
 		defaults: { bell: true, email: true }
+	},
+	{
+		key: 'schwarzes_brett',
+		label: 'Schwarzes Brett',
+		hint: 'neue Anzeigen',
+		defaults: { bell: false, email: false }
+	},
+	{ key: 'nachrichten', label: 'Nachrichten', defaults: { bell: true, email: true } },
+	{
+		key: 'moderation',
+		label: 'Schwarzes Brett prüfen',
+		hint: 'nur Moderation',
+		defaults: { bell: true, email: true },
+		onlyFor: 'moderation'
 	}
 ];
 

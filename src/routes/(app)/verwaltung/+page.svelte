@@ -51,6 +51,11 @@
 				</a>
 			</li>
 			<li>
+				<a class="karte kachel" href={resolve('/(app)/verwaltung/schwarzes-brett')}>
+					<strong>Schwarzes Brett</strong><span class="hinweis">Kategorien</span>
+				</a>
+			</li>
+			<li>
 				<a class="karte kachel" href={resolve('/(app)/verwaltung/entra-gruppen')}>
 					<strong>Rollen aus Entra-Gruppen</strong><span class="hinweis">
 						Gruppe → Rolle zuordnen
