@@ -5,6 +5,7 @@
  * - sendEmails(): sofort bzw. als Zusammenfassung (täglich/wöchentlich um 7 Uhr).
  * Läuft minütlich im Anwendungsprozess (startNotifier).
  */
+import { track } from './jobs.ts';
 import { and, asc, desc, eq, gt, inArray, isNull, lt, lte, or, sql } from 'drizzle-orm';
 import { berlinNow } from '../canteen.ts';
 import {
@@ -413,10 +414,12 @@ export function startNotifier(intervalMs = 60_000) {
 		if (running) return;
 		running = true;
 		try {
-			await dispatchNews();
-			await sendEmails();
-			const { sendDuePushes } = await import('./push.ts');
-			await sendDuePushes();
+			await track('benachrichtigungen', async () => {
+				await dispatchNews();
+				await sendEmails();
+				const { sendDuePushes } = await import('./push.ts');
+				await sendDuePushes();
+			});
 		} catch (err) {
 			console.error('Benachrichtigungen fehlgeschlagen:', err);
 		} finally {

@@ -17,7 +17,7 @@ export interface TopicDefinition {
 	/** Kanäle, die sich nicht abschalten lassen */
 	fixed?: Channel[];
 	/** Nur für Personen mit dieser Aufgabe sichtbar */
-	onlyFor?: 'moderation' | 'pflege' | 'verwaltung';
+	onlyFor?: 'moderation' | 'pflege' | 'verwaltung' | 'system';
 	/** Nicht in der Tabelle: Einstellung woanders (Hubs: „Meine Hubs“) */
 	hidden?: boolean;
 }
@@ -86,6 +86,13 @@ export const TOPICS: TopicDefinition[] = [
 		hint: 'nur Verwaltung',
 		defaults: { bell: true, push: false, email: false },
 		onlyFor: 'verwaltung'
+	},
+	{
+		key: 'system',
+		label: 'Betrieb und Sicherungen',
+		hint: 'nur System-Admins',
+		defaults: { bell: true, push: false, email: true },
+		onlyFor: 'system'
 	},
 	{
 		key: 'hubs',
