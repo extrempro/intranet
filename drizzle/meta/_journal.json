@@ -113,6 +113,13 @@
       "when": 1795182826480,
       "tag": "0015_abteilungsseiten",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1795186305613,
+      "tag": "0016_profilfoto",
+      "breakpoints": true
     }
   ]
 }

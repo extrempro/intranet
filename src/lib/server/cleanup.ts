@@ -8,6 +8,7 @@ import { deleteOrphans } from './files/store.ts';
 import { boardRetention } from './board.ts';
 import { calendarRetention } from './calendar.ts';
 import { hubRetention } from './hubs.ts';
+import { deletePhotosOfDisabled } from './people.ts';
 import { remindResponsibilityReviews } from './departments.ts';
 import { deleteClosedConversations } from './messages.ts';
 import { deleteExpiredCanteenData } from './canteen.ts';
@@ -29,6 +30,7 @@ export async function cleanup(): Promise<void> {
 	await deleteOldNotifications();
 	await boardRetention();
 	await hubRetention();
+	await deletePhotosOfDisabled();
 	await remindResponsibilityReviews();
 	await deleteClosedConversations();
 	await db.delete(pendingLogins).where(lt(pendingLogins.expiresAt, new Date()));
