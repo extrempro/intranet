@@ -12,6 +12,8 @@ export const init: ServerInit = async () => {
 	if (process.env.MIGRATE_ON_START === 'false') return;
 	const { runMigrations } = await import('#lib/server/db/migrate.ts');
 	await runMigrations();
+	const { ensureInitialTenant } = await import('#lib/server/bootstrap.ts');
+	await ensureInitialTenant();
 	const { startCleanup } = await import('#lib/server/cleanup.ts');
 	startCleanup();
 };
