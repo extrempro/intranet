@@ -1,6 +1,7 @@
 import { redirect, type RequestHandler } from '@sveltejs/kit';
 import * as oidc from 'openid-client';
 import {
+	ENTRA_LOGIN_ORIGINS,
 	ENTRA_SCOPES,
 	OIDC_COOKIE,
 	getEntraConfig,
@@ -39,5 +40,6 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		console.error('Entra-Anmeldung konnte nicht gestartet werden:', err);
 		redirect(303, '/anmelden?fehler=failed');
 	}
-	redirect(303, authUrl.href);
+	// Nur zur Microsoft-Anmeldung; andere externe Ziele lehnt SvelteKit ab
+	redirect(303, authUrl.href, { external: ENTRA_LOGIN_ORIGINS });
 };
