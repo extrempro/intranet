@@ -3,6 +3,9 @@
 	"version": "0.1.0",
 	"private": true,
 	"type": "module",
+	"imports": {
+		"#lib/*": "./src/lib/*"
+	},
 	"license": "MIT",
 	"engines": {
 		"node": ">=24"
@@ -23,6 +26,7 @@
 	},
 	"dependencies": {
 		"drizzle-orm": "^0.45.4",
+		"openid-client": "^6.9.0",
 		"postgres": "^4.1.1"
 	},
 	"devDependencies": {
