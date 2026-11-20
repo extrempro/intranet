@@ -12,6 +12,18 @@ Die Verwaltung erreichst du über das Konto-Menü. Mandanten-Admins verwalten ih
 - **Abteilungen und Hubs**: anlegen, Typ, Zuständigkeit, Ausblenden, Rechte (Dringend, Termine), Pflicht-Abo, Team und Pflege-Rolle.
 - **Standorte**: Kantinen und Betreiber-Konten.
 - **Benutzer und Rollen**: Rollen mit Geltungsbereich vergeben, Konten sperren; lokale Konten einladen.
-- **Nur System-Admins**: Anmeldung, Rollen aus Entra-Gruppen, Kategorien des Schwarzen Bretts, Hinweis „Hinter den Kulissen“.
+- **Nur System-Admins**: Anmeldung, Rollen aus Entra-Gruppen, Kategorien des Schwarzen Bretts, Hinweis „Hinter den Kulissen“ und **System**.
 
 Gesperrte Konten werden nach der Löschfrist (Standard 90 Tage) gelöscht; Inhalte der Einheiten bleiben.
+
+## System
+
+Unter **System** siehst du die Version, den Zustand von Datenbank, Dateien und Hintergrundaufgaben, die Anbindungen (Entra, E-Mail, Web Push) und die **Sicherungen**:
+
+- wann zuletzt gesichert wurde und ob es geklappt hat,
+- das Ergebnis des wöchentlichen **Wiederherstellungstests**,
+- die vorhandenen Sicherungen und den freien Speicher.
+
+Schlägt eine Sicherung fehl oder ist die letzte erfolgreiche älter als 26 Stunden, bekommen alle System-Admins eine Benachrichtigung (Thema „Betrieb und Sicherungen“, höchstens einmal am Tag je Meldung).
+
+Wiederherstellen geht nur auf dem Server, nicht im Intranet. Die Anleitung steht im Repo unter `backup/README.md`. Du brauchst dafür den privaten Schlüssel der Sicherung und den `ENCRYPTION_KEY`; beide liegen nicht auf dem Server.

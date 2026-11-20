@@ -18,6 +18,8 @@ import { deleteForgottenPlans } from './plans.ts';
 import { db } from './db/index.ts';
 import { auditLog, invitations, pendingLogins } from './db/schema.ts';
 import { allRetention } from './retention.ts';
+import { track } from './jobs.ts';
+import { checkBackups } from './system.ts';
 
 export async function cleanup(): Promise<void> {
 	await deleteExpiredSessions();
@@ -64,7 +66,14 @@ let timer: ReturnType<typeof setInterval> | null = null;
 
 export function startCleanup(intervalMs = 60 * 60 * 1000) {
 	if (timer) return;
-	const run = () => cleanup().catch((err) => console.error('Aufräumen fehlgeschlagen:', err));
+	const run = async () => {
+		await track('aufraeumen', cleanup).catch((err) =>
+			console.error('Aufräumen fehlgeschlagen:', err)
+		);
+		await checkBackups().catch((err) =>
+			console.error('Prüfung der Sicherung fehlgeschlagen:', err)
+		);
+	};
 	void run();
 	timer = setInterval(run, intervalMs);
 	timer.unref();

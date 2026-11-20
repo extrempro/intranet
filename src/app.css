@@ -23,6 +23,9 @@
 	--err-bd: #d92d20;
 	--err-tx: #b42318;
 	--ok-bg: #ecf6f1;
+	--warn-bg: #fffaeb;
+	--warn-bd: #dc6803;
+	--warn-tx: #93370d;
 	--shadow: 0 12px 32px rgb(0 0 0 / 0.18);
 }
 
@@ -39,6 +42,9 @@
 	--err-bd: #f97066;
 	--err-tx: #fda29b;
 	--ok-bg: #16302a;
+	--warn-bg: #3a2a10;
+	--warn-bd: #fdb022;
+	--warn-tx: #fec84b;
 	--shadow: 0 12px 32px rgb(0 0 0 / 0.5);
 }
 
@@ -57,6 +63,12 @@
 		--err-bd: #f97066;
 		--err-tx: #fda29b;
 		--ok-bg: #16302a;
+		--warn-bg: #3a2a10;
+		--warn-bd: #fdb022;
+		--warn-tx: #fec84b;
+		--warn-bg: #3a2a10;
+		--warn-bd: #fdb022;
+		--warn-tx: #fec84b;
 		--shadow: 0 12px 32px rgb(0 0 0 / 0.5);
 	}
 }
@@ -277,6 +289,12 @@ textarea {
 	background: var(--err-bg);
 	border-color: var(--err-bd);
 	color: var(--err-tx);
+}
+
+.meldung.warnung {
+	background: var(--warn-bg);
+	border-color: var(--warn-bd);
+	color: var(--warn-tx);
 }
 
 .schild {

@@ -97,6 +97,11 @@
 				</a>
 			</li>
 			<li>
+				<a class="karte kachel" href={resolve('/(app)/verwaltung/system')}>
+					<strong>System</strong><span class="hinweis">Version, Zustand, Sicherungen</span>
+				</a>
+			</li>
+			<li>
 				<a class="karte kachel" href={resolve('/(app)/verwaltung/entra-gruppen')}>
 					<strong>Rollen aus Entra-Gruppen</strong><span class="hinweis">
 						Gruppe → Rolle zuordnen
