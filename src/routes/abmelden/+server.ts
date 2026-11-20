@@ -1,4 +1,4 @@
-import { redirect, type RequestHandler } from '@sveltejs/kit';
+import type { RequestHandler } from '@sveltejs/kit';
 import { audit } from '#lib/server/audit.ts';
 import {
 	deleteSessionCookie,
@@ -20,5 +20,9 @@ export const POST: RequestHandler = async ({ cookies, locals, getClientAddress }
 			ip: getClientAddress()
 		});
 	}
-	redirect(303, '/anmelden?abgemeldet=1');
+	// Offline gespeicherte Pläne, Service Worker und Push-Abo dieses Browsers löschen (Kap. 15)
+	return new Response(null, {
+		status: 303,
+		headers: { location: '/anmelden?abgemeldet=1', 'Clear-Site-Data': '"cache", "storage"' }
+	});
 };

@@ -43,6 +43,13 @@
 			</a>
 		</li>
 		<li>
+			<a class="karte kachel" href={resolve('/(app)/verwaltung/benachrichtigungen')}>
+				<strong>Benachrichtigungen</strong><span class="hinweis">
+					Web Push, E-Mail, Testnachricht
+				</span>
+			</a>
+		</li>
+		<li>
 			<a class="karte kachel" href={resolve('/(app)/verwaltung/protokoll')}>
 				<strong>Protokoll</strong><span class="hinweis">Änderungen in der Verwaltung</span>
 			</a>

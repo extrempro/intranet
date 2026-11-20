@@ -7,7 +7,14 @@
  */
 import { and, asc, desc, eq, gt, inArray, isNull, lt, lte, or, sql } from 'drizzle-orm';
 import { berlinNow } from '../canteen.ts';
-import { digestModesDue, resolveNotify, TOPICS, type NotifySettings } from '../notify.ts';
+import {
+	digestModesDue,
+	quietUntil,
+	resolveNotify,
+	TOPICS,
+	type NotifySettings,
+	type QuietHours
+} from '../notify.ts';
 import { getRetention } from './retention.ts';
 import { db } from './db/index.ts';
 import { news, notifications, personPreferences, persons, units } from './db/schema.ts';
@@ -52,6 +59,47 @@ export interface NotifyContent {
 	link: string;
 }
 
+/** Push-Zeitpunkt nach den Ruhezeiten der Person (null = sofort). */
+function pushTiming(topic: string, quiet: QuietHours, now: Date, cache: Map<string, Date | null>) {
+	if (topic === 'dringend' && quiet.urgent) return null;
+	const key = JSON.stringify(quiet);
+	if (!cache.has(key)) cache.set(key, quietUntil(now, quiet));
+	return cache.get(key) ?? null;
+}
+
+interface Row {
+	personId: string;
+	bell: boolean;
+	push: boolean;
+	email: boolean;
+	quiet: QuietHours;
+}
+
+async function insertRows(topic: string, rows: Row[], content: NotifyContent) {
+	const now = new Date();
+	const cache = new Map<string, Date | null>();
+	const values = rows
+		.filter((r) => r.bell || r.push || r.email)
+		.map((r) => ({
+			personId: r.personId,
+			topic,
+			title: content.title.slice(0, 200),
+			detail: content.detail?.slice(0, 200) ?? null,
+			link: content.link,
+			bell: r.bell,
+			email: r.email ? ('pending' as const) : null,
+			push: r.push ? ('pending' as const) : null,
+			pushAfter: r.push ? pushTiming(topic, r.quiet, now, cache) : null
+		}));
+	if (values.length) await db.insert(notifications).values(values);
+	// Push nicht auf den minütlichen Lauf warten lassen
+	if (values.some((v) => v.push && !v.pushAfter))
+		void import('./push.ts')
+			.then((m) => m.sendDuePushes())
+			.catch((err) => console.error('Push fehlgeschlagen:', err));
+	return values.length;
+}
+
 /** Benachrichtigt die Personen nach ihren Einstellungen für dieses Thema. */
 export async function notify(topic: string, personIds: string[], content: NotifyContent) {
 	if (!TOPICS.some((t) => t.key === topic) || personIds.length === 0) return 0;
@@ -63,61 +111,48 @@ export async function notify(topic: string, personIds: string[], content: Notify
 			.from(persons)
 			.leftJoin(personPreferences, eq(personPreferences.personId, persons.id))
 			.where(and(inArray(persons.id, chunk), regularPerson));
-		const values = rows
-			.map((r) => ({ id: r.id, s: resolveNotify(r.n).topics[topic] }))
-			.filter((r) => r.s.bell || r.s.email)
-			.map((r) => ({
-				personId: r.id,
-				topic,
-				title: content.title.slice(0, 200),
-				detail: content.detail?.slice(0, 200) ?? null,
-				link: content.link,
-				bell: r.s.bell,
-				email: r.s.email ? ('pending' as const) : null
-			}));
-		if (values.length) await db.insert(notifications).values(values);
-		count += values.length;
+		count += await insertRows(
+			topic,
+			rows.map((r) => {
+				const s = resolveNotify(r.n);
+				return { personId: r.id, ...s.topics[topic], quiet: s.quiet };
+			}),
+			content
+		);
 	}
 	return count;
 }
 
-/** Mit festen Kanälen je Person (Hub-Abos aus „Meine Hubs“). */
+/** Mit festen Kanälen je Person (Hub-Abos aus „Meine Hubs“); Ruhezeiten gelten trotzdem. */
 export async function notifyWithChannels(
 	topic: string,
-	list: { personId: string; bell: boolean; email: boolean }[],
+	list: { personId: string; bell: boolean; push: boolean; email: boolean }[],
 	content: NotifyContent
 ) {
-	const wanted = list.filter((r) => r.bell || r.email);
+	const wanted = list.filter((r) => r.bell || r.push || r.email);
 	for (let i = 0; i < wanted.length; i += 1000) {
 		const chunk = wanted.slice(i, i + 1000);
-		const ok = new Set(
-			(
-				await db
-					.select({ id: persons.id })
-					.from(persons)
-					.where(
-						and(
-							inArray(
-								persons.id,
-								chunk.map((c) => c.personId)
-							),
-							regularPerson
-						)
-					)
-			).map((r) => r.id)
+		const rows = await db
+			.select({ id: persons.id, n: personPreferences.notify })
+			.from(persons)
+			.leftJoin(personPreferences, eq(personPreferences.personId, persons.id))
+			.where(
+				and(
+					inArray(
+						persons.id,
+						chunk.map((c) => c.personId)
+					),
+					regularPerson
+				)
+			);
+		const quiet = new Map(rows.map((r) => [r.id, resolveNotify(r.n).quiet]));
+		await insertRows(
+			topic,
+			chunk
+				.filter((c) => quiet.has(c.personId))
+				.map((c) => ({ ...c, quiet: quiet.get(c.personId)! })),
+			content
 		);
-		const values = chunk
-			.filter((c) => ok.has(c.personId))
-			.map((c) => ({
-				personId: c.personId,
-				topic,
-				title: content.title.slice(0, 200),
-				detail: content.detail?.slice(0, 200) ?? null,
-				link: content.link,
-				bell: c.bell,
-				email: c.email ? ('pending' as const) : null
-			}));
-		if (values.length) await db.insert(notifications).values(values);
 	}
 }
 
@@ -380,6 +415,8 @@ export function startNotifier(intervalMs = 60_000) {
 		try {
 			await dispatchNews();
 			await sendEmails();
+			const { sendDuePushes } = await import('./push.ts');
+			await sendDuePushes();
 		} catch (err) {
 			console.error('Benachrichtigungen fehlgeschlagen:', err);
 		} finally {

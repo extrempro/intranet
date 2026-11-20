@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="de">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="color-scheme" content="light dark" />
+		<title>Offline · Intranet</title>
+		<link rel="icon" href="/favicon.svg" />
+		<link rel="stylesheet" href="/offline.css" />
+	</head>
+	<body>
+		<main>
+			<h1>Du bist offline</h1>
+			<p>
+				Das Intranet ist gerade nicht erreichbar. Sobald die Verbindung wieder steht, geht es
+				weiter.
+			</p>
+			<p><a class="knopf" href="/">Erneut versuchen</a></p>
+			<section aria-labelledby="h-plaene">
+				<h2 id="h-plaene">Offline gespeicherte Pläne</h2>
+				<p id="leer">Keine Pläne offline gespeichert.</p>
+				<ul id="plaene"></ul>
+			</section>
+		</main>
+		<script src="/offline.js"></script>
+	</body>
+</html>

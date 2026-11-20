@@ -970,11 +970,16 @@ export const notifications = pgTable(
 		readAt: timestamp('read_at', { withTimezone: true }),
 		/** E-Mail: pending = noch zu senden, sent, null = keine E-Mail */
 		email: text('email', { enum: ['pending', 'sent'] }),
+		/** Web Push: pending = noch zu senden, sent, null = kein Push */
+		push: text('push', { enum: ['pending', 'sent'] }),
+		/** Ruhezeit: frühestens dann senden (null = sofort) */
+		pushAfter: timestamp('push_after', { withTimezone: true }),
 		createdAt: createdAt()
 	},
 	(t) => [
 		index('notifications_person').on(t.personId, t.createdAt),
-		index('notifications_email').on(t.email)
+		index('notifications_email').on(t.email),
+		index('notifications_push').on(t.push, t.pushAfter)
 	]
 );
 
@@ -1163,6 +1168,7 @@ export const hubSubscriptions = pgTable(
 			.notNull()
 			.references(() => units.id, { onDelete: 'cascade' }),
 		bell: boolean('bell').notNull().default(true),
+		push: boolean('push').notNull().default(false),
 		email: boolean('email').notNull().default(false),
 		createdAt: createdAt()
 	},
@@ -1292,4 +1298,28 @@ export const legalLinks = pgTable(
 		updatedAt: updatedAt()
 	},
 	(t) => [index('legal_links_tenant').on(t.tenantId, t.kind, t.position)]
+);
+
+// ---------------------------------------------------------------------------
+// Web Push (Kap. 11.1)
+// ---------------------------------------------------------------------------
+
+/** Push-Abo eines Geräts (Browser). Endpunkte nur bei bekannten Push-Diensten. */
+export const pushSubscriptions = pgTable(
+	'push_subscriptions',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		personId: uuid('person_id')
+			.notNull()
+			.references(() => persons.id, { onDelete: 'cascade' }),
+		endpoint: text('endpoint').notNull().unique(),
+		p256dh: text('p256dh').notNull(),
+		auth: text('auth').notNull(),
+		/** Kurze Gerätebeschreibung, z. B. „Chrome auf Windows“ */
+		label: text('label'),
+		failures: integer('failures').notNull().default(0),
+		lastSuccessAt: timestamp('last_success_at', { withTimezone: true }),
+		createdAt: createdAt()
+	},
+	(t) => [index('push_subscriptions_person').on(t.personId)]
 );

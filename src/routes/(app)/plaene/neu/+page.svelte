@@ -1,8 +1,17 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { untrack } from 'svelte';
 
 	let { data, form } = $props();
 	let sendet = $state(false);
+	// Eigener Zustand: sonst setzt das Neuzeichnen beim Absenden die Felder zurück
+	let w = $state(
+		untrack(() => ({
+			title: form?.werte?.title ?? '',
+			from: form?.werte?.validFrom ?? '',
+			until: form?.werte?.validUntil ?? ''
+		}))
+	);
 </script>
 
 <svelte:head><title>PDF hochladen · Pläne (KBB) · Intranet</title></svelte:head>
@@ -22,18 +31,18 @@
 				name="titel"
 				required
 				maxlength="120"
-				value={form?.werte?.title ?? ''}
+				bind:value={w.title}
 				placeholder="z. B. Wochenplan KW 48"
 			/>
 		</label>
 		<div class="zeile">
 			<label class="feld">
 				<span>Gültig ab</span>
-				<input type="date" name="von" required value={form?.werte?.validFrom ?? ''} />
+				<input type="date" name="von" required bind:value={w.from} />
 			</label>
 			<label class="feld">
 				<span>Gültig bis</span>
-				<input type="date" name="bis" required value={form?.werte?.validUntil ?? ''} />
+				<input type="date" name="bis" required bind:value={w.until} />
 			</label>
 		</div>
 		<label class="feld">
