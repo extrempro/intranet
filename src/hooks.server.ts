@@ -37,7 +37,8 @@ const securityHeaders: Record<string, string> = {
 
 /** Ohne Anmeldung erreichbar. Alles andere nur mit gültiger Sitzung. */
 /** /ical: persönliches Kalender-Abo, geschützt durch den geheimen Link (Kap. 8.8). */
-const PUBLIC_PATHS = ['/anmelden', '/einladung', '/health', '/ical'];
+/** /teams/tab: Tab der Teams-App, zeigt nur einen Link (Kap. 11.1). */
+const PUBLIC_PATHS = ['/anmelden', '/einladung', '/health', '/ical', '/teams/tab'];
 
 function isPublic(pathname: string): boolean {
 	return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));

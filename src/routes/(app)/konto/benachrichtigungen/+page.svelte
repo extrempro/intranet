@@ -71,6 +71,7 @@
 						<th scope="col">Glocke</th>
 						<th scope="col">Push</th>
 						<th scope="col">E-Mail</th>
+						{#if data.teams}<th scope="col">Teams</th>{/if}
 					</tr>
 				</thead>
 				<tbody>
@@ -111,6 +112,20 @@
 									aria-label="{t.label}: E-Mail"
 								/>
 							</td>
+							{#if data.teams}
+								<td>
+									{#if t.teams !== undefined}
+										<input
+											type="checkbox"
+											name="{t.key}_teams"
+											checked={e.topics[t.key].teams}
+											aria-label="{t.label}: Teams"
+										/>
+									{:else}
+										<span class="hinweis" title="Für dieses Thema nicht verfügbar">–</span>
+									{/if}
+								</td>
+							{/if}
 						</tr>
 					{/each}
 				</tbody>
@@ -118,6 +133,7 @@
 			<p class="hinweis">
 				Dringende Meldungen erscheinen immer in der Glocke und als Push. Push kommt nur auf Geräten
 				an, auf denen du ihn oben eingeschaltet hast. Hubs stellst du unter „Meine Hubs“ ein.
+				{#if data.teams}Teams-Meldungen erscheinen in Teams unter „Aktivität“.{/if}
 			</p>
 		</section>
 

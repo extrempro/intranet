@@ -13,6 +13,9 @@ import {
 } from '#lib/server/mail.ts';
 import { pushStatus, sendToPerson, vapidKeys } from '#lib/server/push.ts';
 import { setSetting } from '#lib/server/settings.ts';
+import { getEntraConfig } from '#lib/server/auth/entra.ts';
+import { saveTeamsSettings, teamsSettings } from '#lib/server/teams-config.ts';
+import { sendTeamsTest, teamsStatus } from '#lib/server/teams.ts';
 import { db } from '#lib/server/db/index.ts';
 import { persons } from '#lib/server/db/schema.ts';
 import { eq } from 'drizzle-orm';
@@ -34,6 +37,21 @@ export const load: PageServerLoad = async ({ locals }) => {
 		system,
 		smtp: system
 			? { gilt: await mailSettings(), gespeichert, passwortGespeichert: Boolean(passwordEnc) }
+			: null,
+		teams: system
+			? {
+					einstellung: await teamsSettings(),
+					entra: Boolean(await getEntraConfig()),
+					status: await teamsStatus(),
+					microsoftKonto: Boolean(
+						(
+							await db
+								.select({ oid: persons.entraOid })
+								.from(persons)
+								.where(eq(persons.id, p.personId))
+						)[0]?.oid
+					)
+				}
 			: null
 	};
 };
@@ -99,6 +117,59 @@ export const actions: Actions = {
 			ip: getClientAddress()
 		});
 		return { bereich: 'smtp', gespeichert: true };
+	},
+
+	teamsSchalten: async ({ locals, request, getClientAddress }) => {
+		const p = requireSystemAdmin(locals);
+		const aktiv = (await request.formData()).get('aktiv') === 'ja';
+		if (aktiv && !(await getEntraConfig()))
+			return fail(400, {
+				bereich: 'teams',
+				fehler: 'Erst die Anmeldung mit Microsoft einrichten.'
+			});
+		const s = await teamsSettings();
+		await saveTeamsSettings({ ...s, aktiv }, p.personId);
+		await audit({
+			category: 'admin',
+			action: 'settings.update',
+			actorId: p.personId,
+			entityType: 'setting',
+			entityId: 'teams',
+			details: { vorher: s.aktiv, nachher: aktiv },
+			ip: getClientAddress()
+		});
+		return {
+			bereich: 'teams',
+			ergebnis: aktiv ? 'Teams-Benachrichtigungen sind an.' : 'Teams-Benachrichtigungen sind aus.'
+		};
+	},
+
+	teamsVersion: async ({ locals, getClientAddress }) => {
+		const p = requireSystemAdmin(locals);
+		const s = await teamsSettings();
+		await saveTeamsSettings({ ...s, version: s.version + 1 }, p.personId);
+		await audit({
+			category: 'admin',
+			action: 'settings.update',
+			actorId: p.personId,
+			entityType: 'setting',
+			entityId: 'teams.version',
+			details: { vorher: s.version, nachher: s.version + 1 },
+			ip: getClientAddress()
+		});
+		return {
+			bereich: 'teams',
+			ergebnis: `Neue Version 1.0.${s.version + 1}. Lade das Paket herunter und aktualisiere die App im Teams Admin Center.`
+		};
+	},
+
+	teamsTest: async ({ locals }) => {
+		const p = requireSystemAdmin(locals);
+		try {
+			return { bereich: 'teams', ergebnis: await sendTeamsTest(p.personId) };
+		} catch (err) {
+			return fail(502, { bereich: 'teams', fehler: err instanceof Error ? err.message : 'Fehler' });
+		}
 	},
 
 	smtpTest: async ({ locals }) => {

@@ -1,6 +1,6 @@
 /**
  * Benachrichtigungen (Kap. 11): Themen, Voreinstellungen und Einstellungen
- * je Person. Glocke, Web Push und E-Mail; Teams folgt später. Themen
+ * je Person. Glocke, Web Push, E-Mail und Teams (nur dringend/angeheftet). Themen
  * erscheinen erst, wenn es die Funktion gibt.
  */
 import { berlinNow } from './canteen.ts';
@@ -20,6 +20,8 @@ export interface TopicDefinition {
 	onlyFor?: 'moderation' | 'pflege' | 'verwaltung' | 'system';
 	/** Nicht in der Tabelle: Einstellung woanders (Hubs: „Meine Hubs“) */
 	hidden?: boolean;
+	/** Teams-Aktivitätsfeed möglich, mit dieser Voreinstellung (Kap. 11.2) */
+	teams?: boolean;
 }
 
 /** Reihenfolge und Voreinstellungen nach Tabelle 11.2 */
@@ -28,12 +30,14 @@ export const TOPICS: TopicDefinition[] = [
 		key: 'dringend',
 		label: 'Dringende Meldungen',
 		defaults: { bell: true, push: true, email: true },
-		fixed: ['bell', 'push']
+		fixed: ['bell', 'push'],
+		teams: true
 	},
 	{
 		key: 'angeheftet',
 		label: 'Angeheftete Beiträge',
-		defaults: { bell: true, push: true, email: false }
+		defaults: { bell: true, push: true, email: false },
+		teams: false
 	},
 	{ key: 'neuigkeiten', label: 'Neuigkeiten', defaults: { bell: true, push: false, email: true } },
 	{
@@ -124,8 +128,11 @@ export const DEFAULT_QUIET: QuietHours = {
 	urgent: true
 };
 
+/** Kanäle je Thema; teams nur bei Themen mit Teams, sonst immer false */
+export type TopicChannels = Record<Channel, boolean> & { teams: boolean };
+
 export interface NotifySettings {
-	topics: Record<string, Partial<Record<Channel, boolean>>>;
+	topics: Record<string, Partial<Record<Channel | 'teams', boolean>>>;
 	emailMode: EmailMode;
 	quiet?: QuietHours;
 }
@@ -144,15 +151,20 @@ const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 /** Gespeicherte Einstellung mit Voreinstellungen aufgefüllt; feste Kanäle immer an. */
 export function resolveNotify(stored: NotifySettings | null | undefined): {
-	topics: Record<string, Record<Channel, boolean>>;
+	topics: Record<string, TopicChannels>;
 	emailMode: EmailMode;
 	quiet: QuietHours;
 } {
-	const topics: Record<string, Record<Channel, boolean>> = {};
+	const topics: Record<string, TopicChannels> = {};
 	for (const t of TOPICS) {
 		const s = stored?.topics?.[t.key] ?? {};
 		const pick = (c: Channel) => (t.fixed?.includes(c) ? true : (s[c] ?? t.defaults[c]));
-		topics[t.key] = { bell: pick('bell'), push: pick('push'), email: pick('email') };
+		topics[t.key] = {
+			bell: pick('bell'),
+			push: pick('push'),
+			email: pick('email'),
+			teams: t.teams === undefined ? false : (s.teams ?? t.teams)
+		};
 	}
 	const mode = stored?.emailMode;
 	const q = stored?.quiet;
