@@ -1,4 +1,11 @@
-import type { Handle } from '@sveltejs/kit/hooks';
+import type { Handle, ServerInit } from '@sveltejs/kit/hooks';
+
+/** Beim Start ausstehende Migrationen einspielen (abschaltbar mit MIGRATE_ON_START=false). */
+export const init: ServerInit = async () => {
+	if (process.env.MIGRATE_ON_START === 'false') return;
+	const { runMigrations } = await import('./lib/server/db/migrate');
+	await runMigrations();
+};
 
 /**
  * Sicherheits-Header für jede Antwort.
