@@ -6,6 +6,7 @@
  */
 import { and, asc, desc, eq, inArray, isNull, lt, or, sql } from 'drizzle-orm';
 import { hasTenantRole, type Principal } from './auth/access.ts';
+import { doc, headline, matches, rank } from './fts.ts';
 import { db } from './db/index.ts';
 import {
 	boardAdPhotos,
@@ -579,4 +580,25 @@ export async function moveCategory(id: string, delta: -1 | 1) {
 	[list[i], list[j]] = [list[j], list[i]];
 	for (const [position, c] of list.entries())
 		await db.update(boardCategories).set({ position }).where(eq(boardCategories.id, c.id));
+}
+
+/** Globale Suche (Kap. 8.14): aktive Anzeigen für den eigenen und die gewählten Mandanten. */
+export async function searchAds(p: Principal, tsq: string, limit = 20) {
+	const extra = await getBoardTenants(p);
+	const document = doc(boardAds.title, boardAds.body);
+	return db
+		.select({
+			id: boardAds.id,
+			title: boardAds.title,
+			category: boardCategories.name,
+			createdAt: boardAds.createdAt,
+			snippet: headline(boardAds.body, tsq)
+		})
+		.from(boardAds)
+		.innerJoin(boardCategories, eq(boardCategories.id, boardAds.categoryId))
+		.where(
+			and(eq(boardAds.status, 'active'), targetedAt([p.tenantId, ...extra]), matches(document, tsq))
+		)
+		.orderBy(desc(rank(document, tsq)), desc(boardAds.createdAt))
+		.limit(limit);
 }

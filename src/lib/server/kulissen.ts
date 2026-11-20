@@ -9,6 +9,7 @@ import { and, asc, desc, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import { unitTypeLabel } from '../roles.ts';
 import { audit } from './audit.ts';
 import { canManageUnit, hasUnitRole, type Principal } from './auth/access.ts';
+import { doc, headline, matches, rank } from './fts.ts';
 import { db } from './db/index.ts';
 import {
 	files,
@@ -422,4 +423,23 @@ export async function describeFiles(p: Principal, ids: string[], postId: string 
 		.from(files)
 		.where(inArray(files.id, allowed));
 	return allowed.map((x) => rows.find((r) => r.id === x)!).filter(Boolean);
+}
+
+/** Globale Suche (Kap. 8.14): sichtbare Beiträge aus „Hinter den Kulissen“. */
+export async function searchPosts(p: Principal, tsq: string, limit = 20) {
+	const extra = await getExtraTenants(p);
+	const document = doc(news.title, news.bodyText);
+	return db
+		.select({
+			id: news.id,
+			title: news.title,
+			publishAt: news.publishAt,
+			unitName: units.name,
+			snippet: headline(news.bodyText, tsq)
+		})
+		.from(news)
+		.innerJoin(units, eq(units.id, news.unitId))
+		.where(and(visibleFor([p.tenantId, ...extra]), matches(document, tsq)))
+		.orderBy(desc(rank(document, tsq)), desc(news.publishAt))
+		.limit(limit);
 }

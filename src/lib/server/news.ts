@@ -43,6 +43,7 @@ import {
 } from './db/schema.ts';
 import { deleteStored, MAX_ATTACHMENTS, ownUnlinkedFiles } from './files/store.ts';
 import { cleanHtml, excerpt, htmlToText } from './html.ts';
+import { doc, headline, matches, rank } from './fts.ts';
 import { getContentRules } from './rules.ts';
 
 export class NewsError extends Error {}
@@ -664,4 +665,34 @@ export async function toggleReaction(p: Principal, newsId: string, emoji: string
 export async function dismissUrgent(p: Principal, newsId: string) {
 	if (!(await getNews(p, newsId))) throw new NewsError('Beitrag nicht gefunden.');
 	await db.insert(urgentDismissals).values({ newsId, personId: p.personId }).onConflictDoNothing();
+}
+
+/** Globale Suche (Kap. 8.14): sichtbare Neuigkeiten und Hub-Beiträge. */
+export async function searchNews(p: Principal, tsq: string, limit = 20) {
+	const now = new Date();
+	const document = doc(news.title, news.bodyText);
+	return scoped(p, (tx) =>
+		tx
+			.select({
+				id: news.id,
+				title: news.title,
+				publishAt: news.publishAt,
+				unitName: units.name,
+				isHub: sql<boolean>`${units.type} = 'hub'`,
+				snippet: headline(news.bodyText, tsq)
+			})
+			.from(news)
+			.innerJoin(units, eq(units.id, news.unitId))
+			.where(
+				and(
+					readerVisible(p, [...newsUnitIds(p)], isEditorial(p), now),
+					lte(news.publishAt, now),
+					isNull(units.archivedAt),
+					eq(news.channel, 'news'),
+					matches(document, tsq)
+				)
+			)
+			.orderBy(desc(rank(document, tsq)), desc(news.publishAt))
+			.limit(limit)
+	);
 }
