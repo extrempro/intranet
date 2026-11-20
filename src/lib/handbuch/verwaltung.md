@@ -34,6 +34,16 @@ Jede Nacht (Standard 02:30 Uhr) gleicht das Intranet Name, E-Mail, Mandant und R
 
 Gesperrte Konten stehen im Protokoll mit Grund. Schlägt der Abgleich fehl, bekommen die System-Admins eine Benachrichtigung.
 
+## E-Mail
+
+Unter **Benachrichtigungen** pflegst du als System-Admin den **SMTP-Server** für alle E-Mails des Intranets (Einladungen, „Passwort vergessen“, Benachrichtigungen):
+
+- Server, Port und Verschlüsselung: **STARTTLS** (meist 587), **TLS** (meist 465) oder **ohne** für einen internen Relay (meist 25).
+- Benutzer und Passwort, wenn der Server eine Anmeldung verlangt. Das Passwort wird verschlüsselt gespeichert und nie wieder angezeigt; leer lassen behält es.
+- Absenderadresse, Anzeigename und optional „Antworten an“.
+
+Leere Felder nehmen den Wert aus der `.env`. **Test-E-Mail an mich** zeigt sofort, ob alles passt, und bei einem Fehler, woran es liegt. Mandanten-Admins sehen nur, ob der Versand eingerichtet ist.
+
 ## System
 
 Unter **System** siehst du die Version, den Zustand von Datenbank, Dateien, Hintergrundaufgaben und Entra-Abgleich, die Anbindungen (Entra, E-Mail, Web Push) und die **Sicherungen**:

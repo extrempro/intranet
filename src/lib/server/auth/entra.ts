@@ -131,8 +131,8 @@ export function safeReturnTo(value: string | null | undefined): string {
 }
 
 // ---------------------------------------------------------------------------
-// Graph mit Anwendungsberechtigungen (Client Credentials): E-Mail-Versand und
-// nächtlicher Abgleich. Nötige Berechtigungen siehe README.
+// Graph mit Anwendungsberechtigungen (Client Credentials) für den nächtlichen
+// Abgleich und die Prüfung der Verbindung. Nötige Berechtigungen siehe README.
 // ---------------------------------------------------------------------------
 
 let tokenCache: { token: string; expiresAt: number; key: string } | null = null;
@@ -261,8 +261,7 @@ export interface Pruefpunkt {
 
 export const APP_PERMISSIONS: { name: string; wofuer: string; pflicht: boolean }[] = [
 	{ name: 'User.Read.All', wofuer: 'nächtlicher Abgleich', pflicht: true },
-	{ name: 'GroupMember.Read.All', wofuer: 'nächtlicher Abgleich, Zugangsgruppe', pflicht: true },
-	{ name: 'Mail.Send', wofuer: 'E-Mails (Einladungen, Benachrichtigungen)', pflicht: false }
+	{ name: 'GroupMember.Read.All', wofuer: 'nächtlicher Abgleich, Zugangsgruppe', pflicht: true }
 ];
 
 export async function checkEntraConnection(): Promise<Pruefpunkt[]> {
