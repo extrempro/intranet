@@ -6,6 +6,14 @@
 
 <div class="stapel">
 	<h1>Konto und Einstellungen</h1>
+	<h2>Persönlich</h2>
+	<ul class="kacheln">
+		<li>
+			<a class="karte kachel" href={resolve('/(app)/konto/standorte')}>
+				<strong>Meine Standorte</strong><span class="hinweis">Kantine für den Speiseplan</span>
+			</a>
+		</li>
+	</ul>
 	<h2>Weitere Einstellungen</h2>
 	<ul class="kacheln">
 		<li>

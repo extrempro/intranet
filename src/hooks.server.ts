@@ -38,6 +38,15 @@ function isPublic(pathname: string): boolean {
 	return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
+/** Betreiber-Konten sehen nur ihre eigene Oberfläche (Kap. 4.3). */
+const OPERATOR_PATHS = ['/betreiber', '/abmelden'];
+
+function operatorMay(pathname: string, method: string): boolean {
+	if (OPERATOR_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return true;
+	// Speisepläne des eigenen Standorts (Prüfung in /dateien/[id])
+	return method === 'GET' && /^\/dateien\/[0-9a-f-]{36}$/i.test(pathname);
+}
+
 export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.person = null;
 	event.locals.session = null;
@@ -65,6 +74,14 @@ export const handle: Handle = async ({ event, resolve }) => {
 	if (!event.locals.person && !isPublic(event.url.pathname)) {
 		const ziel = event.url.pathname + event.url.search;
 		redirect(303, ziel === '/' ? '/anmelden' : `/anmelden?ziel=${encodeURIComponent(ziel)}`);
+	}
+
+	if (
+		event.locals.principal?.operatorLocationId &&
+		!isPublic(event.url.pathname) &&
+		!operatorMay(event.url.pathname, event.request.method)
+	) {
+		redirect(303, '/betreiber');
 	}
 
 	const theme = event.locals.theme;

@@ -27,6 +27,7 @@ import {
 	uniqueIndex,
 	uuid
 } from 'drizzle-orm/pg-core';
+import type { OpeningDay } from '../../canteen';
 import type { HomeLayout } from '../../home';
 import { ROLES } from '../../roles';
 
@@ -684,3 +685,141 @@ export const settings = pgTable('settings', {
 	updatedAt: updatedAt(),
 	updatedBy: uuid('updated_by').references(() => persons.id, { onDelete: 'set null' })
 });
+
+// ---------------------------------------------------------------------------
+// FAQs (Kap. 8.9)
+// ---------------------------------------------------------------------------
+
+/** Fragen und Antworten je Einheit; Schreibrecht „FAQs“ (Kap. 5.2). */
+export const faqs = pgTable(
+	'faqs',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		unitId: uuid('unit_id')
+			.notNull()
+			.references(() => units.id, { onDelete: 'cascade' }),
+		question: text('question').notNull(),
+		/** Bereinigtes HTML (src/lib/server/html.ts) */
+		answerHtml: text('answer_html').notNull(),
+		/** Reiner Text für die Suche */
+		answerText: text('answer_text').notNull(),
+		position: integer('position').notNull().default(0),
+		updatedBy: uuid('updated_by').references(() => persons.id, { onDelete: 'set null' }),
+		createdAt: createdAt(),
+		updatedAt: updatedAt()
+	},
+	(t) => [index('faqs_unit_position').on(t.unitId, t.position)]
+);
+
+export const faqAttachments = pgTable(
+	'faq_attachments',
+	{
+		faqId: uuid('faq_id')
+			.notNull()
+			.references(() => faqs.id, { onDelete: 'cascade' }),
+		fileId: uuid('file_id')
+			.notNull()
+			.unique()
+			.references(() => files.id, { onDelete: 'cascade' }),
+		position: integer('position').notNull()
+	},
+	(t) => [primaryKey({ columns: [t.faqId, t.fileId] })]
+);
+
+// ---------------------------------------------------------------------------
+// Speiseplan und Standorte (Kap. 4.3, 8.7)
+// ---------------------------------------------------------------------------
+
+/** Kantinen-Standort. Name und Adresse pflegt die Verwaltung, den Rest der Betreiber. */
+export const locations = pgTable(
+	'locations',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		tenantId: uuid('tenant_id')
+			.notNull()
+			.references(() => tenants.id, { onDelete: 'restrict' }),
+		name: text('name').notNull(),
+		address: text('address'),
+		active: boolean('active').notNull().default(true),
+		hours: jsonb('hours').$type<OpeningDay[]>().notNull(),
+		/** Lage in der Kantine bzw. Zugang */
+		place: text('place'),
+		note: text('note'),
+		contact: text('contact'),
+		/** „Heute geschlossen“: gilt nur an diesem Tag (Berlin) */
+		closedOn: date('closed_on'),
+		createdAt: createdAt(),
+		updatedAt: updatedAt()
+	},
+	(t) => [index('locations_tenant').on(t.tenantId)]
+);
+
+/** Betreiber-Konten (lokal), je Konto genau ein Standort. */
+export const locationOperators = pgTable('location_operators', {
+	personId: uuid('person_id')
+		.primaryKey()
+		.references(() => persons.id, { onDelete: 'cascade' }),
+	locationId: uuid('location_id')
+		.notNull()
+		.references(() => locations.id, { onDelete: 'cascade' }),
+	createdAt: createdAt()
+});
+
+export const locationClosures = pgTable(
+	'location_closures',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		locationId: uuid('location_id')
+			.notNull()
+			.references(() => locations.id, { onDelete: 'cascade' }),
+		fromDate: date('from_date').notNull(),
+		untilDate: date('until_date').notNull(),
+		reason: text('reason'),
+		/** Tage vorher ankündigen: 0, 3, 7 oder 14 */
+		announceDays: integer('announce_days').notNull().default(0),
+		createdAt: createdAt()
+	},
+	(t) => [
+		index('location_closures_location').on(t.locationId, t.fromDate),
+		check('location_closures_range', sql`${t.untilDate} >= ${t.fromDate}`),
+		check('location_closures_announce', sql`${t.announceDays} in (0, 3, 7, 14)`)
+	]
+);
+
+/** Speisepläne als PDF; gelöscht am Tag nach „Gültig bis“ (Kap. 15). */
+export const menus = pgTable(
+	'menus',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		locationId: uuid('location_id')
+			.notNull()
+			.references(() => locations.id, { onDelete: 'cascade' }),
+		validFrom: date('valid_from').notNull(),
+		validUntil: date('valid_until').notNull(),
+		fileId: uuid('file_id')
+			.notNull()
+			.unique()
+			.references(() => files.id, { onDelete: 'restrict' }),
+		uploadedBy: uuid('uploaded_by').references(() => persons.id, { onDelete: 'set null' }),
+		createdAt: createdAt(),
+		updatedAt: updatedAt()
+	},
+	(t) => [
+		index('menus_location_from').on(t.locationId, t.validFrom),
+		check('menus_valid_range', sql`${t.validUntil} >= ${t.validFrom}`)
+	]
+);
+
+/** „Mein Standort“ im Konto (mehrere möglich). */
+export const personLocations = pgTable(
+	'person_locations',
+	{
+		personId: uuid('person_id')
+			.notNull()
+			.references(() => persons.id, { onDelete: 'cascade' }),
+		locationId: uuid('location_id')
+			.notNull()
+			.references(() => locations.id, { onDelete: 'cascade' })
+	},
+	(t) => [primaryKey({ columns: [t.personId, t.locationId] })]
+);

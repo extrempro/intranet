@@ -81,15 +81,25 @@ export async function deleteOrphans() {
 	const rows = await db
 		.select({ id: files.id })
 		.from(files)
-		.where(
-			and(
-				lt(files.createdAt, sql`now() - interval '24 hours'`),
-				sql`not exists (select 1 from news_attachments a where a.file_id = ${files.id})`,
-				sql`not exists (select 1 from plans pl where pl.file_id = ${files.id})`,
-				sql`not exists (select 1 from org_chart o where o.file_id = ${files.id})`
-			)
-		);
+		.where(and(lt(files.createdAt, sql`now() - interval '24 hours'`), unlinked));
 	await deleteStored(rows.map((r) => r.id));
+}
+
+/** Datei hängt nirgends: Jede Tabelle, die auf Dateien verweist, muss hier stehen. */
+const unlinked = sql`not exists (select 1 from news_attachments a where a.file_id = ${files.id})
+	and not exists (select 1 from faq_attachments fa where fa.file_id = ${files.id})
+	and not exists (select 1 from plans pl where pl.file_id = ${files.id})
+	and not exists (select 1 from org_chart o where o.file_id = ${files.id})
+	and not exists (select 1 from menus m where m.file_id = ${files.id})`;
+
+/** Eigene, noch nirgends verknüpfte Uploads (für Anhänge). Liefert die gültigen IDs. */
+export async function ownUnlinkedFiles(personId: string, ids: string[]): Promise<string[]> {
+	if (ids.length === 0) return [];
+	const rows = await db
+		.select({ id: files.id })
+		.from(files)
+		.where(and(inArray(files.id, ids), eq(files.createdBy, personId), unlinked));
+	return rows.map((r) => r.id);
 }
 
 /** PDF hochladen (Pläne, Organigramm): andere Typen werden sofort wieder gelöscht. */

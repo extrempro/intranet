@@ -64,6 +64,13 @@
       "when": 1795162200487,
       "tag": "0008_plaene_organigramm",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795168229214,
+      "tag": "0009_faqs_speiseplan",
+      "breakpoints": true
     }
   ]
 }

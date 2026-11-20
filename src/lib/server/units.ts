@@ -237,7 +237,12 @@ export async function addMember(p: Principal, unitId: string, email: string, ip:
 	const [person] = await db
 		.select({ id: persons.id, tenantId: persons.tenantId })
 		.from(persons)
-		.where(sql`lower(${persons.email}) = lower(${email.trim()})`);
+		.where(
+			and(
+				sql`lower(${persons.email}) = lower(${email.trim()})`,
+				sql`not exists (select 1 from location_operators lo where lo.person_id = ${persons.id})`
+			)
+		);
 	// Gleiche Meldung für „gibt es nicht“ und „anderer Mandant“
 	if (!person || person.tenantId !== u.unit.tenantId) {
 		throw new UnitError('Keine Person mit dieser E-Mail-Adresse in diesem Mandanten.');
