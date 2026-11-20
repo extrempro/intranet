@@ -351,3 +351,102 @@ export async function deleteDisabledAccounts() {
 	}
 	return due.length;
 }
+
+/**
+ * Personenliste unter Organisation: wie Suche und Personenseite nur der eigene
+ * Mandant und Personen aus zentralen Einheiten (Row-Level Security), ohne
+ * gesperrte und Betreiber-Konten. Filter nach Suchwort und Einheit.
+ */
+export async function listPeople(
+	p: Principal,
+	opts: { q?: string | null; unitId?: string | null; limit?: number }
+) {
+	const q = opts.q?.trim().slice(0, 100) ?? '';
+	const like = `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+	const unitId = opts.unitId && GUID.test(opts.unitId) ? opts.unitId : null;
+	const limit = Math.min(opts.limit ?? 200, 500);
+	// Einheiten, die die betrachtende Person sehen darf (ohne Hubs)
+	const sichtbar = and(
+		isNull(units.archivedAt),
+		eq(units.hidden, false),
+		ne(units.type, 'hub'),
+		or(eq(units.isCentral, true), eq(units.tenantId, p.tenantId))
+	);
+	const betreiber = (
+		await db.select({ id: locationOperators.personId }).from(locationOperators)
+	).map((r) => r.id);
+	const rows = await scoped(p, (tx) =>
+		tx
+			.select({
+				id: persons.id,
+				name: persons.displayName,
+				email: persons.email,
+				position: persons.position,
+				phone: persons.phone,
+				room: persons.room,
+				photoFileId: persons.photoFileId
+			})
+			.from(persons)
+			.where(
+				and(
+					ne(persons.status, 'disabled'),
+					// Betreiber-Konten (die App-Rolle sieht location_operators nicht)
+					betreiber.length ? notInArray(persons.id, betreiber) : undefined,
+					unitId
+						? sql`exists (select 1 from unit_members m where m.person_id = ${persons.id} and m.unit_id = ${unitId})`
+						: undefined,
+					q
+						? or(
+								sql`${persons.displayName} ilike ${like}`,
+								sql`${persons.position} ilike ${like}`,
+								sql`${persons.email} ilike ${like}`,
+								sql`exists (select 1 from unit_members m join units u on u.id = m.unit_id where m.person_id = ${persons.id} and u.name ilike ${like})`
+							)
+						: undefined
+				)
+			)
+			.orderBy(asc(persons.displayName))
+			.limit(limit + 1)
+	);
+	const mehr = rows.length > limit;
+	const liste = rows.slice(0, limit);
+	const ids = liste.map((r) => r.id);
+	const [mitglied, einheiten] = await Promise.all([
+		ids.length
+			? db
+					.select({
+						personId: unitMembers.personId,
+						id: units.id,
+						slug: units.slug,
+						name: units.name
+					})
+					.from(unitMembers)
+					.innerJoin(units, eq(units.id, unitMembers.unitId))
+					.where(and(inArray(unitMembers.personId, ids), sichtbar))
+					.orderBy(sql`${unitMembers.isPrimary} desc`, asc(units.name))
+			: Promise.resolve([]),
+		db
+			.select({ id: units.id, name: units.name })
+			.from(units)
+			.where(sichtbar)
+			.orderBy(asc(units.name))
+	]);
+	return {
+		personen: liste.map((r) => ({
+			id: r.id,
+			name: r.name,
+			email: r.email,
+			position: r.position,
+			phone: r.phone,
+			room: r.room,
+			foto: photoUrl({ id: r.id, photoFileId: r.photoFileId }),
+			einheiten: mitglied
+				.filter((m) => m.personId === r.id)
+				.map(({ id, slug, name }) => ({ id, slug, name }))
+		})),
+		mehr,
+		einheiten,
+		q,
+		unitId
+	};
+}

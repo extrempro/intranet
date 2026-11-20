@@ -1,6 +1,20 @@
 <script lang="ts">
+	/**
+	 * Name, Kürzel und Oberflächenfarben eines Mandanten, je Darstellung hell
+	 * und dunkel getrennt. Leere Felder = Standard bzw. abgeleitet; Vorschau
+	 * und Kontrastprüfung (mindestens 4,5:1) wie auf dem Server.
+	 */
 	import { untrack } from 'svelte';
-	import { BG_DEFAULT, BG_DEFAULT_DARK, checkAccent, checkBackground, HEX } from '#lib/color.ts';
+	import {
+		FARB_FELDER,
+		FARB_NAMEN,
+		HEX,
+		palette,
+		pruefePalette,
+		type FarbFeld,
+		type Modus,
+		type UiFarben
+	} from '#lib/color.ts';
 
 	let {
 		werte
@@ -12,33 +26,67 @@
 			accentDark: string;
 			bg?: string;
 			bgDark?: string;
+			ui?: UiFarben;
 		};
 	} = $props();
 
-	let akzent = $state(untrack(() => werte.accent));
-	let akzentDunkel = $state(untrack(() => werte.accentDark));
-	const gueltig = $derived(HEX.test(akzent) && HEX.test(akzentDunkel));
-	const pruefung = $derived(gueltig ? checkAccent(akzent, akzentDunkel) : null);
-	const zahl = (n: number) => `${n.toFixed(1).replace('.', ',')}:1`;
+	type Satz = Record<'akzent' | FarbFeld, string>;
+	const start = (m: Modus): Satz => {
+		const ui = werte.ui?.[m] ?? {};
+		return {
+			akzent: m === 'hell' ? werte.accent : werte.accentDark,
+			knopf: ui.knopf ?? '',
+			hintergrund: (m === 'hell' ? werte.bg : werte.bgDark) ?? '',
+			flaeche: ui.flaeche ?? '',
+			rahmen: ui.rahmen ?? '',
+			text: ui.text ?? '',
+			grau: ui.grau ?? ''
+		};
+	};
+	let farben = $state(untrack(() => ({ hell: start('hell'), dunkel: start('dunkel') })));
 
-	let hintergrund = $state(untrack(() => werte.bg ?? ''));
-	let hintergrundDunkel = $state(untrack(() => werte.bgDark ?? ''));
-	const bgOk = $derived(
-		(hintergrund === '' || HEX.test(hintergrund)) &&
-			(hintergrundDunkel === '' || HEX.test(hintergrundDunkel))
+	const MODI: { m: Modus; titel: string }[] = [
+		{ m: 'hell', titel: 'Hell' },
+		{ m: 'dunkel', titel: 'Dunkel' }
+	];
+	const HINWEISE: Partial<Record<FarbFeld, string>> = {
+		knopf: 'Gefüllte Knöpfe und aktive Pillen, weiße Schrift',
+		flaeche: 'Kopfzeile, Seitenleiste, Karten',
+		hintergrund: 'Fläche hinter den Karten'
+	};
+
+	/** Feldname im Formular (Hintergrund und Akzent behalten ihre alten Namen) */
+	const feldName = (m: Modus, f: 'akzent' | FarbFeld) =>
+		f === 'akzent'
+			? m === 'hell'
+				? 'akzent'
+				: 'akzent_dunkel'
+			: f === 'hintergrund'
+				? m === 'hell'
+					? 'hintergrund'
+					: 'hintergrund_dunkel'
+				: `farbe_${m}_${f}`;
+
+	const wirksam = $derived(
+		Object.fromEntries(
+			MODI.map(({ m }) => {
+				const f = farben[m];
+				const ok = (v: string) => (HEX.test(v) ? v : undefined);
+				const akzentHell = HEX.test(farben.hell.akzent) ? farben.hell.akzent : '#0F6E56';
+				const akzent = HEX.test(f.akzent) ? f.akzent : akzentHell;
+				const p = palette(m, akzent, akzentHell, {
+					knopf: ok(f.knopf),
+					hintergrund: ok(f.hintergrund),
+					flaeche: ok(f.flaeche),
+					rahmen: ok(f.rahmen),
+					text: ok(f.text),
+					grau: ok(f.grau)
+				});
+				return [m, { p, k: pruefePalette(p) }];
+			})
+		) as Record<Modus, { p: ReturnType<typeof palette>; k: ReturnType<typeof pruefePalette> }>
 	);
-	const bgPruefung = $derived(
-		gueltig && bgOk
-			? checkBackground(
-					hintergrund || BG_DEFAULT,
-					hintergrundDunkel || BG_DEFAULT_DARK,
-					akzent,
-					akzentDunkel
-				)
-			: null
-	);
-	const minimum = (o: { text: number; gedaempft: number; akzent: number }) =>
-		Math.min(o.text, o.gedaempft, o.akzent);
+	const zahl = (n: number) => `${n.toFixed(1).replace('.', ',')}:1`;
 </script>
 
 <label class="feld">
@@ -51,137 +99,73 @@
 	<span class="hinweis">Erscheint oben links, solange kein Logo hochgeladen ist, z. B. HSO.</span>
 </label>
 
-<fieldset class="gruppe">
-	<legend>Akzentfarbe</legend>
-	<div class="farben">
-		<label class="feld">
-			<span>Hell</span>
-			<span class="farbzeile">
-				<input type="color" bind:value={akzent} aria-label="Akzentfarbe hell wählen" />
-				<input name="akzent" bind:value={akzent} pattern="#[0-9a-fA-F]{'{6}'}" required />
-			</span>
-		</label>
-		<label class="feld">
-			<span>Dunkel</span>
-			<span class="farbzeile">
-				<input type="color" bind:value={akzentDunkel} aria-label="Akzentfarbe dunkel wählen" />
-				<input
-					name="akzent_dunkel"
-					bind:value={akzentDunkel}
-					pattern="#[0-9a-fA-F]{'{6}'}"
-					required
-				/>
-			</span>
-		</label>
-	</div>
+<div class="modi">
+	{#each MODI as { m, titel } (m)}
+		{@const w = wirksam[m]}
+		<fieldset class="gruppe">
+			<legend>Farben {titel.toLowerCase()}</legend>
+			{#each ['akzent', ...FARB_FELDER] as const as f (f)}
+				{@const pflicht = f === 'akzent'}
+				<label class="zeile">
+					<span class="name">
+						{f === 'akzent' ? 'Akzent (Links, Markierungen)' : FARB_NAMEN[f]}
+						{#if HINWEISE[f as FarbFeld]}<span class="hinweis">{HINWEISE[f as FarbFeld]}</span>{/if}
+					</span>
+					<span class="farbzeile">
+						<input
+							type="color"
+							value={HEX.test(farben[m][f]) ? farben[m][f] : w.p[f]}
+							oninput={(e) => (farben[m][f] = e.currentTarget.value.toUpperCase())}
+							aria-label="{titel}: {f === 'akzent' ? 'Akzent' : FARB_NAMEN[f]} wählen"
+						/>
+						<input
+							name={feldName(m, f)}
+							bind:value={farben[m][f]}
+							pattern="#[0-9a-fA-F]{'{6}'}"
+							required={pflicht}
+							placeholder={pflicht ? '' : `Standard ${w.p[f]}`}
+							aria-label="{titel}: {f === 'akzent' ? 'Akzent' : FARB_NAMEN[f]} als Hex-Wert"
+						/>
+						{#if !pflicht && farben[m][f]}<button
+								type="button"
+								class="linkknopf"
+								onclick={() => (farben[m][f] = '')}
+								aria-label="{titel}: {FARB_NAMEN[f]} auf Standard"
+							>
+								Standard
+							</button>{/if}
+					</span>
+				</label>
+			{/each}
 
-	{#if pruefung}
-		<div class="vorschau" aria-hidden="true">
-			<span class="muster hell" style="--a: {akzent}"><b>Knopf</b><i>Link</i></span>
-			<span class="muster dunkel" style="--a: {akzentDunkel}">
-				<b style="background: {akzent}">Knopf</b><i>Link</i>
-			</span>
-		</div>
-		<p class:fehltext={!pruefung.ok} class="hinweis" aria-live="polite">
-			Kontrast (mindestens 4,5:1): Knopf {zahl(pruefung.weissAufAkzent)}, Link hell {zahl(
-				pruefung.akzentAufHell
-			)}, Link dunkel {zahl(pruefung.dunkelAufDunkel)} – {pruefung.ok
-				? 'passt'
-				: 'zu wenig, bitte dunkler bzw. heller wählen'}.
-		</p>
-	{/if}
-</fieldset>
-
-<fieldset class="gruppe">
-	<legend>Seitenhintergrund</legend>
-	<p class="hinweis">
-		Die Fläche hinter den Karten. Leer lassen für den Standard ({BG_DEFAULT} hell, {BG_DEFAULT_DARK}
-		dunkel).
-	</p>
-	<div class="farben">
-		<label class="feld">
-			<span>Hell</span>
-			<span class="farbzeile">
-				<input
-					type="color"
-					value={hintergrund || BG_DEFAULT}
-					oninput={(e) => (hintergrund = e.currentTarget.value)}
-					aria-label="Hintergrund hell wählen"
-				/>
-				<input
-					name="hintergrund"
-					bind:value={hintergrund}
-					pattern="#[0-9a-fA-F]{'{6}'}"
-					placeholder="Standard"
-				/>
-				{#if hintergrund}<button type="button" class="linkknopf" onclick={() => (hintergrund = '')}>
-						Standard
-					</button>{/if}
-			</span>
-		</label>
-		<label class="feld">
-			<span>Dunkel</span>
-			<span class="farbzeile">
-				<input
-					type="color"
-					value={hintergrundDunkel || BG_DEFAULT_DARK}
-					oninput={(e) => (hintergrundDunkel = e.currentTarget.value)}
-					aria-label="Hintergrund dunkel wählen"
-				/>
-				<input
-					name="hintergrund_dunkel"
-					bind:value={hintergrundDunkel}
-					pattern="#[0-9a-fA-F]{'{6}'}"
-					placeholder="Standard"
-				/>
-				{#if hintergrundDunkel}<button
-						type="button"
-						class="linkknopf"
-						onclick={() => (hintergrundDunkel = '')}
-					>
-						Standard
-					</button>{/if}
-			</span>
-		</label>
-	</div>
-	{#if bgPruefung}
-		<div class="vorschau" aria-hidden="true">
-			<span class="flaeche" style="background: {hintergrund || BG_DEFAULT}; --a: {akzent}">
-				<b style="color: #18201c">Überschrift</b><span style="color: #525c57">grauer Text</span><i>
-					Link
-				</i>
-			</span>
-			<span
-				class="flaeche"
-				style="background: {hintergrundDunkel || BG_DEFAULT_DARK}; --a: {akzentDunkel}"
+			<div
+				class="vorschau"
+				aria-hidden="true"
+				style:background={w.p.hintergrund}
+				style:color={w.p.text}
 			>
-				<b style="color: #eaefec">Überschrift</b><span style="color: #a6b0ab">grauer Text</span><i>
-					Link
-				</i>
-			</span>
-		</div>
-		<p class:fehltext={!bgPruefung.ok} class="hinweis" aria-live="polite">
-			Kontrast (mindestens 4,5:1): hell {zahl(minimum(bgPruefung.hell))}, dunkel {zahl(
-				minimum(bgPruefung.dunkel)
-			)} – {bgPruefung.ok ? 'passt' : 'zu wenig, bitte heller bzw. dunkler wählen'}.
-		</p>
-	{/if}
-</fieldset>
+				<div class="karte-muster" style:background={w.p.flaeche} style:border-color={w.p.rahmen}>
+					<b>Überschrift</b>
+					<span style:color={w.p.grau}>Grauer Text</span>
+					<span class="muster-link" style:color={w.p.akzent}>Link</span>
+					<span class="muster-knopf" style:background={w.p.knopf}>Knopf</span>
+				</div>
+				<span style:color={w.p.grau}>Text auf dem Hintergrund</span>
+			</div>
+			<p class:fehltext={!w.k.ok} class="hinweis" aria-live="polite">
+				Kontrast (mindestens 4,5:1): Text {zahl(w.k.text)}, grau {zahl(w.k.grau)}, Links {zahl(
+					w.k.akzent
+				)}, Knöpfe {zahl(w.k.knopf)} – {w.k.ok ? 'passt' : 'zu wenig, so wird nicht gespeichert'}.
+			</p>
+		</fieldset>
+	{/each}
+</div>
 
 <style>
-	.flaeche {
-		display: inline-flex;
-		align-items: center;
-		gap: 12px;
-		padding: 10px 14px;
-		border-radius: 12px;
-		border: 1px solid var(--bd);
-	}
-	.flaeche i {
-		color: var(--a);
-		font-style: normal;
-		font-weight: 600;
-		text-decoration: underline;
+	.modi {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+		gap: 14px;
 	}
 	.gruppe {
 		border: 1px solid var(--bd);
@@ -190,16 +174,33 @@
 		margin: 0;
 		display: grid;
 		gap: 10px;
+		min-width: 0;
 	}
-	.farben {
+	legend {
+		font-weight: 700;
+	}
+	.zeile {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-		gap: 12px;
+		gap: 4px;
+	}
+	.name {
+		display: flex;
+		flex-direction: column;
+		font-size: 14px;
+		font-weight: 600;
+	}
+	.name .hinweis {
+		font-weight: 400;
+		font-size: 13px;
 	}
 	.farbzeile {
 		display: flex;
 		gap: 8px;
 		align-items: center;
+	}
+	.farbzeile input:not([type='color']) {
+		flex: 1;
+		min-width: 0;
 	}
 	input[type='color'] {
 		width: 48px;
@@ -211,35 +212,31 @@
 		flex: none;
 	}
 	.vorschau {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 10px;
-	}
-	.muster {
-		display: inline-flex;
-		align-items: center;
-		gap: 14px;
-		padding: 10px 14px;
+		padding: 14px;
 		border-radius: 12px;
 		border: 1px solid var(--bd);
+		display: grid;
+		gap: 8px;
+		font-size: 14px;
 	}
-	.muster.hell {
-		background: #ffffff;
+	.karte-muster {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 10px 14px;
+		padding: 12px;
+		border: 1px solid;
+		border-radius: 12px;
 	}
-	.muster.dunkel {
-		background: #1a201d;
-	}
-	.muster b {
-		background: var(--a);
-		color: #fff;
-		padding: 6px 12px;
-		border-radius: 8px;
-	}
-	.muster i {
-		color: var(--a);
-		font-style: normal;
+	.muster-link {
 		font-weight: 600;
 		text-decoration: underline;
+	}
+	.muster-knopf {
+		color: #fff;
+		font-weight: 600;
+		padding: 6px 12px;
+		border-radius: 8px;
 	}
 	.fehltext {
 		color: var(--err-tx);

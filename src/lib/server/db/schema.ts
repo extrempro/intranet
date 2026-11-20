@@ -28,6 +28,7 @@ import {
 	uuid
 } from 'drizzle-orm/pg-core';
 import type { OpeningDay } from '../../canteen';
+import type { UiFarben } from '../../color';
 import type { HomeLayout } from '../../home';
 import type { HubLayout } from '../../hubs';
 import type { NotifySettings } from '../../notify';
@@ -59,6 +60,8 @@ export const tenants = pgTable(
 		/** Seitenhintergrund hell/dunkel; null = Standard der App. */
 		bgColor: text('bg_color'),
 		bgColorDark: text('bg_color_dark'),
+		/** Weitere Oberflächenfarben je Darstellung (Knöpfe, Flächen, Rahmen, Text) */
+		uiColors: jsonb('ui_colors').$type<UiFarben>(),
 		/** Startseite für neue Personen (Kap. 3.1, 7): Reihenfolge und Sichtbarkeit der Karten. */
 		homeDefault: jsonb('home_default').$type<HomeLayout>(),
 		/** Favoriten für neue Personen (Schlüssel wie in favorites.key); null = Standard */
@@ -150,6 +153,12 @@ export const units = pgTable(
 		// --- Nur Hubs (Kap. 8.12) ---
 		/** Über uns */
 		about: text('about'),
+		/** Kopf der Abteilungsseite: Kurzbeschreibung und Kontakt (alles freiwillig) */
+		tagline: text('tagline'),
+		contactEmail: text('contact_email'),
+		contactPhone: text('contact_phone'),
+		officeHours: text('office_hours'),
+		room: text('room'),
 		/** Hinweis oben auf der Hub-Seite */
 		notice: text('notice'),
 		/** Pflicht-Abo: alle im Zuständigkeitsbereich, Glocke gesperrt */

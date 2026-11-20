@@ -40,37 +40,138 @@ export function checkAccent(accent: string, accentDark: string): AccentCheck {
 	};
 }
 
-/** Standard-Seitenhintergrund aus app.css */
-export const BG_DEFAULT = '#F4F6F5';
-export const BG_DEFAULT_DARK = '#111614';
-
-export interface BackgroundCheck {
-	ok: boolean;
-	/** Text, gedämpfter Text und Akzent auf dem hellen bzw. dunklen Hintergrund */
-	hell: { text: number; gedaempft: number; akzent: number };
-	dunkel: { text: number; gedaempft: number; akzent: number };
+/** Zwei Hex-Farben mischen (Anteil von b: 0…1). */
+export function mixHex(a: string, b: string, anteil: number): string {
+	const kanal = (h: string, i: number) => parseInt(h.slice(i, i + 2), 16);
+	return (
+		'#' +
+		[1, 3, 5]
+			.map((i) => Math.round(kanal(a, i) * (1 - anteil) + kanal(b, i) * anteil))
+			.map((v) => v.toString(16).padStart(2, '0'))
+			.join('')
+			.toUpperCase()
+	);
 }
 
+// ---------------------------------------------------------------------------
+// Oberflächenfarben je Darstellung (Mandant)
+// ---------------------------------------------------------------------------
+
+export type Modus = 'hell' | 'dunkel';
+export const FARB_FELDER = ['knopf', 'hintergrund', 'flaeche', 'rahmen', 'text', 'grau'] as const;
+export type FarbFeld = (typeof FARB_FELDER)[number];
+/** Eigene Werte je Feld; fehlend oder leer = Standard bzw. abgeleitet */
+export type EigeneFarben = Partial<Record<FarbFeld, string>>;
+export type UiFarben = Partial<Record<Modus, EigeneFarben>>;
+
+export const FARB_NAMEN: Record<FarbFeld, string> = {
+	knopf: 'Knöpfe',
+	hintergrund: 'Hintergrund',
+	flaeche: 'Flächen',
+	rahmen: 'Rahmen und Linien',
+	text: 'Text',
+	grau: 'Grauer Text'
+};
+
+export interface Palette {
+	akzent: string;
+	knopf: string;
+	hintergrund: string;
+	flaeche: string;
+	rahmen: string;
+	text: string;
+	grau: string;
+}
+
+const STANDARD: Record<Modus, Omit<Palette, 'akzent' | 'knopf'>> = {
+	hell: {
+		hintergrund: '#F4F6F5',
+		flaeche: '#FFFFFF',
+		rahmen: '#D9DFDB',
+		text: '#18201C',
+		grau: '#525C57'
+	},
+	dunkel: {
+		hintergrund: '#111614',
+		flaeche: '#1A201D',
+		rahmen: '#2F3733',
+		text: '#EAEFEC',
+		grau: '#A6B0AB'
+	}
+};
+
+const gesetzt = (v: string | undefined) => (v && HEX.test(v) ? v.toUpperCase() : null);
+
 /**
- * Seitenhintergrund prüfen: Überschriften, gedämpfte Texte und Links liegen
- * direkt darauf und brauchen mindestens 4,5:1.
+ * Wirksame Farben einer Darstellung. Ohne eigene Fläche/Rahmen werden sie im
+ * Dunkeln aus einem eigenen Hintergrund abgeleitet; Knöpfe nutzen ohne
+ * Eintrag die helle Akzentfarbe (weiße Schrift).
  */
-export function checkBackground(
-	bg: string,
-	bgDark: string,
-	accent: string,
-	accentDark: string
-): BackgroundCheck {
-	const hell = {
-		text: contrastRatio('#18201c', bg),
-		gedaempft: contrastRatio('#525c57', bg),
-		akzent: contrastRatio(accent, bg)
+export function palette(
+	modus: Modus,
+	akzent: string,
+	akzentHell: string,
+	eigen: EigeneFarben = {}
+): Palette {
+	const s = STANDARD[modus];
+	const hintergrund = gesetzt(eigen.hintergrund) ?? s.hintergrund;
+	const eigenerHg = Boolean(gesetzt(eigen.hintergrund));
+	return {
+		akzent: akzent.toUpperCase(),
+		knopf: gesetzt(eigen.knopf) ?? akzentHell.toUpperCase(),
+		hintergrund,
+		flaeche:
+			gesetzt(eigen.flaeche) ??
+			(modus === 'dunkel' && eigenerHg ? mixHex(hintergrund, '#ffffff', 0.08) : s.flaeche),
+		rahmen:
+			gesetzt(eigen.rahmen) ??
+			(eigenerHg
+				? mixHex(
+						hintergrund,
+						modus === 'dunkel' ? '#ffffff' : '#18201c',
+						modus === 'dunkel' ? 0.18 : 0.12
+					)
+				: s.rahmen),
+		text: gesetzt(eigen.text) ?? s.text,
+		grau: gesetzt(eigen.grau) ?? s.grau
 	};
-	const dunkel = {
-		text: contrastRatio('#eaefec', bgDark),
-		gedaempft: contrastRatio('#a6b0ab', bgDark),
-		akzent: contrastRatio(accentDark, bgDark)
+}
+
+export interface PalettenPruefung {
+	ok: boolean;
+	/** Kleinster Kontrast auf Hintergrund und Fläche */
+	text: number;
+	grau: number;
+	akzent: number;
+	/** Weiße Schrift auf Knöpfen */
+	knopf: number;
+}
+
+export function pruefePalette(p: Palette): PalettenPruefung {
+	const auf = (fg: string) =>
+		Math.min(contrastRatio(fg, p.hintergrund), contrastRatio(fg, p.flaeche));
+	const r = {
+		text: auf(p.text),
+		grau: auf(p.grau),
+		akzent: auf(p.akzent),
+		knopf: contrastRatio('#ffffff', p.knopf)
 	};
-	const ok = [...Object.values(hell), ...Object.values(dunkel)].every((x) => x >= 4.5);
-	return { ok, hell, dunkel };
+	return { ok: Object.values(r).every((x) => x >= 4.5), ...r };
+}
+
+/** Eingaben bereinigen: nur gültige Hex-Werte, Großschreibung. */
+export function normalizeUiFarben(v: unknown): UiFarben {
+	const out: UiFarben = {};
+	if (!v || typeof v !== 'object') return out;
+	for (const m of ['hell', 'dunkel'] as const) {
+		const quelle = (v as Record<string, unknown>)[m];
+		if (!quelle || typeof quelle !== 'object') continue;
+		const ziel: EigeneFarben = {};
+		for (const f of FARB_FELDER) {
+			const x = (quelle as Record<string, unknown>)[f];
+			if (typeof x === 'string' && HEX.test(x)) ziel[f] = x.toUpperCase();
+		}
+		if (Object.keys(ziel).length) out[m] = ziel;
+	}
+	return out;
 }

@@ -3,7 +3,15 @@
 	import MandantFelder from '#lib/components/MandantFelder.svelte';
 
 	let { form } = $props();
-	const leer = { name: '', shortName: '', accent: '#0F6E56', accentDark: '#5DCAA5' };
+	const leer = {
+		name: '',
+		shortName: '',
+		accent: '#0F6E56',
+		accentDark: '#5DCAA5',
+		bg: '',
+		bgDark: '',
+		ui: {}
+	};
 </script>
 
 <svelte:head><title>Mandant anlegen · Verwaltung · Intranet</title></svelte:head>

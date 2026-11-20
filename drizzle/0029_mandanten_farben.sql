@@ -1,0 +1,1 @@
+ALTER TABLE "tenants" ADD COLUMN "ui_colors" jsonb;

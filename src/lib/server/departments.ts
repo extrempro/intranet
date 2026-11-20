@@ -68,6 +68,7 @@ export async function listDepartments(p: Principal) {
 			name: units.name,
 			type: units.type,
 			title: units.title,
+			tagline: units.tagline,
 			isCentral: units.isCentral,
 			tenantShort: tenants.shortName
 		})
@@ -235,6 +236,13 @@ export async function getDepartment(p: Principal, slug: string) {
 		tenantName: row.tenantName,
 		tenantShort: row.tenantShort,
 		about: u.about,
+		tagline: u.tagline,
+		kontakt: {
+			email: u.contactEmail,
+			telefon: u.contactPhone,
+			sprechzeiten: u.officeHours,
+			raum: u.room
+		},
 		leitung: lead(u.leadPersonId),
 		zweiteLeitung: lead(u.secondLeadPersonId),
 		stellvertretung: lead(u.deputyPersonId),
@@ -370,6 +378,11 @@ export async function getDepartmentForEdit(p: Principal, slug: string) {
 		name: u.name,
 		label: unitTypeLabel(u),
 		about: u.about ?? '',
+		tagline: u.tagline ?? '',
+		contactEmail: u.contactEmail ?? '',
+		contactPhone: u.contactPhone ?? '',
+		officeHours: u.officeHours ?? '',
+		room: u.room ?? '',
 		leadPersonId: u.leadPersonId,
 		secondLeadPersonId: u.secondLeadPersonId,
 		deputyPersonId: u.deputyPersonId,
@@ -412,7 +425,17 @@ async function teamIds(unitId: string) {
 export async function updateDepartmentPage(
 	p: Principal,
 	unitId: string,
-	input: { about: string; lead: string; secondLead: string; deputy: string },
+	input: {
+		about: string;
+		lead: string;
+		secondLead: string;
+		deputy: string;
+		tagline: string;
+		email: string;
+		phone: string;
+		hours: string;
+		room: string;
+	},
 	ip: string
 ) {
 	const u = await manageable(p, unitId);
@@ -432,10 +455,12 @@ export async function updateDepartmentPage(
 	if (secondLead && !lead) throw new DepartmentError('Eine zweite Leitung braucht eine Leitung.');
 	const about = input.about.trim();
 	if (about.length > 3000) throw new DepartmentError('„Über uns“ hat höchstens 3000 Zeichen.');
+	const kontakt = checkUnitContact(input);
 	await db
 		.update(units)
 		.set({
 			about: about || null,
+			...kontakt,
 			leadPersonId: lead,
 			secondLeadPersonId: secondLead,
 			deputyPersonId: deputy
@@ -451,6 +476,35 @@ export async function updateDepartmentPage(
 		details: { lead, secondLead, deputy },
 		ip
 	});
+}
+
+/** Kurzbeschreibung und Kontakt im Kopf der Abteilungsseite prüfen (alles freiwillig). */
+export function checkUnitContact(input: {
+	tagline: string;
+	email: string;
+	phone: string;
+	hours: string;
+	room: string;
+}) {
+	const t = (v: string, max: number, label: string) => {
+		const x = v.trim().replace(/\s+/g, ' ');
+		if (x.length > max) throw new DepartmentError(`${label} hat höchstens ${max} Zeichen.`);
+		return x || null;
+	};
+	const tagline = t(input.tagline, 120, 'Die Kurzbeschreibung');
+	const email = t(input.email, 254, 'Die Funktionsadresse');
+	if (email && !/^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(email))
+		throw new DepartmentError('Die Funktionsadresse ist keine gültige E-Mail-Adresse.');
+	const phone = t(input.phone, 40, 'Das Telefon');
+	if (phone && !/^[0-9+()\-/ ]+$/.test(phone))
+		throw new DepartmentError('Das Telefon darf nur Ziffern, Leerzeichen und + ( ) - / enthalten.');
+	return {
+		tagline,
+		contactEmail: email?.toLowerCase() ?? null,
+		contactPhone: phone,
+		officeHours: t(input.hours, 120, 'Die Sprechzeiten'),
+		room: t(input.room, 60, 'Der Raum')
+	};
 }
 
 /** „Hinter den Kulissen“ für die Abteilung freischalten (Abteilungsverwaltung, Kap. 5.1). */

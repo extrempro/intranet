@@ -6,7 +6,7 @@
  */
 import { and, asc, eq, sql } from 'drizzle-orm';
 import { forgetBranding } from './tenant-branding.ts';
-import { BG_DEFAULT, BG_DEFAULT_DARK, checkAccent, checkBackground, HEX } from '../color.ts';
+import { HEX, normalizeUiFarben, palette, pruefePalette, type UiFarben } from '../color.ts';
 import { normalizeDomain } from '../domain.ts';
 import { audit } from './audit.ts';
 import { canAdministerTenant, isSystemAdmin, type Principal } from './auth/access.ts';
@@ -73,6 +73,7 @@ export async function getTenant(p: Principal, id: string) {
 		accentDark: t.accentColorDark ?? DEFAULT_ACCENT_DARK,
 		bg: t.bgColor ?? '',
 		bgDark: t.bgColorDark ?? '',
+		ui: normalizeUiFarben(t.uiColors),
 		domains: domains.map((d) => d.domain),
 		admins
 	};
@@ -86,6 +87,8 @@ export interface TenantInput {
 	/** Seitenhintergrund; leer = Standard */
 	bg: string;
 	bgDark: string;
+	/** Weitere Oberflächenfarben je Darstellung */
+	ui: UiFarben;
 }
 
 function checkInput(input: TenantInput) {
@@ -97,27 +100,23 @@ function checkInput(input: TenantInput) {
 		throw new TenantError('Das Kürzel braucht 1 bis 10 Zeichen.');
 	if (!HEX.test(input.accent) || !HEX.test(input.accentDark))
 		throw new TenantError('Farben bitte als #RRGGBB angeben.');
-	const k = checkAccent(input.accent, input.accentDark);
-	if (!k.ok) {
-		throw new TenantError(
-			`Zu wenig Kontrast (mindestens 4,5:1): weiße Schrift auf Akzent ${k.weissAufAkzent.toFixed(1)}:1, Akzent auf Hell ${k.akzentAufHell.toFixed(1)}:1, Dunkelvariante auf Dunkel ${k.dunkelAufDunkel.toFixed(1)}:1.`
-		);
-	}
 	const bg = input.bg.trim();
 	const bgDark = input.bgDark.trim();
 	if ((bg && !HEX.test(bg)) || (bgDark && !HEX.test(bgDark)))
 		throw new TenantError('Hintergrundfarben bitte als #RRGGBB angeben oder leer lassen.');
-	const h = checkBackground(
-		bg || BG_DEFAULT,
-		bgDark || BG_DEFAULT_DARK,
-		input.accent,
-		input.accentDark
-	);
-	if (!h.ok) {
-		const z = (n: number) => `${n.toFixed(1)}:1`;
-		throw new TenantError(
-			`Zu wenig Kontrast auf dem Hintergrund (mindestens 4,5:1): hell Text ${z(h.hell.text)}, grauer Text ${z(h.hell.gedaempft)}, Akzent ${z(h.hell.akzent)}; dunkel Text ${z(h.dunkel.text)}, grauer Text ${z(h.dunkel.gedaempft)}, Akzent ${z(h.dunkel.akzent)}.`
+	const ui = normalizeUiFarben(input.ui);
+	const z = (n: number) => `${n.toFixed(1).replace('.', ',')}:1`;
+	for (const [modus, titel, akzent, hg] of [
+		['hell', 'Hell', input.accent, bg],
+		['dunkel', 'Dunkel', input.accentDark, bgDark]
+	] as const) {
+		const k = pruefePalette(
+			palette(modus, akzent, input.accent, { ...ui[modus], hintergrund: hg || undefined })
 		);
+		if (!k.ok)
+			throw new TenantError(
+				`${titel}: zu wenig Kontrast (mindestens 4,5:1) – Text ${z(k.text)}, grauer Text ${z(k.grau)}, Links ${z(k.akzent)}, weiße Schrift auf Knöpfen ${z(k.knopf)}.`
+			);
 	}
 	return {
 		name,
@@ -125,7 +124,8 @@ function checkInput(input: TenantInput) {
 		accentColor: input.accent.toUpperCase(),
 		accentColorDark: input.accentDark.toUpperCase(),
 		bgColor: bg ? bg.toUpperCase() : null,
-		bgColorDark: bgDark ? bgDark.toUpperCase() : null
+		bgColorDark: bgDark ? bgDark.toUpperCase() : null,
+		uiColors: Object.keys(ui).length ? ui : null
 	};
 }
 
