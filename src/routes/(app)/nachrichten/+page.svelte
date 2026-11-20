@@ -20,14 +20,13 @@
 <svelte:head><title>Nachrichten · Intranet</title></svelte:head>
 
 <div class="stapel schmal">
+	<EinfuehrungAngebot tour={SEITEN.nachrichten} />
 	<div>
 		<h1 class="mit-hilfe">
 			Nachrichten <EinfuehrungKnopf tour={SEITEN.nachrichten} />
 		</h1>
 		<p class="hinweis">Gespräche zu Anzeigen am Schwarzen Brett, Hub-Anträgen und Rückmeldungen.</p>
 	</div>
-
-	<EinfuehrungAngebot tour={SEITEN.nachrichten} />
 
 	{#if data.boxes.length > 1}
 		<nav class="pillen" aria-label="Postfach" data-tour="postfaecher">
@@ -90,26 +89,9 @@
 		flex-wrap: wrap;
 		gap: 6px;
 	}
-	.pille {
-		display: inline-flex;
-		align-items: center;
-		min-height: 44px;
-		padding: 0 16px;
-		border-radius: 999px;
-		border: 1px solid var(--bd);
-		background: var(--sf);
-		color: var(--tx);
-		text-decoration: none;
-		font-weight: 600;
-	}
 	.klein .pille {
 		min-height: 38px;
 		font-size: 14px;
-	}
-	.pille[aria-current='true'] {
-		background: var(--fill);
-		border-color: var(--fill);
-		color: #fff;
 	}
 	.liste {
 		list-style: none;

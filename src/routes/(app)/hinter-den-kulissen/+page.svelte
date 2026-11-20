@@ -160,22 +160,6 @@
 	.suche .feld {
 		flex: 1;
 	}
-	.pille {
-		display: inline-flex;
-		align-items: center;
-		min-height: 44px;
-		padding: 0 16px;
-		border-radius: 999px;
-		border: 1px solid var(--bd);
-		background: var(--sf);
-		color: var(--tx);
-		font-weight: 600;
-		cursor: pointer;
-		list-style: none;
-	}
-	.pille::-webkit-details-marker {
-		display: none;
-	}
 	.auf {
 		position: relative;
 	}

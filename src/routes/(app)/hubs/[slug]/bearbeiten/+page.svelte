@@ -44,6 +44,12 @@
 <svelte:head><title>{h.name} bearbeiten · Hubs · Intranet</title></svelte:head>
 
 <div class="stapel schmal">
+	{#if h.canManage}
+		<EinfuehrungAngebot
+			tour={ROLLEN.hub_team}
+			text="Du bist im Hub-Team. Eine kurze Einführung zeigt dir, wie du den Hub gestaltest."
+		/>
+	{/if}
 	<a class="zurueck" href={resolve('/(app)/hubs/[slug]', { slug: h.slug })}>← {h.name}</a>
 	<h1 class="mit-hilfe">
 		Hub bearbeiten
@@ -53,10 +59,6 @@
 	{#if form && 'gespeichert' in form}<p class="meldung" role="status">Gespeichert.</p>{/if}
 
 	{#if h.canManage}
-		<EinfuehrungAngebot
-			tour={ROLLEN.hub_team}
-			text="Du bist im Hub-Team. Eine kurze Einführung zeigt dir, wie du den Hub gestaltest."
-		/>
 		<form
 			method="POST"
 			action="?/speichern"

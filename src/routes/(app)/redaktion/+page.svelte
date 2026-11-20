@@ -34,6 +34,12 @@
 <svelte:head><title>Redaktion · Intranet</title></svelte:head>
 
 <div class="stapel">
+	{#if l.redaktion}
+		<EinfuehrungAngebot
+			tour={ROLLEN.redaktion}
+			text="Neu in der Redaktion? Eine kurze Einführung zeigt dir die Arbeitsliste."
+		/>
+	{/if}
 	<div>
 		<h1 class="mit-hilfe">
 			Redaktion
@@ -45,13 +51,6 @@
 				: ''}. Einträge verschwinden, sobald sie erledigt sind.
 		</p>
 	</div>
-
-	{#if l.redaktion}
-		<EinfuehrungAngebot
-			tour={ROLLEN.redaktion}
-			text="Neu in der Redaktion? Eine kurze Einführung zeigt dir die Arbeitsliste."
-		/>
-	{/if}
 
 	<nav class="zaehler" aria-label="Abschnitte" data-tour="zaehler">
 		{#each abschnitte as a (a.id)}

@@ -56,6 +56,14 @@
 <svelte:head><title>Schwarzes Brett · Intranet</title></svelte:head>
 
 <div class="stapel">
+	{#if data.ansicht === 'moderation'}
+		<EinfuehrungAngebot
+			tour={ROLLEN.moderation}
+			text="Du moderierst das Schwarze Brett. Eine kurze Einführung zeigt dir, wie das geht."
+		/>
+	{:else}
+		<EinfuehrungAngebot tour={SEITEN.brett} />
+	{/if}
 	<div class="kopfzeile">
 		<div class="titel">
 			<h1>Schwarzes Brett</h1>
@@ -82,15 +90,6 @@
 		<p class="meldung" role="status">
 			Danke! Deine Anzeige erscheint, sobald die Moderation sie freigegeben hat.
 		</p>
-	{/if}
-
-	{#if data.ansicht === 'moderation'}
-		<EinfuehrungAngebot
-			tour={ROLLEN.moderation}
-			text="Du moderierst das Schwarze Brett. Eine kurze Einführung zeigt dir, wie das geht."
-		/>
-	{:else}
-		<EinfuehrungAngebot tour={SEITEN.brett} />
 	{/if}
 
 	<nav class="pillen" aria-label="Ansicht">
@@ -427,28 +426,6 @@
 		flex-wrap: wrap;
 		gap: 8px;
 		align-items: center;
-	}
-	.pille {
-		display: inline-flex;
-		align-items: center;
-		min-height: 44px;
-		padding: 0 16px;
-		border-radius: 999px;
-		border: 1px solid var(--bd);
-		background: var(--sf);
-		color: var(--tx);
-		text-decoration: none;
-		font-weight: 600;
-		cursor: pointer;
-		list-style: none;
-	}
-	.pille::-webkit-details-marker {
-		display: none;
-	}
-	.pille[aria-current='true'] {
-		background: var(--fill);
-		border-color: var(--fill);
-		color: #fff;
 	}
 	.suche {
 		display: flex;

@@ -40,6 +40,7 @@
 <svelte:head><title>Kalender · Intranet</title></svelte:head>
 
 <div class="stapel">
+	<EinfuehrungAngebot tour={SEITEN.kalender} />
 	<div class="kopfzeile">
 		<div class="titel">
 			<h1>Kalender</h1>
@@ -62,7 +63,6 @@
 		{/if}
 	</div>
 	{#if form && 'fehler' in form}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
-	<EinfuehrungAngebot tour={SEITEN.kalender} />
 
 	<form method="GET" class="suche" role="search">
 		{#if data.monatsansicht}<input type="hidden" name="ansicht" value="monat" />{/if}
@@ -102,7 +102,9 @@
 				<button class="knopf klein" type="submit">Übernehmen</button>
 			</form>
 		</details>
-		<a class="abo" href={resolve('/(app)/kalender/abo')} data-tour="abo">Kalender abonnieren</a>
+		<a class="abo aktionslink" href={resolve('/(app)/kalender/abo')} data-tour="abo">
+			Kalender abonnieren
+		</a>
 	</div>
 
 	{#if data.monatsansicht}
@@ -245,28 +247,6 @@
 		align-items: center;
 		gap: 8px;
 	}
-	.pille {
-		display: inline-flex;
-		align-items: center;
-		min-height: 44px;
-		padding: 0 16px;
-		border-radius: 999px;
-		border: 1px solid var(--bd);
-		background: var(--sf);
-		color: var(--tx);
-		text-decoration: none;
-		font-weight: 600;
-		cursor: pointer;
-		list-style: none;
-	}
-	.pille::-webkit-details-marker {
-		display: none;
-	}
-	.pille[aria-current='true'] {
-		background: var(--fill);
-		border-color: var(--fill);
-		color: #fff;
-	}
 	.aus {
 		position: relative;
 	}
@@ -384,7 +364,7 @@
 	.termine > li {
 		border-top: 1px solid var(--bd);
 	}
-	summary {
+	.termine summary {
 		display: flex;
 		align-items: center;
 		gap: 12px;
@@ -392,7 +372,7 @@
 		cursor: pointer;
 		list-style: none;
 	}
-	summary::-webkit-details-marker {
+	.termine summary::-webkit-details-marker {
 		display: none;
 	}
 	.zeit {
