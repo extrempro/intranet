@@ -11,13 +11,17 @@
 		timeZone: 'Europe/Berlin'
 	});
 	const vorgang = $derived(
-		g.kind === 'hub_antrag'
-			? resolve('/(app)/hubs/antraege')
-			: g.kind === 'moderation' && g.viaRole
-				? `${resolve('/(app)/schwarzes-brett')}?ansicht=moderation`
-				: g.kind === 'moderation'
-					? `${resolve('/(app)/schwarzes-brett')}?ansicht=meine`
-					: resolve('/(app)/schwarzes-brett')
+		g.kind === 'rueckmeldung'
+			? g.viaRole && g.refId
+				? resolve('/(app)/verwaltung/rueckmeldungen/[id]', { id: g.refId })
+				: resolve('/(app)/rueckmeldung')
+			: g.kind === 'hub_antrag'
+				? resolve('/(app)/hubs/antraege')
+				: g.kind === 'moderation' && g.viaRole
+					? `${resolve('/(app)/schwarzes-brett')}?ansicht=moderation`
+					: g.kind === 'moderation'
+						? `${resolve('/(app)/schwarzes-brett')}?ansicht=meine`
+						: resolve('/(app)/schwarzes-brett')
 	);
 </script>
 
@@ -33,7 +37,11 @@
 		<h1>{g.subject}</h1>
 		<p class="hinweis">
 			{g.withLabel}{g.withLabel ? ' · ' : ''}<a href={vorgang}>
-				{g.kind === 'hub_antrag' ? 'Zum Antrag' : 'Zum Schwarzen Brett'}
+				{g.kind === 'rueckmeldung'
+					? 'Zur Rückmeldung'
+					: g.kind === 'hub_antrag'
+						? 'Zum Antrag'
+						: 'Zum Schwarzen Brett'}
 			</a>
 		</p>
 	</div>

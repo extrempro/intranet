@@ -19,9 +19,7 @@
 <div class="stapel schmal">
 	<div>
 		<h1>Nachrichten</h1>
-		<p class="hinweis">
-			Rückfragen und Antworten zu Anzeigen am Schwarzen Brett und deren Prüfung.
-		</p>
+		<p class="hinweis">Gespräche zu Anzeigen am Schwarzen Brett, Hub-Anträgen und Rückmeldungen.</p>
 	</div>
 
 	{#if data.boxes.length > 1}

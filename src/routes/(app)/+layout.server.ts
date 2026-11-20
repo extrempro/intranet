@@ -1,13 +1,14 @@
 import { initials } from '#lib/format.ts';
 import { canSeeAdministration } from '#lib/server/auth/access.ts';
 import { photosOf } from '#lib/server/people.ts';
+import { takeFlash } from '#lib/server/flash.ts';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import { unreadConversations } from '#lib/server/messages.ts';
 import { unreadCount } from '#lib/server/notify.ts';
 import { accentStyle, brandingFor } from '#lib/server/tenant-branding.ts';
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ locals, url }) => {
+export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 	// Zähler der Glocke bei jedem Seitenwechsel neu laden
 	void url.pathname;
 	const principal = requirePrincipal(locals);
@@ -34,6 +35,7 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 			(r) => r.role === 'redaktion' || r.role === 'moderation_schwarzes_brett'
 		),
 		ungelesen,
-		nachrichten
+		nachrichten,
+		meldung: takeFlash(cookies)
 	};
 };

@@ -33,6 +33,8 @@
 	const GLOCKE =
 		'M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6M9 17v1a3 3 0 0 0 6 0v-1';
 	const dunkel = $derived(istDunkel(theme));
+	const SPRECHBLASE =
+		'M8 9h8M8 13h6M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-5l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12z';
 </script>
 
 <a class="skip" href="#inhalt">Zum Inhalt springen</a>
@@ -68,6 +70,17 @@
 				<Icon d={dunkel ? SONNE : MOND} size={20} stroke={1.8} />
 			</button>
 		</form>
+
+		<a
+			class="symbolknopf nur-gross"
+			href="{resolve('/(app)/rueckmeldung/neu')}?von={encodeURIComponent(
+				page.url.pathname + page.url.search
+			)}"
+			aria-label="Rückmeldung geben"
+			title="Rückmeldung: Fehler oder Idee"
+		>
+			<Icon d={SPRECHBLASE} size={20} stroke={1.8} />
+		</a>
 
 		<a
 			class="symbolknopf glocke"
@@ -201,6 +214,7 @@
 
 			<main id="inhalt" tabindex="-1">
 				<OfflineHinweis />
+				{#if data.meldung}<p class="meldung oben" role="status">{data.meldung}</p>{/if}
 				{@render children()}
 			</main>
 		</div>

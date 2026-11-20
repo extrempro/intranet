@@ -26,7 +26,8 @@ export const MESSAGE_MAX = 1000;
 const KIND_LABEL = {
 	anzeige: 'Anzeige',
 	moderation: 'Moderation',
-	hub_antrag: 'Hub-Antrag'
+	hub_antrag: 'Hub-Antrag',
+	rueckmeldung: 'Rückmeldung'
 } as const;
 
 export type RoleBox = 'moderation' | 'redaktion' | 'verwaltung';
@@ -109,7 +110,7 @@ async function access(p: Principal, conversationId: string) {
 // Anlegen (intern, von den Vorgängen)
 // ---------------------------------------------------------------------------
 
-export type Kind = 'anzeige' | 'moderation' | 'hub_antrag';
+export type Kind = 'anzeige' | 'moderation' | 'hub_antrag' | 'rueckmeldung';
 
 export async function findConversation(kind: Kind, refId: string, personId?: string) {
 	const rows = await db

@@ -1,0 +1,28 @@
+import { fail, redirect } from '@sveltejs/kit';
+import { safeReturnPath } from '#lib/feedback.ts';
+import { requirePrincipal } from '#lib/server/auth/guard.ts';
+import { createFeedback } from '#lib/server/feedback.ts';
+import { setFlash } from '#lib/server/flash.ts';
+import type { Actions, PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async ({ locals, url }) => {
+	requirePrincipal(locals);
+	return { von: safeReturnPath(url.searchParams.get('von')) };
+};
+
+export const actions: Actions = {
+	default: async ({ request, locals, cookies }) => {
+		const p = requirePrincipal(locals);
+		const f = await request.formData();
+		const input = {
+			kind: String(f.get('art') ?? ''),
+			text: String(f.get('text') ?? '').slice(0, 4000),
+			page: String(f.get('seite') ?? '').slice(0, 500)
+		};
+		const r = await createFeedback(p, input);
+		if (!r.ok) return fail(400, { fehler: r.errors, eingabe: input });
+		setFlash(cookies, 'rueckmeldung');
+		// Nach dem Senden zurück zur Ausgangsseite (Kap. 13)
+		redirect(303, safeReturnPath(input.page));
+	}
+};

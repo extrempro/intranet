@@ -65,6 +65,8 @@
 			</div>
 			<a href={resolve('/(app)/konto/profil')} class="eintrag">Mein Profil</a>
 			<a href={resolve('/(app)/konto')} class="eintrag">Konto und Einstellungen</a>
+			<a href={resolve('/(app)/handbuch')} class="eintrag">Handbuch</a>
+			<a href={resolve('/(app)/rueckmeldung/neu')} class="eintrag">Rückmeldung geben</a>
 			{#if darfRedaktion}
 				<a href={resolve('/(app)/redaktion')} class="eintrag">Redaktion</a>
 			{/if}
