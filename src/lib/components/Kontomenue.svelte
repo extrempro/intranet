@@ -6,8 +6,15 @@
 		name,
 		kuerzel,
 		mandant,
-		darfVerwaltung
-	}: { name: string; kuerzel: string; mandant: string; darfVerwaltung: boolean } = $props();
+		darfVerwaltung,
+		darfRedaktion = false
+	}: {
+		name: string;
+		kuerzel: string;
+		mandant: string;
+		darfVerwaltung: boolean;
+		darfRedaktion?: boolean;
+	} = $props();
 
 	let offen = $state(false);
 	let knopf: HTMLButtonElement | undefined = $state();
@@ -53,6 +60,9 @@
 				<div><strong>{name}</strong><br /><span class="mu">{mandant}</span></div>
 			</div>
 			<a href={resolve('/(app)/konto')} class="eintrag">Konto und Einstellungen</a>
+			{#if darfRedaktion}
+				<a href={resolve('/(app)/redaktion')} class="eintrag">Redaktion</a>
+			{/if}
 			{#if darfVerwaltung}
 				<a href={resolve('/(app)/verwaltung')} class="eintrag">Verwaltung</a>
 			{/if}
