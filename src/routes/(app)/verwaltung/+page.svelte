@@ -8,6 +8,16 @@
 
 <div class="stapel">
 	<h1>Verwaltung</h1>
+	<h2>Organisation</h2>
+	<ul class="kacheln">
+		<li>
+			<a class="karte kachel" href={resolve('/(app)/verwaltung/abteilungen')}>
+				<strong>Abteilungen und Hubs</strong><span class="hinweis">
+					Einheiten, Team, Schreibrechte
+				</span>
+			</a>
+		</li>
+	</ul>
 	<h2>Zugänge</h2>
 	<ul class="kacheln">
 		<li>
