@@ -17,6 +17,12 @@ import { getSetting } from '../settings.ts';
 /** Kurzlebiges Cookie mit state, nonce und PKCE-Verifier während der Anmeldung. */
 export const OIDC_COOKIE = '__Host-intranet-oidc';
 
+/**
+ * Einziges externes Ziel für Weiterleitungen (SvelteKit 3 verlangt eine
+ * ausdrückliche Freigabe, siehe redirect(..., { external })).
+ */
+export const ENTRA_LOGIN_ORIGINS = ['https://login.microsoftonline.com'];
+
 export const ENTRA_SCOPES = 'openid profile email User.Read GroupMember.Read.All';
 const GRAPH = 'https://graph.microsoft.com/v1.0';
 
