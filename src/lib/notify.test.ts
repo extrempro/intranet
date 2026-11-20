@@ -5,9 +5,9 @@ describe('Benachrichtigungen', () => {
 	it('füllt Voreinstellungen nach Tabelle 11.2 auf', () => {
 		const r = resolveNotify(null);
 		expect(r.emailMode).toBe('taeglich');
-		expect(r.topics.dringend).toEqual({ bell: true, push: true, email: true });
-		expect(r.topics.angeheftet).toEqual({ bell: true, push: true, email: false });
-		expect(r.topics.speiseplan).toEqual({ bell: false, push: false, email: false });
+		expect(r.topics.dringend).toEqual({ bell: true, push: true, email: true, teams: true });
+		expect(r.topics.angeheftet).toEqual({ bell: true, push: true, email: false, teams: false });
+		expect(r.topics.speiseplan).toEqual({ bell: false, push: false, email: false, teams: false });
 	});
 
 	it('übernimmt eigene Einstellungen, aber nie „Glocke aus“ bei dringenden Meldungen', () => {
@@ -15,8 +15,8 @@ describe('Benachrichtigungen', () => {
 			topics: { dringend: { bell: false, email: false }, neuigkeiten: { email: false } },
 			emailMode: 'sofort'
 		});
-		expect(r.topics.dringend).toEqual({ bell: true, push: true, email: false });
-		expect(r.topics.neuigkeiten).toEqual({ bell: true, push: false, email: false });
+		expect(r.topics.dringend).toEqual({ bell: true, push: true, email: false, teams: true });
+		expect(r.topics.neuigkeiten).toEqual({ bell: true, push: false, email: false, teams: false });
 		expect(r.emailMode).toBe('sofort');
 		expect(resolveNotify({ topics: {}, emailMode: 'quatsch' as never }).emailMode).toBe('taeglich');
 	});

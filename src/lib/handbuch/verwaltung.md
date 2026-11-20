@@ -44,6 +44,16 @@ Unter **Benachrichtigungen** pflegst du als System-Admin den **SMTP-Server** fü
 
 Leere Felder nehmen den Wert aus der `.env`. **Test-E-Mail an mich** zeigt sofort, ob alles passt, und bei einem Fehler, woran es liegt. Mandanten-Admins sehen nur, ob der Versand eingerichtet ist.
 
+## Teams
+
+Ebenfalls unter **Benachrichtigungen** schaltest du die Teams-Meldungen ein (nur dringende und angeheftete Beiträge, Kap. 11). Einmalig nötig:
+
+1. In der App-Registrierung die Anwendungsberechtigung **TeamsActivity.Send** hinzufügen und die Administratorzustimmung erteilen.
+2. Das **App-Paket** herunterladen und im Teams Admin Center unter „Apps verwalten“ hochladen.
+3. Die App per **Setup-Richtlinie** für alle oder die Intranet-Gruppe installieren.
+
+Meldungen kommen nur bei Personen mit Microsoft-Konto an, bei denen die App installiert ist. **Testmeldung an mich** zeigt, ob alles passt. Ändert sich die Adresse des Intranets oder die App-Registrierung, erzeuge eine neue Version des Pakets und aktualisiere die App.
+
 ## System
 
 Unter **System** siehst du die Version, den Zustand von Datenbank, Dateien, Hintergrundaufgaben und Entra-Abgleich, die Anbindungen (Entra, E-Mail, Web Push) und die **Sicherungen**:

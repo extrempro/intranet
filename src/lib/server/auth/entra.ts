@@ -261,7 +261,8 @@ export interface Pruefpunkt {
 
 export const APP_PERMISSIONS: { name: string; wofuer: string; pflicht: boolean }[] = [
 	{ name: 'User.Read.All', wofuer: 'nächtlicher Abgleich', pflicht: true },
-	{ name: 'GroupMember.Read.All', wofuer: 'nächtlicher Abgleich, Zugangsgruppe', pflicht: true }
+	{ name: 'GroupMember.Read.All', wofuer: 'nächtlicher Abgleich, Zugangsgruppe', pflicht: true },
+	{ name: 'TeamsActivity.Send', wofuer: 'Teams-Benachrichtigungen', pflicht: false }
 ];
 
 export async function checkEntraConnection(): Promise<Pruefpunkt[]> {
@@ -347,4 +348,40 @@ export async function checkEntraConnection(): Promise<Pruefpunkt[]> {
 		}
 	}
 	return punkte;
+}
+
+/** POST gegen Graph mit Anwendungs-Token (z. B. Teams-Aktivitätsfeed). Drosselung wie bei GET. */
+export async function graphAppPost(path: string, body: unknown): Promise<void> {
+	const url = `${GRAPH}${path}`;
+	if (!path.startsWith('/')) throw new Error('Unerwartete Graph-Adresse');
+	for (let versuch = 0; ; versuch++) {
+		const res = await fetch(url, {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${await graphAppToken()}`,
+				'Content-Type': 'application/json',
+				Accept: 'application/json'
+			},
+			body: JSON.stringify(body),
+			signal: AbortSignal.timeout(15_000),
+			redirect: 'error'
+		});
+		if ((res.status === 429 || res.status === 503) && versuch < 3) {
+			const warten = Math.min(Number(res.headers.get('Retry-After')) || 5, 60);
+			await new Promise((r) => setTimeout(r, warten * 1000));
+			continue;
+		}
+		if (!res.ok) {
+			// Code aus der Antwort (ohne Inhalte), z. B. „Forbidden“
+			const code = await res
+				.json()
+				.then((j: { error?: { code?: string } }) => j?.error?.code ?? '')
+				.catch(() => '');
+			throw new GraphError(
+				res.status,
+				`Graph antwortet mit ${res.status}${code ? ` (${code})` : ''}`
+			);
+		}
+		return;
+	}
 }

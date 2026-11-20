@@ -53,6 +53,11 @@ Der nächtliche Abgleich (02:30, `ENTRA_SYNC_TIME`) liest mit den **Anwendungsbe
 in Entra gelöschte oder deaktivierte Konten und Personen ohne Zugangsgruppe; würde er mehr als
 10 % sperren, hält er an. Zustand und „Jetzt abgleichen“: Verwaltung → System.
 
+Teams-Benachrichtigungen (dringende und angeheftete Beiträge) gehen über den Aktivitätsfeed von
+Microsoft Graph (`TeamsActivity.Send`). Das App-Paket für das Teams Admin Center gibt es unter
+Verwaltung → Benachrichtigungen. Der Tab der App (`/teams/tab`) ist die einzige Seite, die in Teams
+eingebettet werden darf; er zeigt nur einen Link ins Intranet.
+
 E-Mails (Einladungen, „Passwort vergessen“, Benachrichtigungen) gehen per **SMTP** raus
 (`SMTP_*` und `MAIL_FROM` in der `.env` oder unter Verwaltung → Benachrichtigungen). Der Server
 braucht dafür ausgehend Zugriff auf den SMTP-Server.

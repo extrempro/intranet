@@ -21,6 +21,7 @@ import { db } from './db/index.ts';
 import { news, notifications, personPreferences, persons, units } from './db/schema.ts';
 import { escapeHtml, mailConfigured, sendMail } from './mail.ts';
 import { getSetting, setSetting } from './settings.ts';
+import { teamsActive } from './teams-config.ts';
 
 const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -73,6 +74,8 @@ interface Row {
 	bell: boolean;
 	push: boolean;
 	email: boolean;
+	/** Nur Microsoft-Konten und Themen mit Teams */
+	teams?: boolean;
 	quiet: QuietHours;
 }
 
@@ -80,7 +83,7 @@ async function insertRows(topic: string, rows: Row[], content: NotifyContent) {
 	const now = new Date();
 	const cache = new Map<string, Date | null>();
 	const values = rows
-		.filter((r) => r.bell || r.push || r.email)
+		.filter((r) => r.bell || r.push || r.email || r.teams)
 		.map((r) => ({
 			personId: r.personId,
 			topic,
@@ -90,7 +93,8 @@ async function insertRows(topic: string, rows: Row[], content: NotifyContent) {
 			bell: r.bell,
 			email: r.email ? ('pending' as const) : null,
 			push: r.push ? ('pending' as const) : null,
-			pushAfter: r.push ? pushTiming(topic, r.quiet, now, cache) : null
+			teams: r.teams ? ('pending' as const) : null,
+			pushAfter: r.push || r.teams ? pushTiming(topic, r.quiet, now, cache) : null
 		}));
 	if (values.length) await db.insert(notifications).values(values);
 	// Push nicht auf den minütlichen Lauf warten lassen
@@ -98,6 +102,10 @@ async function insertRows(topic: string, rows: Row[], content: NotifyContent) {
 		void import('./push.ts')
 			.then((m) => m.sendDuePushes())
 			.catch((err) => console.error('Push fehlgeschlagen:', err));
+	if (values.some((v) => v.teams && !v.pushAfter))
+		void import('./teams.ts')
+			.then((m) => m.sendDueTeams())
+			.catch((err) => console.error('Teams fehlgeschlagen:', err));
 	return values.length;
 }
 
@@ -108,15 +116,22 @@ export async function notify(topic: string, personIds: string[], content: Notify
 	for (let i = 0; i < personIds.length; i += 1000) {
 		const chunk = personIds.slice(i, i + 1000);
 		const rows = await db
-			.select({ id: persons.id, n: personPreferences.notify })
+			.select({ id: persons.id, n: personPreferences.notify, oid: persons.entraOid })
 			.from(persons)
 			.leftJoin(personPreferences, eq(personPreferences.personId, persons.id))
 			.where(and(inArray(persons.id, chunk), regularPerson));
+		const teamsOn = await teamsActive();
 		count += await insertRows(
 			topic,
 			rows.map((r) => {
 				const s = resolveNotify(r.n);
-				return { personId: r.id, ...s.topics[topic], quiet: s.quiet };
+				const c = s.topics[topic];
+				return {
+					personId: r.id,
+					...c,
+					teams: teamsOn && c.teams && Boolean(r.oid),
+					quiet: s.quiet
+				};
 			}),
 			content
 		);
@@ -419,6 +434,8 @@ export function startNotifier(intervalMs = 60_000) {
 				await sendEmails();
 				const { sendDuePushes } = await import('./push.ts');
 				await sendDuePushes();
+				const { sendDueTeams } = await import('./teams.ts');
+				await sendDueTeams();
 			});
 		} catch (err) {
 			console.error('Benachrichtigungen fehlgeschlagen:', err);

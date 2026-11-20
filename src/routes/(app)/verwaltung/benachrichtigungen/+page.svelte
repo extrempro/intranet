@@ -23,6 +23,11 @@
 			? String((form.werte as Record<string, string>)[name] ?? '')
 			: (gespeichert ?? '');
 	let sende = $state(false);
+	const datum = new Intl.DateTimeFormat('de-DE', {
+		dateStyle: 'medium',
+		timeStyle: 'short',
+		timeZone: 'Europe/Berlin'
+	});
 </script>
 
 <svelte:head><title>Benachrichtigungen · Verwaltung · Intranet</title></svelte:head>
@@ -239,8 +244,91 @@
 	</section>
 
 	<section class="karte stapel" aria-labelledby="h-teams">
-		<h2 id="h-teams">Teams</h2>
-		<p class="hinweis">Folgt mit der Intranet-App im Tenant.</p>
+		<h2 id="h-teams">
+			Teams
+			<Info
+				thema="Teams"
+				text="Dringende und angeheftete Beiträge erscheinen in Teams unter „Aktivität“, mit Titel und Absender. Ein Klick öffnet einen kleinen Tab mit dem Link ins Intranet. Nur für Personen mit Microsoft-Konto, bei denen die Teams-App installiert ist; Ruhezeiten gelten wie bei Push."
+			/>
+		</h2>
+		{#if data.teams}
+			{@const t = data.teams}
+			{#if bereich('teams')?.ergebnis}
+				<p class="meldung" role="status">{bereich('teams')?.ergebnis}</p>
+			{/if}
+			{#if bereich('teams')?.fehler}
+				<p class="meldung fehler" role="alert">{bereich('teams')?.fehler}</p>
+			{/if}
+			{#if !t.entra}
+				<p class="hinweis">Dafür muss zuerst die Anmeldung mit Microsoft eingerichtet sein.</p>
+			{:else}
+				<form method="POST" action="?/teamsSchalten" use:enhance class="zeile">
+					<input type="hidden" name="aktiv" value={t.einstellung.aktiv ? 'nein' : 'ja'} />
+					<p>
+						Teams-Benachrichtigungen sind <strong>{t.einstellung.aktiv ? 'an' : 'aus'}</strong>.
+					</p>
+					<button class="knopf {t.einstellung.aktiv ? 'zweit' : ''}" type="submit">
+						{t.einstellung.aktiv ? 'Ausschalten' : 'Einschalten'}
+					</button>
+				</form>
+				{#if t.status}
+					<p class={['hinweis', !t.status.ok && 'fehlertext']}>
+						Letzter Versand {datum.format(new Date(t.status.zeit))}: {t.status.ok
+							? `${t.status.gesendet} ${t.status.gesendet === 1 ? 'Person' : 'Personen'} erreicht`
+							: t.status.meldung}
+					</p>
+				{/if}
+				<details>
+					<summary>Einrichtung in drei Schritten</summary>
+					<ol class="schritte">
+						<li>
+							In der App-Registrierung die <strong>
+								Anwendungsberechtigung TeamsActivity.Send
+							</strong>
+							hinzufügen und die Administratorzustimmung erteilen. Prüfen unter Verwaltung → Anmeldung
+							→ „Verbindung prüfen“.
+						</li>
+						<li>
+							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- Download, keine Seite -->
+							<a href="/verwaltung/benachrichtigungen/teams-app" download>
+								App-Paket herunterladen
+							</a>
+							(Version 1.0.{t.einstellung.version}) und im Teams Admin Center unter „Apps verwalten“
+							hochladen.
+						</li>
+						<li>
+							Die App per <strong>Setup-Richtlinie</strong> für alle (oder die Intranet-Gruppe) installieren.
+							Erst dann kommen Meldungen bei den Personen an.
+						</li>
+					</ol>
+					<p class="hinweis">
+						App-ID im Manifest: <code>{t.einstellung.appId}</code>. Ändert sich die Adresse des
+						Intranets oder die App-Registrierung, erzeuge eine neue Version und aktualisiere die
+						App.
+					</p>
+					<form method="POST" action="?/teamsVersion" use:enhance>
+						<button class="knopf zweit" type="submit">Neue Version erzeugen</button>
+					</form>
+				</details>
+				<form method="POST" action="?/teamsTest" use:enhance>
+					<button
+						class="knopf zweit"
+						type="submit"
+						disabled={!t.microsoftKonto}
+						title={t.microsoftKonto ? undefined : 'Nur mit einem Microsoft-Konto'}
+					>
+						Testmeldung an mich
+					</button>
+				</form>
+				{#if !t.microsoftKonto}
+					<p class="hinweis">
+						Die Testmeldung geht nur, wenn du mit einem Microsoft-Konto angemeldet bist.
+					</p>
+				{/if}
+			{/if}
+		{:else}
+			<p class="hinweis">Teams richten System-Admins ein.</p>
+		{/if}
 	</section>
 </div>
 
@@ -280,6 +368,22 @@
 	}
 	.knopf {
 		justify-self: start;
+	}
+	.zeile {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		flex-wrap: wrap;
+	}
+	.schritte {
+		margin: 8px 0;
+		padding-left: 1.2rem;
+		display: grid;
+		gap: 6px;
+	}
+	.fehlertext {
+		color: var(--err-tx);
 	}
 	.zwei {
 		display: grid;
