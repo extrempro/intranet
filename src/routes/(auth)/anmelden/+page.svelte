@@ -57,6 +57,12 @@
 </svelte:head>
 
 <h1>Anmelden</h1>
+{#if data.einrichtung}
+	<p class="meldung warnung" role="status">
+		Das Intranet ist noch nicht eingerichtet. Den Link zur Einrichtung findest du im Log der
+		Anwendung (<code>docker compose logs app</code>).
+	</p>
+{/if}
 
 {#if data.fehler}
 	<p class="meldung fehler" role="alert">{data.fehler}</p>

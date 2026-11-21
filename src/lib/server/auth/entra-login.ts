@@ -25,8 +25,6 @@ export interface EntraLoginInput {
 	accountEnabled: boolean;
 	/** Zugangsgruppe; ohne Mitgliedschaft keine Anmeldung. */
 	accessGroupId: string | null;
-	/** Gruppe für die ersten System-Admins (ENTRA_ADMIN_GROUP_ID). */
-	adminGroupId: string | null;
 	/** Domain (klein) → Mandanten-ID */
 	domains: Record<string, string>;
 	mappings: readonly GroupRoleMapping[];
@@ -41,7 +39,7 @@ export type EntraLoginResult =
 
 export function resolveEntraLogin(input: EntraLoginInput): EntraLoginResult {
 	if (!input.accountEnabled) return { ok: false, reason: 'account_disabled' };
-	if (!input.accessGroupId && !input.adminGroupId) return { ok: false, reason: 'not_configured' };
+	if (!input.accessGroupId) return { ok: false, reason: 'not_configured' };
 
 	const email = input.email.trim();
 	if (!email.includes('@')) return { ok: false, reason: 'no_email' };
@@ -50,20 +48,10 @@ export function resolveEntraLogin(input: EntraLoginInput): EntraLoginResult {
 	if (!tenantId) return { ok: false, reason: 'unknown_domain' };
 
 	const groups = new Set(input.groupIds);
-	const isAdmin = input.adminGroupId !== null && groups.has(input.adminGroupId);
-	const hasAccess = isAdmin || (input.accessGroupId !== null && groups.has(input.accessGroupId));
-	if (!hasAccess) return { ok: false, reason: 'not_in_access_group' };
+	if (!groups.has(input.accessGroupId)) return { ok: false, reason: 'not_in_access_group' };
 
+	// Rollen nur aus „Rollen aus Entra-Gruppen“; System-Admins vergibt die Verwaltung
 	const roles: DerivedRole[] = input.mappings.filter((m) => groups.has(m.groupId));
-	if (isAdmin && input.adminGroupId) {
-		roles.push({
-			groupId: input.adminGroupId,
-			role: 'system_admin',
-			scope: 'all',
-			scopeTenantId: null,
-			scopeUnitId: null
-		});
-	}
 
 	return { ok: true, tenantId, email, roles: dedupeRoles(roles) };
 }

@@ -1,6 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { DENIED_MESSAGES } from '#lib/server/auth/entra-login.ts';
 import { getEntraConfig, safeReturnTo } from '#lib/server/auth/entra.ts';
+import { einrichtungNoetig } from '#lib/server/einrichtung.ts';
 import { loginWithPassword, startPending } from '#lib/server/auth/local.ts';
 import { loginLimit, wait } from '#lib/server/rate-limit.ts';
 import type { Actions, PageServerLoad } from './$types';
@@ -22,7 +23,8 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		fehler,
 		abgemeldet: url.searchParams.has('abgemeldet'),
 		passwortGeaendert: url.searchParams.has('passwort-geaendert'),
-		entraAktiv: (await getEntraConfig()) !== null
+		entraAktiv: (await getEntraConfig()) !== null,
+		einrichtung: await einrichtungNoetig()
 	};
 };
 

@@ -36,9 +36,6 @@ APP_DATABASE_PASSWORD=ci-app-$(openssl rand -hex 12)
 ENCRYPTION_KEY=$(openssl rand -base64 32)
 ORIGIN=http://localhost:3999
 APP_PORT=3999
-INITIAL_TENANT_NAME=CI-Haus
-INITIAL_TENANT_SHORT=CI
-INITIAL_TENANT_DOMAINS=ci.test
 RESTORE_TEST_DAYS=7
 ENVDATEI
 
@@ -58,6 +55,11 @@ for _ in $(seq 1 60); do
 	sleep 2
 done
 curl -fsS http://localhost:3999/health >/dev/null || fehler "Anwendung startet nicht"
+
+schritt "Einrichtungslink im Log"
+LINK=$(dc logs app 2>/dev/null | grep -o 'http://localhost:3999/einrichtung/[A-Za-z0-9_-]*' | tail -n1)
+[ -n "$LINK" ] || fehler "kein Einrichtungslink im Log"
+curl -fsS "$LINK" | grep -q 'Hauptmandant' || fehler "Einrichtungsseite zeigt keinen Schritt Hauptmandant"
 
 psql() { dc exec -T db psql -X -q -At -U intranet -d intranet -c "$1"; }
 

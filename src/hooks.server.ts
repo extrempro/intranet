@@ -19,8 +19,9 @@ export const init: ServerInit = async () => {
 	if (process.env.MIGRATE_ON_START === 'false') return;
 	const { runMigrations } = await import('#lib/server/db/migrate.ts');
 	await runMigrations();
-	const { ensureInitialTenant } = await import('#lib/server/bootstrap.ts');
-	await ensureInitialTenant();
+	// Ohne System-Admin: Einrichtungslink ins Log (Hauptmandant, erster Admin)
+	const { einrichtungslinkBeimStart } = await import('#lib/server/einrichtung.ts');
+	await einrichtungslinkBeimStart(process.env.ORIGIN);
 	const { startCleanup } = await import('#lib/server/cleanup.ts');
 	startCleanup();
 	const { startNotifier } = await import('#lib/server/notify.ts');
@@ -43,6 +44,7 @@ const securityHeaders: Record<string, string> = {
 };
 
 /** Ohne Anmeldung erreichbar. Alles andere nur mit gültiger Sitzung. */
+/** /einrichtung: Ersteinrichtung und Notfallzugang über einen Link aus dem Log. */
 /** /ical: persönliches Kalender-Abo, geschützt durch den geheimen Link (Kap. 8.8). */
 /** /teams/tab: Tab der Teams-App, zeigt nur einen Link (Kap. 11.1). */
 /** /teams/test: vorübergehender Test-Tab (SSO, Cookies), zeigt keine Inhalte. */
@@ -50,6 +52,7 @@ const securityHeaders: Record<string, string> = {
 const PUBLIC_PATHS = [
 	'/anmelden',
 	'/einladung',
+	'/einrichtung',
 	'/health',
 	'/ical',
 	'/teams/tab',

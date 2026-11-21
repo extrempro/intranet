@@ -15,7 +15,6 @@ const T2 = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 
 const ctx: SyncContext = {
 	accessGroupId: ZUGANG,
-	adminGroupId: null,
 	domains: { 'oper.test': T1, 'ballett.test': T2 },
 	mappings: [
 		{ groupId: REDAKTION, role: 'redaktion', scope: 'tenant', scopeTenantId: T1, scopeUnitId: null }
