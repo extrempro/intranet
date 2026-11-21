@@ -323,6 +323,41 @@
 						Die Testmeldung geht nur, wenn du mit einem Microsoft-Konto angemeldet bist.
 					</p>
 				{/if}
+				<details>
+					<summary>Test: Intranet ganz in Teams</summary>
+					<p class="hinweis">
+						Vorübergehend hat die Teams-App einen Reiter „Test“. Er prüft, ob die Anmeldung per
+						Microsoft-Konto, Cookies und der Sprung aus einer Benachrichtigung in Teams klappen. Er
+						zeigt keine Inhalte und legt keine Sitzung an.
+					</p>
+					<ol class="schritte">
+						<li>
+							In der App-Registrierung unter <strong>Expose an API</strong> die Application ID URI
+							setzen:
+							<code>{t.ssoResource ?? 'api://<Host>/<Client-ID>'}</code>
+						</li>
+						<li>Dort einen Scope <code>access_as_user</code> anlegen (Admins und Benutzer).</li>
+						<li>
+							Unter „Authorized client applications“ beide Teams-Clients mit diesem Scope
+							hinzufügen: <code>1fec8e78-bce4-4aaf-ab1b-5451cc387264</code> (Desktop und Handy) und
+							<code>5e3ce6c0-2b1f-4285-8d4b-75ee78787346</code> (Browser).
+						</li>
+						<li>
+							Neue Version erzeugen, Paket herunterladen und die App im Teams Admin Center
+							aktualisieren.
+						</li>
+						<li>
+							In Teams die App „Intranet“ öffnen, Reiter „Test“: auf dem PC, im Browser und auf dem
+							Handy. Mit „Ergebnis kopieren“ kannst du das Ergebnis weitergeben.
+						</li>
+					</ol>
+					<form method="POST" action="?/teamsTest" use:enhance>
+						<input type="hidden" name="ziel" value="test" />
+						<button class="knopf zweit" type="submit" disabled={!t.microsoftKonto}>
+							Testmeldung mit Sprung in den Test-Reiter
+						</button>
+					</form>
+				</details>
 			{/if}
 		{:else}
 			<p class="hinweis">Teams richten System-Admins ein.</p>

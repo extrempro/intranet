@@ -10,7 +10,14 @@
  * - Nur Microsoft-Konten (Entra-Objekt-ID); Ruhezeiten wie bei Push
  */
 import { and, eq, inArray, isNotNull, isNull, lt, lte, or, sql } from 'drizzle-orm';
-import { activityBody, activityFor, TEAMS_TAB_ENTITY, type TeamsItem } from '../teams.ts';
+import {
+	activityBody,
+	activityFor,
+	TEAMS_TAB_ENTITY,
+	TEAMS_TEST_ENTITY,
+	type TeamsItem
+} from '../teams.ts';
+import { teamsResource } from './teams-sso.ts';
 import { getEntraConfig, GraphError, graphAppPost } from './auth/entra.ts';
 import { db } from './db/index.ts';
 import { notifications, persons } from './db/schema.ts';
@@ -154,7 +161,9 @@ export async function teamsStatus(): Promise<TeamsStatus | null> {
 /** Testmeldung an die eigene Person (nur Microsoft-Konten). */
 export async function sendTeamsTest(
 	personId: string,
-	post: GraphPost = graphAppPost
+	post: GraphPost = graphAppPost,
+	/** true: Klick öffnet den Test-Tab mit einem Ziel, um den Sprung zu prüfen */
+	testTab = false
 ): Promise<string> {
 	const [p] = await db
 		.select({ oid: persons.entraOid })
@@ -169,8 +178,15 @@ export async function sendTeamsTest(
 			ENDPOINT,
 			activityBody(
 				appId,
-				activityFor([{ title: 'Testmeldung aus dem Intranet', detail: 'Intranet', link: '/' }]),
-				[p.oid]
+				activityFor([
+					{
+						title: testTab ? 'Test: Sprung in den Test-Tab' : 'Testmeldung aus dem Intranet',
+						detail: 'Intranet',
+						link: testTab ? '/sprung-angekommen' : '/'
+					}
+				]),
+				[p.oid],
+				testTab ? TEAMS_TEST_ENTITY : TEAMS_TAB_ENTITY
 			)
 		);
 	} catch (err) {
@@ -211,10 +227,17 @@ export async function teamsAppPackage(origin: string): Promise<{ name: string; d
 				contentUrl: `${origin}/teams/tab?ziel={subEntityId}`,
 				websiteUrl: origin,
 				scopes: ['personal']
+			},
+			{
+				// Vorübergehend: prüft, ob das Intranet ganz in Teams laufen kann
+				entityId: TEAMS_TEST_ENTITY,
+				name: 'Test',
+				contentUrl: `${origin}/teams/test?ziel={subEntityId}`,
+				scopes: ['personal']
 			}
 		],
 		validDomains: [host],
-		webApplicationInfo: { id: entra.clientId },
+		webApplicationInfo: { id: entra.clientId, resource: teamsResource(origin, entra.clientId) },
 		showLoadingIndicator: false
 	};
 	const gruen: [number, number, number, number] = [15, 110, 86, 255];
