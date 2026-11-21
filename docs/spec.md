@@ -113,7 +113,7 @@ Ein gemeinsames Intranet für mehrere Mandanten (Häuser) mit Neuigkeiten, Organ
 Für Personen ohne Microsoft-Konto. Angelegt durch die Verwaltung per Einladung.
 
 - **Zweiter Faktor Pflicht**: Authenticator-App (TOTP) oder Passkey.
-- **Wiederherstellungscodes**: Einmalcodes (**Vorschlag**: 10), im Konto neu erzeugbar.
+- **Wiederherstellungscodes**: 10 Einmalcodes, im Konto neu erzeugbar.
 - **Passwortrichtlinie** (Standardwerte):
   - mindestens 12 Zeichen, bis 128 erlaubt, Leerzeichen erlaubt (Passphrasen)
   - keine Pflicht zu Zeichenarten, kein regelmäßiger Wechsel
@@ -201,8 +201,8 @@ Konto, Redaktion (nur mit Rolle), Verwaltung (nur Admins), Handbuch, Führung er
 
 1. Begrüßung mit Mandant und Datum; Knopf **„Startseite anpassen“**.
 2. **Dringende Meldungen** als rotes Banner (Kap. 8.2).
-3. **Favoriten**: Kacheln, höchstens 8. Hinzufügen per Stern ☆ auf der jeweiligen Seite. Standard: Rechtliches, IT, FAQs, Pläne.
-4. **Karten**: Neuigkeiten, Heute und morgen, Neu in Ihren Hubs, Speiseplan, Neueste Pläne (KBB).
+3. **Favoriten**: Kacheln, höchstens 8. Hinzufügen per Stern ☆ auf der jeweiligen Seite. Neue Personen bekommen die Standard-Favoriten ihres Mandanten (Verwaltung → Mandanten → Startseite für neue Personen).
+4. **Karten**: Neuigkeiten, Heute und morgen, Neu in deinen Hubs, Speiseplan, Neueste Pläne (KBB).
 
 **Startseite anpassen**: Karten ein-/ausblenden und mit ↑ ↓ sortieren; im selben Modus Favoriten mit ← → sortieren und mit × entfernen. „Auf Standard zurücksetzen“ führt zum Standard des Mandanten (Verwaltung → Mandanten). Die Einstellung gilt für das Konto, also auf allen Geräten. Dringende Meldungen und Favoriten stehen immer oben.
 
@@ -407,11 +407,11 @@ Nur Mandanten-Admins (eigener Mandant) und System-Admins.
 | Benutzer und Rollen  | Benutzerliste, lokale Konten anlegen/deaktivieren, Rollen mit Geltungsbereich, Rollen aus Entra-Gruppen                                                       |
 | Anmeldung            | Entra-Verbindung, Zugangsgruppe, Abgleich, Graph-Berechtigungen; Passwortrichtlinie (4.2)                                                                     |
 | Regeln für Inhalte   | Anheften, Dringende Meldungen, Schreibrechte, Kalender, Zuständigkeiten, Hinter den Kulissen, Schwarzes Brett, Hub-Anträge, Reaktionen                        |
-| Benachrichtigungen   | Web Push, E-Mail (Absender), Teams; Status und Testnachricht                                                                                                  |
+| Benachrichtigungen   | Web Push, E-Mail (SMTP), Teams (Meldungen, App-Paket, Aussehen); Status und Testnachricht                                                                     |
 | Rückmeldungen        | Eingegangene Fehler und Ideen bearbeiten, beantworten                                                                                                         |
 | Löschfristen         | Kap. 15                                                                                                                                                       |
 | Protokoll            | Änderungen in der Verwaltung                                                                                                                                  |
-| System               | Version, Zustand, Sicherungen                                                                                                                                 |
+| System               | Startklar, Version, Zustand, Sicherungen                                                                                                                      |
 
 Jede Änderung in der Verwaltung wird protokolliert (wer, was, wann; ohne Inhalte von Beiträgen).
 
@@ -447,17 +447,17 @@ Weitere Regeln:
 
 - Beiträge gehören der Einheit und bleiben beim Deaktivieren eines Kontos erhalten.
 - Reaktionen: nur „hat reagiert“ wird gespeichert, angezeigt nur die Anzahl – auch der Verwaltung.
-- Offline zwischengespeicherte Dateien liegen auf dem Gerät und werden beim Abmelden gelöscht (**Vorschlag**).
+- Offline zwischengespeicherte Dateien liegen auf dem Gerät und werden beim Abmelden gelöscht.
 - Für den Betriebsrat wird eine Unterlage zum Intranet erstellt (Daten, Auswertbarkeit, Protokolle).
 
 ---
 
 ## 16. Sicherheit (OWASP ASVS Level 2)
 
-- **Authentisierung** nach Kap. 4; Passwörter mit Argon2id gehasht (**Vorschlag**).
+- **Authentisierung** nach Kap. 4; Passwörter mit Argon2id gehasht.
 - **Sitzungen**: sichere, HttpOnly-, SameSite-Cookies; Abmelden nach Inaktivität; Sitzungen beendbar.
 - **Erneute Anmeldung** vor kritischen Verwaltungsaktionen (Rollen vergeben und entziehen, Konten sperren und freigeben, Anmeldung und Entra, SMTP): Microsoft-Konten melden sich neu bei Microsoft an, lokale Konten bestätigen mit dem zweiten Faktor; gilt 10 Minuten. In der Teams-App nicht möglich, dort Link in den Browser.
-- **Zugriffskontrolle** serverseitig für jede Anfrage: Rolle, Geltungsbereich und Mandant. Mandantentrennung zusätzlich auf Datenbankebene absichern (**Vorschlag**: Row-Level Security in PostgreSQL).
+- **Zugriffskontrolle** serverseitig für jede Anfrage: Rolle, Geltungsbereich und Mandant. Mandantentrennung zusätzlich auf Datenbankebene mit Row-Level Security in PostgreSQL.
 - **Eingaben**: Validierung serverseitig; HTML aus dem Editor wird bereinigt; Schutz gegen CSRF; Content Security Policy und übliche Sicherheits-Header.
 - **Dateien**: Verschlüsselung je Datei mit eigenem Schlüssel; Schlüssel werden mit einem Hauptschlüssel geschützt; Auslieferung nur nach Rechteprüfung; Typprüfung und Größenlimits beim Hochladen.
 - **Ausgehende Verbindungen** nur zu freigegebenen Zielen: Microsoft (Anmeldung, Graph), SMTP-Server, Push-Dienste, `api.pwnedpasswords.com`; später Spielplan-Quelle. Schutz gegen SSRF (nur HTTPS, keine internen Adressen).
@@ -481,10 +481,11 @@ Weitere Regeln:
 
 ## 18. Betrieb
 
-- Docker Compose: Anwendung, PostgreSQL; Dateien in einem verschlüsselten Volume bzw. verschlüsselt im Dateisystem.
-- Erreichbar über den Reverse Proxy; Bereitstellung per Compose aus dem Repo.
-- Konfiguration über Umgebungsvariablen bzw. Secrets (keine Secrets im Repo).
-- Sicherung von Datenbank und Dateien (**Vorschlag**: täglich, Aufbewahrung 30 Tage, regelmäßiger Wiederherstellungstest).
+- Docker Compose: Anwendung, PostgreSQL und Dienst `backup`. Die Images baut GitHub Actions je Release (`ghcr.io/extrempro/intranet`, `…/intranet-backup`); die Version wird über `INTRANET_VERSION` gewählt.
+- Erreichbar über den Reverse Proxy; Bereitstellung per Compose aus dem Repo. Konfiguration über Umgebungsvariablen (keine Secrets im Repo).
+- Dateien verschlüsselt in einem eigenen Volume.
+- **Sicherung** von Datenbank und Dateien: täglich, mit age verschlüsselt, 30 Tage Aufbewahrung, wöchentlicher Wiederherstellungstest; Zustand unter Verwaltung → System.
+- **Startklar** (Verwaltung → System) zeigt, ob alles für den Betrieb eingerichtet ist. Schritt für Schritt: `docs/inbetriebnahme.md`.
 - Firewall-Freigaben ausgehend siehe Kap. 16.
 
 ---
@@ -503,16 +504,12 @@ Weitere Regeln:
 
 - Zugriff für Externe auf die Pläne des KBB
 - Urlaubsbeantragung
-- Start-Favoriten pro Mandant
 - Organigramm als eigene Darstellung im Intranet, Strukturpflege („Gehört zu“, „Nur im Organigramm“, Beziehungen) und Rolle „Organisation pflegen“
 - Notfall-Upload des Speiseplans durch die Verwaltung
 - Gemeinsame Einheit „Geschäftsführung“ (ersetzt durch Intendanz, kaufmännische Geschäftsführung, GMD)
 
 ---
 
-## 20. Vorschlag: Umsetzung in Etappen
+## 20. Umsetzung
 
-1. Anmeldung (Entra, lokal), Mandanten, Rollen, Einheiten, Neuigkeiten, Startseite
-2. Benachrichtigungen, FAQs, Kalender, Pläne (KBB), Speiseplan
-3. Hubs, Hinter den Kulissen, Schwarzes Brett, Nachrichten, Redaktion
-4. Führung, Einführungen, Handbuch, Feinschliff, Sicherheitsprüfung
+Alle Etappen sind umgesetzt (Anmeldung und Verwaltung; Benachrichtigungen, FAQs, Kalender, Pläne, Speiseplan; Hubs, Hinter den Kulissen, Schwarzes Brett, Nachrichten, Redaktion; Führung, Handbuch, Sicherheitsprüfung, Teams-App). Änderungen seitdem stehen in `CHANGELOG.md` und unter „Neu im Intranet“.

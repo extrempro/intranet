@@ -39,8 +39,6 @@ services:
       MAIL_FROM: ${MAIL_FROM:-}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-}
       MAIL_REPLY_TO: ${MAIL_REPLY_TO:-}
-      # Früherer Name, gilt weiter als Absender
-      MAIL_SENDER: ${MAIL_SENDER:-}
       PUSH_CONTACT: ${PUSH_CONTACT:-}
       INITIAL_TENANT_NAME: ${INITIAL_TENANT_NAME:-}
       INITIAL_TENANT_SHORT: ${INITIAL_TENANT_SHORT:-}

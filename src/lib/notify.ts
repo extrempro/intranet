@@ -102,8 +102,6 @@ export const TOPICS: TopicDefinition[] = [
 	}
 ];
 
-export type Topic = (typeof TOPICS)[number]['key'];
-
 /** Ruhezeiten (Kap. 11.3): keine Push-Nachrichten, danach gesammelt. */
 export interface QuietHours {
 	on: boolean;
@@ -138,10 +136,6 @@ export const EMAIL_MODES: { key: EmailMode; label: string; hint: string }[] = [
 	{ key: 'taeglich', label: 'Täglich', hint: 'Gesammelt um 7 Uhr' },
 	{ key: 'woechentlich', label: 'Wöchentlich', hint: 'Gesammelt montags um 7 Uhr' }
 ];
-
-export function isTopic(key: string): boolean {
-	return TOPICS.some((t) => t.key === key);
-}
 
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 

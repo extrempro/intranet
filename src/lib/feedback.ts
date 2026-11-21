@@ -5,7 +5,6 @@ export const FEEDBACK_KINDS = [
 	{ key: 'fehler', label: 'Fehler', hint: 'Etwas funktioniert nicht wie erwartet' },
 	{ key: 'idee', label: 'Idee', hint: 'Vorschlag, was besser werden kann' }
 ] as const;
-export type FeedbackKind = (typeof FEEDBACK_KINDS)[number]['key'];
 
 export const FEEDBACK_STATUS = {
 	neu: 'Neu',

@@ -13,14 +13,18 @@ Was das Intranet können soll, steht in der **[Spezifikation](docs/spec.md)**.
 
 ## Entwicklung
 
-Voraussetzungen: Node.js 24 oder neuer, eine PostgreSQL-Datenbank (z. B. über `docker compose up db`).
+Voraussetzungen: Node.js 26, eine PostgreSQL-Datenbank (17), z. B.:
 
 ```bash
-cp .env.example .env        # Werte anpassen
+docker run -d --name intranet-db -p 5432:5432 \
+  -e POSTGRES_USER=intranet -e POSTGRES_PASSWORD=intranet -e POSTGRES_DB=intranet postgres:17-alpine
+cp .env.example .env        # DATABASE_URL, APP_DATABASE_PASSWORD, ENCRYPTION_KEY setzen
 npm install
-npm run db:migrate          # sobald Migrationen vorhanden sind
-npm run dev
+npm run dev                 # spielt Migrationen ein; Einrichtungslink steht im Terminal
 ```
+
+Ohne System-Admin schreibt die Anwendung beim Start einen Einrichtungslink ins Log (Hauptmandant,
+erster Admin als lokales Konto), siehe [docs/inbetriebnahme.md](docs/inbetriebnahme.md).
 
 | Befehl                 | Zweck                                             |
 | ---------------------- | ------------------------------------------------- |

@@ -77,8 +77,8 @@
 			<h3>Betreiber-Konto einladen</h3>
 			{#if !data.mailBereit}
 				<p class="meldung fehler">
-					Der E-Mail-Versand ist noch nicht eingerichtet (MAIL_SENDER). Einladungen können nicht
-					verschickt werden.
+					Der E-Mail-Versand ist noch nicht eingerichtet (Verwaltung → Benachrichtigungen → E-Mail).
+					Einladungen können nicht verschickt werden.
 				</p>
 			{/if}
 			{#if form && 'eingeladen' in form}
