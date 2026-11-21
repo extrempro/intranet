@@ -1,6 +1,9 @@
 <script lang="ts">
 	/* eslint-disable svelte/no-navigation-without-resolve -- Links von Einträgen (geprüft: https/http oder eigene Pfade) und Suchparameter */
 	import { enhance } from '$app/forms';
+	import { replaceState } from '$app/navigation';
+	import { page } from '$app/state';
+	import Info from '#lib/components/Info.svelte';
 	import { resolve } from '$app/paths';
 	import Icon from '#lib/components/Icon.svelte';
 	import RechtlichEintrag from '#lib/components/RechtlichEintrag.svelte';
@@ -31,16 +34,59 @@
 	const heute = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date());
 	const KLAMMER =
 		'M15 7l-6.5 6.5a1.5 1.5 0 0 0 3 3l6.5 -6.5a3 3 0 0 0 -6 -6l-6.5 6.5a4.5 4.5 0 0 0 9 9l6.5 -6.5';
-	const sprungziele = $derived(
+	// Reiter je Art (Entwurf): Vereinbarungen und Gesetze/Tarifverträge getrennt
+	const reiterListe = $derived(
 		[
 			...AGREEMENT_KINDS.map((k) => ({
-				id: `h-${k.key}`,
+				key: k.key as string,
 				label: k.label,
 				n: data.vereinbarungen.filter((v) => v.kind === k.key).length
 			})),
-			{ id: 'h-gesetze', label: 'Gesetze und Tarifverträge', n: data.links.length }
-		].filter((z) => z.n > 0)
+			...LEGAL_KINDS.map((k) => ({
+				key: k.key as string,
+				label: k.label,
+				n: data.links.filter((l) => l.kind === k.key).length
+			}))
+		].filter((r) => r.n > 0 || data.canWrite)
 	);
+	let gewaehlt = $state(page.url.searchParams.get('reiter') ?? '');
+	const reiter = $derived(
+		reiterListe.find((r) => r.key === gewaehlt)?.key ?? reiterListe[0]?.key ?? 'betrieb'
+	);
+	const istVereinbarung = $derived(AGREEMENT_KINDS.some((k) => k.key === reiter));
+	function waehle(key: string) {
+		gewaehlt = key;
+		const u = new URL(page.url.href);
+		u.searchParams.set('reiter', key);
+		replaceState(u, {});
+	}
+
+	// „Neu oder geändert“: Stand in den letzten 30 Tagen
+	const grenze = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(
+		new Date(Date.now() - 30 * 86400000)
+	);
+	const neu = (v: { versionDate: string; validFrom: string }) =>
+		v.versionDate >= grenze && v.validFrom <= heute;
+	let nurNeu = $state(false);
+	let sortierung = $state<'az' | 'stand' | 'gilt'>('az');
+	const SORTEN = [
+		{ k: 'az', l: 'Titel A–Z' },
+		{ k: 'stand', l: 'Neuester Stand' },
+		{ k: 'gilt', l: 'Gilt ab' }
+	] as const;
+	const imReiter = $derived(vereinbarungen.filter((v) => v.kind === reiter));
+	const sichtbar = $derived(
+		imReiter
+			.filter((v) => !nurNeu || v.versionDate >= grenze)
+			.toSorted((a, b) =>
+				sortierung === 'stand'
+					? b.versionDate.localeCompare(a.versionDate)
+					: sortierung === 'gilt'
+						? b.validFrom.localeCompare(a.validFrom)
+						: a.title.localeCompare(b.title, 'de')
+			)
+	);
+	const mandantName = $derived(data.mandanten.find((m) => m.id === data.tenantId)?.name ?? '');
 </script>
 
 <svelte:head><title>Rechtliches · Intranet</title></svelte:head>
@@ -98,13 +144,19 @@
 	{/if}
 	{#if form && 'ok' in form}<p class="meldung" role="status">{form.ok}</p>{/if}
 
-	{#if sprungziele.length > 1}
-		<nav class="pillen" aria-label="Abschnitte">
-			{#each sprungziele as z (z.id)}
-				<a class="pille" href="#{z.id}">{z.label} <span class="anzahl">{z.n}</span></a>
-			{/each}
-		</nav>
-	{/if}
+	<div class="pillen" role="group" aria-label="Art">
+		{#each reiterListe as r (r.key)}
+			<button
+				type="button"
+				class="pille"
+				aria-pressed={r.key === reiter}
+				aria-current={r.key === reiter ? 'true' : undefined}
+				onclick={() => waehle(r.key)}
+			>
+				{r.label} <span class="anzahl">{r.n}</span>
+			</button>
+		{/each}
+	</div>
 
 	<div class="suchfeld">
 		<label class="sr-only" for="suche-recht">Rechtliches durchsuchen</label>
@@ -118,160 +170,194 @@
 		/>
 	</div>
 
-	{#each AGREEMENT_KINDS as k (k.key)}
-		{@const liste = vereinbarungen.filter((v) => v.kind === k.key)}
-		{#if liste.length || (!suche && data.canWrite)}
-			<section class="stapel" aria-labelledby="h-{k.key}">
-				<h2 id="h-{k.key}">{k.label}</h2>
-				{#if liste.length === 0}<p class="karte hinweis">Noch keine eingestellt.</p>{/if}
-				{#if liste.length}
-					<ul class="vliste">
-						{#each liste as v (v.id)}
-							<li>
-								<a href={resolve('/(app)/rechtliches/[id]', { id: v.id })}>
-									<span class="vtext">
-										<span class="vtitel">
-											<strong>{v.title}</strong>
-											{#if v.validFrom > heute}<span class="schild warn">
-													Gilt ab {formatIsoDate(v.validFrom)}
-												</span>{/if}
-										</span>
-										<span class="unter">
-											Gilt ab {formatIsoDate(v.validFrom)} · Stand {formatIsoDate(v.versionDate)}
-										</span>
+	{#if istVereinbarung}
+		{@const art = AGREEMENT_KINDS.find((k) => k.key === reiter)}
+		<section class="stapel" aria-labelledby="h-vereinbarungen">
+			<h2 id="h-vereinbarungen" class="sr-only">{art?.label}</h2>
+			<div class="werkzeugzeile">
+				<button
+					type="button"
+					class="pille"
+					aria-pressed={nurNeu}
+					aria-current={nurNeu ? 'true' : undefined}
+					onclick={() => (nurNeu = !nurNeu)}
+				>
+					Neu oder geändert
+				</button>
+				<Info
+					thema="Neu oder geändert"
+					text="Zeigt nur Vereinbarungen, deren Stand in den letzten 30 Tagen liegt: neu eingestellt oder durch eine neue Fassung ersetzt."
+				/>
+				<label class="sortieren">
+					<span>Sortieren</span>
+					<select class="pille" bind:value={sortierung}>
+						{#each SORTEN as o (o.k)}<option value={o.k}>{o.l}</option>{/each}
+					</select>
+				</label>
+			</div>
+			<p class="hinweis klein" role="status">
+				{sichtbar.length} von {imReiter.length}
+				{art?.label}{mandantName ? ` · ${mandantName}` : ''}
+			</p>
+			{#if sichtbar.length === 0}
+				<p class="karte hinweis">
+					{suche || nurNeu ? 'Nichts gefunden.' : 'Noch keine eingestellt.'}
+				</p>
+			{:else}
+				<ul class="vliste">
+					{#each sichtbar as v (v.id)}
+						<li>
+							<a href={resolve('/(app)/rechtliches/[id]', { id: v.id })}>
+								<span class="vtext">
+									<span class="vtitel">
+										<strong>{v.title}</strong>
+										{#if v.validFrom > heute}<span class="schild warn">
+												Gilt ab {formatIsoDate(v.validFrom)}
+											</span>{:else if neu(v)}<span class="schild">Neu</span>{/if}
 									</span>
-									{#if v.attachments.length}
-										<span class="anlagen" aria-label="{v.attachments.length} Dateien">
-											<Icon d={KLAMMER} size={14} stroke={2} />{v.attachments.length}
-										</span>
-									{/if}
-									<Icon d="M9 6l6 6l-6 6" size={18} stroke={2} />
-								</a>
-							</li>
-						{/each}
-					</ul>
-				{/if}
-			</section>
-		{/if}
-	{/each}
-
-	<section class="stapel" aria-labelledby="h-gesetze">
-		<h2 id="h-gesetze">Gesetze und Tarifverträge</h2>
-		{#each LEGAL_KINDS as k (k.key)}
-			{@const liste = links.filter((l) => l.kind === k.key)}
-			{#if liste.length}
-				<div class="karte">
-					<h3>{k.label}</h3>
-					<ul class="eintraege">
-						{#each liste as l, i (l.id)}
-							<li id="eintrag-{l.id}">
-								<div class="zeile">
-									<span class="stapel eng">
-										{#if l.url}
-											<a
-												href={l.url}
-												target={extern(l.url) ? '_blank' : undefined}
-												rel={extern(l.url) ? 'noopener noreferrer' : undefined}
-											>
-												{l.title}
-											</a>
-										{:else if l.fileId}
-											<a href="/dateien/{l.fileId}" target="_blank" rel="noopener">{l.title}</a>
-										{:else}<strong>{l.title}</strong>{/if}
-										{#if l.description}<span class="hinweis">{l.description}</span>{/if}
-										{#if l.url && l.fileId}
-											<a
-												class="klein-link"
-												href="/dateien/{l.fileId}"
-												target="_blank"
-												rel="noopener"
-											>
-												{l.fileName}
-											</a>
-										{/if}
+									<span class="unter">
+										Gilt ab {formatIsoDate(v.validFrom)} · Stand {formatIsoDate(v.versionDate)}
 									</span>
-									{#if data.canWrite}
-										<span class="werkzeuge">
-											<form method="POST" action="?/eintragVerschieben" use:enhance>
-												<input type="hidden" name="id" value={l.id} />
-												<button
-													class="mini"
-													name="richtung"
-													value="hoch"
-													disabled={i === 0}
-													aria-label="{l.title} nach oben"
-												>
-													↑
-												</button>
-												<button
-													class="mini"
-													name="richtung"
-													value="runter"
-													disabled={i === liste.length - 1}
-													aria-label="{l.title} nach unten"
-												>
-													↓
-												</button>
-											</form>
-										</span>
-									{/if}
-								</div>
-								{#if data.canWrite}
-									<details
-										class="bearbeiten"
-										open={(form &&
-											'eintrag' in form &&
-											form.eintrag === l.id &&
-											'felder' in form) ||
-											undefined}
-									>
-										<summary>Bearbeiten</summary>
-										<RechtlichEintrag
-											praefix="e{l.id.slice(0, 8)}"
-											mandant={data.tenantId}
-											fehler={fehlerFuer(l.id)}
-											werte={{
-												id: l.id,
-												kind: l.kind,
-												title: l.title,
-												description: l.description ?? '',
-												url: l.url ?? '',
-												datei:
-													l.fileId && l.fileName
-														? { id: l.fileId, name: l.fileName, size: l.fileSize ?? 0 }
-														: null
-											}}
-										/>
-										<form method="POST" action="?/eintragLoeschen" use:enhance>
-											<input type="hidden" name="id" value={l.id} />
-											<button class="linkknopf" type="submit">Eintrag löschen</button>
-										</form>
-									</details>
+								</span>
+								{#if v.attachments.length}
+									<span class="anlagen" aria-label="{v.attachments.length} Dateien">
+										<Icon d={KLAMMER} size={14} stroke={2} />{v.attachments.length}
+									</span>
 								{/if}
-							</li>
-						{/each}
-					</ul>
-				</div>
+								<Icon d="M9 6l6 6l-6 6" size={18} stroke={2} />
+							</a>
+						</li>
+					{/each}
+				</ul>
 			{/if}
-		{/each}
-		{#if links.length === 0}
-			<p class="karte hinweis">{suche ? 'Nichts gefunden.' : 'Noch keine Einträge.'}</p>
-		{/if}
-		{#if data.canWrite}
-			<details class="karte" bind:open={neuOffen}>
-				<summary><strong>Eintrag hinzufügen</strong></summary>
-				{#key neuZaehler}
-					<RechtlichEintrag
-						praefix="neu"
-						mandant={data.tenantId}
-						fehler={fehlerFuer('neu')}
-						nachSpeichern={() => neuZaehler++}
-						werte={{ id: null, kind: 'gesetz', title: '', description: '', url: '', datei: null }}
-					/>
-				{/key}
-			</details>
-		{/if}
-	</section>
+		</section>
+	{:else}
+		<section class="stapel" aria-labelledby="h-gesetze">
+			<h2 id="h-gesetze" class="sr-only">
+				{LEGAL_KINDS.find((k) => k.key === reiter)?.label}
+			</h2>
+			{#each LEGAL_KINDS.filter((k) => k.key === reiter) as k (k.key)}
+				{@const liste = links.filter((l) => l.kind === k.key)}
+				{#if liste.length}
+					<div class="karte">
+						<ul class="eintraege">
+							{#each liste as l, i (l.id)}
+								<li id="eintrag-{l.id}">
+									<div class="zeile">
+										<span class="stapel eng">
+											{#if l.url}
+												<a
+													href={l.url}
+													target={extern(l.url) ? '_blank' : undefined}
+													rel={extern(l.url) ? 'noopener noreferrer' : undefined}
+												>
+													{l.title}
+												</a>
+											{:else if l.fileId}
+												<a href="/dateien/{l.fileId}" target="_blank" rel="noopener">{l.title}</a>
+											{:else}<strong>{l.title}</strong>{/if}
+											{#if l.description}<span class="hinweis">{l.description}</span>{/if}
+											{#if l.url && l.fileId}
+												<a
+													class="klein-link"
+													href="/dateien/{l.fileId}"
+													target="_blank"
+													rel="noopener"
+												>
+													{l.fileName}
+												</a>
+											{/if}
+										</span>
+										{#if data.canWrite}
+											<span class="werkzeuge">
+												<form method="POST" action="?/eintragVerschieben" use:enhance>
+													<input type="hidden" name="id" value={l.id} />
+													<button
+														class="mini"
+														name="richtung"
+														value="hoch"
+														disabled={i === 0}
+														aria-label="{l.title} nach oben"
+													>
+														↑
+													</button>
+													<button
+														class="mini"
+														name="richtung"
+														value="runter"
+														disabled={i === liste.length - 1}
+														aria-label="{l.title} nach unten"
+													>
+														↓
+													</button>
+												</form>
+											</span>
+										{/if}
+									</div>
+									{#if data.canWrite}
+										<details
+											class="bearbeiten"
+											open={(form &&
+												'eintrag' in form &&
+												form.eintrag === l.id &&
+												'felder' in form) ||
+												undefined}
+										>
+											<summary>Bearbeiten</summary>
+											<RechtlichEintrag
+												praefix="e{l.id.slice(0, 8)}"
+												mandant={data.tenantId}
+												fehler={fehlerFuer(l.id)}
+												werte={{
+													id: l.id,
+													kind: l.kind,
+													title: l.title,
+													description: l.description ?? '',
+													url: l.url ?? '',
+													datei:
+														l.fileId && l.fileName
+															? { id: l.fileId, name: l.fileName, size: l.fileSize ?? 0 }
+															: null
+												}}
+											/>
+											<form method="POST" action="?/eintragLoeschen" use:enhance>
+												<input type="hidden" name="id" value={l.id} />
+												<button class="linkknopf" type="submit">Eintrag löschen</button>
+											</form>
+										</details>
+									{/if}
+								</li>
+							{/each}
+						</ul>
+					</div>
+				{/if}
+			{/each}
+			{#if links.filter((l) => l.kind === reiter).length === 0}
+				<p class="karte hinweis">{suche ? 'Nichts gefunden.' : 'Noch keine Einträge.'}</p>
+			{/if}
+			{#if data.canWrite}
+				<details class="karte" bind:open={neuOffen}>
+					<summary><strong>Eintrag hinzufügen</strong></summary>
+					{#key neuZaehler}
+						<RechtlichEintrag
+							praefix="neu"
+							mandant={data.tenantId}
+							fehler={fehlerFuer('neu')}
+							nachSpeichern={() => neuZaehler++}
+							werte={{
+								id: null,
+								kind: reiter === 'tarif' ? 'tarif' : 'gesetz',
+								title: '',
+								description: '',
+								url: '',
+								datei: null
+							}}
+						/>
+					{/key}
+				</details>
+			{/if}
+		</section>
+	{/if}
 </div>
 
 <style>
@@ -288,15 +374,11 @@
 		gap: 10px;
 	}
 	h1,
-	h2,
-	h3 {
+	h2 {
 		margin: 0;
 	}
 	h2 {
 		font-size: 1.1rem;
-	}
-	h3 {
-		font-size: 1rem;
 	}
 	.eng {
 		gap: 4px;
@@ -318,6 +400,23 @@
 	}
 	.suchfeld {
 		max-width: 560px;
+	}
+	.werkzeugzeile {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px;
+	}
+	.sortieren {
+		margin-left: auto;
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 14px;
+		color: var(--mu);
+	}
+	.klein {
+		font-size: 13px;
 	}
 	.anzahl {
 		font-size: 12px;
@@ -403,9 +502,6 @@
 	}
 	.eintraege li:first-child {
 		border-top: 0;
-	}
-	h3 + .eintraege {
-		margin-top: 6px;
 	}
 	.zeile {
 		display: flex;

@@ -31,6 +31,7 @@ import {
 	hubApplications,
 	hubSubscriptions,
 	messages,
+	personPreferences,
 	persons,
 	roleAssignments,
 	tenants,
@@ -187,9 +188,52 @@ async function hubInScope(p: Principal, unitId: string) {
 	return u;
 }
 
+export interface HubChannels {
+	bell: boolean;
+	push: boolean;
+	email: boolean;
+}
+
+/** Voreinstellung der Kanäle für Hubs ohne eigene Einstellung. */
+export const HUB_DEFAULTS: HubChannels = { bell: true, push: false, email: false };
+
+/** Eigener „Standard für neue Abos“ (Meine Hubs). */
+export async function getHubDefaults(personId: string): Promise<HubChannels> {
+	const [r] = await db
+		.select({ d: personPreferences.hubDefaults })
+		.from(personPreferences)
+		.where(eq(personPreferences.personId, personId));
+	return r?.d ?? HUB_DEFAULTS;
+}
+
+export async function setHubDefaults(personId: string, d: HubChannels) {
+	const hubDefaults = { bell: d.bell, push: d.push, email: d.email };
+	await db
+		.insert(personPreferences)
+		.values({ personId, hubDefaults })
+		.onConflictDoUpdate({ target: personPreferences.personId, set: { hubDefaults } });
+}
+
+/** Standard auf alle Abos (auch Pflicht-Abos) übertragen. */
+export async function applyHubDefaults(p: Principal) {
+	const d = await getHubDefaults(p.personId);
+	for (const h of await myHubs(p)) await setChannels(p, h.id, d.bell, d.push, d.email);
+}
+
+/** Alle freiwilligen Abos beenden; Pflicht-Abos bleiben. */
+export async function unsubscribeAllOptional(p: Principal): Promise<number> {
+	const optional = (await myHubs(p)).filter((h) => !h.mandatory);
+	for (const h of optional) await unsubscribe(p, h.id);
+	return optional.length;
+}
+
 export async function subscribe(p: Principal, unitId: string) {
 	await hubInScope(p, unitId);
-	await db.insert(hubSubscriptions).values({ personId: p.personId, unitId }).onConflictDoNothing();
+	const d = await getHubDefaults(p.personId);
+	await db
+		.insert(hubSubscriptions)
+		.values({ personId: p.personId, unitId, ...d })
+		.onConflictDoNothing();
 }
 
 export async function unsubscribe(p: Principal, unitId: string) {
@@ -224,9 +268,18 @@ export async function myHubs(p: Principal) {
 		.select()
 		.from(hubSubscriptions)
 		.where(eq(hubSubscriptions.personId, p.personId));
+	const d = await getHubDefaults(p.personId);
 	return hubs.map((h) => {
 		const s = subs.find((x) => x.unitId === h.id);
-		return { ...h, bell: s?.bell ?? true, push: s?.push ?? false, email: s?.email ?? false };
+		const k = s ?? HUB_DEFAULTS;
+		return {
+			...h,
+			bell: k.bell,
+			push: k.push,
+			email: k.email,
+			/** weicht vom eigenen Standard ab */
+			eigen: k.bell !== d.bell || k.push !== d.push || k.email !== d.email
+		};
 	});
 }
 

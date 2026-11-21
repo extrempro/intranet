@@ -54,6 +54,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		anzeigen: ansicht === 'alle' ? await listAds(p, { categoryId: kategorie, q }) : [],
 		meine: ansicht === 'meine' ? await myAds(p) : [],
 		pruefen: ansicht === 'moderation' ? await moderationQueue(p) : [],
+		// Zähler am Reiter „Prüfen“ (nur Moderation)
+		pruefenAnzahl: mod ? (await moderationQueue(p)).length : 0,
 		neu: url.searchParams.has('neu'),
 		favorit: favs.some((f) => f.key === 'schwarzes-brett')
 	};

@@ -159,9 +159,9 @@
 						text="Die Zeiten gelten in deutscher Zeit, auch wenn dein Gerät anders eingestellt ist. Über Mitternacht geht, zum Beispiel 20 bis 7 Uhr. Dringende Meldungen kommen trotzdem sofort, wenn du das unten nicht ausschaltest."
 					/>
 				</legend>
-				<label class="option">
-					<input type="checkbox" name="ruhe" checked={e.quiet.on} />
+				<label class="option-schalter">
 					<span>Ruhezeiten einhalten</span>
+					<input type="checkbox" role="switch" class="schalter" name="ruhe" checked={e.quiet.on} />
 				</label>
 				<p class="hinweis klein">Kein Push und keine Teams-Nachricht in dieser Zeit.</p>
 				<div class="zeiten">
@@ -178,9 +178,15 @@
 					<input type="checkbox" name="ruhe_wochenende" checked={e.quiet.weekend} />
 					<span>Am Wochenende auch</span>
 				</label>
-				<label class="option">
-					<input type="checkbox" name="ruhe_dringend" checked={e.quiet.urgent} />
+				<label class="option-schalter trenner">
 					<span>Dringende Meldungen trotzdem sofort</span>
+					<input
+						type="checkbox"
+						role="switch"
+						class="schalter"
+						name="ruhe_dringend"
+						checked={e.quiet.urgent}
+					/>
 				</label>
 			</fieldset>
 
@@ -222,6 +228,19 @@
 </div>
 
 <style>
+	.option-schalter {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		min-height: 44px;
+		font-weight: 600;
+	}
+	.option-schalter.trenner {
+		margin-top: 6px;
+		padding-top: 8px;
+		border-top: 1px solid var(--bd);
+	}
 	.benachrichtigungen {
 		display: flex;
 		flex-direction: column;
