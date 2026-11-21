@@ -10,6 +10,13 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.15.0 · 21.11.2026 · Tabellen, Infokästen und Unterstreichen
+
+- Im Editor kannst du jetzt Text unterstreichen.
+- Neu sind einfache Tabellen mit Kopfzeile. Zeilen und Spalten fügst du über eine eigene Leiste hinzu oder löschst sie. Am Handy lassen sich breite Tabellen seitlich verschieben.
+- Mit dem Infokasten hebst du Wichtiges hervor, wahlweise als Info, Hinweis oder Warnung.
+- Das gibt es bei Neuigkeiten, Hub-Beiträgen, „Hinter den Kulissen“ und FAQs.
+
 ## 0.14.0 · 21.11.2026 · Bilder im Text
 
 - Bilder lassen sich jetzt direkt in den Text setzen: über 🖼 im Editor, per Hineinziehen oder Einfügen. Das geht bei Neuigkeiten, Hub-Beiträgen, „Hinter den Kulissen“ und FAQs.

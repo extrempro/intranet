@@ -7,6 +7,7 @@
 	import type { Editor } from '@tiptap/core';
 	import { BILD_GROESSEN, type BildAusrichtung, type BildGroesse } from '#lib/bilder-im-text.ts';
 	import { bildHochladen, bildVorbereiten, istTextbild } from '#lib/textbild.ts';
+	import { KASTEN_ARTEN, KASTEN_NAMEN, type KastenArt } from '#lib/textbausteine.ts';
 
 	let {
 		name,
@@ -102,12 +103,40 @@
 		editor?.chain().focus().updateAttributes('image', attrs).run();
 
 	onMount(async () => {
-		const [{ Editor, mergeAttributes }, { default: StarterKit }, { default: Image }] =
-			await Promise.all([
-				import('@tiptap/core'),
-				import('@tiptap/starter-kit'),
-				import('@tiptap/extension-image')
-			]);
+		const [
+			{ Editor, Node, mergeAttributes },
+			{ default: StarterKit },
+			{ default: Image },
+			{ TableKit }
+		] = await Promise.all([
+			import('@tiptap/core'),
+			import('@tiptap/starter-kit'),
+			import('@tiptap/extension-image'),
+			import('@tiptap/extension-table')
+		]);
+		// Infokasten: <div class="kasten kasten-info|hinweis|warnung">
+		const Infokasten = Node.create({
+			name: 'infokasten',
+			group: 'block',
+			content: '(paragraph|bulletList|orderedList)+',
+			defining: true,
+			addAttributes() {
+				return {
+					art: {
+						default: 'info',
+						parseHTML: (el: HTMLElement) =>
+							KASTEN_ARTEN.find((a) => el.classList.contains(`kasten-${a}`)) ?? 'info',
+						renderHTML: (attrs: { art: KastenArt }) => ({ class: `kasten kasten-${attrs.art}` })
+					}
+				};
+			},
+			parseHTML() {
+				return [{ tag: 'div.kasten' }];
+			},
+			renderHTML({ HTMLAttributes }) {
+				return ['div', HTMLAttributes, 0];
+			}
+		});
 		// Größe und Ausrichtung als Klassen (bild-klein, bild-links …), siehe bilder-im-text.ts
 		const TextBild = Image.extend({
 			addAttributes() {
@@ -151,6 +180,9 @@
 			element,
 			extensions: [
 				...(bilder ? [TextBild] : []),
+				Infokasten,
+				// Einfache Tabellen: keine verbundenen Zellen, keine Spaltenbreiten
+				TableKit.configure({ table: { resizable: false } }),
 				StarterKit.configure({
 					heading: { levels: [2, 3] },
 					code: false,
@@ -204,6 +236,25 @@
 		return editor?.isActive(typ, attrs) ?? false;
 	};
 
+	const kastenArt = () => {
+		void tick;
+		return (editor?.getAttributes('infokasten').art as KastenArt | undefined) ?? null;
+	};
+	const kopfzeile = () => {
+		void tick;
+		const tabelle = editor?.state.selection.$from;
+		if (!tabelle) return false;
+		for (let d = tabelle.depth; d > 0; d--) {
+			const n = tabelle.node(d);
+			if (n.type.name === 'table') return n.firstChild?.firstChild?.type.name === 'tableHeader';
+		}
+		return false;
+	};
+	function kastenUmschalten() {
+		if (aktiv('infokasten')) editor?.chain().focus().lift('infokasten').run();
+		else editor?.chain().focus().wrapIn('infokasten', { art: 'info' }).run();
+	}
+
 	function linkSetzen() {
 		const adresse = linkAdresse.trim();
 		const kette = editor?.chain().focus().extendMarkRange('link');
@@ -226,6 +277,12 @@
 			t: 'I',
 			on: aktiv('italic'),
 			run: () => editor?.chain().focus().toggleItalic().run()
+		},
+		{
+			l: 'Unterstrichen',
+			t: 'U',
+			on: aktiv('underline'),
+			run: () => editor?.chain().focus().toggleUnderline().run()
 		},
 		{
 			l: 'H2 Überschrift',
@@ -308,6 +365,27 @@
 		{/if}
 		<button
 			type="button"
+			aria-label="Tabelle einfügen"
+			title="Tabelle einfügen"
+			aria-pressed={aktiv('table')}
+			disabled={!editor || aktiv('table')}
+			onclick={() =>
+				editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+		>
+			▦
+		</button>
+		<button
+			type="button"
+			aria-label="Infokasten"
+			title="Infokasten"
+			aria-pressed={aktiv('infokasten')}
+			disabled={!editor}
+			onclick={kastenUmschalten}
+		>
+			ⓘ
+		</button>
+		<button
+			type="button"
 			aria-label="Rückgängig"
 			title="Rückgängig"
 			disabled={!editor}
@@ -327,7 +405,7 @@
 	</div>
 	{#if bilder && aktiv('image')}
 		<!-- Ausgewähltes Bild: Größe, Ausrichtung, Beschreibung -->
-		<div class="bildleiste" role="toolbar" aria-label="Bild" tabindex="-1">
+		<div class="zusatzleiste" role="toolbar" aria-label="Bild" tabindex="-1">
 			<span class="gruppe" role="group" aria-label="Größe">
 				{#each [['klein', 'Klein'], ['mittel', 'Mittel'], ['voll', 'Volle Breite']] as [g, t] (g)}
 					<button
@@ -357,6 +435,63 @@
 			<button type="button" onclick={beschreibungAendern}>Beschreibung</button>
 			<button type="button" onclick={() => editor?.chain().focus().deleteSelection().run()}>
 				Bild entfernen
+			</button>
+		</div>
+	{/if}
+	{#if aktiv('table')}
+		<!-- Tabelle: Zeilen und Spalten -->
+		<div class="zusatzleiste" role="toolbar" aria-label="Tabelle" tabindex="-1">
+			<span class="gruppe" role="group" aria-label="Zeilen">
+				<button type="button" onclick={() => editor?.chain().focus().addRowBefore().run()}>
+					+ Zeile oben
+				</button>
+				<button type="button" onclick={() => editor?.chain().focus().addRowAfter().run()}>
+					+ Zeile unten
+				</button>
+				<button type="button" onclick={() => editor?.chain().focus().deleteRow().run()}>
+					− Zeile
+				</button>
+			</span>
+			<span class="gruppe" role="group" aria-label="Spalten">
+				<button type="button" onclick={() => editor?.chain().focus().addColumnBefore().run()}>
+					+ Spalte links
+				</button>
+				<button type="button" onclick={() => editor?.chain().focus().addColumnAfter().run()}>
+					+ Spalte rechts
+				</button>
+				<button type="button" onclick={() => editor?.chain().focus().deleteColumn().run()}>
+					− Spalte
+				</button>
+			</span>
+			<button
+				type="button"
+				aria-pressed={kopfzeile()}
+				title="Erste Zeile als Überschrift der Spalten"
+				onclick={() => editor?.chain().focus().toggleHeaderRow().run()}
+			>
+				Kopfzeile
+			</button>
+			<button type="button" onclick={() => editor?.chain().focus().deleteTable().run()}>
+				Tabelle entfernen
+			</button>
+		</div>
+	{/if}
+	{#if aktiv('infokasten')}
+		<!-- Infokasten: Art wählen oder auflösen -->
+		<div class="zusatzleiste" role="toolbar" aria-label="Infokasten" tabindex="-1">
+			<span class="gruppe" role="group" aria-label="Art">
+				{#each KASTEN_ARTEN as a (a)}
+					<button
+						type="button"
+						aria-pressed={kastenArt() === a}
+						onclick={() => editor?.chain().focus().updateAttributes('infokasten', { art: a }).run()}
+					>
+						{KASTEN_NAMEN[a]}
+					</button>
+				{/each}
+			</span>
+			<button type="button" onclick={() => editor?.chain().focus().lift('infokasten').run()}>
+				Kasten entfernen
 			</button>
 		</div>
 	{/if}
@@ -504,7 +639,7 @@
 		outline: 3px solid var(--focus);
 		outline-offset: 2px;
 	}
-	.bildleiste {
+	.zusatzleiste {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
@@ -513,11 +648,11 @@
 		border-bottom: 1px solid var(--bd);
 		background: var(--tint);
 	}
-	.bildleiste .gruppe {
+	.zusatzleiste .gruppe {
 		display: inline-flex;
 		gap: 2px;
 	}
-	.bildleiste button {
+	.zusatzleiste button {
 		min-height: 36px;
 		padding: 4px 10px;
 		border: 1px solid var(--bd);
@@ -528,12 +663,12 @@
 		font-size: 14px;
 		cursor: pointer;
 	}
-	.bildleiste button[aria-pressed='true'] {
+	.zusatzleiste button[aria-pressed='true'] {
 		background: var(--fill);
 		border-color: var(--fill);
 		color: #fff;
 	}
-	.bildleiste button:disabled {
+	.zusatzleiste button:disabled {
 		opacity: 0.45;
 		cursor: not-allowed;
 	}
