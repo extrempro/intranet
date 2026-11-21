@@ -1,6 +1,6 @@
 # Sicherheitsprüfung (OWASP ASVS 4.0, Level 2)
 
-Stand: 21.11.2026 (Nachprüfung Teams-App, siehe unten) · Grundlage: Kap. 16 der Spezifikation · Geprüft: Code und laufende Instanz (Produktions-Build, zwei Mandanten, Rollen System-Admin, Mandanten-Admin, Redaktion, Moderation, Hub-Team, normale Person).
+Stand: 21.11.2026 (Nachprüfungen Teams-App sowie Einrichtung, erneute Anmeldung und Bildbeschreibungen, siehe unten) · Grundlage: Kap. 16 der Spezifikation · Geprüft: Code und laufende Instanz (Produktions-Build, zwei Mandanten, Rollen System-Admin, Mandanten-Admin, Redaktion, Moderation, Hub-Team, normale Person).
 
 Vorgehen:
 
@@ -52,6 +52,25 @@ Ohne Fund geprüft:
 - **Anmeldung nur mit Passkey:** Challenge einmalig und 5 Minuten gültig, Zuordnung über ein `SameSite=Strict`-Cookie; Benutzerverifikation (PIN, Biometrie) Pflicht, da der Passkey hier Passwort und zweiten Faktor ersetzt; Zähler gegen geklonte Schlüssel; gleiche Verzögerung bei Fehlversuchen; nur aktive lokale Konten.
 - **„Neu im Intranet“:** Markdown aus `CHANGELOG.md` (Teil des Builds, nicht änderbar über die Oberfläche), trotzdem mit derselben Erlaubnisliste bereinigt wie Beiträge.
 - **Hub-Standards, „Alle Abos beenden“, Löschen von Plänen:** ändern nur eigene Einstellungen bzw. prüfen das Recht für den Bereich des Plans serverseitig, mit Protokoll.
+
+## Nachprüfung Einrichtung, erneute Anmeldung, Bildbeschreibungen (21.11.2026, Version 0.10.0)
+
+Geprüft: Einrichtung ohne Microsoft (Einrichtungslink, Notfallzugang), erneute Anmeldung vor kritischen Verwaltungsaktionen, Teams-Anmeldung, Bildbeschreibungen; Gegenprobe Zugriff über Rollen- und Mandantengrenzen, CSRF, XSS, offene Weiterleitungen. Zwei Instanzen: eine eingerichtete mit zwei Mandanten und Konten für System-Admin (lokal und Microsoft), Mandanten-Admin, Redaktion, normale Person ohne Rollen und Betreiber; eine frisch installierte ohne Admin. Dazu wieder ein **unabhängiger Prüfer** (separater Agent, nur Adressen, Zugänge und Code).
+
+| #   | Fund                                                                                                                                                                                                                                   | Schwere | Stand                                                                                              |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------- |
+| E9  | Mit einem Einrichtungs- oder Notfall-Link ließen sich durch gleichzeitige Anfragen mehrere System-Admins anlegen (nachgestellt: 4 parallele Anfragen, 4 Admins). Voraussetzung ist der Link, also Zugriff auf die Logs bzw. den Server | niedrig | behoben: Link wird in der Transaktion zuerst atomar verbraucht, nur eine Anfrage kommt durch; Test |
+
+Hinweise des unabhängigen Prüfers (kein ausnutzbarer Fund mit hoher oder mittlerer Schwere):
+
+| #   | Hinweis                                                                                                                              | Schwere | Bewertung                                                                                                                                                            |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P4  | Verwaltungsaktionen verlangen die erneute Anmeldung vor der Rechteprüfung; eine Person ohne Recht sieht also zuerst die Aufforderung | Info    | akzeptiert: Die Rechteprüfung greift danach unverändert, ohne Recht keine Wirkung                                                                                    |
+| P5  | Pläne der KBBs sind für alle Angemeldeten aller Mandanten sichtbar                                                                   | Info    | gewollt (Spezifikation: KBB-Pläne oft auch für andere Mandanten wichtig)                                                                                             |
+| P6  | Domains eines Mandanten und Betreiber-Konten verlangen keine erneute Anmeldung                                                       | Info    | bewusst außerhalb des festgelegten Umfangs (Rollen, Sperren, Anmeldung/Entra, SMTP); eine neue Domain allein gibt keine Rechte, Rollen bleiben bestätigungspflichtig |
+| P7  | Teilen sich Browser und Teams eine Sitzung, gälte eine Bestätigung im Browser auch in Teams                                          | Info    | verworfen: Die Teams-App legt immer eine eigene Sitzung an; nur in den Testdaten zeigten beide Cookies auf dieselbe                                                  |
+
+Ohne Fund geprüft (eigene Prüfung und Prüfer): Übernahme einer frischen Instanz ohne Link nicht möglich, ungültige und verbrauchte Links abgewiesen, Erst-Link nur gültig ohne aktiven System-Admin; erneute Anmeldung nicht über andere Aktionen, die Teams-Sitzung oder Wiederverwendung umgehbar, falsche Codes zählen als Fehlversuch mit wachsender Wartezeit, Wiederherstellungscodes einmalig; Teams-Token vollständig geprüft (Signatur, Aussteller, Empfänger, Scope, Client, Mandant); Bildbeschreibungen nur für eigene bzw. zum Beitrag gehörende Bilder, sicher maskiert; Verwaltungs- und Bearbeitungsseiten für Personen ohne Recht 403/404; fremder Origin 403; Weiterleitungen mit `//`, Backslash, `%09`, `%0a` landen auf der Startseite; Uploads nach Inhalt geprüft. `npm audit`: vier mittlere Meldungen nur im Entwicklungswerkzeug `drizzle-kit` (nicht im Produktions-Image); Pakete auf aktuellem Stand gebracht.
 
 ## Stand je ASVS-Kapitel
 
