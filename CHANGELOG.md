@@ -10,6 +10,11 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.11.1 · 21.11.2026 · Aufgeräumtes Menü
+
+- Im Menü oben rechts gibt es nur noch **Mein Konto**. Dort stehen auch Profilfoto und Kontaktdaten.
+- „Neu im Intranet“, Datenschutz und Impressum sind jetzt kleine Symbole unten im Hauptmenü. Auf dem Handy findest du sie ganz unten unter „Konto“.
+
 ## 0.11.0 · 21.11.2026 · Hinweis auf neue Versionen
 
 - Gibt es eine neue Version des Intranets, während du es offen hast, erscheint oben der Hinweis „Neu laden“. Das gilt im Browser und in der Teams-App. Beim nächsten Klick auf einen Link bekommst du die neue Version ohnehin.

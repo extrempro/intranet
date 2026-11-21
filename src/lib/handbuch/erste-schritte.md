@@ -25,7 +25,7 @@ Am PC stehen die Bereiche links, am Handy unten.
 - **Glocke**: deine Benachrichtigungen.
 - **Konto-Menü**: Profil, Einstellungen, Handbuch und Abmelden.
 
-Ganz unten auf jeder Seite stehen die Version und **Neu im Intranet**: Dort siehst du, was sich zuletzt geändert hat.
+Unten im Hauptmenü findest du drei Symbole: **Neu im Intranet** (was sich zuletzt geändert hat, mit der aktuellen Version), **Datenschutz** und **Impressum**. Auf dem Handy stehen sie ganz unten unter **Konto**.
 
 Gibt es eine neue Version, während du das Intranet offen hast, erscheint oben der Hinweis **Neu laden**. Spätestens beim nächsten Klick auf einen Link bekommst du sie ohnehin. Danach zeigt das Intranet einmal kurz, was neu ist. Das kannst du unter **Konto → Weitere Einstellungen** abschalten.
 

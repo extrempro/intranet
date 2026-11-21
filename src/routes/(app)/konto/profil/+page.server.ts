@@ -1,8 +1,7 @@
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import {
 	ContactValidationError,
-	getOwnProfile,
 	ProfileError,
 	removePhoto,
 	setPhoto,
@@ -11,9 +10,11 @@ import {
 import { uploadLimit } from '#lib/server/rate-limit.ts';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals }) => ({
-	profil: await getOwnProfile(requirePrincipal(locals))
-});
+/** Profil steht auf der Konto-Seite; hier nur noch die Aktionen (Foto, Kontaktdaten). */
+export const load: PageServerLoad = ({ locals }) => {
+	requirePrincipal(locals);
+	redirect(303, '/konto');
+};
 
 const str = (f: FormData, k: string) => String(f.get(k) ?? '').slice(0, 200);
 
