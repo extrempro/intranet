@@ -54,6 +54,8 @@ Das Intranet läuft auch als App in Teams. Ebenfalls unter **Benachrichtigungen*
 4. Das **App-Paket** herunterladen und im Teams Admin Center unter „Apps verwalten“ hochladen.
 5. Die App per **Setup-Richtlinie** für alle oder die Intranet-Gruppe installieren.
 
+Unter **Aussehen der Teams-App** legst du Name, Beschreibung, Herausgeber, Akzentfarbe und Symbol fest. Ohne eigene Angaben nimmt die App das App-Symbol und die Farbe des Hauptmandanten. Nach jeder Änderung entsteht eine neue Version des Pakets: herunterladen und die App im Teams Admin Center aktualisieren.
+
 In Teams melden sich die Leute automatisch mit ihrem Microsoft-Konto an. Meldungen kommen nur bei Personen mit Microsoft-Konto an, bei denen die App installiert ist. **Testmeldung an mich** zeigt, ob alles passt. Ändert sich die Adresse des Intranets oder die App-Registrierung, erzeuge eine neue Version des Pakets und aktualisiere die App.
 
 ## System
