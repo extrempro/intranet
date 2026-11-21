@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import FaqFormular from '#lib/components/FaqFormular.svelte';
+	import MitFrage from '#lib/components/MitFrage.svelte';
 
 	let { data, form } = $props();
-	let loeschenFragen = $state(false);
 </script>
 
 <svelte:head><title>FAQ bearbeiten · Intranet</title></svelte:head>
@@ -31,19 +31,16 @@
 	{/key}
 
 	<section class="karte">
-		{#if loeschenFragen}
-			<form method="POST" action="?/loeschen" class="aktionen">
-				<span>Diese FAQ samt Anhängen endgültig löschen?</span>
-				<button class="knopf rot" type="submit">Ja, löschen</button>
-				<button class="knopf zweit" type="button" onclick={() => (loeschenFragen = false)}>
-					Abbrechen
-				</button>
-			</form>
-		{:else}
-			<button class="linkknopf" type="button" onclick={() => (loeschenFragen = true)}>
-				FAQ löschen
-			</button>
-		{/if}
+		<MitFrage
+			action="?/loeschen"
+			knopf="FAQ löschen"
+			frage={{
+				titel: 'FAQ löschen?',
+				text: 'Die FAQ wird samt Anhängen endgültig gelöscht.',
+				ja: 'Löschen',
+				gefahr: true
+			}}
+		/>
 	</section>
 </div>
 
@@ -64,9 +61,5 @@
 		flex-wrap: wrap;
 		gap: 10px;
 		align-items: center;
-	}
-	.rot {
-		background: var(--rot);
-		border-color: var(--rot);
 	}
 </style>

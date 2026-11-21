@@ -7,12 +7,12 @@
 	import OfflinePlan from '#lib/components/OfflinePlan.svelte';
 	import PdfAnsicht from '#lib/components/PdfAnsicht.svelte';
 	import { formatRange, planState } from '#lib/plans.ts';
+	import MitFrage from '#lib/components/MitFrage.svelte';
 
 	let { data, form } = $props();
 	const pl = $derived(data.plan);
 	const datei = $derived(resolve('/(app)/dateien/[id]', { id: pl.fileId }));
 	let bearbeiten = $state(false);
-	let loeschenFragen = $state(false);
 	const LADEN = 'M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2M7 11l5 5l5 -5M12 4l0 12';
 	const DRUCKER =
 		'M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4M7 13m0 2a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2z';
@@ -112,30 +112,27 @@
 						</button>
 					</div>
 				</form>
-			{:else if loeschenFragen}
-				<form method="POST" action="?/loeschen" class="aktionen">
-					<span>
-						„{pl.title}“ endgültig löschen? Der Plan verschwindet für alle, auch für andere
-						Mandanten.
-					</span>
-					<button class="knopf rot" type="submit">Ja, löschen</button>
-					<button class="knopf zweit" type="button" onclick={() => (loeschenFragen = false)}>
-						Abbrechen
-					</button>
-				</form>
 			{:else}
 				<div class="aktionen">
 					<span class="hinweis schieben">Nur für die Fachpflege des KBB sichtbar</span>
 					<button class="knopf zweit klein" type="button" onclick={() => (bearbeiten = true)}>
 						Neue Fassung hochladen
 					</button>
-					<button
-						class="knopf zweit klein rotschrift"
-						type="button"
-						onclick={() => (loeschenFragen = true)}
+					<MitFrage
+						action="?/loeschen"
+						frage={{
+							titel: `„${pl.title}“ löschen?`,
+							text: 'Der Plan verschwindet endgültig für alle, auch für andere Mandanten.',
+							ja: 'Löschen',
+							gefahr: true
+						}}
 					>
-						Löschen
-					</button>
+						{#snippet ausloeser(klick: () => void)}
+							<button class="knopf zweit klein rotschrift" type="button" onclick={klick}>
+								Löschen
+							</button>
+						{/snippet}
+					</MitFrage>
 				</div>
 			{/if}
 		</section>
@@ -205,9 +202,6 @@
 		margin-right: auto;
 		font-size: 14px;
 	}
-	.rotschrift {
-		color: var(--err-tx);
-	}
 	.zeile {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
@@ -218,10 +212,6 @@
 		flex-wrap: wrap;
 		gap: 10px;
 		align-items: center;
-	}
-	.rot {
-		background: var(--rot);
-		border-color: var(--rot);
 	}
 	.informieren {
 		display: flex;

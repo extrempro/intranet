@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MitFrage from '#lib/components/MitFrage.svelte';
 	import NeuesPasswort from '#lib/components/NeuesPasswort.svelte';
 	let { data, form } = $props();
 	const datum = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium' });
@@ -55,18 +56,33 @@
 					</span>
 				</div>
 				{#if !s.aktuell}
-					<form method="POST" action="?/sitzungBeenden">
-						<input type="hidden" name="id" value={s.id} />
-						<button class="linkknopf" type="submit">Beenden</button>
-					</form>
+					<MitFrage
+						action="?/sitzungBeenden"
+						knopf="Beenden"
+						knopfLabel="Sitzung auf {geraet(s.geraet)} beenden"
+						frage={{
+							titel: 'Gerät abmelden?',
+							text: `${geraet(s.geraet)} wird abgemeldet und muss sich neu anmelden.`,
+							ja: 'Abmelden'
+						}}
+					>
+						{#snippet felder()}<input type="hidden" name="id" value={s.id} />{/snippet}
+					</MitFrage>
 				{/if}
 			</li>
 		{/each}
 	</ul>
 	{#if data.sitzungen.length > 1}
-		<form method="POST" action="?/andereBeenden">
-			<button class="knopf" type="submit">Alle anderen Geräte abmelden</button>
-		</form>
+		<MitFrage
+			action="?/andereBeenden"
+			knopf="Alle anderen Geräte abmelden"
+			knopfKlasse="knopf"
+			frage={{
+				titel: 'Alle anderen Geräte abmelden?',
+				text: 'Nur dieses Gerät bleibt angemeldet. Auf allen anderen musst du dich neu anmelden.',
+				ja: 'Abmelden'
+			}}
+		/>
 	{/if}
 
 	{#if !data.lokal}

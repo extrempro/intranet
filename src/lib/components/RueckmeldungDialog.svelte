@@ -4,6 +4,7 @@
 	 * Schließen fragt nach, solange Text oder Bild nicht gesendet sind.
 	 */
 	import { page } from '$app/state';
+	import { frage } from '#lib/frage.svelte.ts';
 	import RueckmeldungFormular from './RueckmeldungFormular.svelte';
 
 	let {
@@ -30,8 +31,18 @@
 		}
 	});
 
-	function schliessen() {
-		if (hatEingabe && !confirm('Rückmeldung verwerfen? Dein Text ist noch nicht gesendet.')) return;
+	async function schliessen() {
+		if (
+			hatEingabe &&
+			!(await frage({
+				titel: 'Rückmeldung verwerfen?',
+				text: 'Dein Text ist noch nicht gesendet.',
+				ja: 'Verwerfen',
+				nein: 'Weiter schreiben',
+				gefahr: true
+			}))
+		)
+			return;
 		offen = false;
 		hatEingabe = false;
 		if (ausloeser instanceof HTMLElement) ausloeser.focus();
