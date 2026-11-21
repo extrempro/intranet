@@ -23,6 +23,7 @@
 			standard: Omit<Marke, 'farbe'>;
 			farbe: string;
 			quelle: 'eigen' | 'mandant' | 'standard';
+			eigenerUmriss: boolean;
 			farbig: string;
 			umriss: string;
 		};
@@ -83,35 +84,78 @@
 			neuFarbig = await alsPng(zeichne(192));
 			vorschauFarbig = URL.createObjectURL(neuFarbig);
 
-			// Umriss: weiß, wo das Bild deckt; geht nur mit durchsichtigem Hintergrund
-			const k = zeichne(32);
-			const ctx = k.getContext('2d')!;
-			const daten = ctx.getImageData(0, 0, 32, 32);
-			let durchsichtig = 0;
-			for (let i = 3; i < daten.data.length; i += 4) if (daten.data[i] < 128) durchsichtig++;
-			if (durchsichtig / (32 * 32) > 0.1) {
-				for (let i = 0; i < daten.data.length; i += 4) {
-					const an = daten.data[i + 3] >= 128;
-					daten.data[i] = daten.data[i + 1] = daten.data[i + 2] = 255;
-					daten.data[i + 3] = an ? 255 : 0;
-				}
-				ctx.putImageData(daten, 0, 0);
-				neuUmriss = await alsPng(k);
-				vorschauUmriss = URL.createObjectURL(neuUmriss);
+			// Umriss aus demselben Bild; geht nur mit durchsichtigem Hintergrund
+			const umriss = await alsUmriss(img);
+			if (umriss) {
+				neuUmriss = umriss;
+				vorschauUmriss = URL.createObjectURL(umriss);
 			} else {
 				symbolHinweis =
-					'Das Bild hat keinen durchsichtigen Hintergrund. Für das Umriss-Symbol nimmt Teams dann ein einfaches Standard-Symbol.';
+					'Das Bild hat keinen durchsichtigen Hintergrund. Lade unten ein eigenes Umriss-Symbol hoch, sonst nimmt Teams ein einfaches Standard-Symbol.';
 			}
 		} catch (err) {
 			symbolFehler = err instanceof Error ? err.message : 'Das Bild konnte nicht gelesen werden.';
 		}
 	}
 
+	/**
+	 * Umriss-Symbol für Teams: 32 × 32, weiß auf durchsichtig. Die Deckkraft bleibt
+	 * erhalten (weiche Kanten) und wird verstärkt, damit dünne Linien beim
+	 * Verkleinern nicht verschwinden. null, wenn der Hintergrund nicht durchsichtig ist.
+	 */
+	async function alsUmriss(img: HTMLImageElement): Promise<Blob | null> {
+		const w = img.naturalWidth || 512;
+		const h = img.naturalHeight || 512;
+		const seite = Math.min(w, h);
+		const k = document.createElement('canvas');
+		k.width = k.height = 32;
+		const ctx = k.getContext('2d')!;
+		ctx.imageSmoothingQuality = 'high';
+		ctx.drawImage(img, (w - seite) / 2, (h - seite) / 2, seite, seite, 0, 0, 32, 32);
+		const daten = ctx.getImageData(0, 0, 32, 32);
+		let durchsichtig = 0;
+		for (let i = 3; i < daten.data.length; i += 4) if (daten.data[i] < 128) durchsichtig++;
+		if (durchsichtig / (32 * 32) <= 0.1) return null;
+		for (let i = 0; i < daten.data.length; i += 4) {
+			const a = daten.data[i + 3];
+			daten.data[i] = daten.data[i + 1] = daten.data[i + 2] = 255;
+			daten.data[i + 3] = a < 16 ? 0 : Math.min(255, Math.round(a * 1.8));
+		}
+		ctx.putImageData(daten, 0, 0);
+		return alsPng(k);
+	}
+
+	/** Eigenes Umriss-Symbol, unabhängig vom farbigen Symbol. */
+	async function umrissGewaehlt(e: Event & { currentTarget: HTMLInputElement }) {
+		symbolFehler = '';
+		symbolHinweis = '';
+		neuUmriss = null;
+		vorschauUmriss = null;
+		const datei = e.currentTarget.files?.[0];
+		if (!datei) return;
+		if (datei.size > 10_000_000) {
+			symbolFehler = 'Die Datei ist zu groß (höchstens 10 MB).';
+			return;
+		}
+		try {
+			const umriss = await alsUmriss(await laden(datei));
+			if (!umriss) {
+				symbolFehler =
+					'Das Umriss-Symbol braucht einen durchsichtigen Hintergrund. Teams zeigt nur die deckenden Stellen, in Weiß.';
+				return;
+			}
+			neuUmriss = umriss;
+			vorschauUmriss = URL.createObjectURL(umriss);
+		} catch (err) {
+			symbolFehler = err instanceof Error ? err.message : 'Das Bild konnte nicht gelesen werden.';
+		}
+	}
+
 	const hochladen: SubmitFunction = (eingabe) => {
-		// „Symbol des Hauptmandanten verwenden“ schickt nur zuruecksetzen=ja
+		// „Eigene Symbole entfernen“ schickt nur zuruecksetzen=ja
 		if (eingabe.submitter?.getAttribute('value') !== 'ja') {
-			if (!neuFarbig) return eingabe.cancel();
-			eingabe.formData.set('farbig', neuFarbig, 'farbig.png');
+			if (!neuFarbig && !neuUmriss) return eingabe.cancel();
+			if (neuFarbig) eingabe.formData.set('farbig', neuFarbig, 'farbig.png');
 			if (neuUmriss) eingabe.formData.set('umriss', neuUmriss, 'umriss.png');
 		}
 		const weiter = hierBleiben();
@@ -240,13 +284,28 @@
 				(192 × 192) und das Umriss-Symbol (32 × 32, weiß).
 			</span>
 		</div>
+		<div class="feld">
+			<span>
+				<strong>Umriss-Symbol</strong> (optional) · jetzt: {aussehen.eigenerUmriss
+					? 'eigenes'
+					: 'Standard-Symbol'}
+			</span>
+			<input type="file" accept="image/png,image/webp,image/svg+xml" onchange={umrissGewaehlt} />
+			<span class="hinweis">
+				Für die App-Leiste in Teams. Nur die deckenden Stellen zählen, Teams zeigt sie in Weiß. Am
+				besten ein schlichtes Symbol mit kräftigen Linien auf durchsichtigem Hintergrund; feine
+				Details gehen bei 32 × 32 Pixeln verloren.
+			</span>
+		</div>
 		{#if symbolHinweis}<p class="hinweis">{symbolHinweis}</p>{/if}
 		{#if symbolFehler}<p class="meldung fehler" role="alert">{symbolFehler}</p>{/if}
 		<div class="zeile">
-			<button class="knopf" type="submit" disabled={!neuFarbig}>Symbol speichern</button>
-			{#if aussehen.quelle === 'eigen'}
+			<button class="knopf" type="submit" disabled={!neuFarbig && !neuUmriss}>
+				Symbol speichern
+			</button>
+			{#if aussehen.quelle === 'eigen' || aussehen.eigenerUmriss}
 				<button class="knopf zweit" type="submit" name="zuruecksetzen" value="ja">
-					Symbol des Hauptmandanten verwenden
+					Eigene Symbole entfernen
 				</button>
 			{/if}
 		</div>
@@ -294,8 +353,8 @@
 	}
 	.umriss {
 		flex: none;
-		width: 40px;
-		height: 40px;
+		width: 48px;
+		height: 48px;
 		border-radius: 8px;
 		background: #292929;
 		display: flex;
@@ -303,8 +362,8 @@
 		justify-content: center;
 	}
 	.umriss img {
-		width: 24px;
-		height: 24px;
+		width: 32px;
+		height: 32px;
 	}
 	.zwei {
 		display: grid;

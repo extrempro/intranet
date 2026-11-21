@@ -67,6 +67,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 							standard: TEAMS_MARKE_STANDARD,
 							farbe: a.marke.farbe,
 							quelle: a.quelle,
+							eigenerUmriss: a.eigenerUmriss,
 							farbig: `data:image/png;base64,${Buffer.from(a.farbig).toString('base64')}`,
 							umriss: `data:image/png;base64,${Buffer.from(a.umriss).toString('base64')}`
 						};
@@ -230,11 +231,13 @@ export const actions: Actions = {
 			else {
 				const farbig = f.get('farbig');
 				const umriss = f.get('umriss');
-				if (!(farbig instanceof File))
+				const hatFarbig = farbig instanceof File && farbig.size > 0;
+				const hatUmriss = umriss instanceof File && umriss.size > 0;
+				if (!hatFarbig && !hatUmriss)
 					return fail(400, { bereich: 'teams-marke', fehler: 'Bitte wähle ein Bild.' });
 				await saveTeamsSymbole(
-					new Uint8Array(await farbig.arrayBuffer()),
-					umriss instanceof File && umriss.size ? new Uint8Array(await umriss.arrayBuffer()) : null,
+					hatFarbig ? new Uint8Array(await (farbig as File).arrayBuffer()) : null,
+					hatUmriss ? new Uint8Array(await (umriss as File).arrayBuffer()) : null,
 					p.personId
 				);
 			}
