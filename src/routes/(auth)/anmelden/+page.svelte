@@ -1,8 +1,52 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { browserSupportsWebAuthn, startAuthentication } from '@simplewebauthn/browser';
+	import { onMount } from 'svelte';
 
 	let { data, form } = $props();
 	let lokalOffen = $derived(!data.entraAktiv || !!form?.lokalFehler);
+	let passkeyMoeglich = $state(false);
+	let passkeyLaeuft = $state(false);
+	let passkeyFehler = $state('');
+	onMount(() => (passkeyMoeglich = browserSupportsWebAuthn()));
+
+	/** Anmeldung nur mit Passkey (Gerätesperre per PIN oder Biometrie). */
+	async function mitPasskey() {
+		passkeyFehler = '';
+		passkeyLaeuft = true;
+		try {
+			const opt = await fetch('/anmelden/passkey', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ aktion: 'direkt-optionen' })
+			});
+			if (opt.status === 429) {
+				passkeyFehler = 'Zu viele Anmeldeversuche. Warte bitte kurz.';
+				return;
+			}
+			if (!opt.ok) throw new Error();
+			const antwort = await startAuthentication({ optionsJSON: await opt.json() });
+			const res = await fetch('/anmelden/passkey', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ aktion: 'direkt', antwort, ziel: data.ziel })
+			});
+			const ergebnis = await res.json().catch(() => ({ ok: false }));
+			if (res.status === 429 && ergebnis.warten) {
+				passkeyFehler = `Zu viele Fehlversuche. Warte bitte ${ergebnis.warten} Sekunden.`;
+				return;
+			}
+			if (!ergebnis.ok) throw new Error();
+			// Ziel kommt vom Server und ist dort auf relative Pfade geprüft
+			await goto(ergebnis.ziel, { invalidateAll: true });
+		} catch {
+			passkeyFehler =
+				'Die Anmeldung mit dem Passkey hat nicht geklappt. Nutze sonst E-Mail und Passwort.';
+		} finally {
+			passkeyLaeuft = false;
+		}
+	}
 	const entraHref = $derived(
 		data.ziel === '/' ? '/anmelden/entra' : `/anmelden/entra?ziel=${encodeURIComponent(data.ziel)}`
 	);
@@ -65,6 +109,12 @@
 			<input name="passwort" type="password" autocomplete="current-password" required />
 		</label>
 		<button class="knopf breit" type="submit">Weiter</button>
+		{#if passkeyMoeglich}
+			<button class="knopf zweit breit" type="button" onclick={mitPasskey} disabled={passkeyLaeuft}>
+				Mit Passkey anmelden
+			</button>
+			{#if passkeyFehler}<p class="meldung fehler" role="alert">{passkeyFehler}</p>{/if}
+		{/if}
 		<a class="vergessen" href={resolve('/(auth)/anmelden/passwort-vergessen')}>
 			Passwort vergessen?
 		</a>

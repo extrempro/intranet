@@ -205,6 +205,8 @@
 				mandant={data.ich.mandant}
 				darfVerwaltung={data.darfVerwaltung}
 				darfRedaktion={data.darfRedaktion}
+				datenschutz={data.rechtliches.datenschutz}
+				impressum={data.rechtliches.impressum}
 			/>
 		</span>
 	</header>

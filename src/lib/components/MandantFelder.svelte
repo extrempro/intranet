@@ -27,6 +27,8 @@
 			bg?: string;
 			bgDark?: string;
 			ui?: UiFarben;
+			privacyUrl?: string;
+			imprintUrl?: string;
 		};
 	} = $props();
 
@@ -97,6 +99,30 @@
 	<span>Kürzel</span>
 	<input name="kuerzel" required maxlength="10" value={werte.shortName} />
 	<span class="hinweis">Erscheint oben links, solange kein Logo hochgeladen ist, z. B. BH.</span>
+</label>
+
+<label class="feld">
+	<span>Datenschutzerklärung (Link)</span>
+	<input
+		name="datenschutz"
+		type="url"
+		maxlength="500"
+		placeholder="https://…"
+		value={werte.privacyUrl ?? ''}
+	/>
+</label>
+<label class="feld">
+	<span>Impressum (Link)</span>
+	<input
+		name="impressum"
+		type="url"
+		maxlength="500"
+		placeholder="https://…"
+		value={werte.imprintUrl ?? ''}
+	/>
+	<span class="hinweis">
+		Erscheinen auf der Anmeldeseite und im Kontomenü. Leer lassen, wenn es keine gibt.
+	</span>
 </label>
 
 <div class="modi">

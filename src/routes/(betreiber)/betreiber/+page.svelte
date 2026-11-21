@@ -12,6 +12,8 @@
 		WEEKDAYS
 	} from '#lib/canteen.ts';
 	import { formatSize } from '#lib/format.ts';
+	import Info from '#lib/components/Info.svelte';
+	import PdfZone from '#lib/components/PdfZone.svelte';
 	import { formatRange, planState } from '#lib/plans.ts';
 
 	let { data, form } = $props();
@@ -57,6 +59,23 @@
 				schliessForm = null;
 			}
 		};
+	let zone: PdfZone | undefined = $state();
+	let zonenFehler = $state('');
+	/** Ohne gewählte PDF gar nicht erst absenden. */
+	const hochladen: SubmitFunction = (eingabe) => {
+		const f = eingabe.formData.get('datei');
+		if (!(f instanceof File) || f.size === 0) {
+			eingabe.cancel();
+			zonenFehler = 'Bitte zuerst eine PDF auswählen.';
+			return;
+		}
+		const weiter = nachAktion(eingabe);
+		return async (opts) => {
+			const nach = await weiter;
+			if (typeof nach === 'function') await nach(opts);
+			if (opts.result.type === 'success') zone?.leeren();
+		};
+	};
 	const ANKUENDIGEN: Record<number, string> = {
 		0: 'Nicht vorher ankündigen',
 		3: '3 Tage vorher',
@@ -68,9 +87,25 @@
 <svelte:head><title>Kantinen-Pflege · {loc.name}</title></svelte:head>
 
 <div class="stapel">
-	<p class="karte rahmen hinweis">
-		Dieser Zugang ist auf den Speiseplan und die Infos deiner Kantine beschränkt. Andere Inhalte des
-		Intranets sind hier nicht sichtbar.
+	<p class="karte rahmen hinweis mit-symbol">
+		<svg
+			width="20"
+			height="20"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			aria-hidden="true"
+		>
+			<circle cx="12" cy="12" r="9" />
+			<path d="M12 8h.01M11 12h1v4h1" />
+		</svg>
+		<span>
+			Dieser Zugang ist auf den Speiseplan und die Infos deiner Kantine beschränkt. Andere Inhalte
+			des Intranets sind hier nicht sichtbar.
+		</span>
 	</p>
 
 	<nav class="reiter" aria-label="Bereiche">
@@ -83,51 +118,67 @@
 
 	{#if !infos}
 		<section class="karte stapel" aria-labelledby="h-hochladen">
-			<h2 id="h-hochladen">Neuen Speiseplan hochladen</h2>
+			<h2 id="h-hochladen">
+				Neuen Speiseplan hochladen
+				<Info
+					thema="Speiseplan hochladen"
+					text="Lade den Speiseplan als PDF hoch. Er erscheint bei allen Beschäftigten, die diesen Standort in ihrem Konto eingetragen haben."
+				/>
+			</h2>
 			<form
 				method="POST"
 				action="?/hochladen"
 				enctype="multipart/form-data"
 				class="felder"
-				use:enhance={nachAktion}
+				use:enhance={hochladen}
 			>
-				<label class="feld">
-					<span>PDF-Datei</span>
-					<input type="file" name="datei" accept=".pdf,application/pdf" required />
-					<span class="hinweis">
-						Er erscheint bei allen Beschäftigten, die diesen Standort in ihrem Konto eingetragen
-						haben.
-					</span>
-				</label>
+				<PdfZone bind:this={zone} bind:fehler={zonenFehler} />
 				<div class="zeile">
 					<label class="feld">
-						<span>Gültig von</span>
+						<span>
+							Gültig von
+							<Info
+								thema="Gültig von"
+								text="Ab diesem Tag wird der Speiseplan angezeigt. So kannst du den Plan für nächste Woche schon jetzt hochladen."
+							/>
+						</span>
 						<input
 							type="date"
 							name="von"
 							required
 							value={form && 'upload' in form ? form.upload?.validFrom : montag}
 						/>
-						<span class="hinweis">Ab diesem Tag wird der Speiseplan angezeigt.</span>
 					</label>
 					<label class="feld">
-						<span>Gültig bis</span>
+						<span>
+							Gültig bis
+							<Info
+								thema="Gültig bis"
+								text="Bis zu diesem Tag ist der Speiseplan sichtbar. Danach wird er automatisch gelöscht."
+							/>
+						</span>
 						<input
 							type="date"
 							name="bis"
 							required
 							value={form && 'upload' in form ? form.upload?.validUntil : addDays(montag, 4)}
 						/>
-						<span class="hinweis">Danach wird er automatisch gelöscht.</span>
 					</label>
 				</div>
-				<div><button class="knopf" type="submit">Hochladen</button></div>
+				<div class="rechts"><button class="knopf" type="submit">Hochladen</button></div>
 				<p class="hinweis">Nur PDF, höchstens 20 MB · verschlüsselt gespeichert</p>
+				{#if zonenFehler}<p class="meldung fehler" role="alert">{zonenFehler}</p>{/if}
 			</form>
 		</section>
 
 		<section class="karte stapel" aria-labelledby="h-liste">
-			<h2 id="h-liste">Deine Speisepläne</h2>
+			<h2 id="h-liste">
+				Deine Speisepläne
+				<Info
+					thema="Deine Speisepläne"
+					text="Geplant: erscheint ab „Gültig von“. Aktuell: ist gerade sichtbar. Löschen entfernt das PDF endgültig. Abgelaufene Speisepläne löscht das System selbst."
+				/>
+			</h2>
 			<p class="hinweis">
 				Abgelaufene Speisepläne werden am Tag nach „Gültig bis“ automatisch gelöscht.
 			</p>
@@ -431,6 +482,19 @@
 	}
 	.rahmen {
 		margin: 0;
+	}
+	.mit-symbol {
+		display: flex;
+		align-items: flex-start;
+		gap: 10px;
+	}
+	.mit-symbol svg {
+		flex: none;
+		margin-top: 2px;
+	}
+	.rechts {
+		display: flex;
+		justify-content: flex-end;
 	}
 	.reiter {
 		display: flex;

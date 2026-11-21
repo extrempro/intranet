@@ -1,5 +1,6 @@
 /**
- * Passkeys als zweiter Faktor (WebAuthn, @simplewebauthn/server).
+ * Passkeys als zweiter Faktor oder allein (passwortlos, mit Gerätesperre)
+ * (WebAuthn, @simplewebauthn/server).
  * RP-ID ist der Hostname aus ORIGIN; die Challenge liegt bei der halbfertigen Anmeldung.
  */
 import {
@@ -12,8 +13,8 @@ import {
 } from '@simplewebauthn/server';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../db/index.ts';
-import { passkeys } from '../db/schema.ts';
-import { resetFailures, updatePending, type Pending } from './local.ts';
+import { passkeys, persons } from '../db/schema.ts';
+import { resetFailures, secondFactorWait, updatePending, type Pending } from './local.ts';
 
 function rp(origin: string) {
 	return { origin, rpID: new URL(origin).hostname };
@@ -134,4 +135,74 @@ export async function hasPasskeys(personId: string): Promise<boolean> {
 		.where(eq(passkeys.personId, personId))
 		.limit(1);
 	return rows.length > 0;
+}
+
+// ---------------------------------------------------------------------------
+// Anmeldung nur mit Passkey (ohne Passwort)
+// ---------------------------------------------------------------------------
+
+/**
+ * Optionen für die passwortlose Anmeldung: Der Browser bietet alle Passkeys
+ * dieser Seite an (auffindbare Zugangsdaten); Gerätesperre ist Pflicht.
+ */
+export async function directOptions(origin: string) {
+	return generateAuthenticationOptions({
+		rpID: rp(origin).rpID,
+		allowCredentials: [],
+		userVerification: 'required'
+	});
+}
+
+/**
+ * Prüft eine passwortlose Anmeldung. Gibt die Person zurück oder einen Grund.
+ * Nur aktive lokale Konten; die Sperre nach Fehlversuchen gilt wie beim
+ * zweiten Faktor.
+ */
+export async function verifyDirect(
+	response: AuthenticationResponseJSON,
+	challenge: string,
+	origin: string
+): Promise<{ ok: true; personId: string } | { ok: false; warten?: number }> {
+	if (!response || typeof response.id !== 'string') return { ok: false };
+	const [cred] = await db
+		.select({
+			id: passkeys.id,
+			personId: passkeys.personId,
+			publicKey: passkeys.publicKey,
+			counter: passkeys.counter,
+			transports: passkeys.transports,
+			status: persons.status,
+			authSource: persons.authSource
+		})
+		.from(passkeys)
+		.innerJoin(persons, eq(persons.id, passkeys.personId))
+		.where(eq(passkeys.id, response.id));
+	if (!cred || cred.authSource !== 'local' || cred.status !== 'active') return { ok: false };
+	const warten = await secondFactorWait(cred.personId);
+	if (warten > 0) return { ok: false, warten };
+	try {
+		const result = await verifyAuthenticationResponse({
+			response,
+			expectedChallenge: challenge,
+			expectedOrigin: origin,
+			expectedRPID: rp(origin).rpID,
+			requireUserVerification: true,
+			credential: {
+				id: cred.id,
+				publicKey: cred.publicKey,
+				counter: cred.counter,
+				transports: cred.transports ?? undefined
+			}
+		});
+		if (!result.verified) return { ok: false };
+		await db
+			.update(passkeys)
+			.set({ counter: result.authenticationInfo.newCounter, lastUsedAt: new Date() })
+			.where(eq(passkeys.id, cred.id));
+		await resetFailures(cred.personId);
+		return { ok: true, personId: cred.personId };
+	} catch (err) {
+		console.error('Passwortlose Passkey-Anmeldung abgelehnt:', err);
+		return { ok: false };
+	}
 }

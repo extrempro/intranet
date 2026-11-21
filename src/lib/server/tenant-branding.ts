@@ -27,6 +27,9 @@ export interface Branding {
 	/** Basisadresse der App-Symbole, null = Standard-Symbole */
 	symbol: string | null;
 	symbolStand: number | null;
+	/** Rechtliche Links, null = keiner */
+	datenschutz: string | null;
+	impressum: string | null;
 }
 
 const DEFAULT: Branding = {
@@ -42,10 +45,14 @@ const DEFAULT: Branding = {
 	logoHell: null,
 	logoDunkel: null,
 	symbol: null,
-	symbolStand: null
+	symbolStand: null,
+	datenschutz: null,
+	impressum: null
 };
 const HEX = /^#[0-9a-fA-F]{6}$/;
 const hex = (v: string | null) => (v && HEX.test(v) ? v : null);
+/** Beim Speichern geprüft; hier nochmals, damit nie ein javascript:-Link ausgeliefert wird. */
+const httpLink = (v: string | null) => (v && /^https?:\/\//i.test(v) ? v : null);
 
 const columns = {
 	id: tenants.id,
@@ -55,7 +62,9 @@ const columns = {
 	accentColorDark: tenants.accentColorDark,
 	bgColor: tenants.bgColor,
 	bgColorDark: tenants.bgColorDark,
-	uiColors: tenants.uiColors
+	uiColors: tenants.uiColors,
+	privacyUrl: tenants.privacyUrl,
+	imprintUrl: tenants.imprintUrl
 };
 
 async function toBranding(row: {
@@ -67,6 +76,8 @@ async function toBranding(row: {
 	bgColor: string | null;
 	bgColorDark: string | null;
 	uiColors: unknown;
+	privacyUrl: string | null;
+	imprintUrl: string | null;
 }): Promise<Branding> {
 	const v = await imageVersions(row.id);
 	const url = (datei: string, stand?: number) =>
@@ -94,7 +105,9 @@ async function toBranding(row: {
 		// Ohne eigenes dunkles Logo wird das helle auch im Dunkeln gezeigt
 		logoDunkel: url('logo-dunkel.png', v.logo_dunkel) ?? url('logo-hell.png', v.logo_hell),
 		symbol: v.symbol_512 ? `/marke/${row.id}` : null,
-		symbolStand: v.symbol_512 ?? null
+		symbolStand: v.symbol_512 ?? null,
+		datenschutz: httpLink(row.privacyUrl),
+		impressum: httpLink(row.imprintUrl)
 	};
 }
 
