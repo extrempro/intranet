@@ -131,4 +131,35 @@
 	.knopf.zweit {
 		justify-self: start;
 	}
+	/* Handy: jeder Eintrag als Block statt Tabelle (sonst sehr schmale Spalten) */
+	@media (max-width: 599px) {
+		table,
+		tbody,
+		tr,
+		td {
+			display: block;
+		}
+		thead {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+		}
+		tr {
+			padding: 10px 0;
+			border-bottom: 1px solid var(--bd);
+		}
+		tbody tr:last-child {
+			border-bottom: 0;
+		}
+		td {
+			padding: 2px 14px;
+			border: 0;
+		}
+		td.nowrap {
+			font-size: 13px;
+			color: var(--mu);
+		}
+	}
 </style>

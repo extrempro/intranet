@@ -101,8 +101,8 @@
 					aria-current={data.gewaehlt?.unitId === k.unitId ? 'true' : undefined}
 				>
 					{k.unitName}{#if k.eigener}
-						· dein Mandant{:else}
-						· {k.tenantName}{/if}
+						&nbsp;· dein Mandant{:else}
+						&nbsp;· {k.tenantName}{/if}
 				</a>
 			{/each}
 		</nav>

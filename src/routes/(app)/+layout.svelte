@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { imFenster } from '#lib/imFenster.ts';
 	/* eslint-disable svelte/no-navigation-without-resolve -- Ziele kommen aus dem festen Register in nav.ts, kein Base-Pfad */
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
@@ -280,7 +281,8 @@
 			{/if}
 			<span class="name nur-gross">Intranet</span>
 		</a>
-		<span class="titel nur-handy" aria-hidden="true">{seitentitel}</span>
+		<!-- Handy: Titel nur neben dem Zurück-Pfeil; sonst steht dort das Logo (zu wenig Platz) -->
+		{#if zurueck}<span class="titel nur-handy" aria-hidden="true">{seitentitel}</span>{/if}
 
 		<Kopfsuche ort="kopf" />
 		<span class="luecke nur-gross"></span>
@@ -365,7 +367,7 @@
 						{#if reiter.mehr.length}
 							<details class="mehr" bind:open={mehrOffen}>
 								<summary class="pille"> Mehr </summary>
-								<ul class="mehrliste">
+								<ul class="mehrliste" use:imFenster>
 									{#each reiter.mehr as p (p.key)}
 										<li>
 											<a href={p.href} onclick={() => (mehrOffen = false)}>{p.label}</a>

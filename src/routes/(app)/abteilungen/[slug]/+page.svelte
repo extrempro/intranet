@@ -240,7 +240,7 @@
 													<span class="unter">
 														{#if z.kontakt.vertretung}Vertretung{/if}
 														{#if z.kontakt.vertretung && z.kontakt.phone}
-															·
+															&nbsp;·
 														{/if}
 														{#if z.kontakt.phone}
 															<a class="tel" href="tel:{z.kontakt.phone}">{z.kontakt.phone}</a>
