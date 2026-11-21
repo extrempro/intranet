@@ -604,30 +604,85 @@ input[type='checkbox'].schalter:focus-visible {
 	margin: 12px auto;
 	border-radius: 10px;
 }
-:where(.text, .inhalt) img.bild-klein {
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-klein {
 	width: 33%;
 }
-:where(.text, .inhalt) img.bild-mittel {
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-mittel {
 	width: 50%;
 }
-:where(.text, .inhalt) img.bild-voll {
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-voll {
 	width: 100%;
 }
-:where(.text, .inhalt) img.bild-links {
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-b10 {
+	width: 10%;
+}
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-b15 {
+	width: 15%;
+}
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-b20 {
+	width: 20%;
+}
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-b25 {
+	width: 25%;
+}
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-b30 {
+	width: 30%;
+}
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-b35 {
+	width: 35%;
+}
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-b40 {
+	width: 40%;
+}
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-b45 {
+	width: 45%;
+}
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-b50 {
+	width: 50%;
+}
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-b55 {
+	width: 55%;
+}
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-b60 {
+	width: 60%;
+}
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-b65 {
+	width: 65%;
+}
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-b70 {
+	width: 70%;
+}
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-b75 {
+	width: 75%;
+}
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-b80 {
+	width: 80%;
+}
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-b85 {
+	width: 85%;
+}
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-b90 {
+	width: 90%;
+}
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-b95 {
+	width: 95%;
+}
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-b100 {
+	width: 100%;
+}
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-links {
 	float: left;
 	margin: 4px 18px 10px 0;
 }
-:where(.text, .inhalt) img.bild-rechts {
+:where(.text, .inhalt) :is(img, .textbild, .animation).bild-rechts {
 	float: right;
 	margin: 4px 0 10px 18px;
 }
 @media (max-width: 599px) {
-	:where(.text, .inhalt) img.bild-klein,
-	:where(.text, .inhalt) img.bild-mittel {
+	:where(.text, .inhalt) :is(img, .textbild, .animation)[class*='bild-'] {
 		width: 100%;
 	}
-	:where(.text, .inhalt) img.bild-links,
-	:where(.text, .inhalt) img.bild-rechts {
+	:where(.text, .inhalt) :is(img, .textbild, .animation):is(.bild-links, .bild-rechts) {
 		float: none;
 		margin: 12px 0;
 	}
@@ -640,23 +695,11 @@ input[type='checkbox'].schalter:focus-visible {
 	width: 100%;
 	margin: 12px auto;
 }
-:where(.text) .animation.bild-klein {
-	width: 33%;
-}
-:where(.text) .animation.bild-mittel {
-	width: 50%;
-}
-:where(.text) .animation.bild-links {
-	float: left;
-	margin: 4px 18px 10px 0;
-}
-:where(.text) .animation.bild-rechts {
-	float: right;
-	margin: 4px 0 10px 18px;
-}
-:where(.text) .animation img {
-	width: 100%;
-	margin: 0;
+/* Bild in einem Rahmen (Animation, Editor): Rahmen trägt Größe und Ausrichtung */
+:where(.text, .inhalt) :is(.animation, .textbild) > img {
+	width: 100% !important;
+	margin: 0 !important;
+	float: none !important;
 }
 :where(.text) .animation canvas {
 	position: absolute;
@@ -685,17 +728,6 @@ input[type='checkbox'].schalter:focus-visible {
 	font-size: 14px;
 	font-weight: 600;
 	cursor: pointer;
-}
-@media (max-width: 599px) {
-	:where(.text) .animation.bild-klein,
-	:where(.text) .animation.bild-mittel {
-		width: 100%;
-	}
-	:where(.text) .animation.bild-links,
-	:where(.text) .animation.bild-rechts {
-		float: none;
-		margin: 12px 0;
-	}
 }
 
 /* Tabellen im Text: am Handy waagerecht scrollbar */
