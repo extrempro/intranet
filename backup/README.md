@@ -4,10 +4,10 @@ Der Dienst `backup` in der `docker-compose.yml` sichert Datenbank und Dateien de
 
 ## Was gesichert wird
 
-| Teil | Wie | Schutz |
-|---|---|---|
-| Datenbank | `pg_dump` im custom format | mit [age](https://age-encryption.org) verschlüsselt (`db.dump.age`) |
-| Dateien (Anhänge, PDFs, Fotos) | Schnappschuss mit `rsync --link-dest` | schon einzeln verschlüsselt; Schlüssel liegen in der Datenbank |
+| Teil                           | Wie                                   | Schutz                                                              |
+| ------------------------------ | ------------------------------------- | ------------------------------------------------------------------- |
+| Datenbank                      | `pg_dump` im custom format            | mit [age](https://age-encryption.org) verschlüsselt (`db.dump.age`) |
+| Dateien (Anhänge, PDFs, Fotos) | Schnappschuss mit `rsync --link-dest` | schon einzeln verschlüsselt; Schlüssel liegen in der Datenbank      |
 
 Unveränderte Dateien belegen in weiteren Schnappschüssen keinen Platz (feste Verknüpfungen). Die Datenbank-Sicherung ist jeden Tag vollständig.
 
