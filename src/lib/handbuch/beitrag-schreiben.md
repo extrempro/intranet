@@ -23,7 +23,8 @@ Mit 🖼 in der Werkzeugleiste fügst du ein Bild direkt in den Text ein. Du kan
 - Erlaubt sind JPEG, PNG und WebP. Große Bilder verkleinert das Intranet beim Hochladen.
 - Animierte WebP bleiben, wie sie sind (höchstens 5 MB). Sie stehen erst still, Lesende starten sie mit „Abspielen“.
 - Die **Bildbeschreibung** ist Pflicht. Ohne sie lässt sich das Bild nicht einfügen und der Beitrag nicht speichern.
-- Klick auf das Bild, dann wählst du die Größe (**Klein**, **Mittel**, **Volle Breite**) und ob es **links** oder **rechts** steht. Der Text fließt daneben weiter. Am Handy sind alle Bilder so breit wie der Text.
+- Klick auf das Bild: Am runden Anfasser an der Ecke ziehst du es größer oder kleiner (10 bis 100 % der Textbreite). In der Leiste geht das auch mit **Klein**, **Mittel**, **Volle Breite** oder **−** und **+**. Dort wählst du auch, ob es **links** oder **rechts** steht; der Text fließt daneben weiter. Am Handy sind alle Bilder so breit wie der Text.
+- Zum Verschieben ziehst du das Bild an eine andere Stelle im Text; eine Linie zeigt, wo es landet. Mit der Tastatur geht es per Ausschneiden und Einfügen.
 - Höchstens 20 Bilder je Beitrag. Ortsdaten und andere Angaben aus dem Bild entfernt das Intranet.
 
 ## Unterstreichen, Tabellen und Infokästen

@@ -378,9 +378,12 @@
 						{/if}
 					</nav>
 				{/if}
-				<NeueVersion neu={data.neuInVersion} />
-				<OfflineHinweis />
-				{#if data.meldung}<p class="meldung oben" role="status">{data.meldung}</p>{/if}
+				<!-- Hinweise über der Seite (neue Version, offline, Meldung), mit Abstand zum Inhalt -->
+				<div class="hinweise">
+					<NeueVersion neu={data.neuInVersion} />
+					<OfflineHinweis />
+					{#if data.meldung}<p class="meldung" role="status">{data.meldung}</p>{/if}
+				</div>
 				{@render children()}
 			</main>
 		</div>
@@ -562,6 +565,14 @@
 	}
 	main:focus {
 		outline: none;
+	}
+	.hinweise {
+		display: grid;
+		gap: 10px;
+		margin-bottom: 14px;
+	}
+	.hinweise:not(:has(*)) {
+		display: none;
 	}
 
 	.infosymbole {
