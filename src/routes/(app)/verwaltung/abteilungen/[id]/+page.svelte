@@ -13,8 +13,9 @@
 			['neuigkeiten', 'Neuigkeiten', 'mayWriteNews'],
 			['faqs', 'FAQs', 'mayWriteFaqs'],
 			['termine', 'Termine', 'mayWriteEvents'],
-			['kulissen', 'Hinter den Kulissen', 'mayWriteBehindScenes']
-		].filter(([k]) => !(hub && k === 'kulissen')) as [
+			['kulissen', 'Hinter den Kulissen', 'mayWriteBehindScenes'],
+			['dokumente', 'Dokumente', 'mayWriteDocuments']
+		].filter(([k]) => (hub ? k !== 'kulissen' : k !== 'dokumente')) as [
 			string,
 			string,
 			keyof (typeof e.team)[number]
@@ -107,6 +108,7 @@
 									</span>{/if}
 							</label>
 							{#if m.ausEntra}<input type="hidden" name="verwaltet" value="on" />{/if}
+							{#if hub}<input type="hidden" name="dokumente_feld" value="1" />{/if}
 							{#each rechte as [name, text, key] (name)}
 								<label class="option">
 									<input type="checkbox" {name} checked={Boolean(m[key])} />

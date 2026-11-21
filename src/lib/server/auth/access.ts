@@ -24,6 +24,8 @@ export interface Membership {
 	mayWriteFaqs: boolean;
 	mayWriteEvents: boolean;
 	mayWriteBehindScenes: boolean;
+	/** Dokumente der Einheit pflegen (Hubs) */
+	mayWriteDocuments?: boolean;
 }
 
 export interface Principal {
@@ -60,7 +62,8 @@ export async function loadPrincipal(person: { id: string; tenantId: string }): P
 				mayWriteNews: unitMembers.mayWriteNews,
 				mayWriteFaqs: unitMembers.mayWriteFaqs,
 				mayWriteEvents: unitMembers.mayWriteEvents,
-				mayWriteBehindScenes: unitMembers.mayWriteBehindScenes
+				mayWriteBehindScenes: unitMembers.mayWriteBehindScenes,
+				mayWriteDocuments: unitMembers.mayWriteDocuments
 			})
 			.from(unitMembers)
 			.where(eq(unitMembers.personId, person.id)),

@@ -49,9 +49,11 @@ export interface FavoriteTarget {
  * und Bezeichnung kommen immer von hier (keine freien Links, kein Open Redirect).
  */
 const UNIT_ICON = 'M3 21h18M5 21v-14l8 -4v18M19 21v-10l-6 -4';
+const HUB_ICON =
+	'M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0M5 5m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0M19 5m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0M5 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0M19 19m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0M6.5 6.5l4 4M17.5 6.5l-4 4M6.5 17.5l4 -4M17.5 17.5l-4 -4';
 const UNIT_KEY = /^einheit:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/;
 
-/** Favorit für eine Abteilungsseite; ob die Person sie sehen darf, prüft der Aufrufer. */
+/** Favorit für eine Abteilungs- oder Hub-Seite; ob die Person sie sehen darf, prüft der Aufrufer. */
 export function unitFavoriteKey(unitId: string): string {
 	return `einheit:${unitId}`;
 }
@@ -187,7 +189,6 @@ async function unitTargets(personId: string, keys: string[]) {
 		.where(
 			and(
 				inArray(units.id, ids),
-				sql`${units.type} <> 'hub'`,
 				isNull(units.archivedAt),
 				or(
 					eq(units.isCentral, true),
@@ -201,8 +202,9 @@ async function unitTargets(personId: string, keys: string[]) {
 			{
 				label: u.name,
 				description: unitTypeLabel(u),
-				href: `/abteilungen/${u.slug}`,
-				icon: UNIT_ICON
+				// Hubs haben eine eigene Seite
+				href: u.type === 'hub' ? `/hubs/${u.slug}` : `/abteilungen/${u.slug}`,
+				icon: u.type === 'hub' ? HUB_ICON : UNIT_ICON
 			}
 		])
 	);
