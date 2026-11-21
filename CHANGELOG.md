@@ -10,6 +10,10 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.7.0 · 21.11.2026 · Startklar-Prüfung
+
+- Unter Verwaltung → System zeigt „Startklar“ auf einen Blick, ob alles für den Betrieb eingerichtet ist: Adresse, Microsoft-Anmeldung, Notfallzugang, E-Mail, Sicherung, Datenschutz und Impressum, Teams und Datenbank.
+
 ## 0.6.0 · 21.11.2026 · Erneute Anmeldung in der Verwaltung
 
 - Wer Rollen vergibt, Konten sperrt oder Einstellungen zur Anmeldung und zum E-Mail-Versand ändert, bestätigt vorher noch einmal die eigene Anmeldung. Danach geht es 10 Minuten ohne erneute Nachfrage.
