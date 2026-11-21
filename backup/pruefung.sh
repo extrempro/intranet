@@ -12,6 +12,7 @@ STATUS="$BACKUP_DIR/status"
 mkdir -p "$STATUS"
 START=$(date +%s)
 iso() { date -d "@$1" +%Y-%m-%dT%H:%M:%S%z | sed 's/\(..\)$/:\1/'; }
+# shellcheck disable=SC1003 # Backslash in tr ist gewollt, kein Anführungszeichen-Fehler
 json_text() { printf '%s' "$1" | tr '\n\r\t"\\' '     ' | cut -c1-300; }
 
 PGTEST=$(mktemp -d /tmp/pruefung.XXXXXX)

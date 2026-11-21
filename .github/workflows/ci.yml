@@ -54,5 +54,9 @@ jobs:
     needs: check
     steps:
       - uses: actions/checkout@v7
-      - name: Docker-Image bauen
-        run: docker build -t intranet:ci .
+      - name: Skripte der Sicherung prüfen (ShellCheck)
+        run: shellcheck backup/*.sh
+      # Baut App und Backup mit der echten docker-compose.yml und prüft Sicherung,
+      # Wiederherstellungstest und Wiederherstellen gegen eine frische Datenbank.
+      - name: Images bauen, Sicherung und Wiederherstellung testen
+        run: bash backup/ci-test.sh

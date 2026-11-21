@@ -47,6 +47,7 @@ trap aufraeumen EXIT
 START=$(date +%s)
 iso() { date -d "@$1" +%Y-%m-%dT%H:%M:%S%z | sed 's/\(..\)$/:\1/'; }
 # Text für JSON: nur eine Zeile, ohne Anführungszeichen und Backslashes
+# shellcheck disable=SC1003 # Backslash in tr ist gewollt, kein Anführungszeichen-Fehler
 json_text() { printf '%s' "$1" | tr '\n\r\t"\\' '     ' | cut -c1-300; }
 
 status_schreiben() { # ok meldung
@@ -129,6 +130,7 @@ if [ "$test_faellig" = true ]; then
 	age $empfaenger -o "$ZIEL/db.dump.age" "$ARBEIT/db.dump" || fehler "Verschlüsseln ist fehlgeschlagen."
 else
 	# Ohne Test direkt verschlüsselt schreiben: kein Klartext auf der Platte
+	# shellcheck disable=SC3040 # ash in Alpine (busybox) kennt pipefail
 	set -o pipefail 2>/dev/null || true
 	# shellcheck disable=SC2086
 	pg_dump --format=custom | age $empfaenger -o "$ZIEL/db.dump.age" ||
