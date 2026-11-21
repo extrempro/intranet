@@ -62,3 +62,30 @@ jobs:
       # Wiederherstellungstest und Wiederherstellen gegen eine frische Datenbank.
       - name: Images bauen, Sicherung und Wiederherstellung testen
         run: bash backup/ci-test.sh
+      # Sucht in den gebauten Images (Basis-Image mit Systempaketen und node_modules)
+      # nach bekannten Lücken. Rot bei hohen und kritischen Lücken, für die es schon
+      # eine behobene Version gibt. Läuft auch im täglichen Zeitplan, damit neu
+      # bekannte Lücken im Basis-Image auffallen.
+      # Action und Trivy fest auf geprüfte Versionen (Action per Commit, nach dem
+      # Lieferketten-Angriff auf trivy-action im März 2026, CVE-2026-33634).
+      - name: Image intranet auf Sicherheitslücken prüfen (Trivy)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.76.2
+          scan-type: image
+          image-ref: ghcr.io/extrempro/intranet:latest
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+      - name: Image intranet-backup auf Sicherheitslücken prüfen (Trivy)
+        if: ${{ !cancelled() }}
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.76.2
+          scan-type: image
+          image-ref: ghcr.io/extrempro/intranet-backup:latest
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
