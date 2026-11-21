@@ -68,6 +68,9 @@ jobs:
       # bekannte Lücken im Basis-Image auffallen.
       # Action und Trivy fest auf geprüfte Versionen (Action per Commit, nach dem
       # Lieferketten-Angriff auf trivy-action im März 2026, CVE-2026-33634).
+      # Geprüft werden die eben gebauten Images aus dem lokalen Docker (ci-test.sh
+      # baut sie unter denselben Namen), nie die Images aus GHCR: TRIVY_IMAGE_SRC
+      # verhindert, dass Trivy still auf die Registry ausweicht.
       - name: Image intranet auf Sicherheitslücken prüfen (Trivy)
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
@@ -78,6 +81,8 @@ jobs:
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: '1'
+        env:
+          TRIVY_IMAGE_SRC: docker
       - name: Image intranet-backup auf Sicherheitslücken prüfen (Trivy)
         if: ${{ !cancelled() }}
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
@@ -89,3 +94,5 @@ jobs:
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: '1'
+        env:
+          TRIVY_IMAGE_SRC: docker
