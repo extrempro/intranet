@@ -78,6 +78,13 @@
 		'M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6M9 17v1a3 3 0 0 0 6 0v-1';
 	const dunkel = $derived(istDunkel(theme));
 
+	// Neu im Intranet, Datenschutz, Impressum: als Symbole unten im Hauptmenü
+	const FUNKELN =
+		'M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm0 -12a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm-7 12a6 6 0 0 1 6 -6a6 6 0 0 1 -6 -6a6 6 0 0 1 -6 6a6 6 0 0 1 6 6z';
+	const SCHILD =
+		'M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3M11 11a1 1 0 1 0 2 0a1 1 0 1 0 -2 0M12 12v2.5';
+	const INFO = 'M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0M12 9h.01M11 12h1v4h1';
+
 	// Führung beim ersten Start bzw. auf Wunsch (?fuehrung=1) – Kap. 13
 	$effect.pre(() => {
 		hilfe.setzeGesehen(data.hilfeGesehen);
@@ -181,10 +188,46 @@
 			mandant={data.ich.mandant}
 			darfVerwaltung={data.darfVerwaltung}
 			darfRedaktion={data.darfRedaktion}
-			datenschutz={data.rechtliches.datenschutz}
-			impressum={data.rechtliches.impressum}
 		/>
 	</span>
+{/snippet}
+
+{#snippet infoSymbole(schmal: boolean)}
+	<div class={['infosymbole', schmal && 'schmal']}>
+		<a
+			href={resolve('/(app)/neu-im-intranet')}
+			class="infosymbol"
+			aria-label="Neu im Intranet (Version {data.version})"
+			data-tipp="Neu im Intranet · Version {data.version}"
+			aria-current={page.url.pathname === '/neu-im-intranet' ? 'page' : undefined}
+		>
+			<Icon d={FUNKELN} size={20} stroke={1.7} />
+		</a>
+		{#if data.rechtliches.datenschutz}
+			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- externer Link -->
+			<a
+				href={data.rechtliches.datenschutz}
+				rel="noopener"
+				class="infosymbol"
+				aria-label="Datenschutz"
+				data-tipp="Datenschutz"
+			>
+				<Icon d={SCHILD} size={20} stroke={1.7} />
+			</a>
+		{/if}
+		{#if data.rechtliches.impressum}
+			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- externer Link -->
+			<a
+				href={data.rechtliches.impressum}
+				rel="noopener"
+				class="infosymbol"
+				aria-label="Impressum"
+				data-tipp="Impressum"
+			>
+				<Icon d={INFO} size={20} stroke={1.7} />
+			</a>
+		{/if}
+	</div>
 {/snippet}
 
 <div class="app akzent" class:teams={data.inTeams} style={data.akzent}>
@@ -267,6 +310,7 @@
 						</li>
 					{/each}
 				</ul>
+				{@render infoSymbole(false)}
 			</div>
 		</nav>
 
@@ -286,6 +330,7 @@
 					<span>{area.kurz ?? area.label}</span>
 				</a>
 			{/each}
+			{@render infoSymbole(true)}
 		</nav>
 
 		<div class="spalte">
@@ -370,21 +415,6 @@
 				<OfflineHinweis />
 				{#if data.meldung}<p class="meldung oben" role="status">{data.meldung}</p>{/if}
 				{@render children()}
-				<footer class="fusszeile">
-					<span>Version {data.version}</span>
-					<span aria-hidden="true">·</span>
-					<a href={resolve('/(app)/neu-im-intranet')}>Neu im Intranet</a>
-					{#if data.rechtliches.datenschutz}
-						<span aria-hidden="true">·</span>
-						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- externer Link -->
-						<a href={data.rechtliches.datenschutz} rel="noopener">Datenschutz</a>
-					{/if}
-					{#if data.rechtliches.impressum}
-						<span aria-hidden="true">·</span>
-						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- externer Link -->
-						<a href={data.rechtliches.impressum} rel="noopener">Impressum</a>
-					{/if}
-				</footer>
 			</main>
 		</div>
 	</div>
@@ -573,23 +603,62 @@
 		position: relative;
 		z-index: 25;
 	}
-	.fusszeile {
+	.infosymbole {
 		display: flex;
-		flex-wrap: wrap;
-		justify-content: center;
-		gap: 4px 8px;
-		margin-top: 40px;
-		padding: 16px 0 8px;
-		border-top: 1px solid var(--bd);
-		font-size: 12px;
-		color: var(--mu);
+		gap: 4px;
+		margin-top: auto;
+		padding-top: 16px;
 	}
-	/* Zielgröße mindestens 24 px (WCAG 2.5.8) */
-	.fusszeile a {
-		color: var(--mu);
+	.infosymbole.schmal {
+		flex-direction: column;
+		align-items: center;
+		margin-top: 8px;
+		padding-top: 12px;
+		border-top: 1px solid var(--bd);
+		width: 100%;
+	}
+	.infosymbol {
+		position: relative;
 		display: inline-flex;
 		align-items: center;
-		min-height: 24px;
+		justify-content: center;
+		width: 40px;
+		height: 40px;
+		border-radius: 10px;
+		color: var(--mu);
+	}
+	.infosymbol:hover,
+	.infosymbol[aria-current='page'] {
+		background: var(--bg);
+		color: var(--tx);
+	}
+	/* Beschriftung beim Überfahren und bei Tastaturfokus */
+	.infosymbol::after {
+		content: attr(data-tipp);
+		position: absolute;
+		left: 50%;
+		bottom: calc(100% + 6px);
+		transform: translateX(-50%);
+		padding: 4px 8px;
+		border-radius: 6px;
+		background: var(--tx);
+		color: var(--sf);
+		font-size: 12px;
+		white-space: nowrap;
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity 0.12s;
+		z-index: 30;
+	}
+	.schmal .infosymbol::after {
+		left: calc(100% + 6px);
+		bottom: auto;
+		top: 50%;
+		transform: translateY(-50%);
+	}
+	.infosymbol:hover::after,
+	.infosymbol:focus-visible::after {
+		opacity: 1;
 	}
 	.teams-werkzeuge {
 		display: flex;
@@ -612,6 +681,9 @@
 		top: 61px;
 		display: flex;
 		flex-direction: column;
+		box-sizing: border-box;
+		/* Symbole „Neu im Intranet“, Datenschutz, Impressum unten am Rand */
+		min-height: calc(100dvh - 61px);
 		padding: 20px 16px;
 	}
 	.trenner {
@@ -937,6 +1009,7 @@
 		}
 		.app.teams .seiteninnen {
 			top: 0;
+			min-height: 100dvh;
 		}
 		.seitenleiste {
 			display: block;
