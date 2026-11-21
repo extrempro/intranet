@@ -50,6 +50,15 @@ docker compose cp backup:/backups/<Name>/db.dump.age .
 age -d -i intranet-sicherung.key db.dump.age | pg_restore --list | head
 ```
 
+## Prüfung im CI
+
+Bei jedem CI-Lauf startet `backup/ci-test.sh` Datenbank, Anwendung und Sicherung mit der echten `docker-compose.yml`. Das Skript legt eine Datei an und prüft dann:
+
+- die erste Sicherung samt Wiederherstellungstest,
+- dass die Anwendung den Zustand lesen darf, die Sicherungen selbst aber nicht,
+- dass unveränderte Dateien in der zweiten Sicherung keinen neuen Platz belegen,
+- dass Wiederherstellen ohne Schlüssel scheitert und mit Schlüssel Datenbank und Dateien zurückholt.
+
 ## Sicherung von Hand
 
 ```sh
