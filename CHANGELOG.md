@@ -10,6 +10,13 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.14.0 · 21.11.2026 · Bilder im Text
+
+- Bilder lassen sich jetzt direkt in den Text setzen: über 🖼 im Editor, per Hineinziehen oder Einfügen. Das geht bei Neuigkeiten, Hub-Beiträgen, „Hinter den Kulissen“ und FAQs.
+- Du wählst die Größe (klein, mittel, volle Breite) und ob das Bild links oder rechts steht; der Text fließt daneben weiter. Am Handy sind Bilder immer so breit wie der Text.
+- Jedes Bild braucht eine kurze Bildbeschreibung, damit auch Bildschirmleser wissen, was zu sehen ist.
+- JPEG, PNG und WebP sind erlaubt, große Bilder werden automatisch verkleinert. Animierte WebP stehen zuerst still und starten mit „Abspielen“.
+
 ## 0.13.2 · 21.11.2026 · Feinschliff bei Abständen
 
 - Aufklapplisten wie „Mehr“ oder „Aus: dein Mandant“ bleiben jetzt im Bild und laufen nicht mehr über den rechten Rand.

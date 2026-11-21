@@ -10,7 +10,8 @@ import { doc, headline, matches, rank } from './fts.ts';
 import { db, scoped } from './db/index.ts';
 import { faqAttachments, faqs, files, units } from './db/schema.ts';
 import { deleteStored, MAX_ATTACHMENTS, ownUnlinkedFiles } from './files/store.ts';
-import { cleanHtml, htmlToText } from './html.ts';
+import { htmlToText } from './html.ts';
+import { bilderVerknuepfen, textMitBildern } from './textbilder.ts';
 
 export class FaqError extends Error {}
 
@@ -182,9 +183,11 @@ export async function saveFaq(
 	if (!writable.some((u) => u.id === input.unitId))
 		errors.unitId = 'Für diese Einheit darfst du keine FAQs pflegen.';
 
-	const answerHtml = cleanHtml(input.answerHtml);
+	const text = await textMitBildern(p, input.answerHtml, { art: 'faq', id });
+	const answerHtml = text.html;
 	const answerText = htmlToText(answerHtml);
 	Object.assign(errors, checkFaq({ question: input.question, answerText }));
+	if (text.fehler && !errors.answer) errors.answer = text.fehler;
 
 	// Anhänge: vorhandene dieser FAQ oder eigene, noch nicht verknüpfte Uploads
 	const wanted = [...new Set(input.attachmentIds.filter((x) => GUID.test(x)))];
@@ -224,6 +227,7 @@ export async function saveFaq(
 			await tx
 				.insert(faqAttachments)
 				.values(wanted.map((fileId, position) => ({ faqId: faqIdInner!, fileId, position })));
+		await bilderVerknuepfen(tx, { art: 'faq', id: faqIdInner! }, text.bilder);
 		return faqIdInner;
 	});
 	await deleteStored(removed);

@@ -9,6 +9,7 @@ import { db } from '../db/index.ts';
 import { files } from '../db/schema.ts';
 import { decryptFile, encryptFile, newFileKey, unwrapFileKey } from './crypto.ts';
 import { detectKind, MIME, safeFileName, type FileKind } from './types.ts';
+import { stripWebp, WebpError } from './webp.ts';
 
 export const MAX_FILE_BYTES = 20 * 1024 * 1024;
 export const MAX_ATTACHMENTS = 10;
@@ -35,7 +36,17 @@ export async function storeUpload(file: File, personId: string) {
 			'Dieser Dateityp ist nicht erlaubt. Erlaubt sind PDF, JPG, PNG, WebP, Word, Excel und PowerPoint (ohne Makros).'
 		);
 	}
-	return storeBytes(bytes, safeFileName(file.name, kind), kind, personId);
+	// WebP: Metadaten (EXIF, XMP) entfernen; Animation bleibt
+	let inhalt: Uint8Array = bytes;
+	if (kind === 'webp') {
+		try {
+			inhalt = stripWebp(bytes);
+		} catch (err) {
+			if (err instanceof WebpError) throw new FileError('Dieses WebP-Bild ist beschädigt.');
+			throw err;
+		}
+	}
+	return storeBytes(inhalt, safeFileName(file.name, kind), kind, personId);
 }
 
 /** Geprüfte Bytes verschlüsselt ablegen (ohne Verknüpfung). */
@@ -105,7 +116,8 @@ const unlinked = sql`not exists (select 1 from news_attachments a where a.file_i
 	and not exists (select 1 from persons pp where pp.photo_file_id = ${files.id})
 	and not exists (select 1 from agreement_attachments ag where ag.file_id = ${files.id})
 	and not exists (select 1 from legal_links ll where ll.file_id = ${files.id})
-	and not exists (select 1 from feedback fb where fb.screenshot_file_id = ${files.id})`;
+	and not exists (select 1 from feedback fb where fb.screenshot_file_id = ${files.id})
+	and not exists (select 1 from text_images ti where ti.file_id = ${files.id})`;
 
 /** Eigene, noch nirgends verknüpfte Uploads (für Anhänge). Liefert die gültigen IDs. */
 export async function ownUnlinkedFiles(personId: string, ids: string[]): Promise<string[]> {

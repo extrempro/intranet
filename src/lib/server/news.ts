@@ -43,7 +43,8 @@ import {
 } from './db/schema.ts';
 import { beschreibungenSpeichern } from './files/beschreibung.ts';
 import { deleteStored, MAX_ATTACHMENTS, ownUnlinkedFiles } from './files/store.ts';
-import { cleanHtml, excerpt, htmlToText } from './html.ts';
+import { excerpt, htmlToText } from './html.ts';
+import { bilderVerknuepfen, textMitBildern } from './textbilder.ts';
 import { doc, headline, matches, rank } from './fts.ts';
 import { getContentRules } from './rules.ts';
 
@@ -476,7 +477,8 @@ export async function saveNews(
 			throw new NewsError('Beitrag nicht gefunden.');
 	}
 
-	const bodyHtml = cleanHtml(input.bodyHtml);
+	const text = await textMitBildern(p, input.bodyHtml, { art: 'news', id: newsId });
+	const bodyHtml = text.html;
 	const bodyText = htmlToText(bodyHtml);
 	// Hubs: weder anheften noch dringend (Kap. 8.3)
 	const draft: NewsDraft = sender.isHub
@@ -555,6 +557,7 @@ export async function saveNews(
 		}
 	}
 
+	if (text.fehler && !errors.body) errors.body = text.fehler;
 	const att = await checkAttachments(p, input.attachmentIds, newsId);
 	if ('error' in att) errors.attachments = att.error;
 
@@ -610,6 +613,7 @@ export async function saveNews(
 				.values(att.wanted.map((fileId, position) => ({ newsId: id!, fileId, position })));
 		}
 		await beschreibungenSpeichern(tx, att.wanted, input.descriptions);
+		await bilderVerknuepfen(tx, { art: 'news', id: id! }, text.bilder);
 		return id;
 	});
 	// Entfernte Anhänge sofort löschen (Schlüssel und Datei, Kap. 15)

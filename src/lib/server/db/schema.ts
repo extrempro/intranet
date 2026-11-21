@@ -820,6 +820,26 @@ export const faqAttachments = pgTable(
 	(t) => [primaryKey({ columns: [t.faqId, t.fileId] })]
 );
 
+/**
+ * Bilder im Text (Editor) von Beiträgen (Neuigkeiten, Hubs, Hinter den
+ * Kulissen) und FAQs. Sichtbar wie der Beitrag; ohne Verknüpfung nach 24 h gelöscht.
+ */
+export const textImages = pgTable(
+	'text_images',
+	{
+		fileId: uuid('file_id')
+			.primaryKey()
+			.references(() => files.id, { onDelete: 'cascade' }),
+		newsId: uuid('news_id').references(() => news.id, { onDelete: 'cascade' }),
+		faqId: uuid('faq_id').references(() => faqs.id, { onDelete: 'cascade' })
+	},
+	(t) => [
+		check('text_images_ein_besitzer', sql`(${t.newsId} is null) <> (${t.faqId} is null)`),
+		index('text_images_news').on(t.newsId),
+		index('text_images_faq').on(t.faqId)
+	]
+);
+
 // ---------------------------------------------------------------------------
 // Speiseplan und Standorte (Kap. 4.3, 8.7)
 // ---------------------------------------------------------------------------
