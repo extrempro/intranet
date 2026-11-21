@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { imFenster } from '#lib/imFenster.ts';
 	import { livesuche } from '#lib/livesuche.ts';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
@@ -77,7 +78,7 @@
 		</form>
 		<details class="auf">
 			<summary class="pille">{ausLabel}</summary>
-			<form method="POST" action="?/aus" class="liste-auf">
+			<form method="POST" action="?/aus" class="liste-auf" use:imFenster>
 				<input type="hidden" name="zurueck" value={page.url.search} />
 				{#each data.mandanten as m (m.id)}
 					<label>

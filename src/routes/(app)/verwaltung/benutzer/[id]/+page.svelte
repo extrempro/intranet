@@ -19,7 +19,7 @@
 			? 'Anmeldung mit Microsoft'
 			: 'Lokales Konto'}
 		{#if x.lastLoginAt}
-			· zuletzt angemeldet {formatWhen(x.lastLoginAt)}{/if}
+			&nbsp;· zuletzt angemeldet {formatWhen(x.lastLoginAt)}{/if}
 	</p>
 	{#if x.status === 'disabled'}<p class="meldung fehler">Dieses Konto ist gesperrt.</p>{/if}
 	{#if x.einladungOffen && x.status !== 'disabled'}<p class="meldung">

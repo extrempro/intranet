@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { imFenster } from '#lib/imFenster.ts';
 	import { livesuche } from '#lib/livesuche.ts';
 	/* eslint-disable svelte/no-navigation-without-resolve -- nur Suchparameter der eigenen Seite */
 	import { enhance } from '$app/forms';
@@ -129,7 +130,7 @@
 		</a>
 		<details class="aus">
 			<summary class="pille" class:an={gefiltert}>{quelleLabel}</summary>
-			<form method="GET" class="ausliste" data-sveltekit-reset="false">
+			<form method="GET" class="ausliste" use:imFenster data-sveltekit-reset="false">
 				{#if data.monatsansicht}
 					<input type="hidden" name="ansicht" value="monat" />
 					<input type="hidden" name="monat" value={data.monat} />
@@ -150,7 +151,7 @@
 		</details>
 		<details class="aus" data-tour="mandanten">
 			<summary class="pille">{ausLabel}</summary>
-			<form method="POST" action={actionUrl(page.url.search, 'aus')} class="ausliste">
+			<form method="POST" action={actionUrl(page.url.search, 'aus')} class="ausliste" use:imFenster>
 				<input type="hidden" name="zurueck" value={page.url.search} />
 				{#each data.mandanten as m (m.id)}
 					<label>

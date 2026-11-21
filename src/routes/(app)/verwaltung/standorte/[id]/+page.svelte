@@ -59,7 +59,7 @@
 							<strong>{o.name}</strong>
 							<span class="hinweis">
 								{o.email} · {STATUS[o.status]}{#if o.lastLoginAt}
-									· zuletzt angemeldet {zeit.format(o.lastLoginAt)}{/if}
+									&nbsp;· zuletzt angemeldet {zeit.format(o.lastLoginAt)}{/if}
 							</span>
 						</span>
 						<form method="POST" action={o.status === 'disabled' ? '?/freigeben' : '?/sperren'}>

@@ -35,9 +35,9 @@
 							{x.email} · {x.tenantName} · {x.authSource === 'entra'
 								? 'Microsoft'
 								: 'lokal'}{#if x.roles}
-								· {x.roles}
+								&nbsp;· {x.roles}
 								{x.roles === 1 ? 'Rolle' : 'Rollen'}{/if}{#if STATUS[x.status]}
-								· <span class="schild rand">{STATUS[x.status]}</span>{/if}
+								&nbsp;· <span class="schild rand">{STATUS[x.status]}</span>{/if}
 						</span>
 					</a>
 				</li>
