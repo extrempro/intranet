@@ -10,6 +10,12 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.19.1 · 21.11.2026 · Besser zugänglich
+
+- Bildschirmleser lesen beim Logo und beim Kontomenü jetzt denselben Namen vor, den du siehst.
+- Die Hinweise im Kopf eines Hubs haben mehr Kontrast und sind besser lesbar.
+- Die Liste „Wer darf schreiben?“ beim Bearbeiten eines Hubs ist für Bildschirmleser richtig aufgebaut.
+
 ## 0.19.0 · 21.11.2026 · Hub bearbeiten auf einer Seite
 
 - „Bearbeiten“ eines Hubs ist jetzt eine Seite mit einem „Speichern“ am Ende, so wie im Entwurf.

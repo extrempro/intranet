@@ -28,6 +28,13 @@ jobs:
         run: npx --yes npm-check-updates@latest --upgrade --peer
       - name: Installieren und Lock-Datei erzeugen
         run: npm install
+      - name: Pakete der Browser-Tests aktualisieren (e2e)
+        working-directory: e2e
+        run: |
+          npx --yes npm-check-updates@latest --upgrade --peer
+          npm install
+          npx tsc -p .
+          npm audit --audit-level=high
       - name: Typen prüfen
         run: npm run check
       - name: Lint
@@ -42,12 +49,12 @@ jobs:
         run: docker build -t intranet:update .
       - name: Änderungen übernehmen
         run: |
-          if git diff --quiet -- package.json package-lock.json; then
+          if git diff --quiet -- package.json package-lock.json e2e/package.json e2e/package-lock.json; then
             echo "Alles ist aktuell."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json
+          git add package.json package-lock.json e2e/package.json e2e/package-lock.json
           git commit -m "Abhängigkeiten aktualisieren"
           git push

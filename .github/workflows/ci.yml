@@ -57,11 +57,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Skripte der Sicherung prüfen (ShellCheck)
-        run: shellcheck backup/*.sh
+        run: shellcheck backup/*.sh scripts/*.sh e2e/*.sh
       # Baut App und Backup mit der echten docker-compose.yml und prüft Sicherung,
       # Wiederherstellungstest und Wiederherstellen gegen eine frische Datenbank.
       - name: Images bauen, Sicherung und Wiederherstellung testen
         run: bash backup/ci-test.sh
+      # Rauchtest: Compose-Datei gültig, healthy, Port nur auf APP_BIND, kein root,
+      # schreibgeschützt, Sicherheits-Header, Daten überstehen Neustart und neuen Container
+      - name: Container-Rauchtest
+        run: bash scripts/ci-container.sh
       # Sucht in den gebauten Images (Basis-Image mit Systempaketen und node_modules)
       # nach bekannten Lücken. Rot bei hohen und kritischen Lücken, für die es schon
       # eine behobene Version gibt. Läuft auch im täglichen Zeitplan, damit neu
@@ -96,3 +100,77 @@ jobs:
           exit-code: '1'
         env:
           TRIVY_IMAGE_SRC: docker
+
+  # Pflichtdokumente und Version: Jede sichtbare Änderung braucht einen Eintrag in
+  # CHANGELOG.md (daraus entstehen Release und „Neu im Intranet“).
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Pflichtdokumente vorhanden und nicht leer
+        run: |
+          fehlt=0
+          for f in README.md LICENSE SECURITY.md CHANGELOG.md .env.example \
+            docs/spec.md docs/sicherheit.md docs/barrierefreiheit.md docs/inbetriebnahme.md; do
+            if [ ! -s "$f" ]; then echo "::error file=$f::fehlt oder ist leer"; fehlt=1; fi
+          done
+          exit $fehlt
+      - name: Version in package.json, CHANGELOG.md und .env.example gleich
+        run: |
+          V=$(node -p "require('./package.json').version")
+          L=$(node -p "require('./package-lock.json').version")
+          L2=$(node -p "require('./package-lock.json').packages[''].version")
+          E=$(sed -n 's/^INTRANET_VERSION=//p' .env.example)
+          echo "package.json $V, package-lock.json $L/$L2, .env.example $E"
+          [ "$L" = "$V" ] && [ "$L2" = "$V" ] || { echo "::error file=package-lock.json::Version $L/$L2 statt $V"; exit 1; }
+          [ "$E" = "$V" ] || { echo "::error file=.env.example::INTRANET_VERSION=$E statt $V"; exit 1; }
+          grep -Eq "^## ${V//./\\.} · [0-9]{2}\.[0-9]{2}\.[0-9]{4} · .+" CHANGELOG.md \
+            || { echo "::error file=CHANGELOG.md::Eintrag „## $V · TT.MM.JJJJ · Titel“ fehlt"; exit 1; }
+
+  # Browser-Tests (Playwright) gegen das gebaute Image mit Testdaten:
+  # wichtige Seiten auf PC, Tablet und Handy mit axe (WCAG 2.2 AA) und ohne
+  # waagerechtes Scrollen, Rechte und Mandantentrennung, Beitrag mit Entwurf,
+  # Hub-Pflege. Danach Lighthouse (Barrierefreiheit, Best Practices, Leistung).
+  e2e:
+    runs-on: ubuntu-latest
+    needs: check
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+      - name: Abhängigkeiten der Browser-Tests
+        working-directory: e2e
+        run: npm ci
+      - name: Typen der Browser-Tests prüfen
+        working-directory: e2e
+        run: npx tsc -p .
+      - name: Chromium installieren
+        working-directory: e2e
+        run: npx playwright install --with-deps chromium
+      - name: Anwendung mit Testdaten starten
+        run: bash e2e/start.sh
+      - name: Browser-Tests
+        working-directory: e2e
+        run: npx playwright test
+      - name: Lighthouse
+        if: ${{ !cancelled() }}
+        working-directory: e2e
+        run: npx lhci autorun
+      - name: Logs der Anwendung
+        if: ${{ failure() }}
+        run: bash e2e/start.sh logs
+      - name: Berichte hochladen
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-berichte
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+            e2e/lighthouse
+          retention-days: 14
+          if-no-files-found: ignore
+      - name: Aufräumen
+        if: ${{ always() }}
+        run: bash e2e/start.sh stop
