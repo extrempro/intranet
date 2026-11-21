@@ -29,8 +29,8 @@
 						<span class="hinweis">
 							{unitTypeLabel(e)} · {e.isCentral ? 'Zentral' : e.tenantName} · {e.members}
 							{e.members === 1 ? 'Person' : 'Personen'}{#if e.managers === 0}
-								{' '}· ohne Pflege{/if}{#if e.hidden}
-								{' '}· ausgeblendet{/if}
+								&nbsp;· ohne Pflege{/if}{#if e.hidden}
+								&nbsp;· ausgeblendet{/if}
 						</span>
 					</a>
 				</li>

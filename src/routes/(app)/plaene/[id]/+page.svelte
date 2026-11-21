@@ -27,7 +27,7 @@
 		<p class="hinweis">
 			{pl.kbb.unitName} ({pl.kbb.tenantName}) · gültig {formatRange(pl.validFrom, pl.validUntil)}
 			{#if planState(pl, data.heute) === 'abgelaufen'}
-				{' '}· <span class="schild rand">abgelaufen</span>{/if}
+				&nbsp;· <span class="schild rand">abgelaufen</span>{/if}
 		</p>
 		<div class="werkzeuge">
 			<a class="knopf zweit klein mit-symbol" href="{datei}?download" download>
