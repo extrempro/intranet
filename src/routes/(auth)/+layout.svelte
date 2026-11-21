@@ -21,12 +21,12 @@
 			<p class="rechtliches">
 				{#if data.rechtliches.datenschutz}
 					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- externer Link -->
-					<a href={data.rechtliches.datenschutz} rel="noopener">Datenschutz</a>
+					<a href={data.rechtliches.datenschutz} target="_blank" rel="noopener">Datenschutz</a>
 				{/if}
 				{#if data.rechtliches.datenschutz && data.rechtliches.impressum}·{/if}
 				{#if data.rechtliches.impressum}
 					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- externer Link -->
-					<a href={data.rechtliches.impressum} rel="noopener">Impressum</a>
+					<a href={data.rechtliches.impressum} target="_blank" rel="noopener">Impressum</a>
 				{/if}
 			</p>
 		{/if}
