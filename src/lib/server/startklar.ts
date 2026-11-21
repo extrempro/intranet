@@ -9,7 +9,7 @@ import { mailConfigured } from './mail.ts';
 import { pushStatus } from './push.ts';
 import { backupStatus, migrationStatus } from './system.ts';
 import { teamsStatus } from './teams.ts';
-import { teamsSettings } from './teams-config.ts';
+import { teamsAppIdAusEnv, teamsSettings } from './teams-config.ts';
 
 export async function startklar(erkannteAdresse: string | null) {
 	const [entra, abgleich, mail, sicherung, push, teams, teamsLetzte, migrationen] =
@@ -51,6 +51,8 @@ export async function startklar(erkannteAdresse: string | null) {
 		rechtliches: { datenschutz: Boolean(haupt?.datenschutz), impressum: Boolean(haupt?.impressum) },
 		teams: {
 			aktiv: teams.aktiv,
+			appId: teams.appId,
+			appIdFest: teamsAppIdAusEnv() !== null,
 			letzte: teamsLetzte ? { ok: teamsLetzte.ok, meldung: teamsLetzte.meldung } : null
 		},
 		migrationen

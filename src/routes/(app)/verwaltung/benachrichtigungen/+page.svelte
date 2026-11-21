@@ -324,9 +324,15 @@
 						</li>
 					</ol>
 					<p class="hinweis">
-						App-ID im Manifest: <code>{t.einstellung.appId}</code>. Ändert sich die Adresse des
-						Intranets oder die App-Registrierung, erzeuge eine neue Version und aktualisiere die
-						App.
+						App-ID im Manifest: <code>{t.einstellung.appId}</code>
+						{#if t.appIdFest}
+							(fest aus der <code>.env</code>, <code>TEAMS_APP_ID</code>).
+						{:else}
+							– trage sie als <code>TEAMS_APP_ID={t.einstellung.appId}</code> in die
+							<code>.env</code> ein, damit sie auch bei einer neuen Datenbank gleich bleibt.
+						{/if}
+						Ändert sich die Adresse des Intranets oder die App-Registrierung, erzeuge eine neue Version
+						und aktualisiere die App.
 					</p>
 					<form method="POST" action="?/teamsVersion" use:enhance>
 						<button class="knopf zweit" type="submit">Neue Version erzeugen</button>

@@ -73,6 +73,12 @@ describe('Startklar', () => {
 		expect(stufe(gut({ teams: { aktiv: false, letzte: null } }), 'teams')).toBe('info');
 		expect(stufe(gut({ teams: { aktiv: true, letzte: null } }), 'teams')).toBe('ok');
 		expect(
+			stufe(gut({ teams: { aktiv: true, appId: 'x', appIdFest: false, letzte: null } }), 'teams')
+		).toBe('warnung');
+		expect(
+			stufe(gut({ teams: { aktiv: true, appId: 'x', appIdFest: true, letzte: null } }), 'teams')
+		).toBe('ok');
+		expect(
 			stufe(gut({ teams: { aktiv: true, letzte: { ok: false, meldung: '403' } } }), 'teams')
 		).toBe('fehler');
 	});
