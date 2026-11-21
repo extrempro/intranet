@@ -137,11 +137,15 @@ export function safeReturnTo(value: string | null | undefined): string {
 
 let tokenCache: { token: string; expiresAt: number; key: string } | null = null;
 
-export async function graphAppToken(): Promise<string> {
+/**
+ * App-Token für Graph. `mindestens`: so lange muss das Token noch gültig sein,
+ * sonst wird ein neues geholt (Teams-Aktivitätsfeed verlangt 45 Minuten).
+ */
+export async function graphAppToken(mindestens = 60_000): Promise<string> {
 	const entra = await getEntraConfig();
 	if (!entra) throw new Error('Anmeldung mit Microsoft ist nicht eingerichtet');
 	const key = `${entra.tenantId}|${entra.clientId}`;
-	if (tokenCache && tokenCache.key === key && tokenCache.expiresAt > Date.now() + 60_000) {
+	if (tokenCache && tokenCache.key === key && tokenCache.expiresAt > Date.now() + mindestens) {
 		return tokenCache.token;
 	}
 	const config = await getOidcConfiguration(entra);
@@ -351,14 +355,21 @@ export async function checkEntraConnection(): Promise<Pruefpunkt[]> {
 }
 
 /** POST gegen Graph mit Anwendungs-Token (z. B. Teams-Aktivitätsfeed). Drosselung wie bei GET. */
+/**
+ * Teams-Aktivitätsfeed: Das Token muss noch mindestens 45 Minuten gültig sein,
+ * sonst antwortet Graph mit 412 (Precondition Failed). Etwas Puffer dazu.
+ */
+const FEED_MINDESTENS = 50 * 60_000;
+
 export async function graphAppPost(path: string, body: unknown): Promise<void> {
 	const url = `${GRAPH}${path}`;
 	if (!path.startsWith('/')) throw new Error('Unerwartete Graph-Adresse');
+	let neuesToken = false;
 	for (let versuch = 0; ; versuch++) {
 		const res = await fetch(url, {
 			method: 'POST',
 			headers: {
-				Authorization: `Bearer ${await graphAppToken()}`,
+				Authorization: `Bearer ${await graphAppToken(FEED_MINDESTENS)}`,
 				'Content-Type': 'application/json',
 				Accept: 'application/json'
 			},
@@ -366,6 +377,12 @@ export async function graphAppPost(path: string, body: unknown): Promise<void> {
 			signal: AbortSignal.timeout(15_000),
 			redirect: 'error'
 		});
+		// 412: Token zu kurz gültig. Einmal mit frisch geholtem Token wiederholen.
+		if (res.status === 412 && !neuesToken) {
+			neuesToken = true;
+			tokenCache = null;
+			continue;
+		}
 		if ((res.status === 429 || res.status === 503) && versuch < 3) {
 			const warten = Math.min(Number(res.headers.get('Retry-After')) || 5, 60);
 			await new Promise((r) => setTimeout(r, warten * 1000));

@@ -42,6 +42,8 @@ export function teamsFehlertext(err: unknown): string {
 	if (err instanceof GraphError) {
 		if (err.status === 401 || err.status === 403)
 			return `Microsoft lehnt ab (${err.message}): Anwendungsberechtigung TeamsActivity.Send fehlt, oder die Teams-App gehört zu einer anderen App-Registrierung.`;
+		if (err.status === 412)
+			return `Microsoft lehnt das Token ab (${err.message}): Es ist zu kurz gültig. Ist die Token-Lebensdauer per Richtlinie unter 50 Minuten gesetzt?`;
 		if (err.status === 404)
 			return `Microsoft findet die Person oder die App nicht (${err.message}): Ist die Teams-App für sie installiert?`;
 		return err.message;

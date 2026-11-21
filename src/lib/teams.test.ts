@@ -76,6 +76,8 @@ describe('Teams', () => {
 		const { teamsFehlertext } = await import('./server/teams.ts');
 		expect(teamsFehlertext(new TypeError('fetch failed'))).toContain('nicht erreichbar');
 		expect(teamsFehlertext(new Error('AADSTS7000215: Invalid client secret'))).toContain('Secret');
+		const { GraphError } = await import('./server/auth/entra.ts');
+		expect(teamsFehlertext(new GraphError(412, 'PreconditionFailed'))).toContain('zu kurz gültig');
 	});
 
 	it('kann auf den Test-Reiter springen', () => {
