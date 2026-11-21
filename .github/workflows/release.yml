@@ -2,6 +2,8 @@ name: Release
 
 # Legt nach dem Merge für eine neue Version (package.json) ein GitHub-Release an.
 # Der Text kommt aus CHANGELOG.md (gleicher Eintrag wie „Neu im Intranet“).
+# Dazu baut er die Images ghcr.io/extrempro/intranet:<Version> und
+# ghcr.io/extrempro/intranet-backup:<Version> (bei der neuesten Version auch :latest).
 # Von Hand (Actions → Release → Run workflow) lässt sich auch ein Release für
 # eine frühere Version an einem bestimmten Commit nachtragen.
 on:
@@ -19,6 +21,7 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   release:
@@ -29,6 +32,7 @@ jobs:
         with:
           node-version: 26
       - name: Release anlegen, falls es die Version noch nicht gibt
+        id: release
         env:
           GH_TOKEN: ${{ github.token }}
           EINGABE_VERSION: ${{ inputs.version }}
@@ -39,6 +43,13 @@ jobs:
           ZIEL=${EINGABE_COMMIT:-$GITHUB_SHA}
           if ! [[ "$V" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then echo "Ungültige Version: $V"; exit 1; fi
           if ! [[ "$ZIEL" =~ ^[0-9a-f]{7,40}$ ]]; then echo "Ungültiger Commit: $ZIEL"; exit 1; fi
+          LATEST=true
+          if [ "$V" != "$AKTUELL" ]; then LATEST=false; fi
+          {
+            echo "version=$V"
+            echo "commit=$ZIEL"
+            echo "latest=$LATEST"
+          } >> "$GITHUB_OUTPUT"
           if gh release view "v$V" >/dev/null 2>&1; then
             echo "Release v$V gibt es schon."
             exit 0
@@ -46,6 +57,47 @@ jobs:
           node scripts/release-notes.mjs "$V" > notes.md
           TITEL=$(node scripts/release-notes.mjs "$V" --titel)
           # Ältere Versionen nicht als „neueste“ markieren
-          LATEST=true
-          if [ "$V" != "$AKTUELL" ]; then LATEST=false; fi
           gh release create "v$V" --target "$ZIEL" --title "$V · $TITEL" --notes-file notes.md --latest=$LATEST
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      commit: ${{ steps.release.outputs.commit }}
+      latest: ${{ steps.release.outputs.latest }}
+
+  images:
+    runs-on: ubuntu-latest
+    needs: release
+    strategy:
+      matrix:
+        include:
+          - name: intranet
+            context: .
+          - name: intranet-backup
+            context: backup
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.release.outputs.commit }}
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Tags festlegen
+        id: tags
+        env:
+          V: ${{ needs.release.outputs.version }}
+          LATEST: ${{ needs.release.outputs.latest }}
+          NAME: ${{ matrix.name }}
+        run: |
+          BILD="ghcr.io/extrempro/$NAME"
+          TAGS="$BILD:$V"
+          if [ "$LATEST" = "true" ]; then TAGS="$TAGS,$BILD:latest"; fi
+          echo "tags=$TAGS" >> "$GITHUB_OUTPUT"
+      - uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}

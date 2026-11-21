@@ -34,9 +34,18 @@ npm run dev
 
 ## Betrieb
 
+Schritt für Schritt vom leeren Server bis zum Start, mit Updates und Störungen:
+**[docs/inbetriebnahme.md](docs/inbetriebnahme.md)**. Was eingerichtet ist, prüft
+Verwaltung → System → **Startklar**.
+
+Die Images baut GitHub Actions bei jedem Release (`ghcr.io/extrempro/intranet:<Version>` und
+`ghcr.io/extrempro/intranet-backup:<Version>`); `INTRANET_VERSION` wählt die Version.
+
 ```bash
-cp .env.example .env        # ORIGIN, Passwörter usw. setzen
-docker compose up -d --build
+cp .env.example .env        # INTRANET_VERSION, ORIGIN, Passwörter usw. setzen
+docker compose up -d
+# selbst bauen statt laden:
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 ```
 
 Die Anwendung hört im Container auf Port 3000 (`APP_PORT` auf dem Host). Der Zustand ist unter
@@ -85,7 +94,7 @@ Jeder Pull Request mit sichtbaren Änderungen erhöht die Version in `package.js
 oben in `CHANGELOG.md` einen Eintrag in einfacher Sprache (Format steht in der Datei). Ein Test
 prüft, dass beide zusammenpassen. Im Intranet erscheint das unter „Neu im Intranet“ (Fußzeile).
 Nach dem Merge legt `.github/workflows/release.yml` ein GitHub-Release mit Tag `v<Version>` und
-demselben Text an.
+demselben Text an und veröffentlicht die Images in der GitHub Container Registry.
 
 ## Sicherheit
 

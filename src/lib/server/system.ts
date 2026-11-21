@@ -64,7 +64,7 @@ async function appVersion(): Promise<string> {
 	return typeof pkg?.version === 'string' ? pkg.version : 'unbekannt';
 }
 
-async function migrations() {
+export async function migrationStatus() {
 	const folder = process.env.MIGRATIONS_DIR ?? 'drizzle';
 	const journal = (await readJson(resolve(folder, 'meta', '_journal.json'))) as {
 		entries?: unknown[];
@@ -101,7 +101,7 @@ export async function systemStatus(buildVersion: string) {
 		datenbank: {
 			version: dbInfo.version,
 			groesse: Number(dbInfo.groesse),
-			migrationen: await migrations()
+			migrationen: await migrationStatus()
 		},
 		dateien: {
 			anzahl: dateien.n,

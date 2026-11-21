@@ -8,6 +8,9 @@ RUN npm run build && npm prune --omit=dev
 
 # --- Laufen ---
 FROM node:26-alpine
+LABEL org.opencontainers.image.source=https://github.com/extrempro/intranet \
+	org.opencontainers.image.description="Intranet" \
+	org.opencontainers.image.licenses=MIT
 ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=build --chown=node:node /app/build ./build
