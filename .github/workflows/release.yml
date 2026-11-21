@@ -1,0 +1,33 @@
+name: Release
+
+# Legt nach dem Merge für eine neue Version (package.json) ein GitHub-Release an.
+# Der Text kommt aus CHANGELOG.md (gleicher Eintrag wie „Neu im Intranet“).
+on:
+  push:
+    branches: [main]
+    paths: [package.json, CHANGELOG.md]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+      - name: Release anlegen, falls es die Version noch nicht gibt
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V=$(node -p "require('./package.json').version")
+          if gh release view "v$V" >/dev/null 2>&1; then
+            echo "Release v$V gibt es schon."
+            exit 0
+          fi
+          node scripts/release-notes.mjs "$V" > notes.md
+          TITEL=$(node scripts/release-notes.mjs "$V" --titel)
+          gh release create "v$V" --target "$GITHUB_SHA" --title "$V · $TITEL" --notes-file notes.md

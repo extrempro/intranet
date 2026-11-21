@@ -1,3 +1,4 @@
+import { APP_VERSION } from '#lib/server/changelog.ts';
 import { initials } from '#lib/format.ts';
 import { canSeeAdministration, type Principal } from '#lib/server/auth/access.ts';
 import { photosOf } from '#lib/server/people.ts';
@@ -33,6 +34,8 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		},
 		logo: { hell: branding.logoHell, dunkel: branding.logoDunkel },
 		rechtliches: { datenschutz: branding.datenschutz, impressum: branding.impressum },
+		/** Version für die Fußzeile („Neu im Intranet“) */
+		version: APP_VERSION,
 		/** In der Teams-App: ohne eigene Kopfzeile (Teams zeigt App-Name und Symbol) */
 		inTeams: locals.teams,
 		akzent: accentStyle(branding),

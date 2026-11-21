@@ -365,6 +365,21 @@
 				<OfflineHinweis />
 				{#if data.meldung}<p class="meldung oben" role="status">{data.meldung}</p>{/if}
 				{@render children()}
+				<footer class="fusszeile">
+					<span>Version {data.version}</span>
+					<span aria-hidden="true">·</span>
+					<a href={resolve('/(app)/neu-im-intranet')}>Neu im Intranet</a>
+					{#if data.rechtliches.datenschutz}
+						<span aria-hidden="true">·</span>
+						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- externer Link -->
+						<a href={data.rechtliches.datenschutz} rel="noopener">Datenschutz</a>
+					{/if}
+					{#if data.rechtliches.impressum}
+						<span aria-hidden="true">·</span>
+						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- externer Link -->
+						<a href={data.rechtliches.impressum} rel="noopener">Impressum</a>
+					{/if}
+				</footer>
 			</main>
 		</div>
 	</div>
@@ -552,6 +567,20 @@
 	.app.teams .seitenleiste {
 		position: relative;
 		z-index: 25;
+	}
+	.fusszeile {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 4px 8px;
+		margin-top: 40px;
+		padding: 16px 0 8px;
+		border-top: 1px solid var(--bd);
+		font-size: 12px;
+		color: var(--mu);
+	}
+	.fusszeile a {
+		color: var(--mu);
 	}
 	.teams-werkzeuge {
 		display: flex;

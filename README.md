@@ -22,15 +22,15 @@ npm run db:migrate          # sobald Migrationen vorhanden sind
 npm run dev
 ```
 
-| Befehl | Zweck |
-|---|---|
-| `npm run dev` | Entwicklungsserver |
-| `npm run check` | Typen prüfen |
-| `npm run lint` | Lint prüfen |
+| Befehl                 | Zweck                                             |
+| ---------------------- | ------------------------------------------------- |
+| `npm run dev`          | Entwicklungsserver                                |
+| `npm run check`        | Typen prüfen                                      |
+| `npm run lint`         | Lint prüfen                                       |
 | `npm run format:check` | Formatierung prüfen (`npm run format` korrigiert) |
-| `npm test` | Tests |
-| `npm run build` | Produktions-Build |
-| `npm run db:generate` | Migration aus dem Schema erzeugen |
+| `npm test`             | Tests                                             |
+| `npm run build`        | Produktions-Build                                 |
+| `npm run db:generate`  | Migration aus dem Schema erzeugen                 |
 
 ## Betrieb
 
@@ -67,12 +67,20 @@ Wiederherstellungstest). Einrichten und Wiederherstellen: [backup/README.md](bac
 
 ## Aktualität der Pakete
 
-- **Wöchentlich** (montags) hebt der Workflow *Abhängigkeiten aktualisieren* alle npm-Pakete auf die neueste Version,
+- **Wöchentlich** (montags) hebt der Workflow _Abhängigkeiten aktualisieren_ alle npm-Pakete auf die neueste Version,
   auch auf neue Hauptversionen. Er prüft Typen, Lint, Tests, Build und bekannte Sicherheitslücken und committet
   nur, wenn alles grün ist. Ist er rot, braucht es eine Anpassung im Code.
 - **Täglich** läuft die CI zusätzlich, damit neu bekannte Sicherheitslücken auffallen.
 - **Monatlich** schlägt Dependabot neue Versionen für GitHub Actions und das Docker-Basis-Image vor.
-- Der Workflow lässt sich unter *Actions* auch von Hand starten.
+- Der Workflow lässt sich unter _Actions_ auch von Hand starten.
+
+## Versionen und Release Notes
+
+Jeder Pull Request mit sichtbaren Änderungen erhöht die Version in `package.json` und ergänzt
+oben in `CHANGELOG.md` einen Eintrag in einfacher Sprache (Format steht in der Datei). Ein Test
+prüft, dass beide zusammenpassen. Im Intranet erscheint das unter „Neu im Intranet“ (Fußzeile).
+Nach dem Merge legt `.github/workflows/release.yml` ein GitHub-Release mit Tag `v<Version>` und
+demselben Text an.
 
 ## Sicherheit
 
