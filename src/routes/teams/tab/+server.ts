@@ -1,4 +1,5 @@
 import type { RequestHandler } from '@sveltejs/kit';
+import { TEAMS_FRAME_ANCESTORS } from '#lib/server/teams-frame.ts';
 import { safeTabTarget } from '#lib/teams.ts';
 
 /**
@@ -6,8 +7,7 @@ import { safeTabTarget } from '#lib/teams.ts';
  * Ohne Anmeldung und ohne Inhalte; nur ein Link ins Intranet (Browser). Darf als
  * einzige Seite in Teams eingebettet werden; das Intranet selbst nicht.
  */
-const FRAME =
-	"frame-ancestors 'self' https://teams.microsoft.com https://*.teams.microsoft.com https://teams.cloud.microsoft https://*.cloud.microsoft https://*.office.com https://outlook.office.com https://*.microsoft365.com";
+const FRAME = TEAMS_FRAME_ANCESTORS;
 
 const esc = (s: string) =>
 	s.replace(

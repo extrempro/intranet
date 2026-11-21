@@ -8,6 +8,8 @@
 
 /** entityId des Tabs im Manifest */
 export const TEAMS_TAB_ENTITY = 'intranet';
+/** entityId des vorübergehenden Test-Tabs (SSO, Cookies, Sprung aus Benachrichtigung) */
+export const TEAMS_TEST_ENTITY = 'teamstest';
 
 /** Nur eigene Pfade als Ziel (kein offener Weiterleiter) */
 export function safeTabTarget(value: string | null | undefined): string {
@@ -17,9 +19,9 @@ export function safeTabTarget(value: string | null | undefined): string {
 }
 
 /** Deep Link auf den Tab der App; subEntityId trägt den Pfad im Intranet */
-export function teamsDeepLink(appId: string, path: string): string {
+export function teamsDeepLink(appId: string, path: string, entity = TEAMS_TAB_ENTITY): string {
 	const context = JSON.stringify({ subEntityId: safeTabTarget(path) });
-	return `https://teams.microsoft.com/l/entity/${encodeURIComponent(appId)}/${TEAMS_TAB_ENTITY}?context=${encodeURIComponent(context)}`;
+	return `https://teams.microsoft.com/l/entity/${encodeURIComponent(appId)}/${entity}?context=${encodeURIComponent(context)}`;
 }
 
 export interface TeamsItem {
@@ -53,9 +55,14 @@ export function activityFor(items: TeamsItem[]): { preview: string; text: string
 	};
 }
 
-export function activityBody(appId: string, a: ReturnType<typeof activityFor>, userIds: string[]) {
+export function activityBody(
+	appId: string,
+	a: ReturnType<typeof activityFor>,
+	userIds: string[],
+	entity = TEAMS_TAB_ENTITY
+) {
 	return {
-		topic: { source: 'text', value: 'Intranet', webUrl: teamsDeepLink(appId, a.link) },
+		topic: { source: 'text', value: 'Intranet', webUrl: teamsDeepLink(appId, a.link, entity) },
 		activityType: 'systemDefault',
 		previewText: { content: a.preview },
 		templateParameters: [{ name: 'systemDefaultText', value: a.text }],
