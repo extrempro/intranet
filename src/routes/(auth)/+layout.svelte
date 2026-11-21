@@ -4,34 +4,45 @@
 
 <div class="flaeche akzent" style={data.akzent}>
 	<main class="karte auth" id="inhalt">
-		{#if data.marke.logoHell}
-			<div class="marke mit-logo">
-				<img class="logobild logo-hell" src={data.marke.logoHell} alt={data.marke.name} />
-				<img class="logobild logo-dunkel" src={data.marke.logoDunkel} alt={data.marke.name} />
-				<div class="titel">Intranet</div>
-			</div>
-		{:else}
-			<div class="marke">
+		<div class="marke">
+			{#if data.marke.logoHell}
+				<img class="logobild logo-hell" src={data.marke.logoHell} alt="" />
+				<img class="logobild logo-dunkel" src={data.marke.logoDunkel} alt="" />
+			{:else}
 				<div class="logo" aria-hidden="true">{data.marke.kurz}</div>
-				<div>
-					<div class="titel">Intranet</div>
-					<div class="mandant">{data.marke.name}</div>
-				</div>
+			{/if}
+			<div>
+				<div class="titel">Intranet</div>
+				<div class="mandant">{data.marke.name}</div>
 			</div>
-		{/if}
+		</div>
 		{@render children()}
+		{#if data.rechtliches.datenschutz || data.rechtliches.impressum}
+			<p class="rechtliches">
+				{#if data.rechtliches.datenschutz}
+					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- externer Link -->
+					<a href={data.rechtliches.datenschutz} rel="noopener">Datenschutz</a>
+				{/if}
+				{#if data.rechtliches.datenschutz && data.rechtliches.impressum}·{/if}
+				{#if data.rechtliches.impressum}
+					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- externer Link -->
+					<a href={data.rechtliches.impressum} rel="noopener">Impressum</a>
+				{/if}
+			</p>
+		{/if}
 	</main>
 </div>
 
 <style>
-	.mit-logo {
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 10px;
+	.rechtliches {
+		margin: 0;
+		font-size: 12px;
+		color: var(--mu);
+		text-align: center;
 	}
 	.logobild {
-		max-height: 56px;
-		max-width: 100%;
+		max-height: 44px;
+		max-width: 160px;
 		width: auto;
 		object-fit: contain;
 	}
