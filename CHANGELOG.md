@@ -10,6 +10,10 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.17.1 · 21.11.2026 · Entwurf-Knopf neben Speichern
+
+- „Als Entwurf speichern“ steht jetzt direkt neben „Speichern“ bzw. „Veröffentlichen“; darunter steht, wann der Entwurf zuletzt gespeichert wurde.
+
 ## 0.17.0 · 21.11.2026 · Entwürfe und Schutz vor Datenverlust
 
 - Neue Neuigkeiten, Hub-Beiträge, Beiträge „Hinter den Kulissen“ und FAQs werden beim Schreiben automatisch als Entwurf gespeichert. Mit „Als Entwurf speichern“ geht es auch sofort.

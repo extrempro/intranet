@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import { untrack } from 'svelte';
 	import Anhaenge from './Anhaenge.svelte';
 	import Editor from './Editor.svelte';
@@ -37,7 +38,8 @@
 		fehler = {},
 		pinKonflikt = null,
 		regeln,
-		knopf
+		knopf,
+		zusatz
 	}: {
 		werte: Werte;
 		einheiten: Einheit[];
@@ -46,6 +48,8 @@
 		pinKonflikt?: { id: string; title: string } | null;
 		regeln: { pinMaxDays: number; urgentMaxDays: number };
 		knopf: string;
+		/** Weitere Knöpfe neben „Speichern“, z. B. Entwurf */
+		zusatz?: Snippet;
 	} = $props();
 
 	// Startwerte aus den Props, danach im Formular änderbar (tief reaktiv).
@@ -280,7 +284,10 @@
 	</ul>
 </section>
 
-<button class="knopf" type="submit">{knopf}</button>
+<div class="aktionen">
+	<button class="knopf" type="submit">{knopf}</button>
+	{@render zusatz?.()}
+</div>
 
 <style>
 	.gruppe {
@@ -333,7 +340,10 @@
 		margin: 6px 0 0;
 		padding-left: 1.2rem;
 	}
-	.knopf {
-		justify-self: start;
+	.aktionen {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 10px 12px;
 	}
 </style>
