@@ -196,28 +196,9 @@
 			{/if}
 		</section>
 	</div>
-	{#if data.rechtliches.datenschutz || data.rechtliches.impressum}
-		<p class="rechtliches">
-			{#if data.rechtliches.datenschutz}
-				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- externer Link -->
-				<a href={data.rechtliches.datenschutz} rel="noopener">Datenschutz</a>
-			{/if}
-			{#if data.rechtliches.datenschutz && data.rechtliches.impressum}·{/if}
-			{#if data.rechtliches.impressum}
-				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- externer Link -->
-				<a href={data.rechtliches.impressum} rel="noopener">Impressum</a>
-			{/if}
-		</p>
-	{/if}
 </div>
 
 <style>
-	.rechtliches {
-		margin: 8px 0 0;
-		font-size: 12px;
-		color: var(--mu);
-		text-align: center;
-	}
 	.konto {
 		display: flex;
 		flex-direction: column;

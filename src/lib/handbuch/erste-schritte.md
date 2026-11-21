@@ -25,6 +25,8 @@ Am PC stehen die Bereiche links, am Handy unten.
 - **Glocke**: deine Benachrichtigungen.
 - **Konto-Menü**: Profil, Einstellungen, Handbuch und Abmelden.
 
+Ganz unten auf jeder Seite stehen die Version und **Neu im Intranet**: Dort siehst du, was sich zuletzt geändert hat.
+
 ## Führung und Einführungen
 
 Beim ersten Start zeigt dir eine kurze **Führung** die wichtigsten Stellen. Du kannst sie jederzeit beenden und später im Konto-Menü unter „Führung starten“ wiederholen.
