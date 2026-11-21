@@ -30,6 +30,51 @@
 
 	<section class="karte"><p class="text">{r.text}</p></section>
 
+	{#if r.kind === 'fehler'}
+		<section class="karte stapel" aria-labelledby="h-technik">
+			<h2 id="h-technik">Technische Angaben</h2>
+			{#if r.technik}
+				<dl>
+					<dt>Version</dt>
+					<dd>{r.technik.version ?? '–'}</dd>
+					<dt>Fenstergröße</dt>
+					<dd>{r.technik.fenster ?? '–'}</dd>
+					<dt>Browser</dt>
+					<dd>{r.technik.browser ?? '–'}</dd>
+					<dt>Teams-App</dt>
+					<dd>{r.technik.teams ? 'ja' : 'nein'}</dd>
+					<dt>Fehlermeldungen des Browsers</dt>
+					<dd>
+						{#if r.technik.fehler.length}<pre>{r.technik.fehler.join('\n')}</pre>{:else}keine{/if}
+					</dd>
+				</dl>
+			{:else}
+				<p class="hinweis">Keine (Meldung aus einer älteren Version).</p>
+			{/if}
+			<h2>Bildschirmfoto</h2>
+			{#if r.screenshotFileId}
+				<a
+					href={resolve('/(app)/dateien/[id]', { id: r.screenshotFileId })}
+					target="_blank"
+					rel="noopener"
+				>
+					<img
+						class="foto"
+						src="/dateien/{r.screenshotFileId}"
+						alt="Bildschirmfoto zur Fehlermeldung"
+					/>
+				</a>
+				<p class="hinweis">
+					Groß ansehen: auf das Bild klicken. Es wird 30 Tage nach Abschluss der Meldung gelöscht.
+				</p>
+			{:else}
+				<p class="hinweis">
+					{r.closedAt ? 'Keines (oder schon gelöscht).' : 'Keines mitgeschickt.'}
+				</p>
+			{/if}
+		</section>
+	{/if}
+
 	<section class="karte stapel" aria-labelledby="h-rueck">
 		<h2 id="h-rueck">Rückfrage</h2>
 		{#if r.gespraech}
@@ -92,5 +137,35 @@
 	}
 	.knopf {
 		justify-self: start;
+	}
+	dl {
+		display: grid;
+		grid-template-columns: minmax(10rem, auto) 1fr;
+		gap: 4px 12px;
+		margin: 0;
+	}
+	dt {
+		color: var(--mu);
+	}
+	dd {
+		margin: 0;
+		overflow-wrap: anywhere;
+	}
+	pre {
+		margin: 0;
+		white-space: pre-wrap;
+		font-size: 13px;
+	}
+	.foto {
+		display: block;
+		max-width: 100%;
+		max-height: 420px;
+		border: 1px solid var(--bd);
+		border-radius: 8px;
+	}
+	@media (max-width: 599px) {
+		dl {
+			grid-template-columns: 1fr;
+		}
 	}
 </style>

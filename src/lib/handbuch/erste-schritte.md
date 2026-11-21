@@ -20,7 +20,7 @@ Am PC stehen die Bereiche links, am Handy unten.
 ## Oben rechts
 
 - **Suche**: Suchfeld bzw. Lupe, Tastenkürzel `/`.
-- **Rückmeldung**: Sprechblase für Fehler und Ideen.
+- **Rückmeldung**: Daumen für Fehler (auch mit Bildschirmfoto) und Ideen.
 - **Nachrichten**: Gespräche zu Anzeigen, Hub-Anträgen und Rückmeldungen.
 - **Glocke**: deine Benachrichtigungen.
 - **Konto-Menü**: Profil, Einstellungen, Handbuch und Abmelden.

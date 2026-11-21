@@ -9,6 +9,8 @@
 	import Kontomenue from '#lib/components/Kontomenue.svelte';
 	import Hauptmenue from '#lib/components/Hauptmenue.svelte';
 	import Kopfsuche from '#lib/components/Kopfsuche.svelte';
+	import RueckmeldungDialog from '#lib/components/RueckmeldungDialog.svelte';
+	import { browserfehlerMerken } from '#lib/browserfehler.ts';
 	import NeueVersion from '#lib/components/NeueVersion.svelte';
 	import OfflineHinweis from '#lib/components/OfflineHinweis.svelte';
 	import Tour from '#lib/components/Tour.svelte';
@@ -22,6 +24,9 @@
 	const aktuell = $derived(currentNav(areas, page.url.pathname));
 	const seitentitel = $derived(aktuell.page?.label ?? aktuell.area?.label ?? 'Intranet');
 	let wechselnOffen = $state(false);
+	let rueckmeldungOffen = $state(false);
+	// Fehlermeldungen des Browsers für „Fehler melden“ merken (nur im Speicher)
+	$effect(() => browserfehlerMerken());
 	/** Hauptmenü ein-/ausgeklappt und offene Bereiche (je Gerät gemerkt) */
 	let menue = $state(untrack(() => data.menue));
 
@@ -111,6 +116,7 @@
 <a class="skip" href="#inhalt">Zum Inhalt springen</a>
 
 <BestaetigenDialog />
+<RueckmeldungDialog bind:offen={rueckmeldungOffen} version={data.version} inTeams={data.inTeams} />
 
 {#if hilfe.aktiv}
 	{#key hilfe.aktiv.key}<Tour tour={hilfe.aktiv} />{/key}
@@ -146,7 +152,13 @@
 			page.url.pathname + page.url.search
 		)}"
 		aria-label="Rückmeldung geben"
+		aria-haspopup="dialog"
 		title="Rückmeldung: Fehler oder Idee"
+		onclick={(e) => {
+			// Mit JavaScript als Fenster über der Seite, sonst die Seite /rueckmeldung/neu
+			e.preventDefault();
+			rueckmeldungOffen = true;
+		}}
 	>
 		<Icon d={RUECKMELDUNG} size={28} stroke={1.8} />
 	</a>
