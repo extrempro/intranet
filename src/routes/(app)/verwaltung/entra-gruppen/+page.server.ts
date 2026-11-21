@@ -1,4 +1,5 @@
 import { error, fail } from '@sveltejs/kit';
+import { bestaetigungFehlt } from '#lib/server/auth/bestaetigung.ts';
 import { asc, eq, inArray } from 'drizzle-orm';
 import { isSystemAdmin } from '#lib/server/auth/access.ts';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
@@ -63,6 +64,8 @@ async function guarded(fn: () => Promise<unknown>) {
 
 export const actions: Actions = {
 	hinzufuegen: async ({ request, locals, getClientAddress }) => {
+		const b = bestaetigungFehlt(locals);
+		if (b) return b;
 		const f = await request.formData();
 		return guarded(() =>
 			addGroupMapping(
@@ -79,6 +82,8 @@ export const actions: Actions = {
 		);
 	},
 	entfernen: async ({ request, locals, getClientAddress }) => {
+		const b = bestaetigungFehlt(locals);
+		if (b) return b;
 		const id = String((await request.formData()).get('zuordnung') ?? '');
 		return guarded(() => removeGroupMapping(requirePrincipal(locals), id, getClientAddress()));
 	}

@@ -59,6 +59,8 @@ export interface SessionPerson {
 export interface ValidSession {
 	id: string;
 	authMethod: 'entra' | 'local';
+	/** Letzte erneute Anmeldung (Bestätigung vor kritischen Aktionen) */
+	confirmedAt: Date | null;
 	person: SessionPerson;
 }
 
@@ -87,6 +89,7 @@ export async function validateSession(token: string): Promise<ValidSession | nul
 		.select({
 			id: sessions.id,
 			authMethod: sessions.authMethod,
+			confirmedAt: sessions.confirmedAt,
 			lastActiveAt: sessions.lastActiveAt,
 			expiresAt: sessions.expiresAt,
 			person: {
@@ -120,6 +123,7 @@ export async function validateSession(token: string): Promise<ValidSession | nul
 	return {
 		id: row.id,
 		authMethod: row.authMethod,
+		confirmedAt: row.confirmedAt,
 		person: { id: personId, tenantId, email, displayName }
 	};
 }

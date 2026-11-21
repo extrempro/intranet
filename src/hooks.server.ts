@@ -88,7 +88,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 		const session = await validateSession(token);
 		if (session) {
 			event.locals.person = session.person;
-			event.locals.session = { id: session.id, authMethod: session.authMethod };
+			event.locals.session = {
+				id: session.id,
+				authMethod: session.authMethod,
+				confirmedAt: session.confirmedAt
+			};
 			// Rollen und Mitgliedschaften je Anfrage frisch, damit Entzug sofort wirkt
 			const [principal, prefs] = await Promise.all([
 				loadPrincipal(session.person),

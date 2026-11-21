@@ -225,6 +225,13 @@
       "when": 1795247464321,
       "tag": "0031_hub_standard",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1795256286184,
+      "tag": "0032_erneute_anmeldung",
+      "breakpoints": true
     }
   ]
 }

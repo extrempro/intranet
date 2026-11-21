@@ -1,4 +1,5 @@
 import { fail } from '@sveltejs/kit';
+import { bestaetigungFehlt } from '#lib/server/auth/bestaetigung.ts';
 import {
 	normalizePolicy,
 	PASSWORD_MIN_OPTIONS,
@@ -71,6 +72,8 @@ async function log(
 export const actions: Actions = {
 	entra: async ({ request, locals, getClientAddress }) => {
 		const p = admin(locals);
+		const b = bestaetigungFehlt(locals);
+		if (b) return b;
 		const form = Object.fromEntries(
 			[...(await request.formData())].map(([k, v]) => [k, String(v).slice(0, 100)])
 		);
@@ -126,6 +129,8 @@ export const actions: Actions = {
 
 	richtlinie: async ({ request, locals, getClientAddress }) => {
 		const p = admin(locals);
+		const b = bestaetigungFehlt(locals);
+		if (b) return b;
 		const form = await request.formData();
 		const minLength = Number(form.get('mindestlaenge'));
 		const resetMinutes = Number(form.get('link'));
@@ -143,6 +148,8 @@ export const actions: Actions = {
 
 	inaktivitaet: async ({ request, locals, getClientAddress }) => {
 		const p = admin(locals);
+		const b = bestaetigungFehlt(locals);
+		if (b) return b;
 		const value = String((await request.formData()).get('idle') ?? '');
 		if (!Object.hasOwn(IDLE_OPTIONS, value))
 			return fail(400, { bereich: 'inaktivitaet', fehler: 'Ungültiger Wert.' });
