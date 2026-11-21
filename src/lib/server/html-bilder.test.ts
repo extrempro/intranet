@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { alleBilderBeschrieben, bildIdsImText } from '../bilder-im-text.ts';
+import {
+	alleBilderBeschrieben,
+	bildBreite,
+	bildIdsImText,
+	breiteAusKlassen
+} from '../bilder-im-text.ts';
 import { cleanHtml, htmlToText } from './html.ts';
 
 const A = '11111111-1111-4111-8111-111111111111';
@@ -45,5 +50,29 @@ describe('Tabellen und Infokästen', () => {
 
 	it('Text für Suche trennt Zellen', () => {
 		expect(htmlToText('<table><tr><td>A</td><td>B</td></tr></table>')).toBe('A B');
+	});
+});
+
+describe('Bildbreite', () => {
+	it('rundet auf 5er-Schritte zwischen 10 und 100', () => {
+		expect(bildBreite(47)).toBe(45);
+		expect(bildBreite(3)).toBe(10);
+		expect(bildBreite(140)).toBe(100);
+		expect(bildBreite(Number.NaN)).toBe(100);
+	});
+
+	it('liest neue und frühere Klassen', () => {
+		expect(breiteAusKlassen(['bild-b65', 'bild-links'])).toBe(65);
+		expect(breiteAusKlassen(['bild-klein'])).toBe(35);
+		expect(breiteAusKlassen([])).toBe(100);
+	});
+
+	it('Server lässt nur gültige Breiten durch', () => {
+		const A = '11111111-1111-4111-8111-111111111111';
+		expect(
+			cleanHtml(`<img src="/dateien/${A}" alt="x" class="bild-b65 bild-b7 bild-b200">`, {
+				bilder: new Set([A])
+			})
+		).toBe(`<img src="/dateien/${A}" alt="x" class="bild-b65" />`);
 	});
 });

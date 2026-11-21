@@ -10,6 +10,14 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.16.0 · 21.11.2026 · Bilder ziehen und klarere Symbole
+
+- Bilder im Text ziehst du jetzt am Anfasser an der Ecke größer oder kleiner. Alternativ geht es in der Leiste mit „−“ und „+“ in 5-%-Schritten.
+- Bilder lassen sich mit der Maus an eine andere Stelle im Text ziehen.
+- Die Werkzeugleiste des Editors hat einheitliche, gut erkennbare Symbole.
+- Nach dem Einfügen eines Bildes schreibst du direkt dahinter weiter.
+- Hinweise wie „Neu in Version …“ oder „Neu laden“ haben jetzt Abstand zum Inhalt darunter.
+
 ## 0.15.0 · 21.11.2026 · Tabellen, Infokästen und Unterstreichen
 
 - Im Editor kannst du jetzt Text unterstreichen.

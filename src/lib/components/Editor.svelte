@@ -5,7 +5,14 @@
 	 */
 	import { onDestroy, onMount, tick as warten } from 'svelte';
 	import type { Editor } from '@tiptap/core';
-	import { BILD_GROESSEN, type BildAusrichtung, type BildGroesse } from '#lib/bilder-im-text.ts';
+	import {
+		BILD_BREITE_SCHRITT,
+		BILD_VORGABEN,
+		bildBreite,
+		breiteAusKlassen,
+		type BildAusrichtung
+	} from '#lib/bilder-im-text.ts';
+	import Icon from './Icon.svelte';
 	import { bildHochladen, bildVorbereiten, istTextbild } from '#lib/textbild.ts';
 	import { KASTEN_ARTEN, KASTEN_NAMEN, type KastenArt } from '#lib/textbausteine.ts';
 
@@ -76,7 +83,7 @@
 	function bildUebernehmen() {
 		const b = bildEntwurf;
 		if (!b || !b.alt.trim()) return;
-		if (b.neu)
+		if (b.neu) {
 			editor
 				?.chain()
 				.focus()
@@ -85,7 +92,9 @@
 					attrs: { src: b.src, alt: b.alt.trim(), animiert: Boolean(b.animiert) }
 				})
 				.run();
-		else editor?.chain().focus().updateAttributes('image', { alt: b.alt.trim() }).run();
+			// Cursor hinter das Bild, damit Weiterschreiben das Bild nicht ersetzt
+			if (editor) editor.commands.setTextSelection(editor.state.selection.to);
+		} else editor?.chain().focus().updateAttributes('image', { alt: b.alt.trim() }).run();
 		bildSchliessen();
 	}
 
@@ -95,11 +104,11 @@
 		bildDialog?.close();
 	}
 
-	const bildAttr = (k: 'groesse' | 'ausrichtung') => {
+	const bildAttr = (k: 'breite' | 'ausrichtung') => {
 		void tick;
 		return editor?.getAttributes('image')[k] ?? null;
 	};
-	const setzeBild = (attrs: { groesse?: BildGroesse; ausrichtung?: BildAusrichtung | null }) =>
+	const setzeBild = (attrs: { breite?: number; ausrichtung?: BildAusrichtung | null }) =>
 		editor?.chain().focus().updateAttributes('image', attrs).run();
 
 	onMount(async () => {
@@ -137,16 +146,23 @@
 				return ['div', HTMLAttributes, 0];
 			}
 		});
-		// Größe und Ausrichtung als Klassen (bild-klein, bild-links …), siehe bilder-im-text.ts
+		// Breite (bild-b<n>, Prozent der Textbreite) und Ausrichtung als Klassen, siehe bilder-im-text.ts
+		const klassen = (attrs: Record<string, unknown>) => {
+			const breite = attrs.breite as number;
+			const a = breite < 100 ? (attrs.ausrichtung as BildAusrichtung | null) : null;
+			return [`bild-b${breite}`, a && `bild-${a}`, attrs.animiert && 'bild-animiert']
+				.filter(Boolean)
+				.join(' ');
+		};
 		const TextBild = Image.extend({
+			draggable: true,
 			addAttributes() {
 				return {
 					src: { default: null },
 					alt: { default: '' },
-					groesse: {
-						default: 'voll',
-						parseHTML: (el: HTMLElement) =>
-							BILD_GROESSEN.find((g) => el.classList.contains(`bild-${g}`)) ?? 'voll',
+					breite: {
+						default: 100,
+						parseHTML: (el: HTMLElement) => breiteAusKlassen(el.classList),
 						renderHTML: () => ({})
 					},
 					animiert: {
@@ -164,16 +180,82 @@
 				};
 			},
 			renderHTML({ node, HTMLAttributes }) {
-				const g = node.attrs.groesse as BildGroesse;
-				const a = g !== 'voll' ? (node.attrs.ausrichtung as BildAusrichtung | null) : null;
-				return [
-					'img',
-					mergeAttributes(HTMLAttributes, {
-						class: [`bild-${g}`, a && `bild-${a}`, node.attrs.animiert && 'bild-animiert']
-							.filter(Boolean)
-							.join(' ')
-					})
-				];
+				return ['img', mergeAttributes(HTMLAttributes, { class: klassen(node.attrs) })];
+			},
+			// Im Editor: Rahmen mit Anfasser zum Größer-/Kleinerziehen; verschieben per Ziehen
+			addNodeView() {
+				return ({ node: start, getPos, editor: ed }) => {
+					let node = start;
+					let ausgewaehlt = false;
+					const rahmen = document.createElement('div');
+					const img = document.createElement('img');
+					const griff = document.createElement('span');
+					const anzeige = document.createElement('span');
+					griff.className = 'ziehpunkt';
+					griff.setAttribute('aria-hidden', 'true');
+					anzeige.className = 'breitenanzeige';
+					anzeige.setAttribute('aria-hidden', 'true');
+					rahmen.append(img, griff, anzeige);
+					const zeigen = () => {
+						rahmen.className = `textbild ${klassen(node.attrs)}${ausgewaehlt ? ' ProseMirror-selectednode' : ''}`;
+						img.src = node.attrs.src;
+						img.alt = node.attrs.alt ?? '';
+						griff.dataset.seite = node.attrs.ausrichtung === 'rechts' ? 'links' : 'rechts';
+					};
+					zeigen();
+					griff.addEventListener('pointerdown', (e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						const flaeche = rahmen.parentElement?.getBoundingClientRect().width ?? 1;
+						const startX = e.clientX;
+						const startB = rahmen.getBoundingClientRect().width;
+						const richtung =
+							node.attrs.ausrichtung === 'rechts' && node.attrs.breite < 100
+								? -1
+								: node.attrs.ausrichtung && node.attrs.breite < 100
+									? 1
+									: 2;
+						let neu = node.attrs.breite as number;
+						griff.setPointerCapture(e.pointerId);
+						rahmen.classList.add('zieht');
+						const bewegen = (ev: PointerEvent) => {
+							neu = bildBreite(((startB + (ev.clientX - startX) * richtung) / flaeche) * 100);
+							rahmen.style.width = `${neu}%`;
+							anzeige.textContent = `${neu} %`;
+						};
+						const ende = () => {
+							griff.removeEventListener('pointermove', bewegen);
+							rahmen.classList.remove('zieht');
+							rahmen.style.width = '';
+							const pos = typeof getPos === 'function' ? getPos() : undefined;
+							if (typeof pos === 'number' && neu !== node.attrs.breite)
+								ed.view.dispatch(
+									ed.state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, breite: neu })
+								);
+						};
+						griff.addEventListener('pointermove', bewegen);
+						griff.addEventListener('pointerup', ende, { once: true });
+						griff.addEventListener('pointercancel', ende, { once: true });
+					});
+					return {
+						dom: rahmen,
+						update: (n) => {
+							if (n.type !== node.type) return false;
+							node = n;
+							zeigen();
+							return true;
+						},
+						selectNode: () => {
+							ausgewaehlt = true;
+							zeigen();
+						},
+						deselectNode: () => {
+							ausgewaehlt = false;
+							zeigen();
+						},
+						stopEvent: (e) => e.target === griff
+					};
+				};
 			}
 		}).configure({ inline: false, allowBase64: false });
 		editor = new Editor({
@@ -269,18 +351,34 @@
 		linkAdresse = '';
 	}
 
+	// Linien-Symbole (Tabler, 24×24) wie im Hauptmenü
+	const SYM = {
+		link: 'M9 15l6 -6M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463',
+		bild: 'M15 8h.01M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3zM3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3',
+		tabelle:
+			'M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2zM3 10h18M10 3v18',
+		info: 'M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0M12 9h.01M11 12h1v4h1',
+		zurueck: 'M9 14l-4 -4l4 -4M5 10h11a4 4 0 1 1 0 8h-1',
+		vor: 'M15 14l4 -4l-4 -4M19 10h-11a4 4 0 1 0 0 8h1'
+	};
+
 	// Sichtbarer Text steht vorn im Namen (WCAG 2.5.3, Sprachsteuerung „H2 klicken“)
-	const knoepfe = $derived([
-		{ l: 'Fett', t: 'B', on: aktiv('bold'), run: () => editor?.chain().focus().toggleBold().run() },
+	const knoepfe: { l: string; t?: string; i?: string; on: boolean; run: () => void }[] = $derived([
+		{
+			l: 'Fett',
+			i: 'M7 5h6a3.5 3.5 0 0 1 0 7h-6zM13 12h1a3.5 3.5 0 0 1 0 7h-7v-7',
+			on: aktiv('bold'),
+			run: () => editor?.chain().focus().toggleBold().run()
+		},
 		{
 			l: 'Kursiv',
-			t: 'I',
+			i: 'M11 5h6M7 19h6M14 5l-4 14',
 			on: aktiv('italic'),
 			run: () => editor?.chain().focus().toggleItalic().run()
 		},
 		{
 			l: 'Unterstrichen',
-			t: 'U',
+			i: 'M7 5v5a5 5 0 0 0 10 0v-5M5 19h14',
 			on: aktiv('underline'),
 			run: () => editor?.chain().focus().toggleUnderline().run()
 		},
@@ -298,19 +396,19 @@
 		},
 		{
 			l: 'Aufzählung',
-			t: '•',
+			i: 'M9 6h11M9 12h11M9 18h11M5 6v.01M5 12v.01M5 18v.01',
 			on: aktiv('bulletList'),
 			run: () => editor?.chain().focus().toggleBulletList().run()
 		},
 		{
 			l: '1. Nummerierte Liste',
-			t: '1.',
+			i: 'M11 6h9M11 12h9M12 18h8M4 16a2 2 0 1 1 4 0c0 .591 -.5 1 -1 1.5l-3 2.5h4M6 10v-6l-2 2',
 			on: aktiv('orderedList'),
 			run: () => editor?.chain().focus().toggleOrderedList().run()
 		},
 		{
 			l: 'Zitat',
-			t: '❝',
+			i: 'M6 15h15M21 19h-15M15 11h6M21 7h-6M9 9h1a1 1 0 1 1 -1 1v-2.5a2 2 0 0 1 2 -2M3 9h1a1 1 0 1 1 -1 1v-2.5a2 2 0 0 1 2 -2',
 			on: aktiv('blockquote'),
 			run: () => editor?.chain().focus().toggleBlockquote().run()
 		}
@@ -335,7 +433,7 @@
 				onclick={k.run}
 				disabled={!editor}
 			>
-				{k.t}
+				{#if k.i}<Icon d={k.i} size={20} stroke={2} />{:else}{k.t}{/if}
 			</button>
 		{/each}
 		<button
@@ -350,7 +448,7 @@
 				linkOffen = !linkOffen;
 			}}
 		>
-			🔗
+			<Icon d={SYM.link} size={20} stroke={2} />
 		</button>
 		{#if bilder}
 			<button
@@ -360,7 +458,7 @@
 				disabled={!editor}
 				onclick={() => dateiFeld?.click()}
 			>
-				🖼
+				<Icon d={SYM.bild} size={20} stroke={2} />
 			</button>
 		{/if}
 		<button
@@ -372,7 +470,7 @@
 			onclick={() =>
 				editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
 		>
-			▦
+			<Icon d={SYM.tabelle} size={20} stroke={2} />
 		</button>
 		<button
 			type="button"
@@ -382,7 +480,7 @@
 			disabled={!editor}
 			onclick={kastenUmschalten}
 		>
-			ⓘ
+			<Icon d={SYM.info} size={20} stroke={2} />
 		</button>
 		<button
 			type="button"
@@ -391,7 +489,7 @@
 			disabled={!editor}
 			onclick={() => editor?.chain().focus().undo().run()}
 		>
-			↶
+			<Icon d={SYM.zurueck} size={20} stroke={2} />
 		</button>
 		<button
 			type="button"
@@ -400,29 +498,50 @@
 			disabled={!editor}
 			onclick={() => editor?.chain().focus().redo().run()}
 		>
-			↷
+			<Icon d={SYM.vor} size={20} stroke={2} />
 		</button>
 	</div>
 	{#if bilder && aktiv('image')}
 		<!-- Ausgewähltes Bild: Größe, Ausrichtung, Beschreibung -->
 		<div class="zusatzleiste" role="toolbar" aria-label="Bild" tabindex="-1">
-			<span class="gruppe" role="group" aria-label="Größe">
-				{#each [['klein', 'Klein'], ['mittel', 'Mittel'], ['voll', 'Volle Breite']] as [g, t] (g)}
+			<span class="gruppe" role="group" aria-label="Breite">
+				{#each BILD_VORGABEN as v (v.breite)}
 					<button
 						type="button"
-						aria-pressed={bildAttr('groesse') === g}
-						onclick={() => setzeBild({ groesse: g as BildGroesse })}
+						aria-pressed={bildAttr('breite') === v.breite}
+						onclick={() => setzeBild({ breite: v.breite })}
 					>
-						{t}
+						{v.name}
 					</button>
 				{/each}
+				<button
+					type="button"
+					aria-label="Schmaler"
+					title="Schmaler (oder an der Ecke ziehen)"
+					disabled={bildAttr('breite') <= 10}
+					onclick={() =>
+						setzeBild({ breite: bildBreite(bildAttr('breite') - BILD_BREITE_SCHRITT) })}
+				>
+					−
+				</button>
+				<span class="wert" aria-live="polite">{bildAttr('breite')} %</span>
+				<button
+					type="button"
+					aria-label="Breiter"
+					title="Breiter (oder an der Ecke ziehen)"
+					disabled={bildAttr('breite') >= 100}
+					onclick={() =>
+						setzeBild({ breite: bildBreite(bildAttr('breite') + BILD_BREITE_SCHRITT) })}
+				>
+					+
+				</button>
 			</span>
 			<span class="gruppe" role="group" aria-label="Ausrichtung">
 				{#each [[null, 'Mitte'], ['links', 'Links'], ['rechts', 'Rechts']] as [a, t] (t)}
 					<button
 						type="button"
-						disabled={bildAttr('groesse') === 'voll'}
-						title={bildAttr('groesse') === 'voll'
+						disabled={bildAttr('breite') >= 100}
+						title={bildAttr('breite') >= 100
 							? 'Bei voller Breite steht das Bild für sich'
 							: 'Text fließt um das Bild'}
 						aria-pressed={(bildAttr('ausrichtung') ?? null) === a}
@@ -635,9 +754,59 @@
 	.flaeche :global(.inhalt p) {
 		margin: 0 0 0.6em;
 	}
-	.flaeche :global(.inhalt img.ProseMirror-selectednode) {
+	.flaeche :global(.inhalt .textbild) {
+		position: relative;
+		cursor: grab;
+	}
+	.flaeche :global(.inhalt .textbild:not(.bild-links, .bild-rechts)) {
+		margin: 12px auto;
+	}
+	.flaeche :global(.inhalt .textbild img) {
+		display: block;
+		pointer-events: none;
+	}
+	.flaeche :global(.inhalt .textbild.ProseMirror-selectednode) {
 		outline: 3px solid var(--focus);
 		outline-offset: 2px;
+		border-radius: 10px;
+	}
+	/* Anfasser zum Größer-/Kleinerziehen, nur am ausgewählten Bild */
+	.flaeche :global(.inhalt .ziehpunkt) {
+		display: none;
+		position: absolute;
+		bottom: -10px;
+		width: 22px;
+		height: 22px;
+		border: 3px solid var(--sf);
+		border-radius: 50%;
+		background: var(--fill);
+		cursor: ew-resize;
+		touch-action: none;
+	}
+	.flaeche :global(.inhalt .ziehpunkt[data-seite='rechts']) {
+		right: -10px;
+	}
+	.flaeche :global(.inhalt .ziehpunkt[data-seite='links']) {
+		left: -10px;
+	}
+	.flaeche :global(.inhalt .ProseMirror-selectednode .ziehpunkt),
+	.flaeche :global(.inhalt .zieht .ziehpunkt) {
+		display: block;
+	}
+	.flaeche :global(.inhalt .breitenanzeige) {
+		display: none;
+		position: absolute;
+		top: 8px;
+		left: 8px;
+		padding: 2px 8px;
+		border-radius: 999px;
+		background: rgb(0 0 0 / 0.7);
+		color: #fff;
+		font-size: 13px;
+		font-weight: 600;
+	}
+	.flaeche :global(.inhalt .zieht .breitenanzeige) {
+		display: block;
 	}
 	.zusatzleiste {
 		display: flex;
@@ -667,6 +836,12 @@
 		background: var(--fill);
 		border-color: var(--fill);
 		color: #fff;
+	}
+	.zusatzleiste .wert {
+		min-width: 3.5em;
+		text-align: center;
+		font-size: 14px;
+		font-variant-numeric: tabular-nums;
 	}
 	.zusatzleiste button:disabled {
 		opacity: 0.45;
