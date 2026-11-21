@@ -80,16 +80,4 @@ describe('Teams', () => {
 		const { GraphError } = await import('./server/auth/entra.ts');
 		expect(teamsFehlertext(new GraphError(412, 'PreconditionFailed'))).toContain('zu kurz gültig');
 	});
-
-	it('kann auf den Test-Reiter springen', () => {
-		const url = new URL(teamsDeepLink(APP, '/sprung-angekommen', 'teamstest'));
-		expect(url.pathname).toBe(`/l/entity/${APP}/teamstest`);
-		const body = activityBody(
-			APP,
-			activityFor([{ title: 'T', detail: null, link: '/x' }]),
-			['u'],
-			'teamstest'
-		);
-		expect(body.topic.webUrl).toContain('/teamstest?');
-	});
 });

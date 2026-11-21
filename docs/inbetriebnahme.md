@@ -102,12 +102,11 @@ Tenant-ID und Client-ID stehen auf der Übersichtsseite der Registrierung.
 
 1. Verwaltung → Benachrichtigungen → Teams: **Aussehen** festlegen, Teams-Meldungen einschalten, **App-Paket** herunterladen.
 2. Im **Teams Admin Center** unter „Apps verwalten“ hochladen und per **Setup-Richtlinie** für die Intranet-Gruppe installieren.
-3. „Testmeldung an mich“ senden und in Teams auf Desktop, im Browser, auf iPhone und Android prüfen.
-4. Nach den Tests den Reiter „Test“ entfernen (`TEAMS_TEST_REITER` in `src/lib/server/teams.ts`), neue Version des Pakets erzeugen und in Teams aktualisieren.
+3. „Testmeldung an mich“ senden und in Teams auf Desktop, im Browser, auf iPhone und Android prüfen: Die Meldung erscheint unter „Aktivität“, ein Klick öffnet das Intranet.
 
 ## 8. Vor dem Start
 
-- [ ] Startklar ohne Fehler und Hinweise (Teams-Test-Reiter ausgenommen, solange getestet wird)
+- [ ] Startklar ohne Fehler und Hinweise
 - [ ] Wiederherstellen einmal geprobt ([backup/README.md](../backup/README.md)), privater age-Schlüssel und `ENCRYPTION_KEY` im Passwortmanager
 - [ ] Lokalen Admin ausprobiert (lokal anmelden, Verwaltung öffnen), Zugang und Wiederherstellungscodes im Passwortmanager
 - [ ] Clientgeheimnis-Ablauf im Kalender

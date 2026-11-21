@@ -8,7 +8,7 @@ import { persons, roleAssignments, tenants } from './db/schema.ts';
 import { mailConfigured } from './mail.ts';
 import { pushStatus } from './push.ts';
 import { backupStatus, migrationStatus } from './system.ts';
-import { TEAMS_TEST_REITER, teamsStatus } from './teams.ts';
+import { teamsStatus } from './teams.ts';
 import { teamsSettings } from './teams-config.ts';
 
 export async function startklar(erkannteAdresse: string | null) {
@@ -51,8 +51,7 @@ export async function startklar(erkannteAdresse: string | null) {
 		rechtliches: { datenschutz: Boolean(haupt?.datenschutz), impressum: Boolean(haupt?.impressum) },
 		teams: {
 			aktiv: teams.aktiv,
-			letzte: teamsLetzte ? { ok: teamsLetzte.ok, meldung: teamsLetzte.meldung } : null,
-			testReiter: TEAMS_TEST_REITER
+			letzte: teamsLetzte ? { ok: teamsLetzte.ok, meldung: teamsLetzte.meldung } : null
 		},
 		migrationen
 	});

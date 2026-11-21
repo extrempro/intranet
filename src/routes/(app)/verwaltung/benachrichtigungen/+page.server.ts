@@ -265,11 +265,10 @@ export const actions: Actions = {
 		};
 	},
 
-	teamsTest: async ({ locals, request }) => {
+	teamsTest: async ({ locals }) => {
 		const p = requireSystemAdmin(locals);
-		const testTab = (await request.formData()).get('ziel') === 'test';
 		try {
-			return { bereich: 'teams', ergebnis: await sendTeamsTest(p.personId, undefined, testTab) };
+			return { bereich: 'teams', ergebnis: await sendTeamsTest(p.personId) };
 		} catch (err) {
 			return fail(502, { bereich: 'teams', fehler: err instanceof Error ? err.message : 'Fehler' });
 		}

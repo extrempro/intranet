@@ -46,7 +46,6 @@ const securityHeaders: Record<string, string> = {
 /** Ohne Anmeldung erreichbar. Alles andere nur mit gültiger Sitzung. */
 /** /einrichtung: Ersteinrichtung und Notfallzugang über einen Link aus dem Log. */
 /** /ical: persönliches Kalender-Abo, geschützt durch den geheimen Link (Kap. 8.8). */
-/** /teams/test: vorübergehender Test-Tab (SSO, Cookies), zeigt keine Inhalte. */
 /** /teams/app: Einstieg der Teams-App (Anmeldung per SSO), /teams/anmelden: Token-Tausch. */
 const PUBLIC_PATHS = [
 	'/anmelden',
@@ -54,7 +53,6 @@ const PUBLIC_PATHS = [
 	'/einrichtung',
 	'/health',
 	'/ical',
-	'/teams/test',
 	'/teams/app',
 	'/teams/anmelden',
 	'/teams/teams.js',
