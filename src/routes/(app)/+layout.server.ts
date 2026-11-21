@@ -16,6 +16,8 @@ import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import { unreadConversations } from '#lib/server/messages.ts';
 import { unreadCount } from '#lib/server/notify.ts';
 import { accentStyle, brandingFor } from '#lib/server/tenant-branding.ts';
+import { MENUE_COOKIE, menueLesen } from '#lib/menue.ts';
+import { navAreas } from '#lib/nav.ts';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
@@ -59,6 +61,11 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		meldung: takeFlash(cookies),
 		hilfeGesehen,
 		neueBeitraege,
+		/** Hauptmenü ein-/ausgeklappt und offene Bereiche (je Gerät, Cookie) */
+		menue: menueLesen(
+			cookies.get(MENUE_COOKIE),
+			navAreas().map((a) => a.key)
+		),
 		/** Nach einem Update einmal: „Neu in Version …“ */
 		neuInVersion
 	};
