@@ -23,7 +23,8 @@ import {
 } from './db/schema.ts';
 import { beschreibungenSpeichern } from './files/beschreibung.ts';
 import { deleteStored, MAX_ATTACHMENTS, ownUnlinkedFiles } from './files/store.ts';
-import { cleanHtml, excerpt, htmlToText } from './html.ts';
+import { excerpt, htmlToText } from './html.ts';
+import { bilderVerknuepfen, textMitBildern } from './textbilder.ts';
 import { toggleReaction } from './news.ts';
 import { getContentRules } from './rules.ts';
 import { getSetting, setSetting } from './settings.ts';
@@ -355,9 +356,11 @@ export async function savePost(
 	const title = input.title.trim();
 	if (title.length < 3) errors.title = 'Gib bitte einen Titel an.';
 	else if (title.length > 160) errors.title = 'Höchstens 160 Zeichen.';
-	const bodyHtml = cleanHtml(input.bodyHtml);
+	const text = await textMitBildern(p, input.bodyHtml, { art: 'news', id });
+	const bodyHtml = text.html;
 	const bodyText = htmlToText(bodyHtml);
 	if (!bodyText) errors.body = 'Erzähl bitte kurz, was zu sehen ist.';
+	else if (text.fehler) errors.body = text.fehler;
 	if (!input.consent)
 		errors.consent = 'Bestätige bitte, dass alle abgebildeten Personen zugestimmt haben.';
 	const wanted = [...new Set(input.attachmentIds.filter((x) => GUID.test(x)))];
@@ -400,6 +403,7 @@ export async function savePost(
 				.insert(newsAttachments)
 				.values(wanted.map((fileId, position) => ({ newsId: pid!, fileId, position })));
 		await beschreibungenSpeichern(tx, wanted, input.descriptions);
+		await bilderVerknuepfen(tx, { art: 'news', id: pid! }, text.bilder);
 		return pid;
 	});
 	await deleteStored(removed);

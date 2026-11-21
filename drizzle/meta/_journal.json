@@ -253,6 +253,13 @@
       "when": 1795279280035,
       "tag": "0035_fehlermeldung_technik",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1795285189249,
+      "tag": "0036_bilder_im_text",
+      "breakpoints": true
     }
   ]
 }
