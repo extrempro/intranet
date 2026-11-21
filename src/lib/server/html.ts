@@ -4,6 +4,7 @@
  */
 import sanitizeHtml from 'sanitize-html';
 import { BILD_KLASSEN } from '../bilder-im-text.ts';
+import { KASTEN_KLASSEN } from '../textbausteine.ts';
 
 const OPTIONS: sanitizeHtml.IOptions = {
 	allowedTags: [
@@ -36,26 +37,46 @@ const OPTIONS: sanitizeHtml.IOptions = {
 	}
 };
 
-/**
- * @param bilder Erlaubte Bilder im Text (Datei-IDs). Ohne Angabe fallen alle
- *   Bilder weg; erlaubt sind nur <img src="/dateien/<ID>"> aus dieser Liste,
- *   mit Beschreibung (alt) und den Klassen für Größe und Ausrichtung.
- */
-export function cleanHtml(html: string, bilder?: ReadonlySet<string>): string {
-	const options: sanitizeHtml.IOptions = bilder?.size
-		? {
-				...OPTIONS,
-				allowedTags: [...(OPTIONS.allowedTags as string[]), 'img'],
-				allowedAttributes: { ...OPTIONS.allowedAttributes, img: ['src', 'alt', 'class'] },
-				allowedClasses: { img: BILD_KLASSEN },
-				allowedSchemesAppliedToAttributes: ['href'],
-				exclusiveFilter: (frame) => {
-					if (frame.tag !== 'img') return false;
-					const m = /^\/dateien\/([0-9a-f-]{36})$/i.exec(frame.attribs.src ?? '');
-					return !m || !bilder.has(m[1].toLowerCase());
-				}
-			}
-		: OPTIONS;
+const TABELLE = ['table', 'thead', 'tbody', 'tr', 'th', 'td'];
+
+export type HtmlOptionen = {
+	/**
+	 * Erlaubte Bilder im Text (Datei-IDs). Ohne Angabe fallen alle Bilder weg;
+	 * erlaubt sind nur <img src="/dateien/<ID>"> aus dieser Liste, mit
+	 * Beschreibung (alt) und den Klassen für Größe und Ausrichtung.
+	 */
+	bilder?: ReadonlySet<string>;
+	/** Tabellen (ohne verbundene Zellen) und Infokästen erlauben */
+	erweitert?: boolean;
+};
+
+export function cleanHtml(html: string, { bilder, erweitert }: HtmlOptionen = {}): string {
+	const tags = [...(OPTIONS.allowedTags as string[])];
+	const attribute: Record<string, string[]> = { a: ['href'] };
+	const klassen: Record<string, string[]> = {};
+	if (erweitert) {
+		tags.push(...TABELLE, 'div');
+		attribute.div = ['class'];
+		klassen.div = KASTEN_KLASSEN;
+	}
+	const mitBildern = Boolean(bilder?.size);
+	if (mitBildern) {
+		tags.push('img');
+		attribute.img = ['src', 'alt', 'class'];
+		klassen.img = BILD_KLASSEN;
+	}
+	const options: sanitizeHtml.IOptions = {
+		...OPTIONS,
+		allowedTags: tags,
+		allowedAttributes: attribute,
+		allowedClasses: klassen,
+		exclusiveFilter: (frame) => {
+			// Bilder nur aus der Liste erlaubter Dateien
+			if (frame.tag !== 'img') return false;
+			const m = /^\/dateien\/([0-9a-f-]{36})$/i.exec(frame.attribs.src ?? '');
+			return !mitBildern || !m || !bilder!.has(m[1].toLowerCase());
+		}
+	};
 	return (
 		sanitizeHtml(html, options)
 			// Link ohne (sichere) Adresse: Text bleibt, Link fällt weg
@@ -69,7 +90,7 @@ export function cleanHtml(html: string, bilder?: ReadonlySet<string>): string {
 /** Reiner Text für Suche und Vorschau. */
 export function htmlToText(html: string): string {
 	return sanitizeHtml(
-		html.replace(/<\/(p|h2|h3|li|blockquote)>/g, '$& ').replace(/<br\s*\/?>/g, ' '),
+		html.replace(/<\/(p|h2|h3|li|blockquote|td|th|div)>/g, '$& ').replace(/<br\s*\/?>/g, ' '),
 		{
 			allowedTags: [],
 			allowedAttributes: {}

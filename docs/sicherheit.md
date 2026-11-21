@@ -101,6 +101,8 @@ Neu: Bilder direkt im Text von Neuigkeiten, Hub-Beiträgen, Hinter den Kulissen 
 - **Metadaten**: Bei WebP entfernt der Server EXIF und XMP, Animationen bleiben erhalten (Test); JPEG/PNG wie bisher.
 - **Aufräumen**: Aus dem Text entfernte Bilder gelten wieder als nicht verknüpft und werden nach 24 Stunden gelöscht (DB-Test); beim Löschen des Beitrags fallen die Verknüpfungen mit weg.
 
+- **Tabellen und Infokästen (Version 0.15.0)**: Nur im Editor dieser vier Bereiche erlaubt. Tabellen ohne Attribute (kein `style`, `colspan`, Event-Attribute), Infokästen nur als `div` mit den Klassen `kasten` und `kasten-info|hinweis|warnung`; alles andere entfernt der Server (Test). Handbuch und Changelog lassen weiterhin keine Tabellen zu.
+
 Kein neuer Fund.
 
 ## Stand je ASVS-Kapitel (5.0)
