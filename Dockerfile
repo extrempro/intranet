@@ -22,7 +22,8 @@ COPY --from=build --chown=node:node /app/drizzle ./drizzle
 COPY --from=build --chown=node:node /app/scripts/notfall-admin.mjs ./scripts/notfall-admin.mjs
 # npm wird zur Laufzeit nicht gebraucht: entfernen (weniger Angriffsfläche,
 # keine Funde des Image-Scans in den mitgelieferten npm-Paketen)
-RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+# apk upgrade: Sicherheitskorrekturen von Alpine, auch wenn das Basis-Image noch älter ist.
+RUN apk upgrade --no-cache && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 # Ablage für verschlüsselte Dateien (Volume in docker-compose.yml)
 RUN mkdir -p /data/files && chown node:node /data/files && chmod 700 /data/files
 USER node
