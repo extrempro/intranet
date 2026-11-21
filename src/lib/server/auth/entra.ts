@@ -11,6 +11,7 @@
  * Gruppen kommen per Microsoft Graph (transitiveMemberOf, delegiert),
  * damit verschachtelte Gruppen zählen und keine Obergrenze im Token greift.
  */
+import { safeTarget } from '../../ziel.ts';
 import * as oidc from 'openid-client';
 import { getSetting } from '../settings.ts';
 
@@ -122,12 +123,9 @@ export async function fetchGroupIds(accessToken: string): Promise<string[]> {
 	return ids;
 }
 
-/** Nur relative Ziele innerhalb des Intranets zulassen (kein Open Redirect). */
+/** Nur relative Ziele innerhalb des Intranets zulassen (kein Open Redirect, siehe ziel.ts). */
 export function safeReturnTo(value: string | null | undefined): string {
-	if (!value || !value.startsWith('/') || value.startsWith('//') || value.startsWith('/\\')) {
-		return '/';
-	}
-	return value;
+	return safeTarget(value, 2000);
 }
 
 // ---------------------------------------------------------------------------

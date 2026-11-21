@@ -11,10 +11,19 @@
 	const knopf = document.getElementById('erneut');
 	const params = new URLSearchParams(location.search);
 
+	// Gleiche Regeln wie src/lib/ziel.ts: Browser entfernen Tabulator und
+	// Zeilenumbruch und lesen „\“ wie „/“, darum beides ablehnen und das
+	// Ergebnis gegen die eigene Herkunft prüfen (kein Open Redirect).
 	function sicher(ziel) {
-		if (!ziel || ziel.charAt(0) !== '/' || ziel.charAt(1) === '/' || ziel.charAt(1) === '\\')
+		// eslint-disable-next-line no-control-regex -- Steuerzeichen gezielt ablehnen
+		if (!ziel || ziel.length > 300 || /[\u0000-\u001f\u007f\\]/.test(ziel)) return '/';
+		if (ziel.charAt(0) !== '/' || ziel.charAt(1) === '/') return '/';
+		try {
+			const u = new URL(ziel, location.origin);
+			return u.origin === location.origin ? u.pathname + u.search + u.hash : '/';
+		} catch {
 			return '/';
-		return ziel.slice(0, 300);
+		}
 	}
 
 	function zeigeFehler(text) {
