@@ -21,6 +21,7 @@ import {
 	tenants,
 	units
 } from './db/schema.ts';
+import { beschreibungenSpeichern } from './files/beschreibung.ts';
 import { deleteStored, MAX_ATTACHMENTS, ownUnlinkedFiles } from './files/store.ts';
 import { cleanHtml, excerpt, htmlToText } from './html.ts';
 import { toggleReaction } from './news.ts';
@@ -199,7 +200,8 @@ async function imagesOf(ids: string[]) {
 			id: files.id,
 			name: files.name,
 			kind: files.kind,
-			size: files.size
+			size: files.size,
+			description: files.description
 		})
 		.from(newsAttachments)
 		.innerJoin(files, eq(files.id, newsAttachments.fileId))
@@ -244,7 +246,7 @@ export async function listPosts(p: Principal, q?: string | null) {
 		cover: att.find((a) => a.newsId === r.id && IMAGE.includes(a.kind)) ?? null,
 		images: att
 			.filter((a) => a.newsId === r.id && IMAGE.includes(a.kind))
-			.map((a) => ({ id: a.id })),
+			.map((a) => ({ id: a.id, description: a.description })),
 		reactions: reactions.get(r.id) ?? [],
 		canEdit: writable.some((u) => u.id === r.unitId)
 	}));
@@ -325,6 +327,8 @@ export interface PostInput {
 	tenantIds: string[];
 	attachmentIds: string[];
 	consent: boolean;
+	/** Bildbeschreibungen je Datei-ID */
+	descriptions?: Map<string, string>;
 }
 
 export type PostErrors = Partial<
@@ -395,6 +399,7 @@ export async function savePost(
 			await tx
 				.insert(newsAttachments)
 				.values(wanted.map((fileId, position) => ({ newsId: pid!, fileId, position })));
+		await beschreibungenSpeichern(tx, wanted, input.descriptions);
 		return pid;
 	});
 	await deleteStored(removed);
@@ -421,7 +426,13 @@ export async function describeFiles(p: Principal, ids: string[], postId: string 
 	const allowed = valid.filter((x) => current.includes(x) || own.includes(x));
 	if (!allowed.length) return [];
 	const rows = await db
-		.select({ id: files.id, name: files.name, size: files.size })
+		.select({
+			id: files.id,
+			name: files.name,
+			size: files.size,
+			kind: files.kind,
+			description: files.description
+		})
 		.from(files)
 		.where(inArray(files.id, allowed));
 	return allowed.map((x) => rows.find((r) => r.id === x)!).filter(Boolean);

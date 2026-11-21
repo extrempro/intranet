@@ -1,6 +1,7 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { asc } from 'drizzle-orm';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
+import { mitBeschreibungen } from '#lib/server/files/beschreibung.ts';
 import { db } from '#lib/server/db/index.ts';
 import { tenants } from '#lib/server/db/schema.ts';
 import { readPostForm } from '#lib/server/kulissen-form.ts';
@@ -35,7 +36,13 @@ export const actions: Actions = {
 		const r = await savePost(p, null, input);
 		if (!r.ok)
 			return fail(400, {
-				werte: { ...input, attachments: await describeFiles(p, input.attachmentIds, null) },
+				werte: {
+					...input,
+					attachments: mitBeschreibungen(
+						await describeFiles(p, input.attachmentIds, null),
+						input.descriptions ?? new Map()
+					)
+				},
 				fehler: r.errors
 			});
 		redirect(303, `/hinter-den-kulissen/${r.id}`);

@@ -8,7 +8,7 @@ kurz: Anzeigen aufgeben, Kontakt aufnehmen, melden.
 
 ## Anzeige aufgeben
 
-Kategorie, Titel, Text, bis zu 3 Fotos und der Kontaktweg. Du wählst, in welchen Mandanten sie erscheint. Neue Anzeigen prüft zuerst die Moderation. Eine Anzeige läuft 30 Tage und lässt sich einmal verlängern.
+Kategorie, Titel, Text, bis zu 3 Fotos (je mit optionaler Beschreibung für Bildschirmleser) und der Kontaktweg. Du wählst, in welchen Mandanten sie erscheint. Neue Anzeigen prüft zuerst die Moderation. Eine Anzeige läuft 30 Tage und lässt sich einmal verlängern.
 
 ## Kontakt
 

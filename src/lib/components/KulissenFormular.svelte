@@ -62,7 +62,7 @@
 	{#if fehler.body}<span class="feldfehler">{fehler.body}</span>{/if}
 </div>
 
-<Anhaenge start={werte.attachments} fehler={fehler.attachments} />
+<Anhaenge start={werte.attachments} fehler={fehler.attachments} beschreibungen />
 
 <fieldset class="gruppe">
 	<legend>Wer sieht das?</legend>

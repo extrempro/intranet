@@ -1,3 +1,4 @@
+import { mitBeschreibungen } from '#lib/server/files/beschreibung.ts';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { asc } from 'drizzle-orm';
 import { dateToBerlinInput } from '#lib/news.ts';
@@ -61,7 +62,10 @@ export const actions: Actions = {
 		try {
 			const r = await saveNews(p, input, getClientAddress(), params.id);
 			if (!r.ok) {
-				values.attachments = await describeAttachments(p, input.attachmentIds, params.id);
+				values.attachments = mitBeschreibungen(
+					await describeAttachments(p, input.attachmentIds, params.id),
+					input.descriptions ?? new Map()
+				);
 				return fail(400, { werte: values, fehler: r.errors, pinKonflikt: r.pinConflict ?? null });
 			}
 			redirect(303, `/neuigkeiten/${r.id}`);

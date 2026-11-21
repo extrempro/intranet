@@ -232,6 +232,13 @@
       "when": 1795256286184,
       "tag": "0032_erneute_anmeldung",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1795263607118,
+      "tag": "0033_bildbeschreibung",
+      "breakpoints": true
     }
   ]
 }
