@@ -173,7 +173,7 @@
 		gap: 4px;
 	}
 	.schild.rot {
-		background: #b42318;
+		background: var(--rot);
 		color: #fff;
 	}
 	.schild.warn {

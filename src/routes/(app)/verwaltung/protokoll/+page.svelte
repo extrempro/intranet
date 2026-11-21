@@ -57,7 +57,9 @@
 	{#if data.eintraege.length === 0}
 		<p class="karte hinweis">Keine Einträge im gewählten Zeitraum.</p>
 	{:else}
-		<div class="karte tabelle-rahmen">
+		<!-- Bei schmalem Bildschirm waagerecht scrollbar, darum per Tastatur erreichbar -->
+		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+		<div class="karte tabelle-rahmen" tabindex="0" role="region" aria-label="Protokolleinträge">
 			<table>
 				<thead>
 					<tr>

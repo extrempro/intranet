@@ -461,7 +461,7 @@
 		width: 40px;
 		height: 40px;
 		border-radius: 12px;
-		background: #b42318;
+		background: var(--rot);
 		color: #fff;
 		display: flex;
 		align-items: center;
@@ -525,7 +525,7 @@
 		margin: 0;
 		padding: 0;
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+		grid-template-columns: repeat(auto-fill, minmax(min(170px, 100%), 1fr));
 		gap: 12px;
 	}
 	.fav {
@@ -621,7 +621,7 @@
 	/* Karten: zwei Spalten wie im Entwurf */
 	.karten {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
 		gap: 16px;
 		align-items: start;
 	}
@@ -676,7 +676,7 @@
 		gap: 4px;
 	}
 	.schild.rot {
-		background: #b42318;
+		background: var(--rot);
 		color: #fff;
 	}
 	.absender {
@@ -795,7 +795,7 @@
 		box-sizing: border-box;
 		font-size: 10px;
 		font-weight: 700;
-		color: #b42318;
+		color: var(--err-tx);
 	}
 	.schild.zu {
 		background: #fcebeb;

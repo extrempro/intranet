@@ -137,7 +137,7 @@
 	}
 	.kontakt {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+		grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
 		gap: 12px 24px;
 		margin: 0;
 	}

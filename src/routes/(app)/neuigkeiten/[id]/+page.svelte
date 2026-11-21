@@ -155,7 +155,7 @@
 		line-height: 1.25;
 	}
 	.schild.rot {
-		background: #b42318;
+		background: var(--rot);
 		color: #fff;
 	}
 	.schild.warn {
@@ -175,7 +175,7 @@
 		width: 34px;
 		height: 34px;
 		border-radius: 10px;
-		background: #b42318;
+		background: var(--rot);
 		color: #fff;
 		display: flex;
 		align-items: center;
@@ -263,7 +263,7 @@
 		align-items: center;
 	}
 	.loeschen {
-		background: #b42318;
-		border-color: #b42318;
+		background: var(--rot);
+		border-color: var(--rot);
 	}
 </style>

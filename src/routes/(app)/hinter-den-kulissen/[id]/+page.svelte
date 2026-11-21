@@ -164,7 +164,7 @@
 		align-items: center;
 	}
 	.rot {
-		background: #b42318;
-		border-color: #b42318;
+		background: var(--rot);
+		border-color: var(--rot);
 	}
 </style>

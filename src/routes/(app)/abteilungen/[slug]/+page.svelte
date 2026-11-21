@@ -700,13 +700,21 @@
 		flex-direction: column;
 		min-width: 0;
 	}
+	/* Zielgröße mindestens 24 px (WCAG 2.5.8) */
 	.kontakttext > a {
 		font-weight: 600;
 		color: var(--ac);
 		overflow-wrap: anywhere;
+		align-self: flex-start;
+		display: inline-flex;
+		align-items: center;
+		min-height: 24px;
 	}
 	.tel {
 		color: var(--mu);
+		display: inline-flex;
+		align-items: center;
+		min-height: 24px;
 	}
 	.anzahl {
 		font-weight: 400;
@@ -743,6 +751,15 @@
 	}
 	.name {
 		font-weight: 600;
+		align-self: flex-start;
+		display: inline-flex;
+		align-items: center;
+		min-height: 24px;
+	}
+	.person .unter a {
+		display: inline-flex;
+		align-items: center;
+		min-height: 24px;
 	}
 	.text {
 		margin: 0;

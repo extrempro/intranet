@@ -228,7 +228,7 @@
 	}
 	.zaehler {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+		grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr));
 		gap: 10px;
 	}
 	.kachel {

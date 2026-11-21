@@ -114,6 +114,6 @@
 		letter-spacing: 0.02em;
 	}
 	.thema.dringend {
-		color: #b42318;
+		color: var(--err-tx);
 	}
 </style>

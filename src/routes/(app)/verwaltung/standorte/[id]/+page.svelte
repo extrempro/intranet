@@ -37,7 +37,7 @@
 			<span>Adresse, Gebäude</span><input name="adresse" maxlength="200" value={s.address ?? ''} />
 		</label>
 		<label class="schalter">
-			<input type="checkbox" name="aktiv" checked={s.active} /> Aktiv
+			<input type="checkbox" role="switch" name="aktiv" checked={s.active} /> Aktiv
 		</label>
 		<p class="hinweis">
 			Ein deaktivierter Standort erscheint nirgends mehr; seine Betreiber werden abgemeldet.
@@ -173,7 +173,7 @@
 	}
 	.zeile {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
 		gap: 14px;
 	}
 </style>

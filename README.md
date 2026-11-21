@@ -104,6 +104,10 @@ demselben Text an und veröffentlicht die Images in der GitHub Container Registr
 
 Siehe [SECURITY.md](SECURITY.md).
 
+## Barrierefreiheit
+
+Ziel ist WCAG 2.2, Stufe AA. Prüfung und Stand: [docs/barrierefreiheit.md](docs/barrierefreiheit.md).
+
 ## Lizenz
 
 [MIT](LICENSE)

@@ -189,7 +189,7 @@
 	}
 	.raster {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+		grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
 		gap: 12px;
 	}
 	.kachel {

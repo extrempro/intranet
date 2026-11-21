@@ -95,7 +95,7 @@
 		padding: 6px 12px;
 	}
 	.rotschrift {
-		color: #b42318;
+		color: var(--err-tx);
 	}
 	.fest {
 		min-height: 44px;
