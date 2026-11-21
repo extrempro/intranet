@@ -396,3 +396,31 @@ export async function markNewsSeen(personId: string, at = new Date()) {
 		.values({ personId, newsSeenAt: at })
 		.onConflictDoUpdate({ target: personPreferences.personId, set: { newsSeenAt: at } });
 }
+
+// ---------------------------------------------------------------------------
+// Hinweis „Neu in Version …“ nach einem Update
+// ---------------------------------------------------------------------------
+
+export async function getVersionHint(
+	personId: string
+): Promise<{ an: boolean; gesehen: string | null }> {
+	const [row] = await db
+		.select({ an: personPreferences.versionHint, gesehen: personPreferences.versionSeen })
+		.from(personPreferences)
+		.where(eq(personPreferences.personId, personId));
+	return row ?? { an: true, gesehen: null };
+}
+
+export async function setVersionHint(personId: string, an: boolean) {
+	await db
+		.insert(personPreferences)
+		.values({ personId, versionHint: an })
+		.onConflictDoUpdate({ target: personPreferences.personId, set: { versionHint: an } });
+}
+
+export async function markVersionSeen(personId: string, version: string) {
+	await db
+		.insert(personPreferences)
+		.values({ personId, versionSeen: version })
+		.onConflictDoUpdate({ target: personPreferences.personId, set: { versionSeen: version } });
+}

@@ -17,6 +17,7 @@
 		form && (form as { bereich?: string }).bereich === b ? (form as Record<string, unknown>) : null;
 	let fotoOffen = $state(false);
 	let theme = $derived<string>(data.theme);
+	let neuerungen = $derived<boolean>(data.neuerungen);
 	const DARSTELLUNG = [
 		{ wert: 'auto', text: 'Automatisch' },
 		{ wert: 'hell', text: 'Hell' },
@@ -167,6 +168,25 @@
 				{/each}
 			</form>
 			<p class="unter">Gilt auf allen deinen Geräten. „Automatisch“ folgt deinem Gerät.</p>
+			<h4 id="h-neuerungen">Neuerungen nach einem Update</h4>
+			<form
+				method="POST"
+				action="?/neuerungen"
+				class="pillen"
+				aria-labelledby="h-neuerungen"
+				use:enhance={({ formData }) => {
+					neuerungen = formData.get('wert') === 'an';
+					return async ({ result }) => hierAnwenden(result);
+				}}
+			>
+				<button class="pille" type="submit" name="wert" value="an" aria-pressed={neuerungen}>
+					Anzeigen
+				</button>
+				<button class="pille" type="submit" name="wert" value="aus" aria-pressed={!neuerungen}>
+					Nicht anzeigen
+				</button>
+			</form>
+			<p class="unter">Nach einem Update einmal kurz zeigen, was neu ist.</p>
 		</section>
 
 		<section class="karte block" aria-labelledby="h-sicherheit">
@@ -218,6 +238,10 @@
 	h3 {
 		margin: 0;
 		font-size: 18px;
+	}
+	h4 {
+		margin: 8px 0 0;
+		font-size: 15px;
 	}
 	.mit-info {
 		display: flex;
