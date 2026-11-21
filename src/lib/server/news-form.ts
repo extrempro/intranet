@@ -1,5 +1,6 @@
 import { berlinToDate, endOfBerlinDay } from '../news.ts';
 import type { SaveInput } from './news.ts';
+import { beschreibungenAusForm } from './files/beschreibung.ts';
 
 /** Rohwerte zum erneuten Anzeigen nach Fehlern. */
 export interface NewsFormValues {
@@ -16,7 +17,13 @@ export interface NewsFormValues {
 	allTenants: boolean;
 	tenantIds: string[];
 	replacePin: boolean;
-	attachments: { id: string; name: string; size: number; kind: string }[];
+	attachments: {
+		id: string;
+		name: string;
+		size: number;
+		kind: string;
+		description?: string | null;
+	}[];
 }
 
 export function readNewsForm(form: FormData): { input: SaveInput; values: NewsFormValues } {
@@ -58,7 +65,8 @@ export function readNewsForm(form: FormData): { input: SaveInput; values: NewsFo
 		allTenants: values.allTenants,
 		tenantIds: values.tenantIds,
 		replacePin: values.replacePin,
-		attachmentIds: form.getAll('anhaenge').map(String).slice(0, 20)
+		attachmentIds: form.getAll('anhaenge').map(String).slice(0, 20),
+		descriptions: beschreibungenAusForm(form)
 	};
 	// Anheften ohne Datum: Pflichtfeld (Kap. 8.1) – als ungültiges Datum melden
 	if (values.pin && !values.pinnedUntil) input.pinnedUntil = new Date(0);

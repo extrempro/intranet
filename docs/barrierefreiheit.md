@@ -16,17 +16,18 @@ Automatische Prüfungen finden erfahrungsgemäß nur einen Teil der Probleme. Ei
 
 ## Funde und Korrekturen
 
-| #   | Fund                                                                                                                         | WCAG          | Stand                                                                                                    |
-| --- | ---------------------------------------------------------------------------------------------------------------------------- | ------------- | -------------------------------------------------------------------------------------------------------- |
-| B1  | Fehlerseiten (z. B. 403, 404) ohne Seitentitel, mit englischer Standardseite                                                 | 2.4.2         | behoben: eigene Fehlerseiten mit Titel und Überschrift in einfacher Sprache, im Intranet mit Navigation  |
-| B2  | Dunkle Darstellung: Rot als Schrift (PDF-Symbol, „Löschen“-Knöpfe, Hinweise) mit 2,8:1 bis 3,2:1 zu wenig Kontrast           | 1.4.3, 1.4.11 | behoben: Schrift nutzt die Fehlerfarbe der Darstellung, rote Flächen mit weißer Schrift eine feste Farbe |
-| B3  | Editor: Knöpfe „H2“, „H3“, „1.“ hießen für Hilfsmittel nur „Überschrift“ usw.; Sprachsteuerung („H2 klicken“) fand sie nicht | 2.5.3         | behoben: sichtbarer Text steht vorn im Namen                                                             |
-| B4  | Karussell: Knopf „Pause“/„Abspielen“ mit anderem Namen für Hilfsmittel                                                       | 2.5.3         | behoben                                                                                                  |
-| B5  | Zielgröße unter 24 px: Namen, E-Mail- und Telefon-Links in Abteilungen, Links in der Fußzeile                                | 2.5.8         | behoben: mindestens 24 px hoch                                                                           |
-| B6  | Waagerecht scrollbare Bereiche nicht per Tastatur erreichbar: PDF-Vorschau, Protokoll, Liste der Sicherungen                 | 2.1.1         | behoben: fokussierbar, als Bereich benannt                                                               |
-| B7  | Bei 320 px Breite stand die Seite über (Verwaltung, Konto, Mandant bearbeiten): Spalten mit fester Mindestbreite             | 1.4.10        | behoben: Mindestbreiten höchstens so breit wie der Platz (alle Raster)                                   |
-| B8  | Betreiber-Bereich ohne Hauptüberschrift                                                                                      | 1.3.1, 2.4.6  | behoben                                                                                                  |
-| B9  | Schalter „Aktiv“ bei Standorten ohne `role="switch"` (wie die übrigen Schalter)                                              | 4.1.2         | behoben                                                                                                  |
+| #   | Fund                                                                                                                         | WCAG          | Stand                                                                                                                                |
+| --- | ---------------------------------------------------------------------------------------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| B1  | Fehlerseiten (z. B. 403, 404) ohne Seitentitel, mit englischer Standardseite                                                 | 2.4.2         | behoben: eigene Fehlerseiten mit Titel und Überschrift in einfacher Sprache, im Intranet mit Navigation                              |
+| B2  | Dunkle Darstellung: Rot als Schrift (PDF-Symbol, „Löschen“-Knöpfe, Hinweise) mit 2,8:1 bis 3,2:1 zu wenig Kontrast           | 1.4.3, 1.4.11 | behoben: Schrift nutzt die Fehlerfarbe der Darstellung, rote Flächen mit weißer Schrift eine feste Farbe                             |
+| B3  | Editor: Knöpfe „H2“, „H3“, „1.“ hießen für Hilfsmittel nur „Überschrift“ usw.; Sprachsteuerung („H2 klicken“) fand sie nicht | 2.5.3         | behoben: sichtbarer Text steht vorn im Namen                                                                                         |
+| B4  | Karussell: Knopf „Pause“/„Abspielen“ mit anderem Namen für Hilfsmittel                                                       | 2.5.3         | behoben                                                                                                                              |
+| B5  | Zielgröße unter 24 px: Namen, E-Mail- und Telefon-Links in Abteilungen, Links in der Fußzeile                                | 2.5.8         | behoben: mindestens 24 px hoch                                                                                                       |
+| B6  | Waagerecht scrollbare Bereiche nicht per Tastatur erreichbar: PDF-Vorschau, Protokoll, Liste der Sicherungen                 | 2.1.1         | behoben: fokussierbar, als Bereich benannt                                                                                           |
+| B7  | Bei 320 px Breite stand die Seite über (Verwaltung, Konto, Mandant bearbeiten): Spalten mit fester Mindestbreite             | 1.4.10        | behoben: Mindestbreiten höchstens so breit wie der Platz (alle Raster)                                                               |
+| B8  | Betreiber-Bereich ohne Hauptüberschrift                                                                                      | 1.3.1, 2.4.6  | behoben                                                                                                                              |
+| B9  | Schalter „Aktiv“ bei Standorten ohne `role="switch"` (wie die übrigen Schalter)                                              | 4.1.2         | behoben                                                                                                                              |
+| B10 | Bilder in Beiträgen, am Schwarzen Brett und „Hinter den Kulissen“ nur mit allgemeinem Alternativtext („Foto 1 von 3 zu …“)   | 1.1.1         | behoben (0.10.0): beim Hochladen optional eine Bildbeschreibung, höchstens 250 Zeichen; ohne Beschreibung weiter der allgemeine Text |
 
 Nach den Korrekturen meldet axe auf keiner geprüften Seite einen Verstoß, in Hell, Dunkel und bei 320 px. Keine Seite steht bei 320 px waagerecht über.
 
@@ -42,12 +43,12 @@ Nach den Korrekturen meldet axe auf keiner geprüften Seite einen Verstoß, in H
 | Schalter als `switch`, Auswahl als `radiogroup` | erfüllt (B9)                                                                                           |
 | Statusmeldungen über Live-Regionen              | erfüllt: Meldungen mit `role="status"` bzw. `role="alert"`                                             |
 | „Bewegung reduzieren“                           | erfüllt: Übergänge, Karussell und Führung halten an                                                    |
+| Bilder                                          | erfüllt (B10): Bildbeschreibung beim Hochladen, sonst allgemeiner Text                                 |
 | PDFs                                            | Hinweis unter jeder Vorschau, dass die Barrierefreiheit von der Quelle abhängt; Download immer möglich |
 | Umbruch bei 400 % Zoom (320 px)                 | erfüllt (B7)                                                                                           |
 
 ## Offene Punkte
 
 - **Test mit Bildschirmleser** (NVDA mit Firefox, VoiceOver auf iPhone) und mit betroffenen Beschäftigten, z. B. über die Schwerbehindertenvertretung.
-- **Alternativtexte für Bilder**: Bilder in Beiträgen, am Schwarzen Brett und „Hinter den Kulissen“ bekommen bisher einen allgemeinen Text („Foto 1 von 3 zu …“). Ein eigenes Feld für eine Bildbeschreibung gibt es nicht; bis dahin empfiehlt das Handbuch, Wichtiges aus Bildern in den Text zu schreiben.
 - **Inhalte**: PDFs sollten barrierefrei erstellt werden; das Handbuch („Beitrag schreiben“) gibt dazu Hinweise.
 - Die Prüfung nach größeren Änderungen an der Oberfläche wiederholen.

@@ -547,6 +547,8 @@ export const files = pgTable('files', {
 	kind: text('kind').notNull(),
 	size: integer('size').notNull(),
 	keyEnc: text('key_enc').notNull(),
+	/** Bildbeschreibung (Alternativtext) für Bilder; leer = allgemeiner Text */
+	description: text('description'),
 	createdBy: uuid('created_by').references(() => persons.id, { onDelete: 'set null' }),
 	createdAt: createdAt()
 });

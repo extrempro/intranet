@@ -1,3 +1,4 @@
+import { beschreibungenAusForm } from '#lib/server/files/beschreibung.ts';
 import { fail, redirect } from '@sveltejs/kit';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import { allTenantsList, categories, createAd } from '#lib/server/board.ts';
@@ -24,7 +25,8 @@ export const actions: Actions = {
 			viaApps: f.get('apps') === 'on',
 			ownContact: String(f.get('kontakt') ?? '').slice(0, 200),
 			tenantIds: f.getAll('mandanten').map(String).slice(0, 50),
-			photoIds: f.getAll('fotos').map(String).slice(0, 10)
+			photoIds: f.getAll('fotos').map(String).slice(0, 10),
+			descriptions: beschreibungenAusForm(f)
 		};
 		const r = await createAd(p, input);
 		if (!r.ok) return fail(400, { werte: input, fehler: r.errors });

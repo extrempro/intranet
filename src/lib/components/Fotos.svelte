@@ -1,10 +1,11 @@
 <script lang="ts">
 	/** Bis zu drei Fotos für eine Anzeige; einzeln hochgeladen, das Formular schickt die IDs. */
 	import { resolve } from '$app/paths';
+	import { BESCHREIBUNG_MAX, beschreibungFeld } from '#lib/bildbeschreibung.ts';
 
 	let { max = 3, fehler }: { max?: number; fehler?: string } = $props();
 
-	let liste = $state<{ id: string; name: string }[]>([]);
+	let liste = $state<{ id: string; name: string; beschreibung: string }[]>([]);
 	let laufend = $state(0);
 	let meldungen = $state<string[]>([]);
 	let eingabe: HTMLInputElement | undefined = $state();
@@ -28,7 +29,7 @@
 				const res = await fetch('/dateien', { method: 'POST', body });
 				const r = await res.json().catch(() => ({}));
 				if (!res.ok) meldungen.push(`„${datei.name}“: ${r.fehler ?? 'Hochladen fehlgeschlagen.'}`);
-				else liste.push({ id: r.id, name: r.name });
+				else liste.push({ id: r.id, name: r.name, beschreibung: '' });
 			} catch {
 				meldungen.push(`„${datei.name}“: Hochladen fehlgeschlagen.`);
 			} finally {
@@ -43,7 +44,7 @@
 	<legend>Fotos <span class="optional">(optional, bis zu {max})</span></legend>
 	{#each liste as f (f.id)}<input type="hidden" name="fotos" value={f.id} />{/each}
 	{#if liste.length}
-		<ul>
+		<ul class="vorschau">
 			{#each liste as f (f.id)}
 				<li>
 					<img src={resolve('/(app)/dateien/[id]', { id: f.id })} alt="" />
@@ -58,6 +59,20 @@
 				</li>
 			{/each}
 		</ul>
+		{#each liste as f, i (f.id)}
+			<label class="beschreibung">
+				<span>
+					Beschreibung Foto {i + 1}
+					<span class="hinweis">(optional, für Bildschirmleser)</span>
+				</span>
+				<input
+					name={beschreibungFeld(f.id)}
+					maxlength={BESCHREIBUNG_MAX}
+					bind:value={f.beschreibung}
+					placeholder="Was ist auf dem Foto zu sehen?"
+				/>
+			</label>
+		{/each}
 	{/if}
 	<div aria-live="polite">
 		{#if laufend}<p class="hinweis">Wird hochgeladen …</p>{/if}
@@ -94,6 +109,11 @@
 	.optional {
 		font-weight: 400;
 		color: var(--mu);
+	}
+	.beschreibung {
+		display: grid;
+		gap: 4px;
+		font-size: 0.93rem;
 	}
 	ul {
 		list-style: none;

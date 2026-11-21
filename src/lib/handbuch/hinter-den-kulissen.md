@@ -11,5 +11,6 @@ kurz: Einblicke teilen – mit Zustimmung der abgebildeten Personen.
 - Die Abteilungsverwaltung schaltet die Funktion für die Abteilung frei und vergibt das Schreibrecht je Person.
 - Beim Erstellen bestätigst du, dass alle abgebildeten Personen zugestimmt haben.
 - Du wählst die Ziel-Mandanten; dein eigener ist immer dabei.
+- Unter jedem Foto kannst du eine kurze **Bildbeschreibung** eingeben; Bildschirmleser lesen sie vor.
 
 Diese Beiträge erscheinen nicht auf den Abteilungsseiten.

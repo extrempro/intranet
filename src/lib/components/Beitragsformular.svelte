@@ -105,7 +105,7 @@
 	{#if fehler.body}<span id="f-body" class="feldfehler">{fehler.body}</span>{/if}
 </div>
 
-<Anhaenge start={werte.attachments} fehler={fehler.attachments} />
+<Anhaenge start={werte.attachments} fehler={fehler.attachments} beschreibungen />
 
 {#if einheit?.isCentral}
 	<fieldset class="gruppe">
