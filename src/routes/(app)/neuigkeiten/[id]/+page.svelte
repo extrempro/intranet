@@ -79,6 +79,7 @@
 									{a.name}
 								</a>
 								<span class="hinweis">· {groesse(a.size)}</span>
+								{#if a.description}<span class="beschreibung">{a.description}</span>{/if}
 							</span>
 							<a
 								class="knopf zweit klein-knopf"
@@ -249,6 +250,11 @@
 	}
 	.datei {
 		overflow-wrap: anywhere;
+	}
+	.beschreibung {
+		display: block;
+		color: var(--mu);
+		font-size: 0.93rem;
 	}
 	.klein-knopf {
 		min-height: 36px;

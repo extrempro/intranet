@@ -21,6 +21,7 @@ import {
 	persons,
 	tenants
 } from './db/schema.ts';
+import { beschreibungenSpeichern } from './files/beschreibung.ts';
 import { deleteStored, ownUnlinkedFiles } from './files/store.ts';
 import {
 	closeByRef,
@@ -112,15 +113,25 @@ const adColumns = {
 };
 
 async function photosOf(adIds: string[]) {
-	if (!adIds.length) return new Map<string, { id: string; name: string }[]>();
+	type Foto = { id: string; name: string; description: string | null };
+	if (!adIds.length) return new Map<string, Foto[]>();
 	const rows = await db
-		.select({ adId: boardAdPhotos.adId, id: files.id, name: files.name })
+		.select({
+			adId: boardAdPhotos.adId,
+			id: files.id,
+			name: files.name,
+			description: files.description
+		})
 		.from(boardAdPhotos)
 		.innerJoin(files, eq(files.id, boardAdPhotos.fileId))
 		.where(inArray(boardAdPhotos.adId, adIds))
 		.orderBy(asc(boardAdPhotos.position));
-	const map = new Map<string, { id: string; name: string }[]>();
-	for (const r of rows) map.set(r.adId, [...(map.get(r.adId) ?? []), { id: r.id, name: r.name }]);
+	const map = new Map<string, Foto[]>();
+	for (const r of rows)
+		map.set(r.adId, [
+			...(map.get(r.adId) ?? []),
+			{ id: r.id, name: r.name, description: r.description }
+		]);
 	return map;
 }
 
@@ -194,6 +205,8 @@ export interface AdInput {
 	ownContact: string;
 	tenantIds: string[];
 	photoIds: string[];
+	/** Bildbeschreibungen je Datei-ID */
+	descriptions?: Map<string, string>;
 }
 
 export type AdErrors = Partial<
@@ -260,6 +273,7 @@ export async function createAd(
 			await tx
 				.insert(boardAdPhotos)
 				.values(photoIds.map((fileId, position) => ({ adId: ad.id, fileId, position })));
+		await beschreibungenSpeichern(tx, photoIds, input.descriptions);
 	});
 	await notify('moderation', await moderatorsOf(p.tenantId), {
 		title: `Neue Anzeige: ${title}`,

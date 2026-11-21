@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { bildAlt } from '#lib/bildbeschreibung.ts';
 	import { livesuche } from '#lib/livesuche.ts';
 	/* eslint-disable svelte/no-navigation-without-resolve -- Suchparameter der eigenen Seite, mailto/Teams-Links */
 	import { enhance } from '$app/forms';
@@ -201,7 +202,7 @@
 									>
 										<img
 											src={resolve('/(app)/dateien/[id]', { id: f.id })}
-											alt="Foto zu „{a.title}“"
+											alt={bildAlt(f.description, `Foto zu „${a.title}“`)}
 											loading="lazy"
 										/>
 									</a>
@@ -353,7 +354,10 @@
 				{#if a.photos.length}
 					<div class="bilder">
 						{#each a.photos as f (f.id)}
-							<img src={resolve('/(app)/dateien/[id]', { id: f.id })} alt="Foto zu „{a.title}“" />
+							<img
+								src={resolve('/(app)/dateien/[id]', { id: f.id })}
+								alt={bildAlt(f.description, `Foto zu „${a.title}“`)}
+							/>
 						{/each}
 					</div>
 				{/if}

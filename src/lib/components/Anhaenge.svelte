@@ -4,23 +4,35 @@
 	 * 20 MB), das Formular schickt nur die IDs in Reihenfolge.
 	 */
 	import { untrack } from 'svelte';
+	import { BESCHREIBUNG_MAX, beschreibungFeld, istBild } from '#lib/bildbeschreibung.ts';
 
 	interface Anhang {
 		id: string;
 		name: string;
 		groesse: string;
+		kind: string;
+		beschreibung: string;
 	}
 
 	let {
 		start,
 		max = 10,
 		fehler,
-		legende = 'Dateianhänge'
+		legende = 'Dateianhänge',
+		beschreibungen = false
 	}: {
-		start: { id: string; name: string; size: number }[];
+		start: {
+			id: string;
+			name: string;
+			size: number;
+			kind?: string;
+			description?: string | null;
+		}[];
 		max?: number;
 		fehler?: string;
 		legende?: string;
+		/** Für Bilder ein Feld „Bildbeschreibung“ (Alternativtext) anzeigen */
+		beschreibungen?: boolean;
 	} = $props();
 
 	const groesse = (b: number) =>
@@ -29,7 +41,15 @@
 			: `${(b / 1024 / 1024).toFixed(1).replace('.', ',')} MB`;
 
 	let liste = $state<Anhang[]>(
-		untrack(() => start.map((a) => ({ id: a.id, name: a.name, groesse: groesse(a.size) })))
+		untrack(() =>
+			start.map((a) => ({
+				id: a.id,
+				name: a.name,
+				groesse: groesse(a.size),
+				kind: a.kind ?? '',
+				beschreibung: a.description ?? ''
+			}))
+		)
 	);
 	let laufend = $state<string[]>([]);
 	let meldungen = $state<string[]>([]);
@@ -55,7 +75,14 @@
 				const ergebnis = await res.json().catch(() => ({}));
 				if (!res.ok)
 					meldungen.push(`„${datei.name}“: ${ergebnis.fehler ?? 'Hochladen fehlgeschlagen.'}`);
-				else liste.push({ id: ergebnis.id, name: ergebnis.name, groesse: ergebnis.groesse });
+				else
+					liste.push({
+						id: ergebnis.id,
+						name: ergebnis.name,
+						groesse: ergebnis.groesse,
+						kind: ergebnis.kind ?? '',
+						beschreibung: ''
+					});
 			} catch {
 				meldungen.push(`„${datei.name}“: Hochladen fehlgeschlagen.`);
 			} finally {
@@ -116,6 +143,19 @@
 							×
 						</button>
 					</span>
+					{#if beschreibungen && istBild(a.kind)}
+						<label class="beschreibung">
+							<span>
+								Bildbeschreibung <span class="hinweis">(optional, für Bildschirmleser)</span>
+							</span>
+							<input
+								name={beschreibungFeld(a.id)}
+								maxlength={BESCHREIBUNG_MAX}
+								bind:value={a.beschreibung}
+								placeholder="Was ist auf dem Bild zu sehen?"
+							/>
+						</label>
+					{/if}
 				</li>
 			{/each}
 		</ol>
@@ -160,9 +200,17 @@
 	}
 	.liste li {
 		display: flex;
+		flex-wrap: wrap;
 		justify-content: space-between;
 		align-items: center;
 		gap: 10px;
+	}
+	.beschreibung {
+		flex: 1 0 100%;
+		display: grid;
+		gap: 4px;
+		margin-bottom: 6px;
+		font-size: 0.93rem;
 	}
 	.name {
 		overflow-wrap: anywhere;

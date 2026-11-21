@@ -20,6 +20,7 @@ Unter Aktuelles → Neuigkeiten → „Beitrag schreiben“. Als Absender ersche
 
 - Zwischenüberschriften mit **H2** und **H3** gliedern den Text, auch für Bildschirmleser.
 - Linktexte sagen, wohin es geht („Dienstplan Dezember“), nicht „hier klicken“.
+- **Bildbeschreibung**: Unter jedem Bild kannst du kurz beschreiben, was zu sehen ist (z. B. „Chor auf der Probebühne, im Hintergrund das Bühnenbild“). Bildschirmleser lesen das vor. Ohne Beschreibung steht dort nur „Foto 1 von 3 zu …“.
 - Steht auf einem Bild etwas Wichtiges (Termin, Plan, Text), schreib es zusätzlich in den Beitrag.
 - PDFs möglichst barrierefrei erstellen (in Word: „Barrierefreiheit überprüfen“, beim Speichern als PDF „Dokumentstruktur-Tags“ an).
 

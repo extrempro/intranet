@@ -7,6 +7,7 @@
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
+	import { bildAlt } from '#lib/bildbeschreibung.ts';
 
 	let {
 		bilder,
@@ -14,7 +15,7 @@
 		kompakt = false,
 		angehalten = false
 	}: {
-		bilder: { id: string }[];
+		bilder: { id: string; description?: string | null }[];
 		titel: string;
 		/** Kleiner, ohne eigenen Pause-Knopf (Karten in Listen) */
 		kompakt?: boolean;
@@ -59,7 +60,7 @@
 	<div class="buehne">
 		<img
 			src={resolve('/(app)/dateien/[id]', { id: bilder[nr].id })}
-			alt="Foto {nr + 1} von {bilder.length} zu „{titel}“"
+			alt={bildAlt(bilder[nr].description, `Foto ${nr + 1} von ${bilder.length} zu „${titel}“`)}
 		/>
 		{#if mehrere && !kompakt}
 			<button

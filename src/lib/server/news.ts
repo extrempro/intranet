@@ -41,6 +41,7 @@ import {
 	units,
 	urgentDismissals
 } from './db/schema.ts';
+import { beschreibungenSpeichern } from './files/beschreibung.ts';
 import { deleteStored, MAX_ATTACHMENTS, ownUnlinkedFiles } from './files/store.ts';
 import { cleanHtml, excerpt, htmlToText } from './html.ts';
 import { doc, headline, matches, rank } from './fts.ts';
@@ -352,7 +353,13 @@ export async function urgentForBanner(p: Principal) {
 
 export async function attachmentsOf(newsId: string) {
 	return db
-		.select({ id: files.id, name: files.name, size: files.size, kind: files.kind })
+		.select({
+			id: files.id,
+			name: files.name,
+			size: files.size,
+			kind: files.kind,
+			description: files.description
+		})
 		.from(newsAttachments)
 		.innerJoin(files, eq(files.id, newsAttachments.fileId))
 		.where(eq(newsAttachments.newsId, newsId))
@@ -369,6 +376,7 @@ export async function describeAttachments(p: Principal, ids: string[], newsId?: 
 			name: files.name,
 			size: files.size,
 			kind: files.kind,
+			description: files.description,
 			createdBy: files.createdBy,
 			newsId: newsAttachments.newsId
 		})
@@ -380,7 +388,13 @@ export async function describeAttachments(p: Principal, ids: string[], newsId?: 
 		.filter(
 			(r) => r && ((newsId && r.newsId === newsId) || (!r.newsId && r.createdBy === p.personId))
 		)
-		.map((r) => ({ id: r!.id, name: r!.name, size: r!.size, kind: r!.kind }));
+		.map((r) => ({
+			id: r!.id,
+			name: r!.name,
+			size: r!.size,
+			kind: r!.kind,
+			description: r!.description
+		}));
 }
 
 /** Zu welchem (sichtbaren) Beitrag gehört die Datei? Für den Download. */
@@ -405,6 +419,8 @@ export interface SaveInput extends NewsDraft {
 	replacePin: boolean;
 	/** Anhänge in Reihenfolge: behaltene und neu hochgeladene Datei-IDs. */
 	attachmentIds: string[];
+	/** Bildbeschreibungen je Datei-ID */
+	descriptions?: Map<string, string>;
 }
 
 /**
@@ -593,6 +609,7 @@ export async function saveNews(
 				.insert(newsAttachments)
 				.values(att.wanted.map((fileId, position) => ({ newsId: id!, fileId, position })));
 		}
+		await beschreibungenSpeichern(tx, att.wanted, input.descriptions);
 		return id;
 	});
 	// Entfernte Anhänge sofort löschen (Schlüssel und Datei, Kap. 15)

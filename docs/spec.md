@@ -475,6 +475,7 @@ Weitere Regeln:
 - Semantische Überschriften (eine Hauptüberschrift je Seite), Bereiche, Beschriftungen; Schalter als `switch`, Auswahlgruppen als `radiogroup`.
 - Statusmeldungen über Live-Regionen.
 - „Bewegung reduzieren“ wird beachtet.
+- Bilder: beim Hochladen optional eine Bildbeschreibung (Alternativtext, höchstens 250 Zeichen); ohne Beschreibung ein allgemeiner Text („Foto 1 von 3 zu …“).
 - PDFs: Hinweis, dass die Barrierefreiheit von der Quelle abhängt.
 - Prüfung und Stand: `docs/barrierefreiheit.md`.
 
