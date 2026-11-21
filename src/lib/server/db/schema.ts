@@ -840,6 +840,43 @@ export const textImages = pgTable(
 	]
 );
 
+/**
+ * Entwürfe für neue Beiträge und FAQs (nur für die eigene Person sichtbar,
+ * Row-Level Security). `felder` sind die Formularfelder wie abgeschickt.
+ */
+export const drafts = pgTable(
+	'drafts',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		personId: uuid('person_id')
+			.notNull()
+			.references(() => persons.id, { onDelete: 'cascade' }),
+		art: text('art', { enum: ['news', 'kulissen', 'faq'] }).notNull(),
+		title: text('title').notNull().default(''),
+		fields: jsonb('fields').$type<[string, string][]>().notNull(),
+		createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [
+		check('drafts_art', sql`${t.art} in ('news', 'kulissen', 'faq')`),
+		index('drafts_person').on(t.personId, t.updatedAt)
+	]
+);
+
+/** Hochgeladene Dateien eines Entwurfs: werden nicht nach 24 Stunden gelöscht. */
+export const draftFiles = pgTable(
+	'draft_files',
+	{
+		draftId: uuid('draft_id')
+			.notNull()
+			.references(() => drafts.id, { onDelete: 'cascade' }),
+		fileId: uuid('file_id')
+			.notNull()
+			.references(() => files.id, { onDelete: 'cascade' })
+	},
+	(t) => [primaryKey({ columns: [t.draftId, t.fileId] }), index('draft_files_file').on(t.fileId)]
+);
+
 // ---------------------------------------------------------------------------
 // Speiseplan und Standorte (Kap. 4.3, 8.7)
 // ---------------------------------------------------------------------------

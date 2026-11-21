@@ -8,13 +8,15 @@ import { tenants } from '#lib/server/db/schema.ts';
 import { readNewsForm, type NewsFormValues } from '#lib/server/news-form.ts';
 import { describeAttachments, NewsError, saveNews, writableUnits } from '#lib/server/news.ts';
 import { getContentRules } from '#lib/server/rules.ts';
+import { entwuerfeListe, entwurfLaden, entwurfLoeschen } from '#lib/server/entwuerfe.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const p = requirePrincipal(locals);
 	const einheiten = await writableUnits(p);
 	if (einheiten.length === 0) error(403, 'Dafür fehlt dir das Recht.');
-	const werte: NewsFormValues = {
+	const entwurf = await entwurfLaden(p, url.searchParams.get('entwurf'), 'news');
+	let werte: NewsFormValues = {
 		// ?absender= z. B. vom Hub aus
 		unitId: einheiten.find((e) => e.id === url.searchParams.get('absender'))?.id ?? einheiten[0].id,
 		title: '',
@@ -31,9 +33,19 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		replacePin: false,
 		attachments: []
 	};
+	if (entwurf) {
+		const { input, values } = readNewsForm(entwurf.form);
+		values.attachments = mitBeschreibungen(
+			await describeAttachments(p, input.attachmentIds, undefined),
+			input.descriptions ?? new Map()
+		);
+		werte = values;
+	}
 	return {
 		einheiten,
 		werte,
+		entwurf: entwurf ? { id: entwurf.id, gespeichert: entwurf.gespeichert } : null,
+		entwuerfe: entwurf ? [] : await entwuerfeListe(p, 'news'),
 		mandanten: await db
 			.select({ id: tenants.id, name: tenants.name })
 			.from(tenants)
@@ -45,7 +57,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 export const actions: Actions = {
 	default: async ({ request, locals, getClientAddress }) => {
 		const p = requirePrincipal(locals);
-		const { input, values } = readNewsForm(await request.formData());
+		const fd = await request.formData();
+		const entwurf = String(fd.get('entwurf') ?? '') || null;
+		const { input, values } = readNewsForm(fd);
 		try {
 			const r = await saveNews(p, input, getClientAddress());
 			if (!r.ok) {
@@ -53,12 +67,23 @@ export const actions: Actions = {
 					await describeAttachments(p, input.attachmentIds, undefined),
 					input.descriptions ?? new Map()
 				);
-				return fail(400, { werte: values, fehler: r.errors, pinKonflikt: r.pinConflict ?? null });
+				return fail(400, {
+					werte: values,
+					fehler: r.errors,
+					pinKonflikt: r.pinConflict ?? null,
+					entwurf
+				});
 			}
+			await entwurfLoeschen(p, entwurf);
 			redirect(303, `/neuigkeiten/${r.id}`);
 		} catch (err) {
 			if (err instanceof NewsError)
-				return fail(403, { werte: values, fehler: { title: err.message }, pinKonflikt: null });
+				return fail(403, {
+					werte: values,
+					fehler: { title: err.message },
+					pinKonflikt: null,
+					entwurf
+				});
 			throw err;
 		}
 	}

@@ -222,6 +222,8 @@ Jede Rückfrage vor einer Aktion („… löschen?“, „Konto sperren?“) ers
 ### 8.1 Neuigkeiten
 
 - **Absender**: Geschäftsführung, Stabsstellen, Abteilungen. Hub-Beiträge stehen getrennt (8.3).
+- **Entwürfe** (auch Hub-Beiträge, Hinter den Kulissen, FAQs): neue Einträge werden beim Schreiben automatisch (wenige Sekunden nach der letzten Änderung) und per Knopf als Entwurf gespeichert; nur für die eigene Person sichtbar (Row-Level Security), Liste „Meine Entwürfe“; nach dem Veröffentlichen gelöscht, sonst 90 Tage nach der letzten Änderung. Hochgeladene Bilder und Anhänge eines Entwurfs bleiben so lange erhalten.
+- **Schutz vor Verlassen**: In allen Formularen fragt das Intranet vor dem Verlassen nach, wenn Eingaben weder abgeschickt noch als Entwurf gesichert sind (Fenster nach 6.5; beim Schließen oder Neuladen fragt der Browser).
 - **Freigabe** (geplant veröffentlichen) und **Ablaufdatum**. Geplante Beiträge sehen die Schreibenden der Einheit und die Redaktion (Filter „Geplant“).
 - **Zielgruppe („Wer sieht das?“)**: Nicht-zentrale Einheiten veröffentlichen nur für den eigenen Mandanten; zentrale Absender wählen alle oder einzelne Mandanten. Standortbezogene Beiträge sehen nur Personen mit diesem Standort.
 - Veröffentlichung **ohne Redaktionsfreigabe**.

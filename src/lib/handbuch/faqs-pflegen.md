@@ -13,3 +13,5 @@ Unter Wissen → FAQs → „FAQ anlegen“ oder auf der Abteilungsseite. Eine F
 - Mit ↑ ↓ sortierst du die FAQs deiner Einheit.
 
 FAQs, die 12 Monate nicht geändert wurden, tauchen bei der Redaktion unter „Zu prüfen“ auf.
+
+Neue Einträge werden beim Schreiben automatisch als Entwurf gespeichert (siehe „Neuigkeiten schreiben“, Abschnitt Entwürfe).
