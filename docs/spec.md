@@ -317,7 +317,8 @@ Je Einheit; Schreibrecht „FAQs“. Frage, Antwort im Editor mit Links, Anhäng
 - **Kopf**: Name, Kurzinfo („Aufgaben in einer Zeile“), Glocke, Favorit, Link kopieren, Bearbeiten, Hub-Team mit Anzahl der Abteilungen; optional **Titelbild** (4:1) und **Symbol** (quadratisch, auch in der Hub-Liste), im Browser zugeschnitten, als JPEG ohne Metadaten.
 - **Hinweis oben** (höchstens 200 Zeichen, optional „Anzeigen bis“).
 - **Abschnitte**: Schnellzugriff (bis 12 Kacheln mit Titel, Kurzbeschreibung, Symbol; Ziel im Intranet, https, mailto oder tel), Neues zum Thema (Kacheln mit Vorschaubild, „Alle anzeigen“), Termine (mit „In Kalender“), Dokumente und Anleitungen (Ordner, Titel, Beschreibung; bis 300 Dateien), Hub-Team (mit Aufgabe im Hub, Koordination, Abteilung aus dem Profil, Teams-Chat), Ansprechpersonen (bis 20 Personen außerhalb des Teams mit „Wofür zuständig“, ohne Rechte), Häufige Fragen, Über uns (Editor).
-- **Aufbau der Seite** einstellbar: Abschnitte je Hauptbereich und Seitenleiste sortieren, verschieben, ein-/ausblenden.
+- **Aufbau der Seite** einstellbar: Abschnitte je Hauptbereich und Seitenleiste sortieren und ein-/ausblenden.
+- **Bearbeiten** als eine Seite mit einem „Speichern“: Kurzinfo, Koordination, Vorstellung, Wer darf schreiben? (Personensuche, Rechte als Schalter), Hinweis oben, Aufbau, Schnellzugriff („Ziel wählen“: Seite im Intranet, Dokument des Hubs oder Adresse), Dokumente, Termine (direkt anlegen, wenn Hubs Termine haben dürfen), Ansprechpersonen, Hub-Team (Aufgabe, Koordination), Ruhen; dazu Titelbild/Symbol und Archivieren.
 - **Pflege**: Hub-Team, Verwaltung und Redaktion (ohne Hub-Team). Das Hub-Team nimmt selbst Personen ins Hub-Team auf (mindestens eine bleibt) und vergibt Rechte: Beiträge, FAQs, Termine, Dokumente. Bei zentralen Hubs aus allen Mandanten.
 - Hub-Liste mit Suche und Filter nach Mandant; Hubs als Favorit auf der Startseite.
 - **Ruhen** (Hub-Team) und **Archivieren** (nur Verwaltung).

@@ -10,6 +10,15 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.19.0 · 21.11.2026 · Hub bearbeiten auf einer Seite
+
+- „Bearbeiten“ eines Hubs ist jetzt eine Seite mit einem „Speichern“ am Ende, so wie im Entwurf.
+- Personen wählst du über „Person suchen“ aus: Namen tippen, Vorschlag anklicken. Das gilt für Schreibrechte, Ansprechpersonen und das Hub-Team.
+- Schreibrechte schaltest du je Person als Knöpfe ein und aus: Neuigkeiten, FAQs, Termine, Dokumente.
+- Beim Schnellzugriff wählst du mit „Ziel wählen“ eine Seite im Intranet, ein Dokument des Hubs oder eine Adresse.
+- Termine des Hubs trägst du direkt auf der Seite ein; sie stehen auch im Kalender.
+- Im Hub-Team legst du je Person eine Aufgabe fest und schaltest die Koordination um.
+
 ## 0.18.0 · 21.11.2026 · Hubs ausgebaut
 
 - Neuer Kopf der Hub-Seite mit Kurzinfo, Glocke, Stern für die Favoriten, Link kopieren und dem Hub-Team auf einen Blick; auf Wunsch mit Titelbild und Symbol.

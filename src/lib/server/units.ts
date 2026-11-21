@@ -355,14 +355,21 @@ export async function updateUnit(p: Principal, unitId: string, input: UnitInput,
 // Team und Schreibrechte
 // ---------------------------------------------------------------------------
 
+/** Person ins Team aufnehmen, per E-Mail-Adresse oder Personen-ID (Personensuche). */
 export async function addMember(p: Principal, unitId: string, email: string, ip: string) {
 	const u = await loadForTeam(p, unitId);
+	const perId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+		email.trim()
+	);
 	const [person] = await db
 		.select({ id: persons.id, tenantId: persons.tenantId })
 		.from(persons)
 		.where(
 			and(
-				sql`lower(${persons.email}) = lower(${email.trim()})`,
+				perId
+					? eq(persons.id, email.trim())
+					: sql`lower(${persons.email}) = lower(${email.trim()})`,
+				sql`${persons.status} <> 'disabled'`,
 				sql`not exists (select 1 from location_operators lo where lo.person_id = ${persons.id})`
 			)
 		);
