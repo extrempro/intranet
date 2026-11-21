@@ -181,8 +181,8 @@ export const ROLLEN: Record<string, Tour> = {
 		steps: [
 			{
 				target: 'hinweis',
-				title: 'Hinweis und Über uns',
-				text: 'Was im Hub gerade wichtig ist und worum es geht.'
+				title: 'Kurzinfo und Koordination',
+				text: 'Worum es im Hub geht, in einer Zeile, und wer koordiniert.'
 			},
 			{
 				target: 'aufbau',
@@ -190,9 +190,9 @@ export const ROLLEN: Record<string, Tour> = {
 				text: 'Abschnitte ein- und ausblenden und sortieren.'
 			},
 			{
-				target: 'ruhen',
-				title: 'Ruhen lassen',
-				text: 'Pause ohne neue Beiträge; archivieren kann nur die Verwaltung.'
+				target: 'team',
+				title: 'Hub-Team',
+				text: 'Weitere Personen ins Team holen, Aufgaben festlegen und Schreibrechte vergeben.'
 			}
 		]
 	},

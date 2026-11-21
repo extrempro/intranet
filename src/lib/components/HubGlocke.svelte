@@ -4,8 +4,14 @@
 	import { page } from '$app/state';
 	import { actionUrl } from '#lib/action-url.ts';
 
-	let { hub }: { hub: { id: string; name: string; subscribed: boolean; mandatory: boolean } } =
-		$props();
+	let {
+		hub,
+		aufFarbe = false
+	}: {
+		hub: { id: string; name: string; subscribed: boolean; mandatory: boolean };
+		/** Auf farbigem Hintergrund (Kopf der Hub-Seite) */
+		aufFarbe?: boolean;
+	} = $props();
 	const label = $derived(
 		hub.mandatory
 			? `${hub.name}: Pflicht-Abo, lässt sich nicht beenden`
@@ -29,6 +35,7 @@
 		title={label}
 		disabled={hub.mandatory}
 		class:an={hub.subscribed}
+		class:farbe={aufFarbe}
 	>
 		<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
 			<path
@@ -62,6 +69,18 @@
 		background: var(--fill);
 		border-color: var(--fill);
 		color: #fff;
+	}
+	button.farbe {
+		width: 44px;
+		height: 44px;
+		background: transparent;
+		border-color: rgb(255 255 255 / 0.6);
+		color: #fff;
+	}
+	button.farbe.an {
+		background: #fff;
+		border-color: #fff;
+		color: var(--fill);
 	}
 	button:disabled {
 		cursor: default;

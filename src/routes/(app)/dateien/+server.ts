@@ -17,7 +17,9 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const writer =
 		newsUnitIds(p).size > 0 ||
 		faqUnitIds(p).size > 0 ||
-		p.memberships.some((m) => m.mayWriteBehindScenes);
+		p.memberships.some((m) => m.mayWriteBehindScenes || m.mayWriteDocuments) ||
+		// Hub-Team: Dokumente, Titelbild und Symbol
+		p.roles.some((r) => r.role === 'hub_team');
 	if (p.operatorLocationId) error(403, 'Dafür fehlt dir das Recht.');
 	if (!uploadLimit.hit(p.personId))
 		return json(

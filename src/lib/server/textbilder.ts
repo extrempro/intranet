@@ -16,14 +16,15 @@ import { faqs, files, news, textImages } from './db/schema.ts';
 import { ownUnlinkedFiles } from './files/store.ts';
 import { cleanHtml } from './html.ts';
 
-export type Besitzer = { art: 'news' | 'faq'; id?: string | null };
+export type Besitzer = { art: 'news' | 'faq' | 'unit'; id?: string | null };
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 const BILDARTEN = ['jpeg', 'png', 'webp'];
 const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const spalte = (b: Besitzer) => (b.art === 'news' ? textImages.newsId : textImages.faqId);
+const spalte = (b: Besitzer) =>
+	b.art === 'news' ? textImages.newsId : b.art === 'faq' ? textImages.faqId : textImages.unitId;
 
 /**
  * Text bereinigen und Bilder prüfen: erlaubt sind Bilder, die schon zu diesem
@@ -98,17 +99,26 @@ export async function bilderVerknuepfen(
 		.insert(textImages)
 		.values(
 			ids.map((fileId) =>
-				besitzer.art === 'news' ? { fileId, newsId: besitzer.id } : { fileId, faqId: besitzer.id }
+				besitzer.art === 'news'
+					? { fileId, newsId: besitzer.id }
+					: besitzer.art === 'faq'
+						? { fileId, faqId: besitzer.id }
+						: { fileId, unitId: besitzer.id }
 			)
 		)
 		.onConflictDoNothing();
 }
 
-/** Abruf über /dateien/<ID>: nur, wer den Beitrag bzw. die FAQ sehen darf. */
+/** Abruf über /dateien/<ID>: nur, wer den Beitrag, die FAQ bzw. den Hub sehen darf. */
 export async function textBildErlaubt(p: Principal, fileId: string): Promise<boolean> {
 	if (!GUID.test(fileId)) return false;
 	const [row] = await db
-		.select({ newsId: textImages.newsId, faqId: textImages.faqId, channel: news.channel })
+		.select({
+			newsId: textImages.newsId,
+			faqId: textImages.faqId,
+			unitId: textImages.unitId,
+			channel: news.channel
+		})
 		.from(textImages)
 		.leftJoin(news, eq(news.id, textImages.newsId))
 		.where(eq(textImages.fileId, fileId));
@@ -127,6 +137,11 @@ export async function textBildErlaubt(p: Principal, fileId: string): Promise<boo
 			tx.select({ id: faqs.id }).from(faqs).where(eq(faqs.id, faqId))
 		);
 		return sichtbar.length > 0;
+	}
+	if (row.unitId) {
+		// „Über uns“ eines Hubs: sichtbar wie der Hub
+		const { hubSichtbar } = await import('./hubs.ts');
+		return hubSichtbar(p, row.unitId);
 	}
 	return false;
 }

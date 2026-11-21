@@ -96,6 +96,21 @@ async function loadForTeam(p: Principal, unitId: string) {
 	return { ...row, admin };
 }
 
+/** Ein Hub behält mindestens eine Person im Hub-Team (sonst pflegt ihn niemand). */
+async function letztesHubTeamPruefen(
+	q: Pick<typeof db, 'select'>,
+	unitId: string,
+	personId: string
+) {
+	const team = await q
+		.select({ personId: roleAssignments.personId })
+		.from(roleAssignments)
+		.where(and(eq(roleAssignments.scopeUnitId, unitId), eq(roleAssignments.role, 'hub_team')));
+	const ids = new Set(team.map((t) => t.personId));
+	if (ids.has(personId) && ids.size === 1)
+		throw new UnitError('Mindestens eine Person muss im Hub-Team bleiben.');
+}
+
 async function isManagerOf(unitId: string, personId: string) {
 	const [r] = await db
 		.select({ id: roleAssignments.id })
@@ -110,6 +125,52 @@ async function isManagerOf(unitId: string, personId: string) {
 	return Boolean(r);
 }
 
+/** Team mit Rechten für die Pflege durch die Einheit selbst (Hub-Team). */
+export async function teamFuerPflege(p: Principal, unitId: string) {
+	const u = await loadForTeam(p, unitId);
+	const [team, managers, tenantRows] = await Promise.all([
+		db
+			.select({
+				personId: persons.id,
+				name: persons.displayName,
+				email: persons.email,
+				tenantId: persons.tenantId,
+				disabled: sql<boolean>`${persons.status} = 'disabled'`,
+				mayWriteNews: unitMembers.mayWriteNews,
+				mayWriteFaqs: unitMembers.mayWriteFaqs,
+				mayWriteEvents: unitMembers.mayWriteEvents,
+				mayWriteDocuments: unitMembers.mayWriteDocuments,
+				hubTask: unitMembers.hubTask
+			})
+			.from(unitMembers)
+			.innerJoin(persons, eq(persons.id, unitMembers.personId))
+			.where(eq(unitMembers.unitId, unitId))
+			.orderBy(asc(persons.displayName)),
+		db
+			.select({ personId: roleAssignments.personId, source: roleAssignments.source })
+			.from(roleAssignments)
+			.where(
+				and(
+					eq(roleAssignments.scopeUnitId, unitId),
+					inArray(roleAssignments.role, ['abteilungsverwaltung', 'hub_team'])
+				)
+			),
+		db.select({ id: tenants.id, short: tenants.shortName }).from(tenants)
+	]);
+	const kurz = new Map(tenantRows.map((t) => [t.id, t.short]));
+	const { writersMax } = await getContentRules();
+	return {
+		admin: u.admin,
+		maxSchreibende: writersMax,
+		team: team.map(({ tenantId, ...m }) => ({
+			...m,
+			mandant: kurz.get(tenantId) ?? '',
+			verwaltet: managers.some((r) => r.personId === m.personId),
+			ausEntra: managers.some((r) => r.personId === m.personId && r.source === 'entra')
+		}))
+	};
+}
+
 export async function getUnitForAdmin(p: Principal, unitId: string) {
 	const u = await loadForAdmin(p, unitId);
 	const team = await db
@@ -121,7 +182,8 @@ export async function getUnitForAdmin(p: Principal, unitId: string) {
 			mayWriteNews: unitMembers.mayWriteNews,
 			mayWriteFaqs: unitMembers.mayWriteFaqs,
 			mayWriteEvents: unitMembers.mayWriteEvents,
-			mayWriteBehindScenes: unitMembers.mayWriteBehindScenes
+			mayWriteBehindScenes: unitMembers.mayWriteBehindScenes,
+			mayWriteDocuments: unitMembers.mayWriteDocuments
 		})
 		.from(unitMembers)
 		.innerJoin(persons, eq(persons.id, unitMembers.personId))
@@ -304,8 +366,10 @@ export async function addMember(p: Principal, unitId: string, email: string, ip:
 				sql`not exists (select 1 from location_operators lo where lo.person_id = ${persons.id})`
 			)
 		);
-	// Gleiche Meldung für „gibt es nicht“ und „anderer Mandant“
-	if (!person || person.tenantId !== u.unit.tenantId) {
+	// Gleiche Meldung für „gibt es nicht“ und „anderer Mandant“. Zentrale Hubs
+	// gelten für alle Mandanten, dort dürfen alle mitarbeiten.
+	const offenFuerAlle = u.unit.type === 'hub' && u.unit.isCentral;
+	if (!person || (!offenFuerAlle && person.tenantId !== u.unit.tenantId)) {
 		throw new UnitError('Keine Person mit dieser E-Mail-Adresse in diesem Mandanten.');
 	}
 	await db.insert(unitMembers).values({ unitId, personId: person.id }).onConflictDoNothing();
@@ -323,8 +387,10 @@ export async function addMember(p: Principal, unitId: string, email: string, ip:
 
 export async function removeMember(p: Principal, unitId: string, personId: string, ip: string) {
 	const u = await loadForTeam(p, unitId);
-	if (!u.admin && (await isManagerOf(unitId, personId)))
+	const isHub = u.unit.type === 'hub';
+	if (!u.admin && !isHub && (await isManagerOf(unitId, personId)))
 		throw new UnitError('Personen mit Pflege-Rolle entfernt nur die Verwaltung.');
+	if (isHub) await letztesHubTeamPruefen(db, unitId, personId);
 	await db
 		.delete(unitMembers)
 		.where(and(eq(unitMembers.unitId, unitId), eq(unitMembers.personId, personId)));
@@ -355,6 +421,8 @@ export interface MemberRights {
 	mayWriteFaqs: boolean;
 	mayWriteEvents: boolean;
 	mayWriteBehindScenes: boolean;
+	/** Nur Hubs: Dokumente pflegen */
+	mayWriteDocuments?: boolean;
 	verwaltet: boolean;
 	/** Nur beim KBB: Pläne hochladen und löschen (Kap. 8.6). */
 	fachpflege?: boolean;
@@ -374,12 +442,18 @@ export async function setMemberRights(
 		mayWriteNews: r.mayWriteNews,
 		mayWriteFaqs: r.mayWriteFaqs,
 		mayWriteEvents: r.mayWriteEvents,
-		// Hubs haben kein „Hinter den Kulissen“ (Kap. 5.2)
-		mayWriteBehindScenes: isHub ? false : r.mayWriteBehindScenes
+		// Hubs haben kein „Hinter den Kulissen“ (Kap. 5.2), dafür Dokumente
+		mayWriteBehindScenes: isHub ? false : r.mayWriteBehindScenes,
+		// Ohne Angabe bleibt das Recht „Dokumente“, wie es ist
+		...(r.mayWriteDocuments === undefined
+			? {}
+			: { mayWriteDocuments: isHub && r.mayWriteDocuments })
 	};
 	const writes = Object.values(rights).some(Boolean);
-	// Die Pflege-Rolle und Fachpflege vergibt nur die Verwaltung
-	if (!u.admin) {
+	// Die Pflege-Rolle und Fachpflege vergibt nur die Verwaltung; das Hub-Team
+	// darf weitere Personen ins Hub-Team holen (Hubs organisieren sich selbst)
+	const rolleVergeben = u.admin || isHub;
+	if (!rolleVergeben) {
 		r = { ...r, verwaltet: await isManagerOf(unitId, personId), fachpflege: undefined };
 	}
 	const role = isHub ? 'hub_team' : 'abteilungsverwaltung';
@@ -412,7 +486,8 @@ export async function setMemberRights(
 							unitMembers.mayWriteNews,
 							unitMembers.mayWriteFaqs,
 							unitMembers.mayWriteEvents,
-							unitMembers.mayWriteBehindScenes
+							unitMembers.mayWriteBehindScenes,
+							unitMembers.mayWriteDocuments
 						),
 						managers.length ? notInArray(unitMembers.personId, managers) : undefined
 					)
@@ -457,7 +532,8 @@ export async function setMemberRights(
 			eq(roleAssignments.role, role),
 			eq(roleAssignments.source, 'manual')
 		);
-		if (!u.admin) return;
+		if (!rolleVergeben) return;
+		if (!r.verwaltet && isHub) await letztesHubTeamPruefen(tx, unitId, personId);
 		if (r.verwaltet) {
 			const [has] = await tx.select({ id: roleAssignments.id }).from(roleAssignments).where(manual);
 			if (!has)
