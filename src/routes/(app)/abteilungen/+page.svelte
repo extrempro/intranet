@@ -75,7 +75,7 @@
 							<span>
 								<strong>{z.topic}</strong>
 								{#if z.kontakt}
-									· {z.kontakt.name}{z.kontakt.vertretung ? ' (Vertretung)' : ''}
+									{' '}· {z.kontakt.name}{z.kontakt.vertretung ? ' (Vertretung)' : ''}
 								{/if}
 							</span>
 							<a href={resolve('/(app)/abteilungen/[slug]', { slug: z.einheit.slug })}>

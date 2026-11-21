@@ -123,7 +123,7 @@
 						{#if b.test}
 							{datum(b.test.zeit)} · {b.test.ok ? 'bestanden' : 'fehlgeschlagen'}
 							{#if b.test.ok}
-								· {b.test.tabellen} Tabellen, {b.test.personen} Personen, {b.test.dateien} Dateien
+								{' '}· {b.test.tabellen} Tabellen, {b.test.personen} Personen, {b.test.dateien} Dateien
 							{/if}
 						{:else}
 							noch nicht gelaufen
@@ -223,10 +223,10 @@
 				<dd class:warnung-text={!data.client.header}>
 					{data.client.adresse ?? 'nicht lesbar'}
 					{#if data.client.header}
-						· aus {data.client.header}
+						{' '}· aus {data.client.header}
 					{:else}
-						· ADDRESS_HEADER nicht gesetzt: vermutlich die Adresse des Reverse Proxys. Dann gelten
-						Begrenzungen je IP für alle gemeinsam (siehe .env.example).
+						{' '}· ADDRESS_HEADER nicht gesetzt: vermutlich die Adresse des Reverse Proxys. Dann
+						gelten Begrenzungen je IP für alle gemeinsam (siehe .env.example).
 					{/if}
 				</dd>
 			</div>

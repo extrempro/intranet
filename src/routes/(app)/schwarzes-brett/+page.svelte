@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { imFenster } from '#lib/imFenster.ts';
 	import { bildAlt } from '#lib/bildbeschreibung.ts';
 	import { livesuche } from '#lib/livesuche.ts';
 	/* eslint-disable svelte/no-navigation-without-resolve -- Suchparameter der eigenen Seite, mailto/Teams-Links */
@@ -143,7 +144,7 @@
 			<div class="filter" data-tour="kategorien">
 				<details class="auf">
 					<summary class="pille">Kategorie: {kat ? kat.name : 'alle'}</summary>
-					<div class="liste-auf">
+					<div class="liste-auf" use:imFenster>
 						<a
 							href={data.q ? `?q=${encodeURIComponent(data.q)}` : '?'}
 							aria-current={!data.kategorie ? 'true' : undefined}
@@ -162,7 +163,7 @@
 				</details>
 				<details class="auf">
 					<summary class="pille">{ausLabel}</summary>
-					<form method="POST" action={aktion('aus')} class="liste-auf">
+					<form method="POST" action={aktion('aus')} class="liste-auf" use:imFenster>
 						<input type="hidden" name="zurueck" value={page.url.search} />
 						{#each data.mandanten as m (m.id)}
 							<label>

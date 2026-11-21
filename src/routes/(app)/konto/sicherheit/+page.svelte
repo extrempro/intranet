@@ -47,12 +47,12 @@
 			<li>
 				<div>
 					<strong>{geraet(s.geraet)}</strong>{#if s.aktuell}
-						· dieses Gerät{/if}<br />
+						{' '}· dieses Gerät{/if}<br />
 					<span class="klein">
 						Angemeldet {zeit.format(s.seit)} ({s.art === 'entra' ? 'Microsoft' : 'lokal'}), zuletzt
 						aktiv
 						{zeit.format(s.zuletzt)}{#if s.netz}
-							· Netz {s.netz}{/if}
+							{' '}· Netz {s.netz}{/if}
 					</span>
 				</div>
 				{#if !s.aktuell}

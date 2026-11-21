@@ -65,7 +65,7 @@
 						<span class="hinweis">
 							{[s.address, s.tenantName].filter(Boolean).join(' · ')} · {s.operators}
 							{s.operators === 1 ? 'Betreiber-Konto' : 'Betreiber-Konten'}{#if !s.active}
-								· deaktiviert{/if}
+								{' '}· deaktiviert{/if}
 						</span>
 					</a>
 				</li>
