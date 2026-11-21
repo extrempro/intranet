@@ -77,4 +77,16 @@ describe('Teams', () => {
 		expect(teamsFehlertext(new TypeError('fetch failed'))).toContain('nicht erreichbar');
 		expect(teamsFehlertext(new Error('AADSTS7000215: Invalid client secret'))).toContain('Secret');
 	});
+
+	it('kann auf den Test-Reiter springen', () => {
+		const url = new URL(teamsDeepLink(APP, '/sprung-angekommen', 'teamstest'));
+		expect(url.pathname).toBe(`/l/entity/${APP}/teamstest`);
+		const body = activityBody(
+			APP,
+			activityFor([{ title: 'T', detail: null, link: '/x' }]),
+			['u'],
+			'teamstest'
+		);
+		expect(body.topic.webUrl).toContain('/teamstest?');
+	});
 });

@@ -16,6 +16,7 @@ import { setSetting } from '#lib/server/settings.ts';
 import { getEntraConfig } from '#lib/server/auth/entra.ts';
 import { saveTeamsSettings, teamsSettings } from '#lib/server/teams-config.ts';
 import { sendTeamsTest, teamsStatus } from '#lib/server/teams.ts';
+import { teamsResource } from '#lib/server/teams-sso.ts';
 import { db } from '#lib/server/db/index.ts';
 import { persons } from '#lib/server/db/schema.ts';
 import { eq } from 'drizzle-orm';
@@ -25,7 +26,7 @@ import type { Actions, PageServerLoad } from './$types';
  * Benachrichtigungen (Kap. 14): Web Push und E-Mail (SMTP). Den SMTP-Server
  * pflegen nur System-Admins, weil er für alle Mandanten gilt.
  */
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
 	const p = requirePrincipal(locals);
 	await vapidKeys();
 	const system = isSystemAdmin(p);
@@ -42,6 +43,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 			? {
 					einstellung: await teamsSettings(),
 					entra: Boolean(await getEntraConfig()),
+					// Application ID URI für den Test „Intranet ganz in Teams“
+					ssoResource: await (async () => {
+						const e = await getEntraConfig();
+						return e ? teamsResource(process.env.ORIGIN?.trim() || url.origin, e.clientId) : null;
+					})(),
 					status: await teamsStatus(),
 					microsoftKonto: Boolean(
 						(
@@ -163,10 +169,11 @@ export const actions: Actions = {
 		};
 	},
 
-	teamsTest: async ({ locals }) => {
+	teamsTest: async ({ locals, request }) => {
 		const p = requireSystemAdmin(locals);
+		const testTab = (await request.formData()).get('ziel') === 'test';
 		try {
-			return { bereich: 'teams', ergebnis: await sendTeamsTest(p.personId) };
+			return { bereich: 'teams', ergebnis: await sendTeamsTest(p.personId, undefined, testTab) };
 		} catch (err) {
 			return fail(502, { bereich: 'teams', fehler: err instanceof Error ? err.message : 'Fehler' });
 		}
