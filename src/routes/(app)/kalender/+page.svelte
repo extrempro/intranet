@@ -5,6 +5,7 @@
 	import { resolve } from '$app/paths';
 	import { actionUrl } from '#lib/action-url.ts';
 	import { page } from '$app/state';
+	import Icon from '#lib/components/Icon.svelte';
 	import { dayHeading, monthCells, monthLabel, shiftMonth, timeLabel } from '#lib/calendar.ts';
 
 	let { data, form } = $props();
@@ -30,8 +31,25 @@
 			? `Aus: dein Mandant + ${weitere.map((m) => m.short).join(', ')}`
 			: 'Aus: dein Mandant'
 	);
+	const QUELLEN = [
+		{ k: 'einheit', l: 'Abteilungen und Stabsstellen' },
+		{ k: 'hub', l: 'Hubs' }
+	];
+	const gefiltert = $derived(data.quellen.length < QUELLEN.length);
+	const quelleQs = $derived(gefiltert ? data.quellen.map((q) => `&quelle=${q}`).join('') : '');
+	const quelleLabel = $derived(
+		gefiltert
+			? `Quelle: ${QUELLEN.filter((q) => data.quellen.includes(q.k))
+					.map((q) => (q.k === 'hub' ? 'Hubs' : 'Abteilungen'))
+					.join(', ')}`
+			: 'Quelle: alle'
+	);
+	const anzahl = (k: string) =>
+		data.termine.filter((t) => (t.isHub ? 'hub' : 'einheit') === k).length;
 	const monatHref = (monat: string, tag?: string) =>
-		`?ansicht=monat&monat=${monat}${tag ? `&tag=${tag}` : ''}`;
+		`?ansicht=monat&monat=${monat}${tag ? `&tag=${tag}` : ''}${quelleQs}`;
+	const GLOCKE =
+		'M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6M9 17v1a3 3 0 0 0 6 0v-1';
 	const wochentage = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 	import EinfuehrungAngebot from '#lib/components/EinfuehrungAngebot.svelte';
 	import EinfuehrungKnopf from '#lib/components/EinfuehrungKnopf.svelte';
@@ -76,6 +94,11 @@
 		data-sveltekit-replacestate
 	>
 		{#if data.monatsansicht}<input type="hidden" name="ansicht" value="monat" />{/if}
+		{#if gefiltert}{#each data.quellen as q (q)}<input
+					type="hidden"
+					name="quelle"
+					value={q}
+				/>{/each}{/if}
 		<label class="feld">
 			<span class="sr-only">Im Kalender suchen</span>
 			<input
@@ -90,7 +113,13 @@
 	</form>
 
 	<div class="filter" role="group" aria-label="Kalender filtern" data-tour="ansicht">
-		<a class="pille" href="?" aria-current={!data.monatsansicht ? 'true' : undefined}>Liste</a>
+		<a
+			class="pille"
+			href="?{quelleQs.slice(1)}"
+			aria-current={!data.monatsansicht ? 'true' : undefined}
+		>
+			Liste
+		</a>
 		<a
 			class="pille"
 			href={monatHref(data.monat)}
@@ -98,6 +127,27 @@
 		>
 			Monat
 		</a>
+		<details class="aus">
+			<summary class="pille" class:an={gefiltert}>{quelleLabel}</summary>
+			<form method="GET" class="ausliste" data-sveltekit-reset="false">
+				{#if data.monatsansicht}
+					<input type="hidden" name="ansicht" value="monat" />
+					<input type="hidden" name="monat" value={data.monat} />
+				{/if}
+				{#if data.tag}<input type="hidden" name="tag" value={data.tag} />{/if}
+				{#if data.q}<input type="hidden" name="q" value={data.q} />{/if}
+				{#each QUELLEN as q (q.k)}
+					<label>
+						<input type="checkbox" name="quelle" value={q.k} checked={data.quellen.includes(q.k)} />
+						<i class="punkt" class:quelle-einheit={q.k === 'einheit'} aria-hidden="true"></i>
+						<span>{q.l}</span>
+						{#if data.quellen.includes(q.k)}<span class="hinweis">{anzahl(q.k)}</span>{/if}
+					</label>
+				{/each}
+				<p class="hinweis klein-text">Ohne Auswahl werden alle Quellen gezeigt.</p>
+				<button class="knopf klein" type="submit">Übernehmen</button>
+			</form>
+		</details>
 		<details class="aus" data-tour="mandanten">
 			<summary class="pille">{ausLabel}</summary>
 			<form method="POST" action={actionUrl(page.url.search, 'aus')} class="ausliste">
@@ -167,15 +217,22 @@
 						<details>
 							<summary>
 								<span class="zeit">{timeLabel(t)}</span>
-								<span class="balken" class:fremd={!t.own} aria-hidden="true"></span>
+								<span
+									class="balken"
+									class:quelle-einheit={!t.isHub}
+									class:fremd={!t.own}
+									aria-hidden="true"
+								></span>
 								<span class="was">
 									<strong>{t.title}</strong>
 									<span class="hinweis">{[t.unitName, t.place].filter(Boolean).join(' · ')}</span>
 								</span>
-								{#if t.subscribed}<span class="schild" title="Du hast diesen Hub abonniert">
-										Abo
-									</span>{/if}
 								{#if !t.own}<span class="schild rand">{t.tenantShort}</span>{/if}
+								<span class="schild" class:quelle-einheit={!t.isHub}>{t.art}</span>
+								{#if t.subscribed}<span class="glocke" title="Du hast diesen Hub abonniert">
+										<Icon d={GLOCKE} size={16} stroke={2} />
+										<span class="sr-only">abonniert</span>
+									</span>{/if}
 							</summary>
 							<div class="mehr">
 								{#if t.description}<p class="beschreibung">{t.description}</p>{/if}
@@ -397,6 +454,24 @@
 		align-self: stretch;
 		border-radius: 4px;
 		background: var(--fill);
+	}
+	.glocke {
+		display: inline-flex;
+		color: var(--ac);
+	}
+	.punkt {
+		flex: none;
+		width: 10px;
+		height: 10px;
+		border-radius: 999px;
+		background: var(--fill);
+	}
+	.punkt.quelle-einheit {
+		background: var(--blau);
+	}
+	.klein-text {
+		margin: 4px 8px;
+		font-size: 12px;
 	}
 	.balken.fremd {
 		background: var(--mu);

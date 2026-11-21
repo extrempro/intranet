@@ -11,6 +11,8 @@
 	import Icon from '#lib/components/Icon.svelte';
 	const KALENDER =
 		'M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2zM16 3v4M8 3v4M4 11h16';
+	const HAUS =
+		'M5 12l-2 0l9 -9l9 9l-2 0M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6';
 	const ORT =
 		'M12 11m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M17.66 16.66l-4.24 4.24a2 2 0 0 1 -2.83 0l-4.25 -4.24a8 8 0 1 1 11.31 0z';
 
@@ -25,7 +27,12 @@
 <div class="stapel">
 	<div class="kopfzeile">
 		<div class="titel">
-			<h1>Speiseplan</h1>
+			<div>
+				<h1>Speiseplan</h1>
+				{#if data.plan}<p class="hinweis unterzeile">
+						{data.plan.title} · {formatRange(data.plan.validFrom, data.plan.validUntil)}
+					</p>{/if}
+			</div>
 			<form method="POST" action={actionUrl(page.url.search, 'favorit')} use:enhance>
 				<button
 					class="stern"
@@ -53,12 +60,16 @@
 	{:else}
 		{#if data.meine.length > 1 || !data.meine.some((m) => m.id === a.id)}
 			<nav class="pillen" aria-label="Standort wählen">
-				{#each data.meine as l (l.id)}
+				{#each data.meine as l, i (l.id)}
 					<a
 						href="?standort={l.id}"
 						class="pille"
 						aria-current={l.id === a.id ? 'true' : undefined}
+						title={i === 0 ? 'Hauptstandort' : undefined}
 					>
+						{#if i === 0}<Icon d={HAUS} size={14} stroke={2} /><span class="sr-only">
+								Hauptstandort:
+							</span>{/if}
 						{l.name}
 					</a>
 				{/each}
@@ -116,14 +127,14 @@
 		</section>
 
 		{#if data.plan}
-			<div>
-				<h2 class="plantitel">{data.plan.title}</h2>
-				{#if data.plan.title.startsWith('Speiseplan KW')}
-					<p class="hinweis">gültig {formatRange(data.plan.validFrom, data.plan.validUntil)}</p>
-				{/if}
-			</div>
+			<h2 class="sr-only">{data.plan.title}</h2>
 			{#key data.plan.fileId}
-				<PdfAnsicht src={datei} titel={data.plan.title} download="{datei}?download" />
+				<PdfAnsicht
+					src={datei}
+					titel={data.plan.title}
+					name={data.plan.fileName}
+					download="{datei}?download"
+				/>
 			{/key}
 		{:else}
 			<p class="meldung" role="status">Für diese Woche liegt noch kein Speiseplan vor.</p>
@@ -159,6 +170,9 @@
 	}
 	h1 {
 		margin: 0;
+	}
+	.unterzeile {
+		margin: 2px 0 0;
 	}
 	.stern {
 		width: 44px;
@@ -277,10 +291,6 @@
 		align-items: center;
 		gap: 6px;
 		color: var(--mu);
-	}
-	.plantitel {
-		margin: 0;
-		font-size: 1.2rem;
 	}
 	.weitere {
 		display: flex;

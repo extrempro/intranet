@@ -6,7 +6,19 @@
 	import { onDestroy, onMount } from 'svelte';
 	import type { PDFDocumentLoadingTask, PDFDocumentProxy, RenderTask } from 'pdfjs-dist';
 
-	let { src, titel, download }: { src: string; titel: string; download: string } = $props();
+	let {
+		src,
+		titel,
+		download = '',
+		name = ''
+	}: {
+		src: string;
+		titel: string;
+		/** Adresse zum Herunterladen; leer = kein Knopf (Seite bietet ihn selbst an) */
+		download?: string;
+		/** Dateiname links in der Leiste (z. B. beim Speiseplan) */
+		name?: string;
+	} = $props();
 
 	let flaeche: HTMLDivElement | undefined = $state();
 	let canvas: HTMLCanvasElement | undefined = $state();
@@ -88,7 +100,8 @@
 
 <div class="pdf">
 	<div class="leiste" role="toolbar" aria-label="PDF-Ansicht">
-		<span class="gruppe">
+		{#if name}<strong class="name">{name}</strong>{/if}
+		<span class="gruppe" class:links={!name}>
 			<button
 				type="button"
 				class="tb"
@@ -98,7 +111,7 @@
 			>
 				‹
 			</button>
-			<span aria-live="polite">{seiten ? `Seite ${seite} / ${seiten}` : ''}</span>
+			<span class="wert" aria-live="polite">{seiten ? `${seite} / ${seiten}` : ''}</span>
 			<button
 				type="button"
 				class="tb"
@@ -119,7 +132,7 @@
 			>
 				−
 			</button>
-			<span aria-live="polite">{aktuellerZoom}</span>
+			<span class="wert" aria-live="polite">{aktuellerZoom}</span>
 			<button
 				type="button"
 				class="tb"
@@ -136,11 +149,13 @@
 				disabled={!seiten}
 				onclick={() => zoomen(0)}
 			>
-				Einpassen
+				An Breite anpassen
 			</button>
 		</span>
-		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- Adresse kommt bereits über resolve() -->
-		<a class="knopf zweit" href={download} download>Herunterladen</a>
+		{#if download}
+			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- Adresse kommt bereits über resolve() -->
+			<a class="knopf zweit klein" href={download} download>Herunterladen</a>
+		{/if}
 	</div>
 
 	<div class="flaeche" bind:this={flaeche}>
@@ -158,66 +173,94 @@
 			<canvas bind:this={canvas} aria-hidden="true"></canvas>
 		</div>
 	</div>
-	<p class="hinweis">
-		Wie barrierefrei ein PDF ist, hängt von der Quelle ab. Für Bildschirmleser die Datei
-		herunterladen.
-	</p>
 </div>
+<p class="hinweis fuss">
+	Wie barrierefrei ein PDF ist, hängt von der Quelle ab. Für Bildschirmleser die Datei
+	herunterladen.
+</p>
 
 <style>
 	.pdf {
-		display: grid;
-		gap: 10px;
+		border: 1px solid var(--bd);
+		border-radius: 16px;
+		background: var(--sf);
+		overflow: hidden;
 	}
 	.leiste {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 10px 18px;
+		gap: 8px 16px;
 		align-items: center;
+		justify-content: flex-end;
+		padding: 8px 12px;
+		border-bottom: 1px solid var(--bd);
+	}
+	.name {
+		margin-right: auto;
+		font-size: 14px;
+		overflow-wrap: anywhere;
 	}
 	.gruppe {
 		display: inline-flex;
 		align-items: center;
-		gap: 8px;
+		gap: 6px;
+	}
+	.links {
+		margin-right: auto;
+	}
+	.wert {
+		min-width: 3.5em;
+		text-align: center;
+		font-size: 13px;
+		color: var(--mu);
 	}
 	.tb {
-		min-width: 44px;
-		height: 44px;
-		border-radius: 10px;
+		min-width: 36px;
+		height: 36px;
+		border-radius: 999px;
 		border: 1px solid var(--bd);
 		background: var(--sf);
 		color: var(--tx);
 		font: inherit;
-		font-size: 20px;
+		font-size: 18px;
+		line-height: 1;
 		cursor: pointer;
 	}
 	.tb.breit {
-		font-size: 14px;
-		padding: 0 12px;
+		font-size: 13px;
+		font-weight: 600;
+		padding: 0 14px;
 	}
 	.tb[aria-pressed='true'] {
-		background: var(--tint);
-		color: var(--ac);
-		border-color: var(--ac);
+		background: var(--fill);
+		border-color: var(--fill);
+		color: #fff;
 	}
 	.tb:disabled {
 		opacity: 0.35;
 		cursor: not-allowed;
 	}
+	.klein {
+		min-height: 36px;
+		padding: 6px 12px;
+		font-size: 13px;
+	}
 	.flaeche {
 		overflow: auto;
 		max-height: 80vh;
 		background: var(--bg);
-		border: 1px solid var(--bd);
-		border-radius: var(--radius);
-		padding: 0;
+		padding: 16px;
 	}
 	canvas {
 		display: block;
 		margin: 0 auto;
 		background: #fff;
+		box-shadow: 0 2px 10px rgb(0 0 0 / 0.12);
 	}
 	.versteckt {
 		display: none;
+	}
+	.fuss {
+		margin: 8px 0 0;
 	}
 </style>
