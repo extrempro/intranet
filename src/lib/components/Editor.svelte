@@ -3,15 +3,25 @@
 	 * WYSIWYG-Editor (TipTap). Liefert HTML im versteckten Feld `name`;
 	 * der Server bereinigt es immer (src/lib/server/html.ts).
 	 */
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy, onMount, tick as warten } from 'svelte';
 	import type { Editor } from '@tiptap/core';
+	import { BILD_GROESSEN, type BildAusrichtung, type BildGroesse } from '#lib/bilder-im-text.ts';
+	import { bildHochladen, bildVorbereiten, istTextbild } from '#lib/textbild.ts';
 
 	let {
 		name,
 		value = '',
 		label,
-		describedby
-	}: { name: string; value?: string; label: string; describedby?: string } = $props();
+		describedby,
+		bilder = true
+	}: {
+		name: string;
+		value?: string;
+		label: string;
+		describedby?: string;
+		/** Bilder im Text erlauben (Beiträge, FAQs) */
+		bilder?: boolean;
+	} = $props();
 
 	let element: HTMLDivElement | undefined = $state();
 	let editor: Editor | undefined = $state();
@@ -24,14 +34,123 @@
 		if (!editor) html = value;
 	});
 
+	// Bilder im Text: hochladen, Beschreibung abfragen, Größe und Ausrichtung
+	let bildStatus = $state('');
+	let bildDialog: HTMLDialogElement | undefined = $state();
+	let bildFeld: HTMLTextAreaElement | undefined = $state();
+	let dateiFeld: HTMLInputElement | undefined = $state();
+	let bildEntwurf = $state<{
+		src: string;
+		vorschau: string;
+		alt: string;
+		neu: boolean;
+		animiert?: boolean;
+	} | null>(null);
+
+	async function bildEinfuegen(datei: File) {
+		if (!bilder || !editor) return;
+		bildStatus = 'Bild wird vorbereitet und hochgeladen …';
+		try {
+			const { blob, animiert } = await bildVorbereiten(datei);
+			const src = await bildHochladen(blob);
+			bildStatus = '';
+			bildEntwurf = { src, vorschau: URL.createObjectURL(blob), alt: '', neu: true, animiert };
+			await warten();
+			bildDialog?.showModal();
+			bildFeld?.focus();
+		} catch (err) {
+			bildStatus = err instanceof Error ? err.message : 'Das Bild konnte nicht eingefügt werden.';
+		}
+	}
+
+	async function beschreibungAendern() {
+		const a = editor?.getAttributes('image');
+		if (!a?.src) return;
+		bildEntwurf = { src: a.src, vorschau: a.src, alt: a.alt ?? '', neu: false };
+		await warten();
+		bildDialog?.showModal();
+		bildFeld?.focus();
+	}
+
+	function bildUebernehmen() {
+		const b = bildEntwurf;
+		if (!b || !b.alt.trim()) return;
+		if (b.neu)
+			editor
+				?.chain()
+				.focus()
+				.insertContent({
+					type: 'image',
+					attrs: { src: b.src, alt: b.alt.trim(), animiert: Boolean(b.animiert) }
+				})
+				.run();
+		else editor?.chain().focus().updateAttributes('image', { alt: b.alt.trim() }).run();
+		bildSchliessen();
+	}
+
+	function bildSchliessen() {
+		if (bildEntwurf?.neu) URL.revokeObjectURL(bildEntwurf.vorschau);
+		bildEntwurf = null;
+		bildDialog?.close();
+	}
+
+	const bildAttr = (k: 'groesse' | 'ausrichtung') => {
+		void tick;
+		return editor?.getAttributes('image')[k] ?? null;
+	};
+	const setzeBild = (attrs: { groesse?: BildGroesse; ausrichtung?: BildAusrichtung | null }) =>
+		editor?.chain().focus().updateAttributes('image', attrs).run();
+
 	onMount(async () => {
-		const [{ Editor }, { default: StarterKit }] = await Promise.all([
-			import('@tiptap/core'),
-			import('@tiptap/starter-kit')
-		]);
+		const [{ Editor, mergeAttributes }, { default: StarterKit }, { default: Image }] =
+			await Promise.all([
+				import('@tiptap/core'),
+				import('@tiptap/starter-kit'),
+				import('@tiptap/extension-image')
+			]);
+		// Größe und Ausrichtung als Klassen (bild-klein, bild-links …), siehe bilder-im-text.ts
+		const TextBild = Image.extend({
+			addAttributes() {
+				return {
+					src: { default: null },
+					alt: { default: '' },
+					groesse: {
+						default: 'voll',
+						parseHTML: (el: HTMLElement) =>
+							BILD_GROESSEN.find((g) => el.classList.contains(`bild-${g}`)) ?? 'voll',
+						renderHTML: () => ({})
+					},
+					animiert: {
+						default: false,
+						parseHTML: (el: HTMLElement) => el.classList.contains('bild-animiert'),
+						renderHTML: () => ({})
+					},
+					ausrichtung: {
+						default: null,
+						parseHTML: (el: HTMLElement) =>
+							(['links', 'rechts'] as const).find((a) => el.classList.contains(`bild-${a}`)) ??
+							null,
+						renderHTML: () => ({})
+					}
+				};
+			},
+			renderHTML({ node, HTMLAttributes }) {
+				const g = node.attrs.groesse as BildGroesse;
+				const a = g !== 'voll' ? (node.attrs.ausrichtung as BildAusrichtung | null) : null;
+				return [
+					'img',
+					mergeAttributes(HTMLAttributes, {
+						class: [`bild-${g}`, a && `bild-${a}`, node.attrs.animiert && 'bild-animiert']
+							.filter(Boolean)
+							.join(' ')
+					})
+				];
+			}
+		}).configure({ inline: false, allowBase64: false });
 		editor = new Editor({
 			element,
 			extensions: [
+				...(bilder ? [TextBild] : []),
 				StarterKit.configure({
 					heading: { levels: [2, 3] },
 					code: false,
@@ -46,6 +165,21 @@
 			],
 			content: value,
 			editorProps: {
+				// Bilder einfügen per Strg + V oder Ziehen
+				handlePaste: (_view, event) => {
+					const datei = [...(event.clipboardData?.files ?? [])].find(istTextbild);
+					if (!bilder || !datei) return false;
+					void bildEinfuegen(datei);
+					return true;
+				},
+				handleDrop: (_view, event, _slice, verschoben) => {
+					if (verschoben) return false;
+					const datei = [...(event.dataTransfer?.files ?? [])].find(istTextbild);
+					if (!bilder || !datei) return false;
+					event.preventDefault();
+					void bildEinfuegen(datei);
+					return true;
+				},
 				attributes: {
 					role: 'textbox',
 					'aria-multiline': 'true',
@@ -161,6 +295,17 @@
 		>
 			🔗
 		</button>
+		{#if bilder}
+			<button
+				type="button"
+				aria-label="Bild einfügen"
+				title="Bild einfügen (auch per Strg + V oder Ziehen)"
+				disabled={!editor}
+				onclick={() => dateiFeld?.click()}
+			>
+				🖼
+			</button>
+		{/if}
 		<button
 			type="button"
 			aria-label="Rückgängig"
@@ -180,6 +325,42 @@
 			↷
 		</button>
 	</div>
+	{#if bilder && aktiv('image')}
+		<!-- Ausgewähltes Bild: Größe, Ausrichtung, Beschreibung -->
+		<div class="bildleiste" role="toolbar" aria-label="Bild" tabindex="-1">
+			<span class="gruppe" role="group" aria-label="Größe">
+				{#each [['klein', 'Klein'], ['mittel', 'Mittel'], ['voll', 'Volle Breite']] as [g, t] (g)}
+					<button
+						type="button"
+						aria-pressed={bildAttr('groesse') === g}
+						onclick={() => setzeBild({ groesse: g as BildGroesse })}
+					>
+						{t}
+					</button>
+				{/each}
+			</span>
+			<span class="gruppe" role="group" aria-label="Ausrichtung">
+				{#each [[null, 'Mitte'], ['links', 'Links'], ['rechts', 'Rechts']] as [a, t] (t)}
+					<button
+						type="button"
+						disabled={bildAttr('groesse') === 'voll'}
+						title={bildAttr('groesse') === 'voll'
+							? 'Bei voller Breite steht das Bild für sich'
+							: 'Text fließt um das Bild'}
+						aria-pressed={(bildAttr('ausrichtung') ?? null) === a}
+						onclick={() => setzeBild({ ausrichtung: a as BildAusrichtung | null })}
+					>
+						{t}
+					</button>
+				{/each}
+			</span>
+			<button type="button" onclick={beschreibungAendern}>Beschreibung</button>
+			<button type="button" onclick={() => editor?.chain().focus().deleteSelection().run()}>
+				Bild entfernen
+			</button>
+		</div>
+	{/if}
+	{#if bildStatus}<p class="bildstatus" role="status">{bildStatus}</p>{/if}
 	{#if linkOffen}
 		<div class="link">
 			<label class="feld">
@@ -207,6 +388,60 @@
 		{/if}
 	</div>
 	{#if editor}<input type="hidden" {name} value={html} />{/if}
+	{#if bilder}
+		<input
+			bind:this={dateiFeld}
+			type="file"
+			accept="image/jpeg,image/png,image/webp"
+			hidden
+			onchange={(e) => {
+				const d = e.currentTarget.files?.[0];
+				e.currentTarget.value = '';
+				if (d) void bildEinfuegen(d);
+			}}
+		/>
+		<dialog
+			bind:this={bildDialog}
+			class="bilddialog"
+			aria-labelledby="{name}-bild-titel"
+			oncancel={(e) => {
+				e.preventDefault();
+				bildSchliessen();
+			}}
+		>
+			{#if bildEntwurf}
+				<form
+					class="innen"
+					onsubmit={(e) => {
+						e.preventDefault();
+						bildUebernehmen();
+					}}
+				>
+					<h2 id="{name}-bild-titel">{bildEntwurf.neu ? 'Bild einfügen' : 'Bildbeschreibung'}</h2>
+					<img src={bildEntwurf.vorschau} alt="" class="vorschau" />
+					<label class="feld">
+						<span>Bildbeschreibung</span>
+						<textarea
+							bind:this={bildFeld}
+							bind:value={bildEntwurf.alt}
+							rows="2"
+							maxlength="250"
+							required
+							placeholder="z. B. Der Chor bei der Probe auf der Probebühne"></textarea>
+						<span class="hinweis">
+							Was ist zu sehen? Bildschirmleser lesen das vor. Pflicht für jedes Bild.
+						</span>
+					</label>
+					<div class="knoepfe">
+						<button class="knopf zweit" type="button" onclick={bildSchliessen}>Abbrechen</button>
+						<button class="knopf" type="submit" disabled={!bildEntwurf.alt.trim()}>
+							{bildEntwurf.neu ? 'Einfügen' : 'Übernehmen'}
+						</button>
+					</div>
+				</form>
+			{/if}
+		</dialog>
+	{/if}
 </div>
 
 <style>
@@ -264,5 +499,97 @@
 	}
 	.flaeche :global(.inhalt p) {
 		margin: 0 0 0.6em;
+	}
+	.flaeche :global(.inhalt img.ProseMirror-selectednode) {
+		outline: 3px solid var(--focus);
+		outline-offset: 2px;
+	}
+	.bildleiste {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 6px 12px;
+		padding: 6px 8px;
+		border-bottom: 1px solid var(--bd);
+		background: var(--tint);
+	}
+	.bildleiste .gruppe {
+		display: inline-flex;
+		gap: 2px;
+	}
+	.bildleiste button {
+		min-height: 36px;
+		padding: 4px 10px;
+		border: 1px solid var(--bd);
+		border-radius: 8px;
+		background: var(--sf);
+		color: var(--tx);
+		font: inherit;
+		font-size: 14px;
+		cursor: pointer;
+	}
+	.bildleiste button[aria-pressed='true'] {
+		background: var(--fill);
+		border-color: var(--fill);
+		color: #fff;
+	}
+	.bildleiste button:disabled {
+		opacity: 0.45;
+		cursor: not-allowed;
+	}
+	.bildstatus {
+		margin: 0;
+		padding: 6px 12px;
+		font-size: 14px;
+		border-bottom: 1px solid var(--bd);
+	}
+	/* Fenster wie die Rückfragen: PC/Tablet in der Mitte, Handy von unten */
+	.bilddialog {
+		width: min(32rem, calc(100vw - 32px));
+		padding: 0;
+		border: 1px solid var(--bd);
+		border-radius: 14px;
+		background: var(--sf);
+		color: var(--tx);
+		box-shadow: var(--shadow);
+	}
+	.bilddialog::backdrop {
+		background: rgb(0 0 0 / 0.4);
+	}
+	.bilddialog .innen {
+		padding: 22px;
+		display: grid;
+		gap: 12px;
+	}
+	.bilddialog h2 {
+		margin: 0;
+		font-size: 1.2rem;
+	}
+	.bilddialog .vorschau {
+		max-width: 100%;
+		max-height: 240px;
+		justify-self: start;
+		border-radius: 8px;
+		border: 1px solid var(--bd);
+	}
+	.bilddialog .knoepfe {
+		display: flex;
+		justify-content: flex-end;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+	@media (max-width: 599px) {
+		.bilddialog {
+			width: 100%;
+			max-width: 100%;
+			margin: auto 0 0;
+			border-radius: 16px 16px 0 0;
+		}
+		.bilddialog .knoepfe {
+			flex-direction: column-reverse;
+		}
+		.bilddialog .knoepfe .knopf {
+			width: 100%;
+		}
 	}
 </style>

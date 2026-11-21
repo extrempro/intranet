@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { animierteBilder } from '#lib/animiert.ts';
 	import { resolve } from '$app/paths';
 	import Absender from '#lib/components/Absender.svelte';
 	import Icon from '#lib/components/Icon.svelte';
@@ -63,7 +64,7 @@
 		{/if}
 		<!-- Inhalt ist serverseitig bereinigt (src/lib/server/html.ts) -->
 		<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-		<div class="karte text">{@html b.bodyHtml}</div>
+		<div use:animierteBilder class="karte text">{@html b.bodyHtml}</div>
 		{#if b.attachments.length}
 			<section aria-labelledby="h-anhaenge" class="karte">
 				<h2 id="h-anhaenge" class="klein">Anhänge</h2>

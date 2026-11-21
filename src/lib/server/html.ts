@@ -3,6 +3,7 @@
  * Feste Erlaubnisliste passend zur Werkzeugleiste; alles andere fällt weg.
  */
 import sanitizeHtml from 'sanitize-html';
+import { BILD_KLASSEN } from '../bilder-im-text.ts';
 
 const OPTIONS: sanitizeHtml.IOptions = {
 	allowedTags: [
@@ -35,9 +36,28 @@ const OPTIONS: sanitizeHtml.IOptions = {
 	}
 };
 
-export function cleanHtml(html: string): string {
+/**
+ * @param bilder Erlaubte Bilder im Text (Datei-IDs). Ohne Angabe fallen alle
+ *   Bilder weg; erlaubt sind nur <img src="/dateien/<ID>"> aus dieser Liste,
+ *   mit Beschreibung (alt) und den Klassen für Größe und Ausrichtung.
+ */
+export function cleanHtml(html: string, bilder?: ReadonlySet<string>): string {
+	const options: sanitizeHtml.IOptions = bilder?.size
+		? {
+				...OPTIONS,
+				allowedTags: [...(OPTIONS.allowedTags as string[]), 'img'],
+				allowedAttributes: { ...OPTIONS.allowedAttributes, img: ['src', 'alt', 'class'] },
+				allowedClasses: { img: BILD_KLASSEN },
+				allowedSchemesAppliedToAttributes: ['href'],
+				exclusiveFilter: (frame) => {
+					if (frame.tag !== 'img') return false;
+					const m = /^\/dateien\/([0-9a-f-]{36})$/i.exec(frame.attribs.src ?? '');
+					return !m || !bilder.has(m[1].toLowerCase());
+				}
+			}
+		: OPTIONS;
 	return (
-		sanitizeHtml(html, OPTIONS)
+		sanitizeHtml(html, options)
 			// Link ohne (sichere) Adresse: Text bleibt, Link fällt weg
 			.replace(/<a>([\s\S]*?)<\/a>/g, '$1')
 			// Herkunft nicht weitergeben

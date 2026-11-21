@@ -16,6 +16,16 @@ Unter Aktuelles → Neuigkeiten → „Beitrag schreiben“. Als Absender ersche
 - **Ablauf** (optional): danach verschwindet der Beitrag.
 - **Anhänge**: PDF, Bilder und Office-Dateien ohne Makros, je höchstens 20 MB.
 
+## Bilder im Text
+
+Mit 🖼 in der Werkzeugleiste fügst du ein Bild direkt in den Text ein. Du kannst es auch hineinziehen oder einfügen (Strg+V). Das gilt auch für Hub-Beiträge, „Hinter den Kulissen“ und FAQs.
+
+- Erlaubt sind JPEG, PNG und WebP. Große Bilder verkleinert das Intranet beim Hochladen.
+- Animierte WebP bleiben, wie sie sind (höchstens 5 MB). Sie stehen erst still, Lesende starten sie mit „Abspielen“.
+- Die **Bildbeschreibung** ist Pflicht. Ohne sie lässt sich das Bild nicht einfügen und der Beitrag nicht speichern.
+- Klick auf das Bild, dann wählst du die Größe (**Klein**, **Mittel**, **Volle Breite**) und ob es **links** oder **rechts** steht. Der Text fließt daneben weiter. Am Handy sind alle Bilder so breit wie der Text.
+- Höchstens 20 Bilder je Beitrag. Ortsdaten und andere Angaben aus dem Bild entfernt das Intranet.
+
 ## Für alle lesbar
 
 - Zwischenüberschriften mit **H2** und **H3** gliedern den Text, auch für Bildschirmleser.

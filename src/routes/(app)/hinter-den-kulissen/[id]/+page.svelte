@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { animierteBilder } from '#lib/animiert.ts';
 	/* eslint-disable svelte/no-at-html-tags -- Text ist serverseitig bereinigt */
 	import { resolve } from '$app/paths';
 	import Absender from '#lib/components/Absender.svelte';
@@ -32,7 +33,7 @@
 
 	{#if b.images.length}<Karussell bilder={b.images} titel={b.title} />{/if}
 
-	<div class="text">{@html b.bodyHtml}</div>
+	<div use:animierteBilder class="text">{@html b.bodyHtml}</div>
 
 	{#if b.files.length}
 		<section class="karte">

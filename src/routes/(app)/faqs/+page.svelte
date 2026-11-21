@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { animierteBilder } from '#lib/animiert.ts';
 	import { livesuche } from '#lib/livesuche.ts';
 	/* eslint-disable svelte/no-navigation-without-resolve, svelte/no-at-html-tags -- Suchparameter der eigenen Seite; Antwort-HTML ist serverseitig bereinigt */
 	import { enhance } from '$app/forms';
@@ -134,7 +135,7 @@
 							<details open={offen === f.id || Boolean(data.q)}>
 								<summary>{f.question}</summary>
 								<div class="antwort">
-									<div class="text">{@html f.answerHtml}</div>
+									<div use:animierteBilder class="text">{@html f.answerHtml}</div>
 									{#if f.attachments.length}
 										<ul class="anhaenge" aria-label="Anhänge">
 											{#each f.attachments as a (a.id)}

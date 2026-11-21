@@ -8,6 +8,7 @@ import { kulissenFileAllowed } from '#lib/server/kulissen.ts';
 import { legalFileAllowed } from '#lib/server/legal.ts';
 import { faqOfFile } from '#lib/server/faqs.ts';
 import { feedbackScreenshotAllowed } from '#lib/server/feedback.ts';
+import { textBildErlaubt } from '#lib/server/textbilder.ts';
 import { newsOfFile } from '#lib/server/news.ts';
 import { isPublicDocument } from '#lib/server/plans.ts';
 import type { RequestHandler } from './$types';
@@ -32,6 +33,8 @@ export const GET: RequestHandler = async ({ locals, params, url }) => {
 				(await boardPhotoAllowed(p, id)) ||
 				(await kulissenFileAllowed(p, id)) ||
 				(await legalFileAllowed(p, id)) ||
+				// Bild im Text eines Beitrags oder einer FAQ
+				(await textBildErlaubt(p, id)) ||
 				// Bildschirmfoto einer Fehlermeldung (nur System-Admins)
 				(await feedbackScreenshotAllowed(p, id)) ||
 				// Eigener, noch nicht verknüpfter Upload (Vorschau im Formular)

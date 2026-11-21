@@ -226,6 +226,7 @@ Jede Rückfrage vor einer Aktion („… löschen?“, „Konto sperren?“) ers
 - **Zielgruppe („Wer sieht das?“)**: Nicht-zentrale Einheiten veröffentlichen nur für den eigenen Mandanten; zentrale Absender wählen alle oder einzelne Mandanten. Standortbezogene Beiträge sehen nur Personen mit diesem Standort.
 - Veröffentlichung **ohne Redaktionsfreigabe**.
 - **WYSIWYG-Editor**, **Dateianhänge** (verschlüsselt).
+- **Bilder im Text** (auch Hub-Beiträge, Hinter den Kulissen, FAQs): JPEG, PNG, WebP; im Browser auf höchstens 1600 px verkleinert, animierte WebP unverändert bis 5 MB. Größe klein/mittel/volle Breite, Ausrichtung links/rechts (am Handy immer volle Breite). Bildbeschreibung Pflicht. Höchstens 20 Bilder je Beitrag. Animationen starten angehalten mit Knopf „Abspielen“ (WCAG 2.2.2). Abrufbar nur für Personen, die den Beitrag sehen dürfen.
 - **Anheften** (Pflichtfeld „Angeheftet bis“):
   - Höchstdauer 14 Tage
   - pro Absender gleichzeitig 1 (beim nächsten fragt der Editor, ob ersetzt werden soll)
@@ -256,6 +257,7 @@ Jede Rückfrage vor einer Aktion („… löschen?“, „Konto sperren?“) ers
 - Beiträge von Beschäftigten bzw. Einheiten; gehen ohne Freigabe online. Abgebildete Personen müssen zugestimmt haben (Bestätigung beim Erstellen).
 - Einheiten schalten die Funktion selbst frei; Schreibrecht je Person (5.2). Ein kleiner Hinweis „So geht’s“ erklärt die Freischaltung (Text in der Verwaltung editierbar).
 - **Mandantenübergreifend**: Schreibende wählen die Ziel-Mandanten, Lesende wählen „Aus: …“; der eigene Mandant ist immer enthalten.
+- Bilder im Text wie bei Neuigkeiten (8.1).
 - Nicht auf Abteilungsseiten angezeigt.
 
 ### 8.5 Schwarzes Brett
@@ -292,7 +294,7 @@ Jede Rückfrage vor einer Aktion („… löschen?“, „Konto sperren?“) ers
 
 ### 8.9 FAQs
 
-Je Einheit; Schreibrecht „FAQs“. Frage, Antwort im Editor mit Links und Anhängen.
+Je Einheit; Schreibrecht „FAQs“. Frage, Antwort im Editor mit Links, Anhängen und Bildern im Text (wie 8.1).
 
 ### 8.10 Rechtliches
 
