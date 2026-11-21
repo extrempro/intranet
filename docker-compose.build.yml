@@ -1,0 +1,12 @@
+# Images selbst bauen statt aus GHCR zu laden (Entwicklung, CI):
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+services:
+  app:
+    build: .
+    pull_policy: build
+  backup:
+    build: ./backup
+    pull_policy: build
+  wiederherstellen:
+    build: ./backup
+    pull_policy: build

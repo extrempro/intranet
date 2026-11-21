@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Prüft den Dienst backup im CI mit der echten docker-compose.yml:
+# Prüft den Dienst backup im CI mit der echten docker-compose.yml (Images selbst gebaut):
 #   1. Datenbank und Anwendung starten (Migrationen, erster Mandant)
 #   2. eine Datei anlegen (Zeile in files und verschlüsselte Datei im Volume)
 #   3. backup starten: erste Sicherung mit Wiederherstellungstest
@@ -12,7 +12,7 @@ cd "$(dirname "$0")/.."
 export COMPOSE_PROJECT_NAME=intranet-ci
 ENV=.env.ci-test
 SCHLUESSEL=$(mktemp)
-dc() { docker compose --env-file "$ENV" "$@"; }
+dc() { docker compose -f docker-compose.yml -f docker-compose.build.yml --env-file "$ENV" "$@"; }
 aufraeumen() {
 	status=$?
 	if [ "$status" -ne 0 ]; then

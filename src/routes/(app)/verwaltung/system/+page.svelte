@@ -2,6 +2,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import Info from '#lib/components/Info.svelte';
+	import Startklar from '#lib/components/Startklar.svelte';
 	import { groesse } from '#lib/system-status.ts';
 
 	let { data } = $props();
@@ -54,6 +55,8 @@
 			{laedt ? 'Lädt …' : 'Aktualisieren'}
 		</button>
 	</div>
+
+	<Startklar punkte={data.startklar} />
 
 	<section class="karte stapel" aria-labelledby="h-sicherung">
 		<h2 id="h-sicherung">

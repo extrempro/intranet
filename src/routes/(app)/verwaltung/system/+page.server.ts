@@ -4,6 +4,7 @@ import { isSystemAdmin } from '#lib/server/auth/access.ts';
 import { getEntraConfig } from '#lib/server/auth/entra.ts';
 import { lastSync, syncRunning } from '#lib/server/auth/entra-sync.ts';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
+import { startklar } from '#lib/server/startklar.ts';
 import { backupStatus, systemStatus } from '#lib/server/system.ts';
 import type { PageServerLoad } from './$types';
 
@@ -23,6 +24,7 @@ export const load: PageServerLoad = async ({ locals, getClientAddress }) => {
 		adresse = null;
 	}
 	return {
+		startklar: await startklar(adresse),
 		system: await systemStatus(version),
 		sicherung: await backupStatus(),
 		client: {

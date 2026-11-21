@@ -26,6 +26,12 @@ import { getSetting, setSetting } from './settings.ts';
 import { teamsActive, teamsSettings } from './teams-config.ts';
 import { zip } from './zip.ts';
 
+/**
+ * Reiter „Test“ im App-Paket (SSO, Cookies, Sprung aus Benachrichtigung).
+ * Nach den Tests auf iPhone und Android auf false setzen und /teams/test entfernen.
+ */
+export const TEAMS_TEST_REITER = true;
+
 export type GraphPost = (path: string, body: unknown) => Promise<void>;
 
 export interface TeamsStatus {
@@ -229,13 +235,17 @@ export async function teamsAppPackage(origin: string): Promise<{ name: string; d
 				websiteUrl: origin,
 				scopes: ['personal']
 			},
-			{
-				// Vorübergehend: prüft, ob das Intranet ganz in Teams laufen kann
-				entityId: TEAMS_TEST_ENTITY,
-				name: 'Test',
-				contentUrl: `${origin}/teams/test?ziel={subEntityId}`,
-				scopes: ['personal']
-			}
+			...(TEAMS_TEST_REITER
+				? [
+						{
+							// Vorübergehend: prüft, ob das Intranet ganz in Teams laufen kann
+							entityId: TEAMS_TEST_ENTITY,
+							name: 'Test',
+							contentUrl: `${origin}/teams/test?ziel={subEntityId}`,
+							scopes: ['personal']
+						}
+					]
+				: [])
 		],
 		validDomains: [host],
 		webApplicationInfo: { id: entra.clientId, resource: teamsResource(origin, entra.clientId) },
