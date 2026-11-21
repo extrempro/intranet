@@ -1,7 +1,7 @@
 /**
- * Erneute Anmeldung vor kritischen Verwaltungsaktionen (ASVS V3.7.1):
- * Rollen vergeben und entziehen, Personen sperren und freigeben, Anmeldung und
- * Entra einstellen, SMTP. Eine Bestätigung gilt 10 Minuten für diese Sitzung.
+ * Erneute Anmeldung vor kritischen Verwaltungsaktionen (ASVS 5.0 V7.5):
+ * Rollen vergeben und entziehen, Personen und Betreiber-Konten sperren und
+ * freigeben, Anmeldung und Entra einstellen, SMTP. Eine Bestätigung gilt 10 Minuten für diese Sitzung.
  *
  * Bestätigen: lokale Konten mit dem zweiten Faktor (Code aus der App,
  * Wiederherstellungscode oder Passkey), Microsoft-Konten mit einer neuen
@@ -39,6 +39,7 @@ export function bestaetigtBis(locals: App.Locals, jetzt = Date.now()): Date | nu
  */
 export function bestaetigungFehlt(locals: App.Locals) {
 	if (bestaetigtBis(locals)) return null;
+	locals.bestaetigungVerlangt = true;
 	return fail(403, {
 		bestaetigung: true as const,
 		fehler: 'Bitte bestätige zuerst deine Anmeldung. Danach kannst du 10 Minuten lang ändern.'

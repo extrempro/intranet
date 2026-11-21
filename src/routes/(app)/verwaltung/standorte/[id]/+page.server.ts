@@ -1,3 +1,4 @@
+import { bestaetigungFehlt } from '#lib/server/auth/bestaetigung.ts';
 import { error, fail } from '@sveltejs/kit';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import {
@@ -60,6 +61,8 @@ export const actions: Actions = {
 	},
 	sperren: async ({ request, locals, params, getClientAddress }) => {
 		const p = requirePrincipal(locals);
+		const b = bestaetigungFehlt(locals);
+		if (b) return b;
 		const f = await request.formData();
 		return wrap(async () => {
 			await setOperatorActive(
@@ -74,6 +77,8 @@ export const actions: Actions = {
 	},
 	freigeben: async ({ request, locals, params, getClientAddress }) => {
 		const p = requirePrincipal(locals);
+		const b = bestaetigungFehlt(locals);
+		if (b) return b;
 		const f = await request.formData();
 		return wrap(async () => {
 			await setOperatorActive(
