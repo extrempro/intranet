@@ -4,10 +4,10 @@ Der Dienst `backup` in der `docker-compose.yml` sichert Datenbank und Dateien de
 
 ## Was gesichert wird
 
-| Teil | Wie | Schutz |
-|---|---|---|
-| Datenbank | `pg_dump` im custom format | mit [age](https://age-encryption.org) verschlüsselt (`db.dump.age`) |
-| Dateien (Anhänge, PDFs, Fotos) | Schnappschuss mit `rsync --link-dest` | schon einzeln verschlüsselt; Schlüssel liegen in der Datenbank |
+| Teil                           | Wie                                   | Schutz                                                              |
+| ------------------------------ | ------------------------------------- | ------------------------------------------------------------------- |
+| Datenbank                      | `pg_dump` im custom format            | mit [age](https://age-encryption.org) verschlüsselt (`db.dump.age`) |
+| Dateien (Anhänge, PDFs, Fotos) | Schnappschuss mit `rsync --link-dest` | schon einzeln verschlüsselt; Schlüssel liegen in der Datenbank      |
 
 Unveränderte Dateien belegen in weiteren Schnappschüssen keinen Platz (feste Verknüpfungen). Die Datenbank-Sicherung ist jeden Tag vollständig.
 
@@ -49,6 +49,15 @@ Der Test läuft vor dem Verschlüsseln, denn der private Schlüssel liegt nicht 
 docker compose cp backup:/backups/<Name>/db.dump.age .
 age -d -i intranet-sicherung.key db.dump.age | pg_restore --list | head
 ```
+
+## Prüfung im CI
+
+Bei jedem CI-Lauf startet `backup/ci-test.sh` Datenbank, Anwendung und Sicherung mit der echten `docker-compose.yml`. Das Skript legt eine Datei an und prüft dann:
+
+- die erste Sicherung samt Wiederherstellungstest,
+- dass die Anwendung den Zustand lesen darf, die Sicherungen selbst aber nicht,
+- dass unveränderte Dateien in der zweiten Sicherung keinen neuen Platz belegen,
+- dass Wiederherstellen ohne Schlüssel scheitert und mit Schlüssel Datenbank und Dateien zurückholt.
 
 ## Sicherung von Hand
 

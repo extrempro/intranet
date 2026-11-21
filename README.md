@@ -53,10 +53,10 @@ Der nächtliche Abgleich (02:30, `ENTRA_SYNC_TIME`) liest mit den **Anwendungsbe
 in Entra gelöschte oder deaktivierte Konten und Personen ohne Zugangsgruppe; würde er mehr als
 10 % sperren, hält er an. Zustand und „Jetzt abgleichen“: Verwaltung → System.
 
-Teams-Benachrichtigungen (dringende und angeheftete Beiträge) gehen über den Aktivitätsfeed von
-Microsoft Graph (`TeamsActivity.Send`). Das App-Paket für das Teams Admin Center gibt es unter
-Verwaltung → Benachrichtigungen. Der Tab der App (`/teams/tab`) ist die einzige Seite, die in Teams
-eingebettet werden darf; er zeigt nur einen Link ins Intranet.
+Das Intranet läuft auch als **App in Teams** (Anmeldung per SSO und On-Behalf-Of, eigenes
+partitioniertes Sitzungs-Cookie). Einbetten darf es nur Teams, Outlook und Microsoft 365.
+Benachrichtigungen gehen über den Aktivitätsfeed von Microsoft Graph (`TeamsActivity.Send`). Das
+App-Paket, sein Aussehen und die Einrichtung in Entra stehen unter Verwaltung → Benachrichtigungen.
 
 E-Mails (Einladungen, „Passwort vergessen“, Benachrichtigungen) gehen per **SMTP** raus
 (`SMTP_*` und `MAIL_FROM` in der `.env` oder unter Verwaltung → Benachrichtigungen). Der Server
@@ -64,6 +64,11 @@ braucht dafür ausgehend Zugriff auf den SMTP-Server.
 
 Sicherungen macht der Dienst `backup` (täglich, verschlüsselt, mit wöchentlichem
 Wiederherstellungstest). Einrichten und Wiederherstellen: [backup/README.md](backup/README.md).
+Die CI prüft Sicherung, Wiederherstellungstest und Wiederherstellen bei jedem Lauf mit der echten
+`docker-compose.yml` (`backup/ci-test.sh`).
+
+Logs: Docker behält je Container höchstens 3 Dateien à 10 MB (`x-logging` in der
+`docker-compose.yml`) und löscht die ältesten. Ansehen mit `docker compose logs app`.
 
 ## Aktualität der Pakete
 
