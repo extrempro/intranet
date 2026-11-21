@@ -16,6 +16,13 @@ Unter Aktuelles → Neuigkeiten → „Beitrag schreiben“. Als Absender ersche
 - **Ablauf** (optional): danach verschwindet der Beitrag.
 - **Anhänge**: PDF, Bilder und Office-Dateien ohne Makros, je höchstens 20 MB.
 
+## Für alle lesbar
+
+- Zwischenüberschriften mit **H2** und **H3** gliedern den Text, auch für Bildschirmleser.
+- Linktexte sagen, wohin es geht („Dienstplan Dezember“), nicht „hier klicken“.
+- Steht auf einem Bild etwas Wichtiges (Termin, Plan, Text), schreib es zusätzlich in den Beitrag.
+- PDFs möglichst barrierefrei erstellen (in Word: „Barrierefreiheit überprüfen“, beim Speichern als PDF „Dokumentstruktur-Tags“ an).
+
 ## Anheften
 
 Angeheftete Beiträge stehen oben in den Neuigkeiten. Wie lange und wie viele gleichzeitig, legt die Verwaltung in den Regeln fest (Standard: höchstens 14 Tage, einer je Absender).

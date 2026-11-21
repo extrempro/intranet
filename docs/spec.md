@@ -476,6 +476,7 @@ Weitere Regeln:
 - Statusmeldungen über Live-Regionen.
 - „Bewegung reduzieren“ wird beachtet.
 - PDFs: Hinweis, dass die Barrierefreiheit von der Quelle abhängt.
+- Prüfung und Stand: `docs/barrierefreiheit.md`.
 
 ---
 

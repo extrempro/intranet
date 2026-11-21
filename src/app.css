@@ -22,6 +22,8 @@
 	--err-bg: #fef3f2;
 	--err-bd: #d92d20;
 	--err-tx: #b42318;
+	/* Rote Flächen und Knöpfe mit weißer Schrift, in Hell und Dunkel gleich */
+	--rot: #b42318;
 	--ok-bg: #ecf6f1;
 	--warn-bg: #fffaeb;
 	--warn-bd: #dc6803;

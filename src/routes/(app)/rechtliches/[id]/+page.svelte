@@ -125,7 +125,7 @@
 	}
 	.kacheln {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
 		gap: 10px;
 		margin: 0;
 	}
@@ -167,7 +167,7 @@
 		border-radius: 6px;
 		border: 1px solid var(--bd);
 		background: var(--bg);
-		color: #b42318;
+		color: var(--err-tx);
 		font-size: 10px;
 		font-weight: 700;
 		display: flex;

@@ -141,7 +141,8 @@
 			{#if b.liste.length}
 				<details>
 					<summary>Vorhandene Sicherungen ({b.liste.length})</summary>
-					<div class="tabelle">
+					<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+					<div class="tabelle" tabindex="0" role="region" aria-label="Vorhandene Sicherungen">
 						<table>
 							<thead>
 								<tr>

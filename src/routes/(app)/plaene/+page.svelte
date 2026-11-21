@@ -251,8 +251,8 @@
 		color: var(--err-tx);
 	}
 	.knopf.rot {
-		background: #b42318;
-		border-color: #b42318;
+		background: var(--rot);
+		border-color: var(--rot);
 		color: #fff;
 	}
 	.knopf.klein {
@@ -285,7 +285,7 @@
 		border-radius: 6px;
 		border: 1px solid var(--bd);
 		background: var(--bg);
-		color: #b42318;
+		color: var(--err-tx);
 		font-size: 9px;
 		font-weight: 700;
 		display: flex;
@@ -314,7 +314,7 @@
 		gap: 8px;
 	}
 	.rot-schild {
-		background: #b42318;
+		background: var(--rot);
 		color: #fff;
 	}
 	.rund {

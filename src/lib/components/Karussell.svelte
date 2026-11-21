@@ -66,7 +66,9 @@
 				type="button"
 				class="pause"
 				onclick={() => (laeuft = !laeuft)}
-				aria-label={laeuft ? 'Automatisches Blättern anhalten' : 'Automatisch blättern'}
+				aria-label={laeuft
+					? 'Pause: automatisches Blättern anhalten'
+					: 'Abspielen: automatisch blättern'}
 			>
 				{#if laeuft}
 					<svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">

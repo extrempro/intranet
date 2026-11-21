@@ -10,6 +10,14 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.9.0 · 21.11.2026 · Barrierefreiheit
+
+- Fehlerseiten erklären auf Deutsch, was los ist, und führen zurück zur Startseite.
+- In der dunklen Darstellung sind rote Hinweise und Knöpfe jetzt gut lesbar.
+- Auf kleinen Bildschirmen und bei starker Vergrößerung steht nichts mehr seitlich über.
+- Links und Knöpfe sind leichter zu treffen, PDF-Vorschau und lange Tabellen lassen sich per Tastatur scrollen.
+- Neue Tipps im Handbuch, wie Beiträge für alle lesbar werden.
+
 ## 0.8.1 · 21.11.2026 · Aufgeräumt
 
 - Der Hinweis zum E-Mail-Versand bei den Betreiber-Konten zeigt jetzt, wo er sich einrichten lässt.

@@ -284,6 +284,6 @@
 		gap: 8px;
 	}
 	.rotschrift {
-		color: #b42318;
+		color: var(--err-tx);
 	}
 </style>

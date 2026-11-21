@@ -502,7 +502,7 @@
 	}
 	.raster {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+		grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr));
 		gap: 16px;
 		align-items: start;
 	}
@@ -603,11 +603,11 @@
 		font-size: 17px;
 	}
 	.rot {
-		background: #b42318;
-		border-color: #b42318;
+		background: var(--rot);
+		border-color: var(--rot);
 		color: #fff;
 	}
 	.rotschrift {
-		color: #b42318;
+		color: var(--err-tx);
 	}
 </style>
