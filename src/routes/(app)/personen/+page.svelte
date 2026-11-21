@@ -3,7 +3,17 @@
 	import Avatar from '#lib/components/Avatar.svelte';
 	import { livesuche } from '#lib/livesuche.ts';
 
+	import Icon from '#lib/components/Icon.svelte';
+
 	let { data } = $props();
+	// Startansicht (Entwurf): erst suchen oder Abteilung wählen, Liste auf Wunsch
+	const start = $derived(!data.q && !data.unitId && !data.alle);
+	const LEUTE =
+		'M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2M16 3.13a4 4 0 0 1 0 7.75M21 21v-2a4 4 0 0 0 -3 -3.85';
+	const einheitHref = (id: string | null) =>
+		`?${[id ? `einheit=${id}` : '', data.q ? `q=${encodeURIComponent(data.q)}` : '']
+			.filter(Boolean)
+			.join('&')}`;
 </script>
 
 <svelte:head><title>Personen · Organisation · Intranet</title></svelte:head>
@@ -33,7 +43,8 @@
 				autocomplete="off"
 			/>
 		</label>
-		{#if data.einheiten.length > 1}
+		{#if data.unitId}<input type="hidden" name="einheit" value={data.unitId} />{/if}
+		{#if data.einheiten.length > 8}
 			<label>
 				<span class="sr-only">Abteilung</span>
 				<select
@@ -50,7 +61,38 @@
 		{/if}
 	</form>
 
-	{#if data.personen.length === 0}
+	{#if data.einheiten.length > 1 && data.einheiten.length <= 8}
+		<nav class="pillen" aria-label="Abteilung">
+			<!-- eslint-disable svelte/no-navigation-without-resolve -- nur Suchparameter der eigenen Seite -->
+			<a class="pille" href={einheitHref(null)} aria-current={!data.unitId ? 'true' : undefined}>
+				Alle Abteilungen
+			</a>
+			{#each data.einheiten as u (u.id)}
+				<a
+					class="pille"
+					href={einheitHref(u.id)}
+					aria-current={data.unitId === u.id ? 'true' : undefined}
+				>
+					{u.name}
+				</a>
+			{/each}
+			<!-- eslint-enable svelte/no-navigation-without-resolve -->
+		</nav>
+	{/if}
+
+	{#if start && data.personen.length}
+		<div class="karte startkarte">
+			<span class="symbol" aria-hidden="true"><Icon d={LEUTE} size={26} stroke={1.8} /></span>
+			<h2>Wen suchst du?</h2>
+			<p class="hinweis">
+				Gib einen Namen, eine Position oder eine Abteilung ein, oder wähle oben eine Abteilung.
+			</p>
+			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- nur Suchparameter der eigenen Seite -->
+			<a class="knopf zweit" href="?alle=1">
+				Alle Personen anzeigen{data.mehr ? '' : ` (${data.personen.length})`}
+			</a>
+		</div>
+	{:else if data.personen.length === 0}
 		<p class="karte hinweis" role="status">
 			{data.q || data.unitId ? 'Niemand gefunden.' : 'Noch keine Personen.'}
 		</p>
@@ -92,6 +134,37 @@
 </div>
 
 <style>
+	.pillen {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+	.startkarte {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 10px;
+		padding: 28px 20px;
+		text-align: center;
+	}
+	.startkarte h2 {
+		margin: 0;
+		font-size: 18px;
+	}
+	.startkarte p {
+		margin: 0;
+		max-width: 28rem;
+	}
+	.symbol {
+		width: 52px;
+		height: 52px;
+		border-radius: 14px;
+		background: var(--tint);
+		color: var(--ac);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
 	h1 {
 		margin: 0;
 	}

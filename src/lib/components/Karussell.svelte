@@ -8,7 +8,19 @@
 	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
 
-	let { bilder, titel }: { bilder: { id: string }[]; titel: string } = $props();
+	let {
+		bilder,
+		titel,
+		kompakt = false,
+		angehalten = false
+	}: {
+		bilder: { id: string }[];
+		titel: string;
+		/** Kleiner, ohne eigenen Pause-Knopf (Karten in Listen) */
+		kompakt?: boolean;
+		/** Von außen angehalten (z. B. „Diashows anhalten“ über der Liste) */
+		angehalten?: boolean;
+	} = $props();
 
 	const SEKUNDEN = 6;
 	let nr = $state(0);
@@ -23,7 +35,7 @@
 	});
 
 	$effect(() => {
-		if (!laeuft || darueber || fokus || !mehrere) return;
+		if (!laeuft || angehalten || darueber || fokus || !mehrere) return;
 		const t = setInterval(() => (nr = (nr + 1) % bilder.length), SEKUNDEN * 1000);
 		return () => clearInterval(t);
 	});
@@ -36,6 +48,7 @@
 
 <section
 	class="karussell"
+	class:kompakt
 	aria-roledescription="Karussell"
 	aria-label="Fotos zu „{titel}“"
 	onmouseenter={() => (darueber = true)}
@@ -48,7 +61,7 @@
 			src={resolve('/(app)/dateien/[id]', { id: bilder[nr].id })}
 			alt="Foto {nr + 1} von {bilder.length} zu „{titel}“"
 		/>
-		{#if mehrere}
+		{#if mehrere && !kompakt}
 			<button
 				type="button"
 				class="pause"
@@ -68,6 +81,8 @@
 					Abspielen
 				{/if}
 			</button>
+		{/if}
+		{#if mehrere}
 			<span class="zaehler" aria-live={laeuft ? 'off' : 'polite'}>{nr + 1} / {bilder.length}</span>
 			<button
 				type="button"
@@ -116,6 +131,14 @@
 		width: 100%;
 		height: min(60vh, 480px);
 		object-fit: contain;
+	}
+	.kompakt img {
+		height: 190px;
+		object-fit: cover;
+	}
+	.kompakt .pfeil {
+		width: 36px;
+		height: 36px;
 	}
 	.pause,
 	.zaehler {
