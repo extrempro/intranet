@@ -497,6 +497,8 @@ main input[type='search'] {
 
 .stapel {
 	display: grid;
+	/* Breite Inhalte (z. B. Tabellen) scrollen statt die Seite zu verbreitern */
+	grid-template-columns: minmax(0, 1fr);
 	gap: 14px;
 }
 
@@ -694,4 +696,70 @@ input[type='checkbox'].schalter:focus-visible {
 		float: none;
 		margin: 12px 0;
 	}
+}
+
+/* Tabellen im Text: am Handy waagerecht scrollbar */
+:where(.text, .inhalt) table {
+	display: block;
+	max-width: 100%;
+	overflow-x: auto;
+	margin: 12px 0;
+	border-collapse: collapse;
+}
+:where(.text, .inhalt) :is(th, td) {
+	min-width: 6em;
+	padding: 6px 10px;
+	border: 1px solid var(--bd);
+	text-align: left;
+	vertical-align: top;
+}
+:where(.text, .inhalt) th {
+	background: var(--bg);
+	font-weight: 700;
+}
+:where(.text, .inhalt) :is(th, td) > p {
+	margin: 0;
+	min-height: 1.5em;
+}
+.inhalt .selectedCell {
+	background: var(--tint);
+}
+
+/* Infokästen: Info, Hinweis, Warnung (textbausteine.ts) */
+:where(.text, .inhalt) .kasten {
+	clear: both;
+	margin: 12px 0;
+	padding: 10px 14px;
+	border: 1px solid var(--ac);
+	border-left-width: 5px;
+	border-radius: 10px;
+	background: var(--ok-bg);
+}
+:where(.text, .inhalt) .kasten::before {
+	display: block;
+	margin-bottom: 4px;
+	font-weight: 700;
+	content: 'ⓘ Info';
+	content: 'ⓘ Info' / 'Info:';
+}
+:where(.text, .inhalt) .kasten-hinweis {
+	border-color: var(--warn-bd);
+	background: var(--warn-bg);
+}
+:where(.text, .inhalt) .kasten-hinweis::before {
+	color: var(--warn-tx);
+	content: '💡 Hinweis';
+	content: '💡 Hinweis' / 'Hinweis:';
+}
+:where(.text, .inhalt) .kasten-warnung {
+	border-color: var(--err-bd);
+	background: var(--err-bg);
+}
+:where(.text, .inhalt) .kasten-warnung::before {
+	color: var(--err-tx);
+	content: '⚠ Warnung';
+	content: '⚠ Warnung' / 'Warnung:';
+}
+:where(.text, .inhalt) .kasten > :last-child {
+	margin-bottom: 0;
 }

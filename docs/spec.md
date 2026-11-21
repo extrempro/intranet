@@ -225,7 +225,7 @@ Jede Rückfrage vor einer Aktion („… löschen?“, „Konto sperren?“) ers
 - **Freigabe** (geplant veröffentlichen) und **Ablaufdatum**. Geplante Beiträge sehen die Schreibenden der Einheit und die Redaktion (Filter „Geplant“).
 - **Zielgruppe („Wer sieht das?“)**: Nicht-zentrale Einheiten veröffentlichen nur für den eigenen Mandanten; zentrale Absender wählen alle oder einzelne Mandanten. Standortbezogene Beiträge sehen nur Personen mit diesem Standort.
 - Veröffentlichung **ohne Redaktionsfreigabe**.
-- **WYSIWYG-Editor**, **Dateianhänge** (verschlüsselt).
+- **WYSIWYG-Editor** (fett, kursiv, unterstrichen, H2/H3, Listen, Zitat, Link, einfache Tabellen mit Kopfzeile ohne verbundene Zellen, Infokasten Info/Hinweis/Warnung), **Dateianhänge** (verschlüsselt). Tabellen und Infokästen gibt es wie Bilder im Text auch bei Hub-Beiträgen, Hinter den Kulissen und FAQs.
 - **Bilder im Text** (auch Hub-Beiträge, Hinter den Kulissen, FAQs): JPEG, PNG, WebP; im Browser auf höchstens 1600 px verkleinert, animierte WebP unverändert bis 5 MB. Größe klein/mittel/volle Breite, Ausrichtung links/rechts (am Handy immer volle Breite). Bildbeschreibung Pflicht. Höchstens 20 Bilder je Beitrag. Animationen starten angehalten mit Knopf „Abspielen“ (WCAG 2.2.2). Abrufbar nur für Personen, die den Beitrag sehen dürfen.
 - **Anheften** (Pflichtfeld „Angeheftet bis“):
   - Höchstdauer 14 Tage

@@ -66,7 +66,7 @@ export async function textMitBildern(
 			: [];
 		erlaubt = ids.filter((x) => vorhanden.includes(x) || bilder.includes(x));
 	}
-	const sauber = cleanHtml(html, new Set(erlaubt));
+	const sauber = cleanHtml(html, { bilder: new Set(erlaubt), erweitert: true });
 	const bilder = bildIdsImText(sauber);
 	if (bilder.length > MAX_BILDER_IM_TEXT)
 		return { html: sauber, bilder, fehler: `Höchstens ${MAX_BILDER_IM_TEXT} Bilder im Text.` };
