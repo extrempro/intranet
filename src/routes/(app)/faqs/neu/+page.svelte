@@ -2,6 +2,9 @@
 	import { resolve } from '$app/paths';
 	import FaqFormular from '#lib/components/FaqFormular.svelte';
 
+	import EntwurfHinweis from '#lib/components/EntwurfHinweis.svelte';
+	import EntwurfSpeichern from '#lib/components/EntwurfSpeichern.svelte';
+
 	let { data, form } = $props();
 </script>
 
@@ -10,7 +13,8 @@
 <div class="stapel schmal">
 	<a class="zurueck" href={resolve('/(app)/faqs')}>← FAQs</a>
 	<h1>Neue FAQ</h1>
-	{#key form}
+	<EntwurfHinweis art="faq" entwuerfe={data.entwuerfe} />
+	{#key form ?? data.entwurf?.id}
 		<form method="POST" class="felder karte">
 			<FaqFormular
 				einheiten={data.einheiten}
@@ -21,6 +25,11 @@
 				<button class="knopf" type="submit">Speichern</button>
 				<a class="knopf zweit" href={resolve('/(app)/faqs')}>Abbrechen</a>
 			</div>
+			<EntwurfSpeichern
+				art="faq"
+				id={form?.entwurf ?? data.entwurf?.id ?? null}
+				gespeichert={data.entwurf?.gespeichert ?? null}
+			/>
 		</form>
 	{/key}
 </div>

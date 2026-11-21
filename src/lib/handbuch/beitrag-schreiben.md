@@ -16,6 +16,13 @@ Unter Aktuelles → Neuigkeiten → „Beitrag schreiben“. Als Absender ersche
 - **Ablauf** (optional): danach verschwindet der Beitrag.
 - **Anhänge**: PDF, Bilder und Office-Dateien ohne Makros, je höchstens 20 MB.
 
+## Entwürfe und nichts verlieren
+
+- Beim Schreiben speichert das Intranet deinen neuen Beitrag nach ein paar Sekunden automatisch als **Entwurf**. Mit „Als Entwurf speichern“ geht es sofort. Unter dem Knopf steht, wann zuletzt gespeichert wurde.
+- Entwürfe siehst nur du. Du findest sie oben auf der Seite „Beitrag erstellen“ und im Kontomenü unter **Meine Entwürfe**, auch am Handy oder in Teams.
+- Nach dem Veröffentlichen verschwindet der Entwurf. Entwürfe, die du 90 Tage nicht geändert hast, löscht das Intranet.
+- Willst du eine Seite mit ungespeicherten Eingaben verlassen, fragt das Intranet vorher nach. Das gilt in allen Formularen, auch beim Bearbeiten.
+
 ## Bilder im Text
 
 Mit 🖼 in der Werkzeugleiste fügst du ein Bild direkt in den Text ein. Du kannst es auch hineinziehen oder einfügen (Strg+V). Das gilt auch für Hub-Beiträge, „Hinter den Kulissen“ und FAQs.

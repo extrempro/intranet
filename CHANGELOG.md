@@ -10,6 +10,12 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.17.0 · 21.11.2026 · Entwürfe und Schutz vor Datenverlust
+
+- Neue Neuigkeiten, Hub-Beiträge, Beiträge „Hinter den Kulissen“ und FAQs werden beim Schreiben automatisch als Entwurf gespeichert. Mit „Als Entwurf speichern“ geht es auch sofort.
+- Entwürfe siehst nur du. Du findest sie unter „Meine Entwürfe“ im Kontomenü und oben auf der Seite zum Erstellen, auf jedem Gerät und in Teams.
+- Verlässt du eine Seite mit ungespeicherten Eingaben, fragt das Intranet vorher nach, ob du wirklich gehen willst.
+
 ## 0.16.0 · 21.11.2026 · Bilder ziehen und klarere Symbole
 
 - Bilder im Text ziehst du jetzt am Anfasser an der Ecke größer oder kleiner. Alternativ geht es in der Leiste mit „−“ und „+“ in 5-%-Schritten.

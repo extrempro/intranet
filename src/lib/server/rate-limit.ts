@@ -48,6 +48,8 @@ export const uploadLimit = limiter(60, 60 * 60_000);
 export const messageLimit = limiter(30, 10 * 60_000);
 /** Rückmeldungen je Person */
 export const feedbackLimit = limiter(10, 60 * 60_000);
+/** Entwürfe speichern (automatisch alle paar Sekunden beim Schreiben) */
+export const draftLimit = limiter(600, 60 * 60_000);
 
 export function wait(seconds: number): string {
 	return seconds > 90 ? `${Math.ceil(seconds / 60)} Minuten` : `${seconds} Sekunden`;

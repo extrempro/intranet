@@ -6,6 +6,7 @@ import { and, isNotNull, lt, or, sql } from 'drizzle-orm';
 import { deleteExpiredSessions } from './auth/session.ts';
 import { deleteOldResets } from './auth/reset.ts';
 import { deleteOrphans } from './files/store.ts';
+import { alteEntwuerfeLoeschen } from './entwuerfe.ts';
 import { boardRetention } from './board.ts';
 import { calendarRetention } from './calendar.ts';
 import { hubRetention } from './hubs.ts';
@@ -25,6 +26,7 @@ import { checkBackups } from './system.ts';
 export async function cleanup(): Promise<void> {
 	await deleteExpiredSessions();
 	await deleteOldResets();
+	await alteEntwuerfeLoeschen();
 	await deleteOrphans();
 	await deleteForgottenPlans();
 	await deleteExpiredCanteenData();

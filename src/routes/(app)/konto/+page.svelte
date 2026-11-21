@@ -211,6 +211,9 @@
 					Erledigt. Die Einführungen erscheinen wieder.
 				</p>{/if}
 			<a class="knopf zweit" href={resolve('/(app)/rueckmeldung')}>Meine Meldungen</a>
+			{#if data.darfEntwuerfe}
+				<a class="knopf zweit" href={resolve('/(app)/entwuerfe')}>Meine Entwürfe</a>
+			{/if}
 			{#if data.darfVerwaltung}
 				<a class="knopf zweit" href={resolve('/(app)/verwaltung')}>Verwaltung</a>
 			{/if}

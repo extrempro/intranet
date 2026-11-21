@@ -11,6 +11,7 @@ import {
 	markVersionSeen
 } from '#lib/server/preferences.ts';
 import { countNewNews } from '#lib/server/news.ts';
+import { darfEntwurf } from '#lib/server/entwuerfe.ts';
 import { takeFlash } from '#lib/server/flash.ts';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import { unreadConversations } from '#lib/server/messages.ts';
@@ -52,6 +53,7 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		akzent: accentStyle(branding),
 		theme: locals.theme,
 		darfVerwaltung: canSeeAdministration(principal),
+		darfEntwuerfe: darfEntwurf(principal),
 		// Redaktion: ganze Arbeitsliste; Moderation: nur Abschnitt Schwarzes Brett (Kap. 10)
 		darfRedaktion: principal.roles.some(
 			(r) => r.role === 'redaktion' || r.role === 'moderation_schwarzes_brett'
