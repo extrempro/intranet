@@ -5,6 +5,8 @@
  * Intranet-App (/teams/app): Anmeldung per SSO, dann direkt der Beitrag.
  */
 
+import { safeTarget } from './ziel.ts';
+
 /** entityId des Tabs im Manifest */
 export const TEAMS_TAB_ENTITY = 'intranet';
 /** entityId des vorübergehenden Test-Tabs (SSO, Cookies, Sprung aus Benachrichtigung) */
@@ -12,9 +14,7 @@ export const TEAMS_TEST_ENTITY = 'teamstest';
 
 /** Nur eigene Pfade als Ziel (kein offener Weiterleiter) */
 export function safeTabTarget(value: string | null | undefined): string {
-	if (!value || !value.startsWith('/') || value.startsWith('//') || value.startsWith('/\\'))
-		return '/';
-	return value.slice(0, 300);
+	return safeTarget(value, 300);
 }
 
 /** Deep Link auf den Tab der App; subEntityId trägt den Pfad im Intranet */

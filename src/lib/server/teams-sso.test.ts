@@ -6,6 +6,7 @@ const TID = '11111111-1111-1111-1111-111111111111';
 const CID = '22222222-2222-2222-2222-222222222222';
 const ORIGIN = 'https://intranet.example';
 const entra = { tenantId: TID, clientId: CID };
+const TEAMS_DESKTOP = '1fec8e78-bce4-4aaf-ab1b-5451cc387264';
 
 let keys: ReturnType<typeof createLocalJWKSet>;
 let privat: CryptoKey;
@@ -18,7 +19,14 @@ beforeAll(async () => {
 });
 
 function token(claims: Record<string, unknown>, opt: { iss?: string; aud?: string } = {}) {
-	return new SignJWT({ tid: TID, oid: 'o-1', scp: 'access_as_user', name: 'Ada', ...claims })
+	return new SignJWT({
+		tid: TID,
+		oid: 'o-1',
+		scp: 'access_as_user',
+		name: 'Ada',
+		appid: TEAMS_DESKTOP,
+		...claims
+	})
 		.setProtectedHeader({ alg: 'RS256', kid: 'k1' })
 		.setIssuer(opt.iss ?? `https://sts.windows.net/${TID}/`)
 		.setAudience(opt.aud ?? teamsResource(ORIGIN, CID))
@@ -40,8 +48,22 @@ describe('Teams-SSO', () => {
 	});
 
 	it('nimmt ein gültiges v2-Token an (Empfänger = Client-ID)', async () => {
-		const t = await token({}, { iss: `https://login.microsoftonline.com/${TID}/v2.0`, aud: CID });
+		const t = await token(
+			{ appid: undefined, azp: '5e3ce6c0-2b1f-4285-8d4b-75ee78787346' },
+			{ iss: `https://login.microsoftonline.com/${TID}/v2.0`, aud: CID }
+		);
 		await expect(verifyTeamsToken(t, ORIGIN, { entra, keys })).resolves.toBeTruthy();
+	});
+
+	it('lehnt Tokens ab, die kein Teams-, Outlook- oder M365-Client angefordert hat', async () => {
+		const fremderClient = await token({ appid: '33333333-3333-3333-3333-333333333333' });
+		await expect(verifyTeamsToken(fremderClient, ORIGIN, { entra, keys })).rejects.toThrow(
+			/nicht von Teams/
+		);
+		const ohneClient = await token({ appid: undefined });
+		await expect(verifyTeamsToken(ohneClient, ORIGIN, { entra, keys })).rejects.toThrow(
+			/nicht von Teams/
+		);
 	});
 
 	it('lehnt fremde App, fremden Mandanten und fehlenden Scope ab', async () => {
