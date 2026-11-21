@@ -6,7 +6,6 @@
  * - Tenant-ID, Client-ID und Zugangsgruppe in der Einstellung „entra“
  *   (später in der Verwaltung pflegbar); bis dahin aus ENTRA_TENANT_ID,
  *   ENTRA_CLIENT_ID und ENTRA_ACCESS_GROUP_ID.
- * - ENTRA_ADMIN_GROUP_ID: Mitglieder werden System-Admin (Erstbefüllung).
  *
  * Gruppen kommen per Microsoft Graph (transitiveMemberOf, delegiert),
  * damit verschachtelte Gruppen zählen und keine Obergrenze im Token greift.
@@ -32,7 +31,6 @@ export interface EntraConfig {
 	clientId: string;
 	clientSecret: string;
 	accessGroupId: string | null;
-	adminGroupId: string | null;
 }
 
 interface StoredEntraSettings {
@@ -59,8 +57,7 @@ export async function getEntraConfig(): Promise<EntraConfig | null> {
 		tenantId,
 		clientId,
 		clientSecret,
-		accessGroupId: guidOrNull(stored.accessGroupId ?? process.env.ENTRA_ACCESS_GROUP_ID),
-		adminGroupId: guidOrNull(process.env.ENTRA_ADMIN_GROUP_ID)
+		accessGroupId: guidOrNull(stored.accessGroupId ?? process.env.ENTRA_ACCESS_GROUP_ID)
 	};
 }
 
@@ -240,7 +237,6 @@ export async function entraSettingsView() {
 	>;
 	return {
 		felder,
-		adminGroupId: guidOrNull(process.env.ENTRA_ADMIN_GROUP_ID),
 		secretGesetzt: Boolean(process.env.ENTRA_CLIENT_SECRET?.trim())
 	};
 }
@@ -340,17 +336,13 @@ export async function checkEntraConnection(): Promise<Pruefpunkt[]> {
 				: `fehlt (${p.wofuer}) – als Anwendungsberechtigung hinzufügen und Administratorzustimmung erteilen`
 		});
 	}
-	for (const [name, id] of [
-		['Zugangsgruppe', entra.accessGroupId],
-		['Admin-Gruppe', entra.adminGroupId]
-	] as const) {
+	for (const [name, id] of [['Zugangsgruppe', entra.accessGroupId]] as const) {
 		if (!id) {
-			if (name === 'Zugangsgruppe')
-				punkte.push({
-					name,
-					stufe: 'fehler',
-					text: 'Nicht festgelegt: Niemand kann sich anmelden.'
-				});
+			punkte.push({
+				name,
+				stufe: 'fehler',
+				text: 'Nicht festgelegt: Niemand kann sich mit Microsoft anmelden.'
+			});
 			continue;
 		}
 		try {

@@ -88,12 +88,6 @@
 					</dd>
 				</div>
 				<div>
-					<dt>Admin-Gruppe</dt>
-					<dd class="id">
-						{data.entra.adminGroupId ?? 'nicht gesetzt'} <span class="hinweis">(.env)</span>
-					</dd>
-				</div>
-				<div>
 					<dt>Umleitungs-URI</dt>
 					<dd class="id">{data.umleitung}</dd>
 				</div>

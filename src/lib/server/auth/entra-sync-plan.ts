@@ -35,7 +35,6 @@ export type Lookup = { user: GraphUser; groupIds: string[] } | null;
 
 export interface SyncContext {
 	accessGroupId: string | null;
-	adminGroupId: string | null;
 	domains: Record<string, string>;
 	mappings: readonly GroupRoleMapping[];
 }
@@ -79,7 +78,6 @@ export function planPerson(person: SyncPerson, lookup: Lookup, ctx: SyncContext)
 		groupIds: lookup.groupIds,
 		accountEnabled: lookup.user.accountEnabled !== false,
 		accessGroupId: ctx.accessGroupId,
-		adminGroupId: ctx.adminGroupId,
 		domains: ctx.domains,
 		mappings: ctx.mappings
 	});

@@ -18,6 +18,8 @@ COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/package.json ./package.json
 # Migrationen, werden beim Start eingespielt (src/hooks.server.ts)
 COPY --from=build --chown=node:node /app/drizzle ./drizzle
+# Notfallzugang: docker compose exec app node scripts/notfall-admin.mjs
+COPY --from=build --chown=node:node /app/scripts/notfall-admin.mjs ./scripts/notfall-admin.mjs
 # Ablage für verschlüsselte Dateien (Volume in docker-compose.yml)
 RUN mkdir -p /data/files && chown node:node /data/files && chmod 700 /data/files
 USER node

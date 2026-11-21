@@ -33,7 +33,6 @@ export async function finishEntraLogin(oid: string, graphToken: string): Promise
 		groupIds,
 		accountEnabled: me.accountEnabled !== false,
 		accessGroupId: entra.accessGroupId,
-		adminGroupId: entra.adminGroupId,
 		domains: context.domains,
 		mappings: context.mappings
 	});
