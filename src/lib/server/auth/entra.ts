@@ -160,6 +160,28 @@ export async function graphAppToken(mindestens = 60_000): Promise<string> {
 	return res.access_token;
 }
 
+/**
+ * Teams-SSO (On-Behalf-Of): Das Token, das Teams der App gibt, gegen ein
+ * Graph-Token der Person tauschen. Damit laufen Profil- und Gruppenabfrage
+ * wie bei der normalen Anmeldung (delegierte Rechte User.Read und
+ * GroupMember.Read.All, Administratorzustimmung nötig).
+ */
+export async function oboGraphToken(assertion: string): Promise<string> {
+	const entra = await getEntraConfig();
+	if (!entra) throw new Error('Anmeldung mit Microsoft ist nicht eingerichtet');
+	const config = await getOidcConfiguration(entra);
+	const res = await oidc.genericGrantRequest(
+		config,
+		'urn:ietf:params:oauth:grant-type:jwt-bearer',
+		{
+			assertion,
+			requested_token_use: 'on_behalf_of',
+			scope: 'https://graph.microsoft.com/.default'
+		}
+	);
+	return res.access_token;
+}
+
 export class GraphError extends Error {
 	constructor(
 		readonly status: number,

@@ -246,7 +246,7 @@
 			Teams
 			<Info
 				thema="Teams"
-				text="Dringende und angeheftete Beiträge erscheinen in Teams unter „Aktivität“, mit Titel und Absender. Ein Klick öffnet einen kleinen Tab mit dem Link ins Intranet. Nur für Personen mit Microsoft-Konto, bei denen die Teams-App installiert ist; Ruhezeiten gelten wie bei Push."
+				text="Das Intranet läuft als App in Teams, angemeldet wird über das Microsoft-Konto. Benachrichtigungen erscheinen in Teams unter „Aktivität“, für jedes Thema wählbar (voreingestellt wie Push). Ein Klick öffnet den Beitrag in der App. Nur für Personen mit Microsoft-Konto, bei denen die App installiert ist; Ruhezeiten gelten wie bei Push."
 			/>
 		</h2>
 		{#if data.teams}
@@ -277,7 +277,7 @@
 					</p>
 				{/if}
 				<details>
-					<summary>Einrichtung in drei Schritten</summary>
+					<summary>Einrichtung</summary>
 					<ol class="schritte">
 						<li>
 							In der App-Registrierung die <strong>
@@ -285,6 +285,19 @@
 							</strong>
 							hinzufügen und die Administratorzustimmung erteilen. Prüfen unter Verwaltung → Anmeldung
 							→ „Verbindung prüfen“.
+						</li>
+						<li>
+							Unter <strong>Expose an API</strong> die Application ID URI setzen:
+							<code>{t.ssoResource ?? 'api://<Host>/<Client-ID>'}</code>. Dort den Scope
+							<code>access_as_user</code> anlegen (Admins und Benutzer) und unter „Authorized client
+							applications“ beide Teams-Clients mit diesem Scope hinzufügen:
+							<code>1fec8e78-bce4-4aaf-ab1b-5451cc387264</code> (Desktop und Handy) und
+							<code>5e3ce6c0-2b1f-4285-8d4b-75ee78787346</code> (Browser).
+						</li>
+						<li>
+							Für die delegierten Rechte <strong>User.Read</strong> und
+							<strong>GroupMember.Read.All</strong> (die hat die normale Anmeldung schon) die Administratorzustimmung
+							erteilen. Damit meldet die App die Leute in Teams ohne Rückfrage an.
 						</li>
 						<li>
 							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- Download, keine Seite -->
@@ -330,27 +343,11 @@
 						Microsoft-Konto, Cookies und der Sprung aus einer Benachrichtigung in Teams klappen. Er
 						zeigt keine Inhalte und legt keine Sitzung an.
 					</p>
-					<ol class="schritte">
-						<li>
-							In der App-Registrierung unter <strong>Expose an API</strong> die Application ID URI
-							setzen:
-							<code>{t.ssoResource ?? 'api://<Host>/<Client-ID>'}</code>
-						</li>
-						<li>Dort einen Scope <code>access_as_user</code> anlegen (Admins und Benutzer).</li>
-						<li>
-							Unter „Authorized client applications“ beide Teams-Clients mit diesem Scope
-							hinzufügen: <code>1fec8e78-bce4-4aaf-ab1b-5451cc387264</code> (Desktop und Handy) und
-							<code>5e3ce6c0-2b1f-4285-8d4b-75ee78787346</code> (Browser).
-						</li>
-						<li>
-							Neue Version erzeugen, Paket herunterladen und die App im Teams Admin Center
-							aktualisieren.
-						</li>
-						<li>
-							In Teams die App „Intranet“ öffnen, Reiter „Test“: auf dem PC, im Browser und auf dem
-							Handy. Mit „Ergebnis kopieren“ kannst du das Ergebnis weitergeben.
-						</li>
-					</ol>
+					<p class="hinweis">
+						Voraussetzung ist „Expose an API“ wie oben unter „Einrichtung“. Öffne in Teams die App
+						„Intranet“, Reiter „Test“: auf dem PC, im Browser und auf dem Handy. Mit „Ergebnis
+						kopieren“ kannst du das Ergebnis weitergeben.
+					</p>
 					<form method="POST" action="?/teamsTest" use:enhance>
 						<input type="hidden" name="ziel" value="test" />
 						<button class="knopf zweit" type="submit" disabled={!t.microsoftKonto}>

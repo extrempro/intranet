@@ -217,8 +217,8 @@ export async function teamsAppPackage(origin: string): Promise<{ name: string; d
 		},
 		name: { short: 'Intranet', full: 'Intranet' },
 		description: {
-			short: 'Meldungen aus dem Intranet',
-			full: 'Dringende und angeheftete Beiträge aus dem Intranet im Teams-Aktivitätsfeed. Ein Klick öffnet den Beitrag im Intranet.'
+			short: 'Das Intranet in Teams',
+			full: 'Das Intranet direkt in Teams, mit Anmeldung über dein Microsoft-Konto. Benachrichtigungen erscheinen unter „Aktivität“; ein Klick öffnet den Beitrag in der App.'
 		},
 		icons: { color: 'color.png', outline: 'outline.png' },
 		accentColor: '#0F6E56',
@@ -226,7 +226,7 @@ export async function teamsAppPackage(origin: string): Promise<{ name: string; d
 			{
 				entityId: TEAMS_TAB_ENTITY,
 				name: 'Intranet',
-				contentUrl: `${origin}/teams/tab?ziel={subEntityId}`,
+				contentUrl: `${origin}/teams/app?ziel={subEntityId}`,
 				websiteUrl: origin,
 				scopes: ['personal']
 			},

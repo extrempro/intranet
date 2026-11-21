@@ -9,6 +9,7 @@
 		mandant,
 		darfVerwaltung,
 		darfRedaktion = false,
+		links = false,
 		datenschutz = null,
 		impressum = null
 	}: {
@@ -18,6 +19,8 @@
 		mandant: string;
 		darfVerwaltung: boolean;
 		darfRedaktion?: boolean;
+		/** Menü nach rechts aufklappen (Knopf am linken Rand, z. B. in Teams) */
+		links?: boolean;
 		datenschutz?: string | null;
 		impressum?: string | null;
 	} = $props();
@@ -60,7 +63,14 @@
 	</button>
 
 	{#if offen}
-		<div bind:this={menue} id="kontomenue" class="menue" role="region" aria-label="Kontomenü">
+		<div
+			bind:this={menue}
+			id="kontomenue"
+			class="menue"
+			class:links
+			role="region"
+			aria-label="Kontomenü"
+		>
 			<div class="kopf">
 				<div class="avatar gross" aria-hidden="true">
 					{#if foto}<img src={foto} alt="" />{:else}{kuerzel}{/if}
@@ -136,6 +146,10 @@
 	.avatar.gross {
 		flex: none;
 		cursor: default;
+	}
+	.menue.links {
+		right: auto;
+		left: 0;
 	}
 	.menue {
 		position: absolute;

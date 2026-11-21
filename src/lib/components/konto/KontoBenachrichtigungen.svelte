@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import { hierBleiben } from '#lib/formular.ts';
 	/**
 	 * Benachrichtigungen je Thema (Kap. 11) als Schalter-Pillen wie im Entwurf,
@@ -57,7 +58,15 @@
 				text="Push zeigt Benachrichtigungen auch an, wenn das Intranet geschlossen ist. Du schaltest Push je Gerät ein, also zum Beispiel am Handy an und am Arbeitsplatz aus. Welche Themen als Push kommen, stellst du unten ein."
 			/>
 		</h3>
-		<PushGeraet vapidKey={daten.vapidKey} />
+		{#if page.data.inTeams}
+			<p class="hinweis">
+				In der Teams-App gibt es kein Push. Teams zeigt die Meldungen unter „Aktivität“, wenn die
+				Spalte „Teams“ unten an ist. Push für Handy oder Browser schaltest du dort ein, wo du das
+				Intranet außerhalb von Teams öffnest.
+			</p>
+		{:else}
+			<PushGeraet vapidKey={daten.vapidKey} />
+		{/if}
 		{#if daten.geraete.length}
 			<details>
 				<summary>Geräte mit Push ({daten.geraete.length})</summary>
@@ -121,32 +130,29 @@
 								</label>
 							{/each}
 							{#if daten.teams}
-								{#if t.teams !== undefined}
-									<label class="umschalter">
-										<input
-											class="sr-only"
-											type="checkbox"
-											name="{t.key}_teams"
-											checked={e.topics[t.key].teams}
-										/>
-										<span class="an-symbol" aria-hidden="true">
-											<Icon d={HAKEN} size={13} stroke={2.4} />
-										</span>
-										Teams
-									</label>
-								{:else}
-									<span class="umschalter leer" title="Für dieses Thema nicht verfügbar">–</span>
-								{/if}
+								<label class="umschalter">
+									<input
+										class="sr-only"
+										type="checkbox"
+										name="{t.key}_teams"
+										checked={e.topics[t.key].teams}
+									/>
+									<span class="an-symbol" aria-hidden="true">
+										<Icon d={HAKEN} size={13} stroke={2.4} />
+									</span>
+									Teams
+								</label>
 							{/if}
 						</span>
 					</li>
 				{/each}
 			</ul>
 			<p class="hinweis klein">
-				Schloss: bei dringenden Meldungen immer an. Strich: für dieses Thema nicht möglich. Push
-				kommt nur auf Geräten an, auf denen du ihn oben eingeschaltet hast. Hubs stellst du unter
+				Schloss: bei dringenden Meldungen immer an. Push kommt nur auf Geräten an, auf denen du ihn
+				oben eingeschaltet hast. Hubs stellst du unter
 				<a href={resolve('/(app)/konto/hubs')}>Meine Hubs</a> ein.
-				{#if daten.teams}Teams-Meldungen erscheinen in Teams unter „Aktivität“.{/if}
+				{#if daten.teams}Teams-Meldungen erscheinen in Teams unter „Aktivität“; ein Klick öffnet den
+					Beitrag direkt in der Intranet-App in Teams.{/if}
 			</p>
 		</section>
 
@@ -345,10 +351,6 @@
 	.pille:has(input:focus-visible) {
 		outline: 3px solid var(--focus);
 		outline-offset: 2px;
-	}
-	.umschalter.leer {
-		color: var(--mu);
-		cursor: default;
 	}
 	.klein {
 		font-size: 13px;

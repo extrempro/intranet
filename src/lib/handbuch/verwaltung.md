@@ -46,13 +46,15 @@ Leere Felder nehmen den Wert aus der `.env`. **Test-E-Mail an mich** zeigt sofor
 
 ## Teams
 
-Ebenfalls unter **Benachrichtigungen** schaltest du die Teams-Meldungen ein (nur dringende und angeheftete Beiträge, Kap. 11). Einmalig nötig:
+Das Intranet läuft auch als App in Teams. Ebenfalls unter **Benachrichtigungen** schaltest du die Teams-Meldungen ein. Einmalig nötig:
 
 1. In der App-Registrierung die Anwendungsberechtigung **TeamsActivity.Send** hinzufügen und die Administratorzustimmung erteilen.
-2. Das **App-Paket** herunterladen und im Teams Admin Center unter „Apps verwalten“ hochladen.
-3. Die App per **Setup-Richtlinie** für alle oder die Intranet-Gruppe installieren.
+2. Unter **Expose an API** die Application ID URI setzen (der genaue Wert steht in der Verwaltung), den Scope **access_as_user** anlegen und die beiden Teams-Clients vorab berechtigen.
+3. Für die delegierten Rechte **User.Read** und **GroupMember.Read.All** die Administratorzustimmung erteilen.
+4. Das **App-Paket** herunterladen und im Teams Admin Center unter „Apps verwalten“ hochladen.
+5. Die App per **Setup-Richtlinie** für alle oder die Intranet-Gruppe installieren.
 
-Meldungen kommen nur bei Personen mit Microsoft-Konto an, bei denen die App installiert ist. **Testmeldung an mich** zeigt, ob alles passt. Ändert sich die Adresse des Intranets oder die App-Registrierung, erzeuge eine neue Version des Pakets und aktualisiere die App.
+In Teams melden sich die Leute automatisch mit ihrem Microsoft-Konto an. Meldungen kommen nur bei Personen mit Microsoft-Konto an, bei denen die App installiert ist. **Testmeldung an mich** zeigt, ob alles passt. Ändert sich die Adresse des Intranets oder die App-Registrierung, erzeuge eine neue Version des Pakets und aktualisiere die App.
 
 ## System
 

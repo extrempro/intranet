@@ -3,7 +3,13 @@ import { redirect } from '@sveltejs/kit';
 import type { Handle, ServerInit } from '@sveltejs/kit/hooks';
 import { loadPrincipal } from '#lib/server/auth/access.ts';
 import { getPreferences } from '#lib/server/preferences.ts';
-import { deleteSessionCookie, SESSION_COOKIE, validateSession } from '#lib/server/auth/session.ts';
+import {
+	deleteSessionCookie,
+	deleteTeamsSessionCookie,
+	SESSION_COOKIE,
+	TEAMS_SESSION_COOKIE,
+	validateSession
+} from '#lib/server/auth/session.ts';
 
 /** Beim Start ausstehende Migrationen einspielen (abschaltbar mit MIGRATE_ON_START=false). */
 export const init: ServerInit = async () => {
@@ -40,6 +46,7 @@ const securityHeaders: Record<string, string> = {
 /** /ical: persönliches Kalender-Abo, geschützt durch den geheimen Link (Kap. 8.8). */
 /** /teams/tab: Tab der Teams-App, zeigt nur einen Link (Kap. 11.1). */
 /** /teams/test: vorübergehender Test-Tab (SSO, Cookies), zeigt keine Inhalte. */
+/** /teams/app: Einstieg der Teams-App (Anmeldung per SSO), /teams/anmelden: Token-Tausch. */
 const PUBLIC_PATHS = [
 	'/anmelden',
 	'/einladung',
@@ -47,6 +54,9 @@ const PUBLIC_PATHS = [
 	'/ical',
 	'/teams/tab',
 	'/teams/test',
+	'/teams/app',
+	'/teams/anmelden',
+	'/teams/teams.js',
 	'/marke'
 ];
 
@@ -68,8 +78,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.session = null;
 	event.locals.principal = null;
 	event.locals.theme = 'auto';
+	event.locals.teams = false;
 
-	const token = event.cookies.get(SESSION_COOKIE);
+	// Im Browser das normale Cookie, in der Teams-App das partitionierte Teams-Cookie
+	const browserToken = event.cookies.get(SESSION_COOKIE);
+	const teamsToken = browserToken ? undefined : event.cookies.get(TEAMS_SESSION_COOKIE);
+	const token = browserToken ?? teamsToken;
 	if (token) {
 		const session = await validateSession(token);
 		if (session) {
@@ -82,6 +96,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 			]);
 			event.locals.principal = principal;
 			event.locals.theme = prefs.theme;
+			event.locals.teams = Boolean(teamsToken);
+		} else if (teamsToken) {
+			deleteTeamsSessionCookie(event.cookies);
 		} else {
 			deleteSessionCookie(event.cookies);
 		}
@@ -89,6 +106,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	if (!event.locals.person && !isPublic(event.url.pathname)) {
 		const ziel = event.url.pathname + event.url.search;
+		// Eingebettet (Teams-App): neu per SSO anmelden statt Anmeldeseite im Rahmen
+		if (event.request.headers.get('sec-fetch-dest') === 'iframe')
+			redirect(303, `/teams/app?ziel=${encodeURIComponent(ziel)}`);
 		redirect(303, ziel === '/' ? '/anmelden' : `/anmelden?ziel=${encodeURIComponent(ziel)}`);
 	}
 

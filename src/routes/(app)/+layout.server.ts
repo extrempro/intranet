@@ -33,6 +33,8 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		},
 		logo: { hell: branding.logoHell, dunkel: branding.logoDunkel },
 		rechtliches: { datenschutz: branding.datenschutz, impressum: branding.impressum },
+		/** In der Teams-App: ohne eigene Kopfzeile (Teams zeigt App-Name und Symbol) */
+		inTeams: locals.teams,
 		akzent: accentStyle(branding),
 		theme: locals.theme,
 		darfVerwaltung: canSeeAdministration(principal),
