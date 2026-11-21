@@ -8,6 +8,7 @@
 	import Icon from '#lib/components/Icon.svelte';
 	import Kontomenue from '#lib/components/Kontomenue.svelte';
 	import Kopfsuche from '#lib/components/Kopfsuche.svelte';
+	import NeueVersion from '#lib/components/NeueVersion.svelte';
 	import OfflineHinweis from '#lib/components/OfflineHinweis.svelte';
 	import Tour from '#lib/components/Tour.svelte';
 	import { hilfe } from '#lib/hilfe.svelte.ts';
@@ -365,6 +366,7 @@
 						{/if}
 					</nav>
 				{/if}
+				<NeueVersion neu={data.neuInVersion} />
 				<OfflineHinweis />
 				{#if data.meldung}<p class="meldung oben" role="status">{data.meldung}</p>{/if}
 				{@render children()}
