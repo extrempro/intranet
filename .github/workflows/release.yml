@@ -58,6 +58,18 @@ jobs:
           TITEL=$(node scripts/release-notes.mjs "$V" --titel)
           # Ältere Versionen nicht als „neueste“ markieren
           gh release create "v$V" --target "$ZIEL" --title "$V · $TITEL" --notes-file notes.md --latest=$LATEST
+      # Stückliste der Abhängigkeiten (SBOM, CycloneDX) zum Release (ASVS 5.0 V15.1.2)
+      - name: SBOM anhängen
+        if: steps.release.outputs.version != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ steps.release.outputs.version }}
+          ZIEL: ${{ steps.release.outputs.commit }}
+        run: |
+          git fetch -q --depth=1 origin "$ZIEL"
+          git checkout -q "$ZIEL"
+          npm sbom --sbom-format cyclonedx --omit dev --package-lock-only > "intranet-$V.sbom.cdx.json"
+          gh release upload "v$V" "intranet-$V.sbom.cdx.json" --clobber
     outputs:
       version: ${{ steps.release.outputs.version }}
       commit: ${{ steps.release.outputs.commit }}
