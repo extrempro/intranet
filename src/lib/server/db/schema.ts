@@ -29,6 +29,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import type { OpeningDay } from '../../canteen';
 import type { UiFarben } from '../../color';
+import type { FeedbackTechnik } from '../../feedback';
 import type { HomeLayout } from '../../home';
 import type { HubLayout } from '../../hubs';
 import type { NotifySettings } from '../../notify';
@@ -1397,6 +1398,12 @@ export const feedback = pgTable(
 			.default('neu'),
 		/** Kurze Antwort beim Abschluss (für „Meine Meldungen“) */
 		answer: text('answer'),
+		/** Nur bei Fehlern: technische Angaben aus dem Browser (Version, Fenster, Browser, Fehler) */
+		technik: jsonb('technik').$type<FeedbackTechnik>(),
+		/** Nur bei Fehlern: Bildschirmfoto (JPEG, verschlüsselt); 30 Tage nach Abschluss gelöscht */
+		screenshotFileId: uuid('screenshot_file_id').references(() => files.id, {
+			onDelete: 'set null'
+		}),
 		closedAt: timestamp('closed_at', { withTimezone: true }),
 		createdAt: createdAt(),
 		updatedAt: updatedAt()
