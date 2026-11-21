@@ -83,12 +83,27 @@ function pruefe(b: Uint8Array, n: number, was: string) {
 		throw new TeamsMarkeError(`${was}: Bitte ein PNG mit ${n} × ${n} Pixeln.`);
 }
 
-export async function saveTeamsSymbole(farbig: Uint8Array, umriss: Uint8Array | null, by: string) {
-	pruefe(farbig, 192, 'Farbiges Symbol');
+/**
+ * Farbiges Symbol und/oder Umriss speichern. Ein neues farbiges Symbol ohne
+ * Umriss setzt den Umriss zurück (der alte passt nicht mehr); nur ein neuer
+ * Umriss behält das farbige Symbol.
+ */
+export async function saveTeamsSymbole(
+	farbig: Uint8Array | null,
+	umriss: Uint8Array | null,
+	by: string
+) {
+	if (!farbig && !umriss) throw new TeamsMarkeError('Bitte wähle ein Bild.');
+	if (farbig) pruefe(farbig, 192, 'Farbiges Symbol');
 	if (umriss) pruefe(umriss, 32, 'Umriss-Symbol');
+	const bisher = await getSetting<GespeicherteSymbole | null>('teams.symbole', null);
 	const wert: GespeicherteSymbole = {
-		farbig: Buffer.from(farbig).toString('base64'),
-		umriss: umriss ? Buffer.from(umriss).toString('base64') : null
+		farbig: farbig ? Buffer.from(farbig).toString('base64') : (bisher?.farbig ?? null),
+		umriss: umriss
+			? Buffer.from(umriss).toString('base64')
+			: farbig
+				? null
+				: (bisher?.umriss ?? null)
 	};
 	await setSetting('teams.symbole', wert, by);
 }

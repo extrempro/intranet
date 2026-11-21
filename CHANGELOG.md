@@ -10,6 +10,10 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.11.2 · 21.11.2026 · Symbol in der Teams-Leiste
+
+- Das kleine Symbol der Intranet-App links in der Teams-Leiste wird jetzt vollständig angezeigt, auch mit feinen Linien.
+
 ## 0.11.1 · 21.11.2026 · Aufgeräumtes Menü
 
 - Im Menü oben rechts gibt es nur noch **Mein Konto**. Dort stehen auch Profilfoto und Kontaktdaten.

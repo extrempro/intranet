@@ -72,4 +72,31 @@ describe('Aussehen der Teams-App', () => {
 		).rejects.toThrow(/192 × 192/);
 		await expect(saveTeamsSymbole(farbig, farbig, 'p')).rejects.toThrow(/32 × 32/);
 	});
+
+	it('nur ein neuer Umriss behält das farbige Symbol; neues farbiges ohne Umriss setzt ihn zurück', async () => {
+		const farbig = png(192, () => [9, 9, 9, 255]);
+		const umriss = png(32, () => [255, 255, 255, 255]);
+		await saveTeamsSymbole(farbig, null, 'p');
+		expect((await teamsAppAussehen()).eigenerUmriss).toBe(false);
+		await saveTeamsSymbole(null, umriss, 'p');
+		const a = await teamsAppAussehen();
+		expect(a.quelle).toBe('eigen');
+		expect(a.farbig).toEqual(Buffer.from(farbig));
+		expect(a.eigenerUmriss).toBe(true);
+		await saveTeamsSymbole(farbig, null, 'p');
+		expect((await teamsAppAussehen()).eigenerUmriss).toBe(false);
+		await expect(saveTeamsSymbole(null, null, 'p')).rejects.toThrow(TeamsMarkeError);
+	});
+
+	it('eigener Umriss auch zum Symbol des Hauptmandanten', async () => {
+		symbolStand = 1;
+		await saveTeamsSymbole(
+			null,
+			png(32, () => [255, 255, 255, 255]),
+			'p'
+		);
+		const a = await teamsAppAussehen();
+		expect(a.quelle).toBe('mandant');
+		expect(a.eigenerUmriss).toBe(true);
+	});
 });
