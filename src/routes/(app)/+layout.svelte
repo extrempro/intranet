@@ -103,8 +103,9 @@
 			setTimeout(() => hilfe.starten(FUEHRUNG), 300);
 		}
 	});
-	const SPRECHBLASE =
-		'M8 9h8M8 13h6M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-5l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12z';
+	// Rückmeldung geben: Daumen hoch und runter (wie im Ausbildungsportal, für etwa 26–30 px)
+	const RUECKMELDUNG =
+		'M1 8.5h2.2V14H1zM3.2 9l2.4-4.6a1.4 1.4 0 0 1 1.5 1.4v2.4h2.6a1.3 1.3 0 0 1 1.3 1.6l-.7 3.2a1.5 1.5 0 0 1-1.5 1.2H3.2M23 15.5h-2.2V10H23zM20.8 15l-2.4 4.6a1.4 1.4 0 0 1-1.5-1.4v-2.4h-2.6a1.3 1.3 0 0 1-1.3-1.6l.7-3.2a1.5 1.5 0 0 1 1.5-1.2h5.6';
 </script>
 
 <a class="skip" href="#inhalt">Zum Inhalt springen</a>
@@ -147,7 +148,7 @@
 		aria-label="Rückmeldung geben"
 		title="Rückmeldung: Fehler oder Idee"
 	>
-		<Icon d={SPRECHBLASE} size={20} stroke={1.8} />
+		<Icon d={RUECKMELDUNG} size={28} stroke={1.8} />
 	</a>
 
 	<a

@@ -10,13 +10,15 @@ export interface Menuestand {
 	zu: boolean | null;
 	/** Aufgeklappte Bereiche (Schlüssel aus nav.ts) */
 	offen: string[];
+	/** Schon einmal gemerkt? Sonst ist beim ersten Besuch der aktuelle Bereich offen. */
+	gemerkt?: boolean;
 }
 
 /** Format: „<z>|<schlüssel>.<schlüssel>“, z = 1 (zu), 0 (auf) oder leer. */
 export function menueLesen(wert: string | undefined, erlaubt: readonly string[]): Menuestand {
 	const [z = '', o = ''] = (wert ?? '').slice(0, 300).split('|');
 	const offen = o.split('.').filter((k, i, alle) => erlaubt.includes(k) && alle.indexOf(k) === i);
-	return { zu: z === '1' ? true : z === '0' ? false : null, offen };
+	return { zu: z === '1' ? true : z === '0' ? false : null, offen, gemerkt: wert !== undefined };
 }
 
 export function menueWert(s: Menuestand): string {

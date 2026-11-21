@@ -8,7 +8,7 @@
 	/* eslint-disable svelte/no-navigation-without-resolve -- Ziele kommen aus dem festen Register in nav.ts */
 	import { afterNavigate } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import type { Snippet } from 'svelte';
+	import { untrack, type Snippet } from 'svelte';
 	import Icon from './Icon.svelte';
 	import Kopfsuche from './Kopfsuche.svelte';
 	import { menueSpeichern, type Menuestand } from '#lib/menue.ts';
@@ -55,7 +55,28 @@
 		speichern();
 	}
 
-	const offen = (a: NavArea) => aktuell.area?.key === a.key || stand.offen.includes(a.key);
+	const offen = (a: NavArea) => stand.offen.includes(a.key);
+
+	// Wechselt man in einen anderen Bereich, klappt er auf (zuklappen geht trotzdem).
+	// Beim allerersten Besuch ist der aktuelle Bereich offen.
+	const mitUnterseiten = (key: string | undefined) =>
+		Boolean(key && (areas.find((a) => a.key === key)?.pages.length ?? 0) > 1);
+	let zuletzt = untrack(() => aktuell.area?.key);
+	untrack(() => {
+		if (!stand.gemerkt && mitUnterseiten(zuletzt) && !stand.offen.includes(zuletzt!))
+			stand.offen = [...stand.offen, zuletzt!];
+	});
+	$effect(() => {
+		const key = aktuell.area?.key;
+		if (key === zuletzt) return;
+		zuletzt = key;
+		untrack(() => {
+			if (mitUnterseiten(key) && !stand.offen.includes(key!)) {
+				stand.offen = [...stand.offen, key!];
+				speichern();
+			}
+		});
+	});
 
 	function bereichUmschalten(a: NavArea) {
 		stand.offen = stand.offen.includes(a.key)
@@ -126,23 +147,17 @@
 								</span>{/if}
 						</a>
 						{#if mitUnter}
-							{#if an}
-								<span class="pfeil auf ruhig" aria-hidden="true">
-									<Icon d={PFEIL} size={16} stroke={2} />
-								</span>
-							{:else}
-								<button
-									type="button"
-									class="pfeil"
-									class:auf={offen(area)}
-									aria-expanded={offen(area)}
-									aria-controls="unter-{area.key}"
-									aria-label="{area.label}: Unterseiten {offen(area) ? 'zuklappen' : 'aufklappen'}"
-									onclick={() => bereichUmschalten(area)}
-								>
-									<Icon d={PFEIL} size={16} stroke={2} />
-								</button>
-							{/if}
+							<button
+								type="button"
+								class="pfeil"
+								class:auf={offen(area)}
+								aria-expanded={offen(area)}
+								aria-controls="unter-{area.key}"
+								aria-label="{area.label}: Unterseiten {offen(area) ? 'zuklappen' : 'aufklappen'}"
+								onclick={() => bereichUmschalten(area)}
+							>
+								<Icon d={PFEIL} size={16} stroke={2} />
+							</button>
 						{/if}
 					</div>
 					{#if mitUnter && offen(area)}
@@ -386,10 +401,6 @@
 	button.pfeil:hover {
 		background: var(--bg);
 		color: var(--tx);
-	}
-	.pfeil.ruhig {
-		cursor: default;
-		opacity: 0.5;
 	}
 	.unter {
 		list-style: none;

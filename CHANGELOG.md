@@ -10,6 +10,11 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.12.1 · 21.11.2026 · Menü und Rückmeldung
+
+- Im Menü kannst du jetzt jeden Bereich auf- und zuklappen, auch den, in dem du gerade bist. Mehrere Bereiche können gleichzeitig offen sein.
+- „Rückmeldung geben“ oben rechts hat ein neues Symbol: Daumen hoch und Daumen runter.
+
 ## 0.12.0 · 21.11.2026 · Aufklappbares Menü
 
 - Am PC und Tablet lassen sich die Bereiche im Menü links auf- und zuklappen, sodass du alle Unterseiten auf einen Blick siehst.
