@@ -71,6 +71,8 @@ In Teams melden sich die Leute automatisch mit ihrem Microsoft-Konto an. Meldung
 
 Ganz oben zeigt **Startklar**, ob alles für den Betrieb eingerichtet ist: Adresse, Adressen hinter dem Reverse Proxy, Anmeldung mit Microsoft, Notfallzugang (lokales Konto mit Rolle System-Admin), E-Mail, Sicherung, Push, Datenschutz und Impressum, Teams-App und Datenbank. Grün ist erledigt, Gelb ein Hinweis, Rot muss behoben werden. „Einstellen“ führt zur passenden Seite. Die ganze Anleitung für den Start steht im Repo unter `docs/inbetriebnahme.md`.
 
+Kommt niemand mehr als System-Admin hinein (Zugang verloren, Microsoft-Anmeldung gestört), erzeugt `docker compose exec app node scripts/notfall-admin.mjs` auf dem Server einen Link für einen weiteren lokalen System-Admin. Er gilt 24 Stunden und steht im Protokoll.
+
 Unter **System** siehst du die Version, den Zustand von Datenbank, Dateien, Hintergrundaufgaben und Entra-Abgleich, die Anbindungen (Entra, E-Mail, Web Push) und die **Sicherungen**:
 
 - wann zuletzt gesichert wurde und ob es geklappt hat,

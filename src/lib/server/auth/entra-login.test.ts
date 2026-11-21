@@ -6,7 +6,6 @@ const base: EntraLoginInput = {
 	groupIds: ['zugang'],
 	accountEnabled: true,
 	accessGroupId: 'zugang',
-	adminGroupId: 'admins',
 	domains: { 'beispielhaus.de': 'm-haupt', 'zweithaus.de': 'm-b' },
 	mappings: [
 		{
@@ -63,7 +62,7 @@ describe('resolveEntraLogin', () => {
 	});
 
 	it('meldet fehlende Einrichtung', () => {
-		expect(resolveEntraLogin({ ...base, accessGroupId: null, adminGroupId: null })).toEqual({
+		expect(resolveEntraLogin({ ...base, accessGroupId: null })).toEqual({
 			ok: false,
 			reason: 'not_configured'
 		});
@@ -81,16 +80,8 @@ describe('resolveEntraLogin', () => {
 		]);
 	});
 
-	it('macht Mitglieder der Admin-Gruppe zu System-Admins, auch ohne Zugangsgruppe', () => {
-		const r = resolveEntraLogin({ ...base, groupIds: ['admins'] });
-		expect(r.ok && r.roles).toEqual([
-			{
-				groupId: 'admins',
-				role: 'system_admin',
-				scope: 'all',
-				scopeTenantId: null,
-				scopeUnitId: null
-			}
-		]);
+	it('vergibt keine Rolle System-Admin von selbst (nur über Zuordnungen)', () => {
+		const r = resolveEntraLogin({ ...base, groupIds: ['zugang', 'admins'] });
+		expect(r.ok && r.roles).toEqual([]);
 	});
 });

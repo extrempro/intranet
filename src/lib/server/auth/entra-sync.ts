@@ -215,8 +215,7 @@ export async function runEntraSync(
 		const graph = opts.graph ?? graphClient;
 		const ctx = await loadLoginContext();
 		const accessGroupId = entra?.accessGroupId ?? null;
-		const adminGroupId = entra?.adminGroupId ?? null;
-		if (!accessGroupId && !adminGroupId)
+		if (!accessGroupId)
 			throw new Error('Keine Zugangsgruppe eingerichtet (ENTRA_ACCESS_GROUP_ID).');
 		const liste = await loadPersons();
 
@@ -242,7 +241,6 @@ export async function runEntraSync(
 				actions.push(
 					planPerson(person, l.lookup, {
 						accessGroupId,
-						adminGroupId,
 						domains: ctx.domains,
 						mappings: ctx.mappings
 					})

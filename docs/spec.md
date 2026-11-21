@@ -131,6 +131,12 @@ Konten der Kantinenbetreiber werden unter **Standorte** verwaltet, erscheinen ni
 
 Im Konto sichtbar und einzeln beendbar. In der Teams-App gilt ein eigenes Sitzungs-Cookie (SameSite=None, partitioniert): Es gilt nur, wenn das Intranet unter Teams eingebettet ist. Eingebettet werden darf das Intranet nur in Teams, Outlook und Microsoft 365.
 
+### 4.5 Einrichtung und Notfallzugang
+
+- **Ersteinrichtung ohne Microsoft**: Gibt es keinen aktiven System-Admin, schreibt die Anwendung beim Start einen einmaligen Link ins Log (24 Stunden gültig, jeder Neustart erzeugt einen neuen). Darüber werden der Hauptmandant (Name, Kürzel, Domains, Farben) und der erste System-Admin als lokales Konto mit zweitem Faktor angelegt.
+- System-Admins werden nicht automatisch aus Entra abgeleitet, sondern im Intranet vergeben (von Hand oder über „Rollen aus Entra-Gruppen“).
+- **Notfallzugang**: Ein Befehl im Container (`node scripts/notfall-admin.mjs`) erzeugt einen Link für einen weiteren lokalen System-Admin, z. B. wenn die Anmeldung mit Microsoft nicht geht. Protokolliert.
+
 ---
 
 ## 5. Rollen und Rechte

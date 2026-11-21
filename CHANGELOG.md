@@ -10,6 +10,12 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.8.0 · 21.11.2026 · Einrichtung ohne Microsoft
+
+- Ein neu aufgesetztes Intranet wird über einen einmaligen Link eingerichtet: Hauptmandant anlegen und den ersten Admin mit eigenem Passwort und zweitem Faktor.
+- Für Notfälle kann die IT auf dem Server einen weiteren Admin-Zugang erzeugen.
+- Wer System-Admin ist, legt jetzt nur noch das Intranet selbst fest, nicht mehr eine Gruppe in Microsoft.
+
 ## 0.7.0 · 21.11.2026 · Startklar-Prüfung
 
 - Unter Verwaltung → System zeigt „Startklar“ auf einen Blick, ob alles für den Betrieb eingerichtet ist: Adresse, Microsoft-Anmeldung, Notfallzugang, E-Mail, Sicherung, Datenschutz und Impressum, Teams und Datenbank.

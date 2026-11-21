@@ -47,7 +47,7 @@ Unter **App-Registrierungen → Neue Registrierung**, „Nur Konten in diesem Or
    - Anwendungs-ID-URI: `api://<Adresse ohne https://>/<Client-ID>`
    - Bereich `access_as_user` (Administratoren und Benutzer)
    - Autorisierte Clientanwendungen: `1fec8e78-bce4-4aaf-ab1b-5451cc387264` (Teams Desktop und Mobil) und `5e3ce6c0-2b1f-4285-8d4b-75ee78787346` (Teams im Browser). Soll die App auch in Outlook und Microsoft 365 laufen, zusätzlich deren Client-IDs (Liste in `src/lib/server/teams-sso.ts`).
-5. **Gruppen**: Object-ID der Zugangsgruppe → `ENTRA_ACCESS_GROUP_ID`, der Admin-Gruppe → `ENTRA_ADMIN_GROUP_ID` (wer darin ist, wird beim ersten Anmelden System-Admin).
+5. **Zugangsgruppe**: Object-ID der Gruppe, deren Mitglieder sich mit Microsoft anmelden dürfen → `ENTRA_ACCESS_GROUP_ID`. System-Admins vergibt das Intranet selbst (siehe 6.); weitere Rollen lassen sich unter „Rollen aus Entra-Gruppen“ an Gruppen hängen.
 6. **Bedingter Zugriff**: Prüfen, dass die App-Registrierung in den Richtlinien enthalten ist (MFA, ggf. konforme Geräte). Das gilt auch für die Anmeldung in der Teams-App und für die erneute Anmeldung vor kritischen Verwaltungsaktionen.
 
 Tenant-ID und Client-ID stehen auf der Übersichtsseite der Registrierung.
@@ -68,9 +68,8 @@ Tenant-ID und Client-ID stehen auf der Übersichtsseite der Registrierung.
 | `ENCRYPTION_KEY`                                                        | aus 2.                                                                                    |
 | `BACKUP_AGE_RECIPIENTS`                                                 | öffentlicher age-Schlüssel aus 2.                                                         |
 | `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET`             | aus 3.                                                                                    |
-| `ENTRA_ACCESS_GROUP_ID`, `ENTRA_ADMIN_GROUP_ID`                         | aus 3.                                                                                    |
+| `ENTRA_ACCESS_GROUP_ID`                                                 | aus 3.                                                                                    |
 | `SMTP_HOST`, `SMTP_SECURITY`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` | SMTP (auch später in der Verwaltung pflegbar)                                             |
-| `INITIAL_TENANT_NAME`, `INITIAL_TENANT_SHORT`, `INITIAL_TENANT_DOMAINS` | Hauptmandant, z. B. `Beispielhaus`, `BH`, E-Mail-Domains                           |
 | `PUSH_CONTACT`                                                          | `mailto:it@example.org`                                                         |
 
 3. **Images**: Das Paket `ghcr.io/extrempro/intranet` (und `intranet-backup`) muss öffentlich sein (GitHub → Packages → Package settings → Change visibility). Sonst auf dem Host `docker login ghcr.io` mit einem Token mit `read:packages`.
@@ -84,17 +83,20 @@ Tenant-ID und Client-ID stehen auf der Übersichtsseite der Registrierung.
 
 ## 6. Erster Start
 
-1. In Docker-Verwaltung das Projekt starten. Die Anwendung spielt die Migrationen ein und legt den Hauptmandanten an.
+1. In Docker-Verwaltung das Projekt starten. Die Anwendung spielt die Migrationen ein.
 2. `https://<Adresse>/health` muss `ok` zeigen.
-3. Mit einem Konto aus der Admin-Gruppe **mit Microsoft anmelden**.
-4. **Verwaltung → System → Startklar** öffnen und von oben nach unten abarbeiten:
+3. **Einrichtungslink** aus dem Log holen (`docker compose logs app` bzw. Logs in Docker-Verwaltung):
+   `https://<Adresse>/einrichtung/…`. Er gilt 24 Stunden und nur einmal; ein Neustart der Anwendung erzeugt einen neuen, solange die Einrichtung nicht abgeschlossen ist. Den Link sieht nur, wer die Logs lesen darf.
+4. Im Browser öffnen und einrichten:
+   - **Hauptmandant**: Name, Kürzel, E-Mail-Domains, Akzentfarben
+   - **Erster Admin** als lokales Konto: Name und E-Mail-Adresse mit einer der Domains, dann Passwort, zweiter Faktor (App oder Passkey) und Wiederherstellungscodes. Zugang und Codes in den Passwortmanager: Das ist auch der **Notfallzugang**, wenn die Anmeldung mit Microsoft nicht geht.
+5. **Verwaltung → System → Startklar** öffnen und von oben nach unten abarbeiten:
    - **Adressen hinter dem Reverse Proxy**: „erkannt“ muss die öffentliche Adresse deines Geräts sein, nicht die des Proxys.
-   - **Anmeldung**: „Verbindung prüfen“, dann „Jetzt abgleichen“.
-   - **Notfallzugang**: unter „Lokales Konto einladen“ ein lokales Konto anlegen, Rolle System-Admin vergeben, zweiten Faktor einrichten, Zugang in den Passwortmanager. Damit kommst du in die Verwaltung, wenn Microsoft ausfällt oder Entra falsch eingestellt ist.
+   - **Anmeldung**: Entra-Werte prüfen, „Verbindung prüfen“, dann „Jetzt abgleichen“. Danach mit deinem Microsoft-Konto anmelden und dir unter Benutzer und Rollen (oder über „Rollen aus Entra-Gruppen“) die Rolle System-Admin geben.
    - **E-Mail**: unter Benachrichtigungen „Test-E-Mail an mich“.
    - **Datenschutz und Impressum**: beim Hauptmandanten die Links eintragen, dazu Farben, Symbol und weitere Domains.
    - **Sicherung**: Beim ersten Start sichert der Dienst sofort und testet die Wiederherstellung. Nach ein paar Minuten muss der Punkt grün sein.
-5. Weitere Mandanten, Abteilungen, Hubs und Standorte anlegen (Handbuch „Verwaltung im Überblick“).
+6. Weitere Mandanten, Abteilungen, Hubs und Standorte anlegen (Handbuch „Verwaltung im Überblick“).
 
 ## 7. Teams-App
 
@@ -107,7 +109,7 @@ Tenant-ID und Client-ID stehen auf der Übersichtsseite der Registrierung.
 
 - [ ] Startklar ohne Fehler und Hinweise (Teams-Test-Reiter ausgenommen, solange getestet wird)
 - [ ] Wiederherstellen einmal geprobt ([backup/README.md](../backup/README.md)), privater age-Schlüssel und `ENCRYPTION_KEY` im Passwortmanager
-- [ ] Notfallzugang ausprobiert (lokal anmelden, Verwaltung öffnen)
+- [ ] Lokalen Admin ausprobiert (lokal anmelden, Verwaltung öffnen), Zugang und Wiederherstellungscodes im Passwortmanager
 - [ ] Clientgeheimnis-Ablauf im Kalender
 - [ ] Unterlage für den Betriebsrat abgestimmt
 - [ ] Externer Penetrationstest ([docs/sicherheit.md](sicherheit.md), offene Punkte)
@@ -125,7 +127,8 @@ Zurück auf die vorige Version geht nur, wenn das Update keine Migration enthiel
 ## 10. Störungen
 
 - **Logs**: `docker compose logs app` (bzw. in Docker-Verwaltung). Docker behält je Container 3 × 10 MB.
-- **Anmeldung mit Microsoft geht nicht**: mit dem Notfallzugang anmelden, unter Anmeldung „Verbindung prüfen“. Häufig: Clientgeheimnis abgelaufen, Administratorzustimmung fehlt, `ORIGIN` passt nicht zur Umleitungs-URI.
+- **Anmeldung mit Microsoft geht nicht**: mit dem lokalen Admin anmelden, unter Anmeldung „Verbindung prüfen“. Häufig: Clientgeheimnis abgelaufen, Administratorzustimmung fehlt, `ORIGIN` passt nicht zur Umleitungs-URI.
 - **Alle Anfragen mit Fehler 400/500 nach einer Änderung am Proxy**: `ADDRESS_HEADER` gesetzt, aber der Proxy schickt den Header nicht.
 - **Sicherung rot**: Verwaltung → System zeigt den Grund; System-Admins bekommen zusätzlich eine Benachrichtigung.
+- **Kein lokaler Admin erreichbar** (Zugang verloren, nach einer Wiederherstellung): `docker compose exec app node scripts/notfall-admin.mjs` erzeugt einen Link für einen weiteren lokalen System-Admin (24 Stunden, einmalig, im Protokoll). Nimm eine eigene E-Mail-Adresse, z. B. `it-notfall@…`.
 - **Daten wiederherstellen**: [backup/README.md](../backup/README.md).
