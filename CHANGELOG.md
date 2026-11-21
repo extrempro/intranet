@@ -10,6 +10,10 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.10.1 · 21.11.2026 · Teams-App ohne Test-Reiter
+
+- Die Teams-App hat keinen Reiter „Test“ mehr.
+
 ## 0.10.0 · 21.11.2026 · Bildbeschreibungen
 
 - Wer Bilder hochlädt, kann jetzt kurz beschreiben, was darauf zu sehen ist. Bildschirmleser lesen die Beschreibung vor. Das geht in Beiträgen, „Hinter den Kulissen“ und am Schwarzen Brett.

@@ -29,7 +29,7 @@ export interface StartklarEingaben {
 	sicherung: { eingerichtet: boolean; befunde: { stufe: 'fehler' | 'warnung'; text: string }[] };
 	push: boolean;
 	rechtliches: { datenschutz: boolean; impressum: boolean };
-	teams: { aktiv: boolean; letzte: { ok: boolean; meldung: string } | null; testReiter: boolean };
+	teams: { aktiv: boolean; letzte: { ok: boolean; meldung: string } | null };
 	migrationen: { vorhanden: number | null; eingespielt: number | null };
 }
 
@@ -240,14 +240,6 @@ export function bewerteStartklar(e: StartklarEingaben, jetzt = Date.now()): Prue
 			titel: 'Teams-App',
 			stufe: 'fehler',
 			text: `Letzte Meldung an Teams fehlgeschlagen: ${e.teams.letzte.meldung}`,
-			link: '/verwaltung/benachrichtigungen'
-		});
-	else if (e.teams.testReiter)
-		p.push({
-			id: 'teams',
-			titel: 'Teams-App',
-			stufe: 'warnung',
-			text: 'Das App-Paket enthält noch den Reiter „Teams-Test“. Nach den Tests auf iPhone und Android entfernen.',
 			link: '/verwaltung/benachrichtigungen'
 		});
 	else

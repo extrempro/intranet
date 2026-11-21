@@ -347,25 +347,6 @@
 						Die Testmeldung geht nur, wenn du mit einem Microsoft-Konto angemeldet bist.
 					</p>
 				{/if}
-				<details>
-					<summary>Test: Intranet ganz in Teams</summary>
-					<p class="hinweis">
-						Vorübergehend hat die Teams-App einen Reiter „Test“. Er prüft, ob die Anmeldung per
-						Microsoft-Konto, Cookies und der Sprung aus einer Benachrichtigung in Teams klappen. Er
-						zeigt keine Inhalte und legt keine Sitzung an.
-					</p>
-					<p class="hinweis">
-						Voraussetzung ist „Expose an API“ wie oben unter „Einrichtung“. Öffne in Teams die App
-						„Intranet“, Reiter „Test“: auf dem PC, im Browser und auf dem Handy. Mit „Ergebnis
-						kopieren“ kannst du das Ergebnis weitergeben.
-					</p>
-					<form method="POST" action="?/teamsTest" use:enhance>
-						<input type="hidden" name="ziel" value="test" />
-						<button class="knopf zweit" type="submit" disabled={!t.microsoftKonto}>
-							Testmeldung mit Sprung in den Test-Reiter
-						</button>
-					</form>
-				</details>
 			{/if}
 		{:else}
 			<p class="hinweis">Teams richten System-Admins ein.</p>

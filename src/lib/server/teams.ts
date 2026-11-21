@@ -10,13 +10,7 @@
  * - Nur Microsoft-Konten (Entra-Objekt-ID); Ruhezeiten wie bei Push
  */
 import { and, eq, inArray, isNotNull, isNull, lt, lte, or, sql } from 'drizzle-orm';
-import {
-	activityBody,
-	activityFor,
-	TEAMS_TAB_ENTITY,
-	TEAMS_TEST_ENTITY,
-	type TeamsItem
-} from '../teams.ts';
+import { activityBody, activityFor, TEAMS_TAB_ENTITY, type TeamsItem } from '../teams.ts';
 import { teamsAppAussehen } from './teams-marke.ts';
 import { teamsResource } from './teams-sso.ts';
 import { getEntraConfig, GraphError, graphAppPost } from './auth/entra.ts';
@@ -25,12 +19,6 @@ import { notifications, persons } from './db/schema.ts';
 import { getSetting, setSetting } from './settings.ts';
 import { teamsActive, teamsSettings } from './teams-config.ts';
 import { zip } from './zip.ts';
-
-/**
- * Reiter „Test“ im App-Paket (SSO, Cookies, Sprung aus Benachrichtigung).
- * Nach den Tests auf iPhone und Android auf false setzen und /teams/test entfernen.
- */
-export const TEAMS_TEST_REITER = true;
 
 export type GraphPost = (path: string, body: unknown) => Promise<void>;
 
@@ -169,9 +157,7 @@ export async function teamsStatus(): Promise<TeamsStatus | null> {
 /** Testmeldung an die eigene Person (nur Microsoft-Konten). */
 export async function sendTeamsTest(
 	personId: string,
-	post: GraphPost = graphAppPost,
-	/** true: Klick öffnet den Test-Tab mit einem Ziel, um den Sprung zu prüfen */
-	testTab = false
+	post: GraphPost = graphAppPost
 ): Promise<string> {
 	const [p] = await db
 		.select({ oid: persons.entraOid })
@@ -188,13 +174,13 @@ export async function sendTeamsTest(
 				appId,
 				activityFor([
 					{
-						title: testTab ? 'Test: Sprung in den Test-Tab' : 'Testmeldung aus dem Intranet',
+						title: 'Testmeldung aus dem Intranet',
 						detail: 'Intranet',
-						link: testTab ? '/sprung-angekommen' : '/'
+						link: '/'
 					}
 				]),
 				[p.oid],
-				testTab ? TEAMS_TEST_ENTITY : TEAMS_TAB_ENTITY
+				TEAMS_TAB_ENTITY
 			)
 		);
 	} catch (err) {
@@ -234,18 +220,7 @@ export async function teamsAppPackage(origin: string): Promise<{ name: string; d
 				contentUrl: `${origin}/teams/app?ziel={subEntityId}`,
 				websiteUrl: origin,
 				scopes: ['personal']
-			},
-			...(TEAMS_TEST_REITER
-				? [
-						{
-							// Vorübergehend: prüft, ob das Intranet ganz in Teams laufen kann
-							entityId: TEAMS_TEST_ENTITY,
-							name: 'Test',
-							contentUrl: `${origin}/teams/test?ziel={subEntityId}`,
-							scopes: ['personal']
-						}
-					]
-				: [])
+			}
 		],
 		validDomains: [host],
 		webApplicationInfo: { id: entra.clientId, resource: teamsResource(origin, entra.clientId) },

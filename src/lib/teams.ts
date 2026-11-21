@@ -9,8 +9,6 @@ import { safeTarget } from './ziel.ts';
 
 /** entityId des Tabs im Manifest */
 export const TEAMS_TAB_ENTITY = 'intranet';
-/** entityId des vorübergehenden Test-Tabs (SSO, Cookies, Sprung aus Benachrichtigung) */
-export const TEAMS_TEST_ENTITY = 'teamstest';
 
 /** Nur eigene Pfade als Ziel (kein offener Weiterleiter) */
 export function safeTabTarget(value: string | null | undefined): string {
