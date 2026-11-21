@@ -14,7 +14,7 @@ const gut = (x: Partial<StartklarEingaben> = {}): StartklarEingaben => ({
 	sicherung: { eingerichtet: true, befunde: [] },
 	push: true,
 	rechtliches: { datenschutz: true, impressum: true },
-	teams: { aktiv: true, letzte: { ok: true, meldung: '' }, testReiter: false },
+	teams: { aktiv: true, letzte: { ok: true, meldung: '' } },
 	migrationen: { vorhanden: 33, eingespielt: 33 },
 	...x
 });
@@ -69,18 +69,11 @@ describe('Startklar', () => {
 		});
 	});
 
-	it('Teams: aus ist nur Info, Test-Reiter ein Hinweis', () => {
-		expect(stufe(gut({ teams: { aktiv: false, letzte: null, testReiter: true } }), 'teams')).toBe(
-			'info'
-		);
-		expect(stufe(gut({ teams: { aktiv: true, letzte: null, testReiter: true } }), 'teams')).toBe(
-			'warnung'
-		);
+	it('Teams: aus ist nur Info, fehlgeschlagene Meldung ein Fehler', () => {
+		expect(stufe(gut({ teams: { aktiv: false, letzte: null } }), 'teams')).toBe('info');
+		expect(stufe(gut({ teams: { aktiv: true, letzte: null } }), 'teams')).toBe('ok');
 		expect(
-			stufe(
-				gut({ teams: { aktiv: true, letzte: { ok: false, meldung: '403' }, testReiter: false } }),
-				'teams'
-			)
+			stufe(gut({ teams: { aktiv: true, letzte: { ok: false, meldung: '403' } } }), 'teams')
 		).toBe('fehler');
 	});
 
