@@ -134,7 +134,7 @@
 					href="?ansicht=moderation"
 					aria-current={data.ansicht === 'moderation' ? 'true' : undefined}
 				>
-					Moderation
+					Prüfen{#if data.pruefenAnzahl}&nbsp;({data.pruefenAnzahl}){/if}
 				</a>
 			{/if}
 		</nav>
@@ -502,7 +502,7 @@
 	}
 	.raster {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+		grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
 		gap: 16px;
 		align-items: start;
 	}

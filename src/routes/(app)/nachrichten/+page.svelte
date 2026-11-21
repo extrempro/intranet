@@ -36,7 +36,7 @@
 					href={q(b.key, data.erledigt)}
 					aria-current={b.key === data.box ? 'true' : undefined}
 				>
-					{b.label}
+					{b.label}{#if b.offen}&nbsp;({b.offen}){/if}
 				</a>
 			{/each}
 		</nav>
@@ -48,10 +48,10 @@
 	{/if}
 	<nav class="pillen klein" aria-label="Filtern" data-tour="stand">
 		<a class="pille" href={q(data.box, false)} aria-current={!data.erledigt ? 'true' : undefined}>
-			Offen
+			Offen{#if data.anzahl.offen}&nbsp;({data.anzahl.offen}){/if}
 		</a>
 		<a class="pille" href={q(data.box, true)} aria-current={data.erledigt ? 'true' : undefined}>
-			Erledigt
+			Erledigt{#if data.anzahl.erledigt}&nbsp;({data.anzahl.erledigt}){/if}
 		</a>
 	</nav>
 

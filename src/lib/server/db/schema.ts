@@ -291,6 +291,8 @@ export const personPreferences = pgTable('person_preferences', {
 	behindTenants: jsonb('behind_tenants').$type<string[]>(),
 	/** Gesehene Führung und Einführungen (Kap. 13), z. B. „fuehrung“, „seite:kalender“ */
 	helpSeen: jsonb('help_seen').$type<string[]>(),
+	/** Meine Hubs: Kanäle für neue Abos; null = Glocke an, Push und E-Mail aus */
+	hubDefaults: jsonb('hub_defaults').$type<{ bell: boolean; push: boolean; email: boolean }>(),
 	/** Zuletzt Neuigkeiten angesehen: Zähler „neu“ in der Navigation */
 	newsSeenAt: timestamp('news_seen_at', { withTimezone: true }),
 	updatedAt: updatedAt()

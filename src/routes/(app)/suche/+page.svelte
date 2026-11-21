@@ -37,6 +37,16 @@
 	</form>
 
 	{#if !t}
+		{#if data.vorschlaege.length}
+			<div class="stapel eng">
+				<span class="hinweis">Vorschläge</span>
+				<div class="pillen">
+					{#each data.vorschlaege as v (v)}
+						<a class="pille" href="?q={encodeURIComponent(v)}">{v}</a>
+					{/each}
+				</div>
+			</div>
+		{/if}
 		<p class="hinweis">
 			Gesucht wird in Personen, Abteilungen, Zuständigkeiten, Beiträgen, FAQs, Rechtlichem,
 			Terminen, Hubs, am Schwarzen Brett und in „Hinter den Kulissen“ – nur was du sehen darfst.
@@ -94,6 +104,9 @@
 </div>
 
 <style>
+	.eng {
+		gap: 6px;
+	}
 	.seite {
 		max-width: 52rem;
 	}

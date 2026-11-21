@@ -237,9 +237,14 @@ export async function listPosts(p: Principal, q?: string | null) {
 		publishAt: r.publishAt,
 		sender: r.unitName,
 		senderLabel: unitTypeLabel({ type: r.unitType, title: r.unitTitle }),
+		senderSlug: r.unitSlug,
+		senderHub: r.unitType === 'hub',
 		tenantShort: r.tenantShort,
 		otherTenant: r.tenantId !== p.tenantId,
 		cover: att.find((a) => a.newsId === r.id && IMAGE.includes(a.kind)) ?? null,
+		images: att
+			.filter((a) => a.newsId === r.id && IMAGE.includes(a.kind))
+			.map((a) => ({ id: a.id })),
 		reactions: reactions.get(r.id) ?? [],
 		canEdit: writable.some((u) => u.id === r.unitId)
 	}));

@@ -3,7 +3,10 @@
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import Reaktionen from '#lib/components/Reaktionen.svelte';
+	import Absender from '#lib/components/Absender.svelte';
+	import Info from '#lib/components/Info.svelte';
+	import Karussell from '#lib/components/Karussell.svelte';
+	import Icon from '#lib/components/Icon.svelte';
 	import { actionUrl } from '#lib/action-url.ts';
 
 	let { data, form } = $props();
@@ -11,6 +14,14 @@
 		dateStyle: 'medium',
 		timeZone: 'Europe/Berlin'
 	});
+	let diashowsAus = $state(false);
+	let sogehtsOffen = $state(false);
+	const mehrereFotos = $derived(data.beitraege.some((b) => b.images.length > 1));
+	function reaktionen(r: { emoji: string; n: number }[]) {
+		const mit = r.filter((x) => x.n > 0).sort((a, b) => b.n - a.n);
+		return { summe: mit.reduce((s, x) => s + x.n, 0), oben: mit.slice(0, 3).map((x) => x.emoji) };
+	}
+	const PFEIL = 'M5 12h14M13 18l6 -6M13 6l6 6';
 	const weitere = $derived(data.mandanten.filter((m) => m.an && !m.eigener));
 	const ausLabel = $derived(
 		weitere.length
@@ -40,9 +51,7 @@
 			<a class="knopf" href={resolve('/(app)/hinter-den-kulissen/neu')}>Beitrag erstellen</a>
 		{/if}
 	</div>
-	<p class="hinweis">
-		Einblicke aus den Abteilungen – ohne Freigabe, mit Einwilligung der Abgebildeten.
-	</p>
+
 	{#if form && 'fehler' in form}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
 	{#if form && 'ok' in form}<p class="meldung" role="status">{form.ok}</p>{/if}
 
@@ -80,7 +89,27 @@
 				<button class="knopf klein" type="submit">Übernehmen</button>
 			</form>
 		</details>
+		<Info
+			thema="Hinter den Kulissen"
+			text="Einblicke aus den Abteilungen – ohne Freigabe, mit Einwilligung der Abgebildeten. Über „Aus“ holst du Beiträge anderer Mandanten dazu."
+		/>
+		{#if mehrereFotos}
+			<button
+				type="button"
+				class="pille diashow"
+				aria-pressed={diashowsAus}
+				onclick={() => (diashowsAus = !diashowsAus)}
+			>
+				{diashowsAus ? '▶ Diashows abspielen' : '❚❚ Diashows anhalten'}
+			</button>
+		{/if}
 	</div>
+	{#if data.freischalten.length || data.soGehts}
+		<p class="hinweis klein-text">
+			Deine Abteilung möchte hier auch etwas zeigen?
+			<a href="#sogehts" onclick={() => (sogehtsOffen = true)}>So geht’s</a>
+		</p>
+	{/if}
 
 	{#if data.beitraege.length === 0}
 		<p class="karte hinweis" role="status">
@@ -89,31 +118,40 @@
 	{:else}
 		<div class="raster">
 			{#each data.beitraege as b (b.id)}
+				{@const r = reaktionen(b.reactions)}
+				{@const href = resolve('/(app)/hinter-den-kulissen/[id]', { id: b.id })}
 				<article class="karte beitrag" aria-labelledby="k-{b.id}">
-					{#if b.cover}
-						<img
-							src={resolve('/(app)/dateien/[id]', { id: b.cover.id })}
-							alt=""
-							loading="lazy"
-							class="cover"
-						/>
+					{#if b.images.length}
+						<Karussell bilder={b.images} titel={b.title} kompakt angehalten={diashowsAus} />
 					{/if}
-					<div class="schilder">
-						<span class="schild">{b.sender}</span>
-						{#if b.otherTenant}<span class="schild rand">{b.tenantShort}</span>{/if}
-					</div>
-					<h2 id="k-{b.id}">
-						<a href={resolve('/(app)/hinter-den-kulissen/[id]', { id: b.id })}>{b.title}</a>
-					</h2>
+					{#if b.otherTenant}<div><span class="schild rand">{b.tenantShort}</span></div>{/if}
+					<h2 id="k-{b.id}"><a class="titellink" {href}>{b.title}</a></h2>
+					<Absender
+						name={b.sender}
+						label={b.senderLabel}
+						slug={b.senderSlug}
+						hub={b.senderHub}
+						wann={datum.format(b.publishAt)}
+					/>
 					<p class="text">{b.excerpt}</p>
-					<span class="hinweis">{datum.format(b.publishAt)}</span>
-					<Reaktionen newsId={b.id} reaktionen={b.reactions} basis="/hinter-den-kulissen" />
+					<a class="weiter" {href} aria-hidden="true" tabindex="-1">
+						Beitrag ansehen <Icon d={PFEIL} size={16} stroke={2.2} />
+					</a>
+					{#if r.summe}
+						<span
+							class="reaktionen"
+							aria-label="{r.summe} {r.summe === 1 ? 'Reaktion' : 'Reaktionen'}"
+						>
+							<span aria-hidden="true">{r.oben.join('')}</span>
+							{r.summe}
+						</span>
+					{/if}
 				</article>
 			{/each}
 		</div>
 	{/if}
 
-	<details class="karte sogehts">
+	<details class="karte sogehts" id="sogehts" bind:open={sogehtsOffen}>
 		<summary><strong>So geht’s</strong></summary>
 		<p>{data.soGehts}</p>
 		{#if data.freischalten.length}
@@ -212,28 +250,37 @@
 		display: grid;
 		gap: 8px;
 	}
-	.cover {
-		width: 100%;
-		height: 180px;
-		object-fit: cover;
-		border-radius: 12px;
+	.diashow {
+		margin-left: auto;
+		font-size: 14px;
+	}
+	.klein-text {
+		margin: 0;
+		font-size: 14px;
+	}
+	.weiter {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		color: var(--ac);
+		font-weight: 600;
+		font-size: 14px;
+		text-decoration: none;
+	}
+	.reaktionen {
+		font-size: 13px;
+		color: var(--mu);
 	}
 	.beitrag h2 {
 		margin: 0;
 		font-size: 18px;
 		line-height: 1.3;
 	}
-	.beitrag h2 a {
-		color: var(--tx);
-	}
+
 	.text {
 		margin: 0;
 	}
-	.schilder {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 6px;
-	}
+
 	.sogehts summary {
 		cursor: pointer;
 		min-height: 44px;

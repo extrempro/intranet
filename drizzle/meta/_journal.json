@@ -218,6 +218,13 @@
       "when": 1795215476081,
       "tag": "0030_rechtliche_links",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1795247464321,
+      "tag": "0031_hub_standard",
+      "breakpoints": true
     }
   ]
 }
