@@ -175,4 +175,49 @@ describe.skipIf(!url)('Hub-Inhalte', () => {
 		expect(r.length).toBe(1);
 		await expect(units.addMember(team, EIGEN, 'fremd@zweithaus.de', '127.0.0.1')).rejects.toThrow();
 	});
+
+	it('alles auf einmal speichern: Team, Links, Ansprechpersonen, Seite', async () => {
+		const hp = await import('./hub-pflege.ts');
+		const daten = hp.hubDatenLesen(
+			JSON.stringify({
+				kurz: 'Proben',
+				koordination: TEAM,
+				hinweis: { an: true, text: 'Probe fällt aus', bis: '2099-01-01' },
+				aufbau: { main: ['schnellzugriff'], side: ['hubteam'] },
+				ruhen: false,
+				team: [
+					{ personId: TEAM, hubteam: true, aufgabe: 'Leitung' },
+					{ personId: DOKS, hubteam: false, dokumente: true, news: true }
+				],
+				kontakte: [{ personId: FREMD, aufgabe: 'Kostüme' }],
+				links: [{ label: 'Plan', description: 'Proben', url: '/kalender', icon: 'kalender' }],
+				dokumente: [],
+				termine: []
+			})
+		);
+		expect(await hp.hubSpeichern(team, ZENTRAL, daten, '<p>Hallo</p>', [], '127.0.0.1')).toEqual(
+			{}
+		);
+		const inhalte = await hi.hubInhalte(ZENTRAL, TEAM);
+		expect(inhalte.links.map((l) => [l.label, l.description, l.url])).toEqual([
+			['Plan', 'Proben', '/kalender']
+		]);
+		expect(inhalte.kontakte.map((k) => k.task)).toEqual(['Kostüme']);
+		expect(inhalte.team.find((t) => t.id === TEAM)).toMatchObject({
+			task: 'Leitung',
+			koordination: true
+		});
+		// Ungültiges Ziel: klare Meldung, vor allen anderen Änderungen geprüft
+		const falsch = hp.hubDatenLesen(
+			JSON.stringify({
+				...JSON.parse(JSON.stringify(daten)),
+				links: [{ label: 'x', url: 'javascript:1' }]
+			})
+		);
+		expect((await hp.hubSpeichern(team, ZENTRAL, falsch, '', [], '127.0.0.1')).fehler).toMatch(
+			/Ziel/
+		);
+		// Ohne Recht: abgewiesen
+		await expect(hp.hubSpeichern(fremd, ZENTRAL, daten, '', [], '127.0.0.1')).rejects.toThrow();
+	});
 });
