@@ -165,6 +165,12 @@ export const units = pgTable(
 		room: text('room'),
 		/** Hinweis oben auf der Hub-Seite */
 		notice: text('notice'),
+		/** Hinweis oben nur bis einschließlich (optional) */
+		noticeUntil: date('notice_until'),
+		/** Hub: Koordination (eine Person aus dem Hub-Team) */
+		coordinatorPersonId: uuid('coordinator_person_id').references((): AnyPgColumn => persons.id, {
+			onDelete: 'set null'
+		}),
 		/** Pflicht-Abo: alle im Zuständigkeitsbereich, Glocke gesperrt */
 		mandatorySubscription: boolean('mandatory_subscription').notNull().default(false),
 		/** Ruhen (Hub-Team): keine neuen Beiträge */
@@ -173,6 +179,15 @@ export const units = pgTable(
 		archivedAt: timestamp('archived_at', { withTimezone: true }),
 		/** Aufbau der Hub-Seite: Abschnitte in Reihenfolge, ausgeblendete fehlen */
 		pageLayout: jsonb('page_layout').$type<HubLayout>(),
+		/** Hub: „Über uns“ aus dem Editor (HTML, bereinigt); `about` bleibt die Kurzbeschreibung */
+		aboutHtml: text('about_html'),
+		/** Hub: Titelbild (4:1) und Symbol (quadratisch), JPEG ohne Metadaten */
+		coverFileId: uuid('cover_file_id').references((): AnyPgColumn => files.id, {
+			onDelete: 'set null'
+		}),
+		iconFileId: uuid('icon_file_id').references((): AnyPgColumn => files.id, {
+			onDelete: 'set null'
+		}),
 		// --- Zuständigkeiten (Kap. 8.11) ---
 		/** Zuletzt „Alles geprüft“ (oder erste Zuständigkeit angelegt) */
 		responsibilitiesCheckedAt: timestamp('responsibilities_checked_at', { withTimezone: true }),
@@ -211,6 +226,10 @@ export const unitMembers = pgTable(
 		mayWriteFaqs: boolean('may_write_faqs').notNull().default(false),
 		mayWriteEvents: boolean('may_write_events').notNull().default(false),
 		mayWriteBehindScenes: boolean('may_write_behind_scenes').notNull().default(false),
+		/** Dokumente der Einheit pflegen (Hubs) */
+		mayWriteDocuments: boolean('may_write_documents').notNull().default(false),
+		/** Hub-Team: Aufgabe im Hub (z. B. „Technik und Aufbau“) */
+		hubTask: text('hub_task'),
 		createdAt: createdAt()
 	},
 	(t) => [
@@ -831,13 +850,93 @@ export const textImages = pgTable(
 			.primaryKey()
 			.references(() => files.id, { onDelete: 'cascade' }),
 		newsId: uuid('news_id').references(() => news.id, { onDelete: 'cascade' }),
-		faqId: uuid('faq_id').references(() => faqs.id, { onDelete: 'cascade' })
+		faqId: uuid('faq_id').references(() => faqs.id, { onDelete: 'cascade' }),
+		/** „Über uns“ einer Einheit (Hub) */
+		unitId: uuid('unit_id').references(() => units.id, { onDelete: 'cascade' })
 	},
 	(t) => [
-		check('text_images_ein_besitzer', sql`(${t.newsId} is null) <> (${t.faqId} is null)`),
+		check('text_images_ein_besitzer', sql`num_nonnulls(${t.newsId}, ${t.faqId}, ${t.unitId}) = 1`),
 		index('text_images_news').on(t.newsId),
-		index('text_images_faq').on(t.faqId)
+		index('text_images_faq').on(t.faqId),
+		index('text_images_unit').on(t.unitId)
 	]
+);
+
+/** Ansprechpersonen eines Hubs: frei gewählte Personen mit kurzer Aufgabe. */
+export const unitContacts = pgTable(
+	'unit_contacts',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		unitId: uuid('unit_id')
+			.notNull()
+			.references(() => units.id, { onDelete: 'cascade' }),
+		personId: uuid('person_id')
+			.notNull()
+			.references(() => persons.id, { onDelete: 'cascade' }),
+		task: text('task').notNull().default(''),
+		position: integer('position').notNull().default(0)
+	},
+	(t) => [
+		index('unit_contacts_unit').on(t.unitId, t.position),
+		uniqueIndex('unit_contacts_einmal').on(t.unitId, t.personId)
+	]
+);
+
+/** Schnellzugriff eines Hubs: Links mit Symbol. */
+export const unitLinks = pgTable(
+	'unit_links',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		unitId: uuid('unit_id')
+			.notNull()
+			.references(() => units.id, { onDelete: 'cascade' }),
+		label: text('label').notNull(),
+		/** Kurzbeschreibung unter dem Titel der Kachel */
+		description: text('description'),
+		url: text('url').notNull(),
+		icon: text('icon').notNull().default('link'),
+		position: integer('position').notNull().default(0)
+	},
+	(t) => [index('unit_links_unit').on(t.unitId, t.position)]
+);
+
+/** Ordner für Dokumente eines Hubs. */
+export const unitDocumentFolders = pgTable(
+	'unit_document_folders',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		unitId: uuid('unit_id')
+			.notNull()
+			.references(() => units.id, { onDelete: 'cascade' }),
+		name: text('name').notNull(),
+		position: integer('position').notNull().default(0)
+	},
+	(t) => [index('unit_document_folders_unit').on(t.unitId, t.position)]
+);
+
+/** Dokumente eines Hubs (verschlüsselt gespeicherte Dateien). */
+export const unitDocuments = pgTable(
+	'unit_documents',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		unitId: uuid('unit_id')
+			.notNull()
+			.references(() => units.id, { onDelete: 'cascade' }),
+		folderId: uuid('folder_id').references(() => unitDocumentFolders.id, {
+			onDelete: 'set null'
+		}),
+		fileId: uuid('file_id')
+			.notNull()
+			.unique()
+			.references(() => files.id, { onDelete: 'cascade' }),
+		title: text('title').notNull(),
+		description: text('description'),
+		position: integer('position').notNull().default(0),
+		createdBy: uuid('created_by').references(() => persons.id, { onDelete: 'set null' }),
+		createdAt: createdAt(),
+		updatedAt: updatedAt()
+	},
+	(t) => [index('unit_documents_unit').on(t.unitId, t.folderId, t.position)]
 );
 
 /**

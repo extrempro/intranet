@@ -7,6 +7,21 @@
 	import { actionUrl } from '#lib/action-url.ts';
 
 	let { data, form } = $props();
+
+	// Suche und Filter direkt im Browser (die Liste ist klein)
+	let suche = $state('');
+	let mandant = $state('');
+	const mandanten = $derived(
+		[...new Set(data.hubs.filter((h) => !h.isCentral).map((h) => h.tenantShort))].sort()
+	);
+	const norm = (t: string) => t.toLocaleLowerCase('de');
+	const gefiltert = $derived(
+		data.hubs.filter(
+			(h) =>
+				(!suche.trim() || norm(`${h.name} ${h.about ?? ''}`).includes(norm(suche.trim()))) &&
+				(!mandant || (mandant === 'alle' ? h.isCentral : !h.isCentral && h.tenantShort === mandant))
+		)
+	);
 </script>
 
 <svelte:head><title>Hubs · Intranet</title></svelte:head>
@@ -54,17 +69,40 @@
 		</a>
 	</nav>
 
+	{#if data.hubs.length > 0}
+		<div class="filter">
+			<label class="feld suche">
+				<span class="sr-only">Hubs durchsuchen</span>
+				<input type="search" bind:value={suche} placeholder="Hubs durchsuchen …" />
+			</label>
+			{#if mandanten.length}
+				<label class="feld">
+					<span class="sr-only">Mandant</span>
+					<select bind:value={mandant}>
+						<option value="">Alle Mandanten</option>
+						<option value="alle">Nur für alle Mandanten</option>
+						{#each mandanten as m (m)}<option value={m}>Nur {m}</option>{/each}
+					</select>
+				</label>
+			{/if}
+		</div>
+		<p class="sr-only" role="status">{gefiltert.length} Hubs</p>
+	{/if}
+
 	{#if data.hubs.length === 0}
 		<p class="karte hinweis">
 			{data.meine
 				? 'Du hast noch keine Hubs abonniert.'
 				: 'Es gibt noch keine Hubs. Beantrag doch den ersten!'}
 		</p>
+	{:else if gefiltert.length === 0}
+		<p class="karte hinweis">Kein Hub passt zu deiner Suche.</p>
 	{:else}
 		<ul class="raster">
-			{#each data.hubs as h (h.id)}
+			{#each gefiltert as h (h.id)}
 				<li class="karte hub">
 					<div class="oben">
+						{#if h.iconUrl}<img class="hubsymbol" src={h.iconUrl} alt="" />{/if}
 						<a class="name dehnen" href={resolve('/(app)/hubs/[slug]', { slug: h.slug })}>
 							{h.name}
 						</a>
@@ -103,6 +141,25 @@
 	}
 	h1 {
 		margin: 0;
+	}
+	.filter {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+	}
+	.filter .suche {
+		flex: 1 1 260px;
+		max-width: 480px;
+	}
+	.filter select {
+		width: auto;
+	}
+	.hubsymbol {
+		width: 40px;
+		height: 40px;
+		flex: none;
+		border-radius: 10px;
+		border: 1px solid var(--bd);
 	}
 	.stern {
 		width: 44px;
@@ -147,6 +204,10 @@
 		justify-content: space-between;
 		align-items: flex-start;
 		gap: 10px;
+	}
+	.oben .name {
+		flex: 1 1 auto;
+		min-width: 0;
 	}
 	.name {
 		font-size: 16px;

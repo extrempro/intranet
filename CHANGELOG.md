@@ -10,6 +10,15 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.18.0 · 21.11.2026 · Hubs ausgebaut
+
+- Neuer Kopf der Hub-Seite mit Kurzinfo, Glocke, Stern für die Favoriten, Link kopieren und dem Hub-Team auf einen Blick; auf Wunsch mit Titelbild und Symbol.
+- Neue Abschnitte: Schnellzugriff als Kacheln, Neues zum Thema mit Vorschaubild, Termine mit „In Kalender“, Dokumente und Anleitungen in Ordnern, Hub-Team mit Aufgaben und Koordination, Ansprechpersonen und häufige Fragen.
+- Der Hinweis oben kann ein Enddatum bekommen und verschwindet danach von selbst.
+- Das Hub-Team pflegt seinen Hub selbst: weitere Personen ins Team holen, Schreibrechte vergeben (auch für Dokumente), Seitenaufbau einstellen. Auch die Verwaltung kann einen Hub pflegen.
+- Bei Hubs für alle Mandanten können Personen aller Mandanten mitmachen.
+- Die Hub-Liste hat eine Suche und einen Filter nach Mandant.
+
 ## 0.17.1 · 21.11.2026 · Entwurf-Knopf neben Speichern
 
 - „Als Entwurf speichern“ steht jetzt direkt neben „Speichern“ bzw. „Veröffentlichen“; darunter steht, wann der Entwurf zuletzt gespeichert wurde.

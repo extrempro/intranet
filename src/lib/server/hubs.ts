@@ -8,6 +8,7 @@ import { and, asc, desc, eq, gte, inArray, isNull, lt, or, sql } from 'drizzle-o
 import { addDays, berlinNow } from '../canteen.ts';
 import {
 	cleanLayout,
+	HUB_GRENZEN,
 	parseTeam,
 	validateApplication,
 	type HubApplicationErrors,
@@ -28,6 +29,7 @@ import { db } from './db/index.ts';
 import {
 	conversations,
 	events,
+	faqs,
 	hubApplications,
 	hubSubscriptions,
 	messages,
@@ -48,6 +50,7 @@ import {
 } from './messages.ts';
 import { notify } from './notify.ts';
 import { createUnit, UnitError } from './units.ts';
+import { bilderVerknuepfen, textMitBildern } from './textbilder.ts';
 
 export class HubError extends Error {}
 
@@ -61,27 +64,6 @@ function inScope(p: Principal) {
 		eq(units.hidden, false),
 		or(eq(units.isCentral, true), eq(units.tenantId, p.tenantId))
 	)!;
-}
-
-/** Hub-Team: Rolle „Hub-Team“ für diesen Hub. */
-async function teamOf(unitId: string) {
-	return db
-		.selectDistinct({
-			id: persons.id,
-			name: persons.displayName,
-			email: persons.email,
-			position: persons.position
-		})
-		.from(roleAssignments)
-		.innerJoin(persons, eq(persons.id, roleAssignments.personId))
-		.where(
-			and(
-				eq(roleAssignments.role, 'hub_team'),
-				eq(roleAssignments.scopeUnitId, unitId),
-				sql`${persons.status} <> 'disabled'`
-			)
-		)
-		.orderBy(asc(persons.displayName));
 }
 
 // ---------------------------------------------------------------------------
@@ -98,6 +80,8 @@ export async function listHubs(p: Principal, onlyMine = false) {
 			isCentral: units.isCentral,
 			resting: units.restingSince,
 			mandatory: units.mandatorySubscription,
+			iconFileId: units.iconFileId,
+			tenantId: units.tenantId,
 			tenantShort: tenants.shortName,
 			subscribed: sql<boolean>`exists (select 1 from hub_subscriptions s where s.unit_id = ${units.id} and s.person_id = ${p.personId})`
 		})
@@ -106,7 +90,11 @@ export async function listHubs(p: Principal, onlyMine = false) {
 		.where(inScope(p))
 		.orderBy(asc(units.name));
 	return rows
-		.map((r) => ({ ...r, subscribed: r.subscribed || r.mandatory }))
+		.map(({ iconFileId, ...r }) => ({
+			...r,
+			iconUrl: iconFileId ? `/dateien/${iconFileId}` : null,
+			subscribed: r.subscribed || r.mandatory
+		}))
 		.filter((r) => !onlyMine || r.subscribed);
 }
 
@@ -128,14 +116,28 @@ export async function getHub(p: Principal, slug: string) {
 		.select({ n: sql<number>`count(*)::int` })
 		.from(roleAssignments)
 		.where(and(eq(roleAssignments.role, 'hub_team'), eq(roleAssignments.scopeUnitId, u.id)));
-	const canManage = canManageUnit(p, u, (managers[0]?.n ?? 0) > 0);
+	const canManage =
+		canManageUnit(p, u, (managers[0]?.n ?? 0) > 0) || canAdministerTenant(p, u.tenantId);
 	const [sub] = await db
 		.select()
 		.from(hubSubscriptions)
 		.where(and(eq(hubSubscriptions.personId, p.personId), eq(hubSubscriptions.unitId, u.id)));
 	const today = berlinNow().date;
-	const [team, termine] = await Promise.all([
-		teamOf(u.id),
+	const { hubInhalte } = await import('./hub-inhalte.ts');
+	const [inhalte, faqListe, abonnierende, termine] = await Promise.all([
+		hubInhalte(u.id, u.coordinatorPersonId),
+		db
+			.select({ id: faqs.id, question: faqs.question })
+			.from(faqs)
+			.where(eq(faqs.unitId, u.id))
+			.orderBy(asc(faqs.position), asc(faqs.createdAt)),
+		canManage
+			? db
+					.select({ n: sql<number>`count(*)::int` })
+					.from(hubSubscriptions)
+					.where(eq(hubSubscriptions.unitId, u.id))
+					.then((r) => r[0]?.n ?? 0)
+			: Promise.resolve(null),
 		db
 			.select({
 				id: events.id,
@@ -158,7 +160,14 @@ export async function getHub(p: Principal, slug: string) {
 		slug: u.slug,
 		name: u.name,
 		about: u.about,
-		notice: u.notice,
+		aboutHtml: u.aboutHtml,
+		// Hinweis oben gilt bis einschließlich „Anzeigen bis“
+		notice: u.notice && (!u.noticeUntil || u.noticeUntil >= today) ? u.notice : null,
+		noticeRaw: u.notice,
+		noticeUntil: u.noticeUntil,
+		coordinatorId: u.coordinatorPersonId,
+		coverUrl: u.coverFileId ? `/dateien/${u.coverFileId}` : null,
+		iconUrl: u.iconFileId ? `/dateien/${u.iconFileId}` : null,
 		isCentral: u.isCentral,
 		tenantName: hub.tenantName,
 		tenantShort: hub.tenantShort,
@@ -173,7 +182,15 @@ export async function getHub(p: Principal, slug: string) {
 			hasUnitRole(p, 'hub_team', u.id) ||
 			p.memberships.some((m) => m.unitId === u.id && m.mayWriteNews),
 		canAdminister: canAdministerTenant(p, u.tenantId),
-		team,
+		canFaqs:
+			canManage ||
+			hasUnitRole(p, 'hub_team', u.id) ||
+			p.memberships.some((m) => m.unitId === u.id && m.mayWriteFaqs),
+		canDocs: canManage || p.memberships.some((m) => m.unitId === u.id && m.mayWriteDocuments),
+		/** Pflicht-Abo: alle; sonst Zahl der Abos (nur für die Pflege) */
+		abonnierende: u.mandatorySubscription ? null : abonnierende,
+		...inhalte,
+		faqs: faqListe,
 		termine
 	};
 }
@@ -329,30 +346,82 @@ export async function hubRecipients(unitId: string) {
 // Pflege durch das Hub-Team
 // ---------------------------------------------------------------------------
 
-async function manageable(p: Principal, unitId: string) {
+/** Hub pflegen: Hub-Team, Redaktion (ohne Hub-Team) und Verwaltung des Mandanten. */
+export async function manageable(p: Principal, unitId: string) {
 	const u = await hubInScope(p, unitId);
 	const [m] = await db
 		.select({ n: sql<number>`count(*)::int` })
 		.from(roleAssignments)
 		.where(and(eq(roleAssignments.role, 'hub_team'), eq(roleAssignments.scopeUnitId, u.id)));
-	if (!canManageUnit(p, u, (m?.n ?? 0) > 0)) throw new HubError('Dafür fehlt dir das Recht.');
+	if (!canManageUnit(p, u, (m?.n ?? 0) > 0) && !canAdministerTenant(p, u.tenantId))
+		throw new HubError('Dafür fehlt dir das Recht.');
 	return u;
+}
+
+/** Dokumente pflegen: wer den Hub pflegt oder das Recht „Dokumente“ hat. */
+export async function dokumentePflegbar(p: Principal, unitId: string) {
+	const u = await hubInScope(p, unitId);
+	if (p.memberships.some((m) => m.unitId === u.id && m.mayWriteDocuments)) return u;
+	return manageable(p, unitId);
+}
+
+/** Darf die Person diesen Hub sehen? (für Bilder und Dokumente) */
+export async function hubSichtbar(p: Principal, unitId: string): Promise<boolean> {
+	if (!GUID.test(unitId)) return false;
+	const [u] = await db
+		.select({ id: units.id })
+		.from(units)
+		.where(and(eq(units.id, unitId), inScope(p)));
+	return Boolean(u);
 }
 
 export async function updateHubPage(
 	p: Principal,
 	unitId: string,
-	input: { notice: string; about: string; layout: HubLayout }
-) {
+	input: {
+		notice: string;
+		noticeUntil: string;
+		about: string;
+		aboutHtml: string;
+		coordinator: string;
+		layout: HubLayout;
+	}
+): Promise<{ fehler?: string }> {
 	await manageable(p, unitId);
-	await db
-		.update(units)
-		.set({
-			notice: input.notice.trim().slice(0, 500) || null,
-			about: input.about.trim().slice(0, 2000) || null,
-			pageLayout: cleanLayout(input.layout)
-		})
-		.where(eq(units.id, unitId));
+	const text = await textMitBildern(p, input.aboutHtml, { art: 'unit', id: unitId });
+	if (text.fehler) return { fehler: text.fehler };
+	const bis = /^\d{4}-\d{2}-\d{2}$/.test(input.noticeUntil) ? input.noticeUntil : null;
+	// Koordination nur aus dem Hub-Team
+	let koordination: string | null = null;
+	if (GUID.test(input.coordinator)) {
+		const [t] = await db
+			.select({ id: roleAssignments.personId })
+			.from(roleAssignments)
+			.where(
+				and(
+					eq(roleAssignments.role, 'hub_team'),
+					eq(roleAssignments.scopeUnitId, unitId),
+					eq(roleAssignments.personId, input.coordinator)
+				)
+			);
+		if (!t) return { fehler: 'Die Koordination übernimmt eine Person aus dem Hub-Team.' };
+		koordination = t.id;
+	}
+	await db.transaction(async (tx) => {
+		await tx
+			.update(units)
+			.set({
+				notice: input.notice.trim().slice(0, HUB_GRENZEN.hinweis) || null,
+				noticeUntil: input.notice.trim() ? bis : null,
+				about: input.about.trim().replace(/\s+/g, ' ').slice(0, HUB_GRENZEN.kurz) || null,
+				aboutHtml: text.html || null,
+				coordinatorPersonId: koordination,
+				pageLayout: cleanLayout(input.layout)
+			})
+			.where(eq(units.id, unitId));
+		await bilderVerknuepfen(tx, { art: 'unit', id: unitId }, text.bilder);
+	});
+	return {};
 }
 
 export async function setResting(p: Principal, unitId: string, resting: boolean, ip: string) {
