@@ -120,7 +120,8 @@ export async function canteenView(locationId: string, now = new Date()) {
 				validFrom: menus.validFrom,
 				validUntil: menus.validUntil,
 				fileId: menus.fileId,
-				size: files.size
+				size: files.size,
+				fileName: files.name
 			})
 			.from(menus)
 			.innerJoin(files, eq(files.id, menus.fileId))

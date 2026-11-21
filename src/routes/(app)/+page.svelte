@@ -321,7 +321,12 @@
 														{t.date === data.termine.today ? 'Heute' : 'Morgen'}
 														{timeLabel(t)}
 													</span>
-													<span class="balken" class:fremd={!t.own} aria-hidden="true"></span>
+													<span
+														class="balken"
+														class:quelle-einheit={!t.isHub}
+														class:fremd={!t.own}
+														aria-hidden="true"
+													></span>
 													<span class="was">
 														<a
 															class="dehnen titellink"

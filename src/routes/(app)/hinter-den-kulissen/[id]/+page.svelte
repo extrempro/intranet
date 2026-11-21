@@ -1,13 +1,15 @@
 <script lang="ts">
 	/* eslint-disable svelte/no-at-html-tags -- Text ist serverseitig bereinigt */
 	import { resolve } from '$app/paths';
+	import Absender from '#lib/components/Absender.svelte';
+	import Karussell from '#lib/components/Karussell.svelte';
+	import LinkKopieren from '#lib/components/LinkKopieren.svelte';
 	import Reaktionen from '#lib/components/Reaktionen.svelte';
 	import { formatSize } from '#lib/format.ts';
 
 	let { data, form } = $props();
 	const b = $derived(data.post);
 	const datum = new Intl.DateTimeFormat('de-DE', { dateStyle: 'long', timeZone: 'Europe/Berlin' });
-	let bild = $state(0);
 	let loeschenFragen = $state(false);
 </script>
 
@@ -15,45 +17,22 @@
 
 <article class="stapel schmal">
 	<a class="zurueck" href={resolve('/(app)/hinter-den-kulissen')}>← Hinter den Kulissen</a>
-	<div>
+	<div class="stapel eng">
+		<span class="rubrik">Hinter den Kulissen</span>
 		<h1>{b.title}</h1>
-		<p class="hinweis">{b.unitName} · {b.tenantShort} · {datum.format(b.publishAt)}</p>
+		<Absender
+			name={b.unitName}
+			label={b.unitLabel}
+			slug={b.unitSlug}
+			hub={b.unitType === 'hub'}
+			wann={datum.format(b.publishAt)}
+		/>
 	</div>
 	{#if form?.fehler}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
 
-	{#if b.images.length}
-		<figure class="galerie">
-			<img
-				src={resolve('/(app)/dateien/[id]', { id: b.images[bild].id })}
-				alt="Foto {bild + 1} von {b.images.length} zu „{b.title}“"
-			/>
-			{#if b.images.length > 1}
-				<div class="blaettern">
-					<button
-						class="knopf zweit klein"
-						type="button"
-						disabled={bild === 0}
-						onclick={() => (bild -= 1)}
-						aria-label="Vorheriges Foto"
-					>
-						‹
-					</button>
-					<span aria-live="polite">Foto {bild + 1} von {b.images.length}</span>
-					<button
-						class="knopf zweit klein"
-						type="button"
-						disabled={bild === b.images.length - 1}
-						onclick={() => (bild += 1)}
-						aria-label="Nächstes Foto"
-					>
-						›
-					</button>
-				</div>
-			{/if}
-		</figure>
-	{/if}
+	{#if b.images.length}<Karussell bilder={b.images} titel={b.title} />{/if}
 
-	<div class="karte text">{@html b.bodyHtml}</div>
+	<div class="text">{@html b.bodyHtml}</div>
 
 	{#if b.files.length}
 		<section class="karte">
@@ -71,7 +50,23 @@
 		</section>
 	{/if}
 
-	<Reaktionen newsId={b.id} reaktionen={b.reactions} basis="/hinter-den-kulissen" />
+	<div class="trenner">
+		<Reaktionen newsId={b.id} reaktionen={b.reactions} basis="/hinter-den-kulissen" hinweis />
+	</div>
+	<div class="trenner zeile">
+		{#if b.unitSlug}
+			<a
+				class="knopf zweit"
+				href={b.unitType === 'hub'
+					? resolve('/(app)/hubs/[slug]', { slug: b.unitSlug })
+					: resolve('/(app)/abteilungen/[slug]', { slug: b.unitSlug })}
+			>
+				Mehr über {b.unitName}
+			</a>
+		{/if}
+		<span class="schieben"></span>
+		<LinkKopieren />
+	</div>
 	<p class="hinweis">
 		Veröffentlicht ohne Freigabe. Abgebildete Personen haben zugestimmt (bestätigt beim Erstellen).
 		Für: {b.targets.map((t) => t.name).join(', ')}
@@ -114,23 +109,34 @@
 	h1 {
 		margin: 0;
 	}
-	.galerie {
-		margin: 0;
-		display: grid;
-		gap: 8px;
+	.eng {
+		gap: 6px;
 	}
-	.galerie img {
-		width: 100%;
-		max-height: 520px;
-		object-fit: contain;
-		border-radius: 14px;
-		background: var(--bg);
+	.rubrik {
+		font-size: 13px;
+		font-weight: 700;
+		color: var(--ac);
 	}
-	.blaettern {
+	h1 {
+		font-size: 30px;
+		line-height: 1.25;
+	}
+	.text {
+		font-size: 17px;
+		line-height: 1.6;
+	}
+	.trenner {
+		padding-top: 14px;
+		border-top: 1px solid var(--bd);
+	}
+	.zeile {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
-		justify-content: center;
-		gap: 12px;
+		gap: 10px;
+	}
+	.schieben {
+		flex: 1;
 	}
 	.text :global(p) {
 		margin: 0 0 10px;
@@ -156,10 +162,6 @@
 		flex-wrap: wrap;
 		gap: 10px;
 		align-items: center;
-	}
-	.klein {
-		min-height: 40px;
-		padding: 6px 12px;
 	}
 	.rot {
 		background: #b42318;

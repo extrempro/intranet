@@ -7,7 +7,11 @@ import type { Actions, PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const p = requirePrincipal(locals);
 	const [liste, favs] = await Promise.all([
-		listFaqs(p, { unitId: url.searchParams.get('einheit'), q: url.searchParams.get('q') }),
+		listFaqs(p, {
+			unitId: url.searchParams.get('einheit'),
+			q: url.searchParams.get('q'),
+			meine: url.searchParams.get('filter') === 'meine'
+		}),
 		listFavorites(p.personId)
 	]);
 	return { ...liste, favorit: favs.some((f) => f.key === 'faqs') };

@@ -154,6 +154,7 @@ const columns = {
 	publishAt: news.publishAt,
 	unitId: news.unitId,
 	unitName: units.name,
+	unitSlug: units.slug,
 	unitType: units.type,
 	unitTitle: units.title,
 	tenantId: news.tenantId,
@@ -283,6 +284,7 @@ export async function getPost(p: Principal, id: string) {
 	]);
 	return {
 		...row,
+		unitLabel: unitTypeLabel({ type: row.unitType, title: row.unitTitle }),
 		images: att.filter((a) => IMAGE.includes(a.kind)),
 		files: att.filter((a) => !IMAGE.includes(a.kind)),
 		reactions: reactions.get(id) ?? [],

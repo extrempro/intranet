@@ -26,6 +26,10 @@
 	--warn-bg: #fffaeb;
 	--warn-bd: #dc6803;
 	--warn-tx: #93370d;
+	/* Termine von Abteilungen und Stabsstellen (Kalender) */
+	--blau: #2563eb;
+	--blau-bg: #eff4ff;
+	--blau-tx: #1d4ed8;
 	--shadow: 0 12px 32px rgb(0 0 0 / 0.18);
 }
 
@@ -45,6 +49,9 @@
 	--warn-bg: #3a2a10;
 	--warn-bd: #fdb022;
 	--warn-tx: #fec84b;
+	--blau: #60a5fa;
+	--blau-bg: #172036;
+	--blau-tx: #93b4fd;
 	--shadow: 0 12px 32px rgb(0 0 0 / 0.5);
 }
 
@@ -66,6 +73,9 @@
 		--warn-bg: #3a2a10;
 		--warn-bd: #fdb022;
 		--warn-tx: #fec84b;
+		--blau: #60a5fa;
+		--blau-bg: #172036;
+		--blau-tx: #93b4fd;
 		--shadow: 0 12px 32px rgb(0 0 0 / 0.5);
 	}
 }
@@ -388,6 +398,12 @@ select.pille {
 	appearance: none;
 	font-weight: 500;
 }
+summary.pille.an {
+	background: var(--fill);
+	border-color: var(--fill);
+	color: #fff;
+	font-weight: 600;
+}
 select.pille.an {
 	background-color: var(--fill);
 	border-color: var(--fill);
@@ -506,4 +522,13 @@ main input[type='search'] {
 	display: flex;
 	gap: 0.5rem;
 	align-items: center;
+}
+
+/* Herkunft eines Termins: Balken und Schild (Kalender, Startseite) */
+.balken.quelle-einheit {
+	background: var(--blau);
+}
+.schild.quelle-einheit {
+	background: var(--blau-bg);
+	color: var(--blau-tx);
 }
