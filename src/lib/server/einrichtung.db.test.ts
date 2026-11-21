@@ -94,6 +94,22 @@ describe.skipIf(!url)('Einrichtung', () => {
 		expect(n).toBe(1);
 	});
 
+	it('gleichzeitige Anfragen mit einem Link legen nur einen Admin an', async () => {
+		const token = await e.neuerLink('notfall');
+		const r = await Promise.allSettled(
+			[1, 2, 3, 4].map((i) =>
+				e.systemAdminAnlegen(token, { name: `Race ${i}`, email: `race${i}@oper.test` }, 'x')
+			)
+		);
+		expect(r.filter((x) => x.status === 'fulfilled')).toHaveLength(1);
+		const [{ n }] = await db.execute<{ n: number }>(
+			sql`select count(*)::int as n from persons where email like 'race%'`
+		);
+		expect(n).toBe(1);
+		await db.execute(sql`delete from persons where email like 'race%'`);
+		await db.execute(sql`delete from audit_log where action = 'setup.emergency_admin'`);
+	});
+
 	it('mit aktivem Admin: kein Erst-Link mehr, Notfall-Link geht', async () => {
 		await db.execute(sql`update persons set status = 'active' where email = 'kai@oper.test'`);
 		expect(await e.einrichtungNoetig()).toBe(false);

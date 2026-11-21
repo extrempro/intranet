@@ -205,6 +205,18 @@ export async function systemAdminAnlegen(
 
 	const einladung = randomToken();
 	const personId = await db.transaction(async (tx) => {
+		// Link zuerst verbrauchen (atomar): Gleichzeitige Anfragen mit demselben
+		// Link legen so höchstens einen Admin an.
+		const verbraucht = await tx
+			.delete(settings)
+			.where(
+				and(
+					eq(settings.key, EINRICHTUNG_KEY),
+					sql`${settings.value}->>'hash' = ${sha256Hex(token)}`
+				)
+			)
+			.returning({ key: settings.key });
+		if (verbraucht.length !== 1) throw new EinrichtungsFehler('Dieser Link gilt nicht mehr.');
 		let id = existing?.id;
 		if (!id) {
 			const [row] = await tx
@@ -226,7 +238,6 @@ export async function systemAdminAnlegen(
 			personId: id,
 			expiresAt: new Date(Date.now() + EINLADUNG_MS)
 		});
-		await tx.delete(settings).where(eq(settings.key, EINRICHTUNG_KEY));
 		return id;
 	});
 	if (!existing) await seedFavorites(personId, tenantId);
