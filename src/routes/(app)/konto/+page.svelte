@@ -223,12 +223,12 @@
 		{#if data.rechtliches.datenschutz}
 			<span aria-hidden="true">·</span>
 			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- externer Link -->
-			<a href={data.rechtliches.datenschutz} rel="noopener">Datenschutz</a>
+			<a href={data.rechtliches.datenschutz} target="_blank" rel="noopener">Datenschutz</a>
 		{/if}
 		{#if data.rechtliches.impressum}
 			<span aria-hidden="true">·</span>
 			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- externer Link -->
-			<a href={data.rechtliches.impressum} rel="noopener">Impressum</a>
+			<a href={data.rechtliches.impressum} target="_blank" rel="noopener">Impressum</a>
 		{/if}
 		<span aria-hidden="true">·</span>
 		<span>Version {data.version}</span>

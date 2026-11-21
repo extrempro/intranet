@@ -10,6 +10,13 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.12.0 · 21.11.2026 · Aufklappbares Menü
+
+- Am PC und Tablet lassen sich die Bereiche im Menü links auf- und zuklappen, sodass du alle Unterseiten auf einen Blick siehst.
+- Das ganze Menü lässt sich auf schmale Symbole zusammenklappen. Ein Klick auf ein Symbol zeigt die Unterseiten daneben. Auf dem Tablet ist es anfangs zusammengeklappt.
+- Das Intranet merkt sich deine Einstellung auf jedem Gerät.
+- Datenschutz und Impressum öffnen sich in einem neuen Fenster.
+
 ## 0.11.2 · 21.11.2026 · Symbol in der Teams-Leiste
 
 - Das kleine Symbol der Intranet-App links in der Teams-Leiste wird jetzt vollständig angezeigt, auch mit feinen Linien.

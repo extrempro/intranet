@@ -7,6 +7,7 @@
 	import BestaetigenDialog from '#lib/components/BestaetigenDialog.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import Kontomenue from '#lib/components/Kontomenue.svelte';
+	import Hauptmenue from '#lib/components/Hauptmenue.svelte';
 	import Kopfsuche from '#lib/components/Kopfsuche.svelte';
 	import NeueVersion from '#lib/components/NeueVersion.svelte';
 	import OfflineHinweis from '#lib/components/OfflineHinweis.svelte';
@@ -21,6 +22,8 @@
 	const aktuell = $derived(currentNav(areas, page.url.pathname));
 	const seitentitel = $derived(aktuell.page?.label ?? aktuell.area?.label ?? 'Intranet');
 	let wechselnOffen = $state(false);
+	/** Hauptmenü ein-/ausgeklappt und offene Bereiche (je Gerät gemerkt) */
+	let menue = $state(untrack(() => data.menue));
 
 	/** Handy: Zurück zur übergeordneten Seite (Unterseite → Bereich, Detail → Unterseite). */
 	const zurueck = $derived.by(() => {
@@ -207,9 +210,10 @@
 			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- externer Link -->
 			<a
 				href={data.rechtliches.datenschutz}
+				target="_blank"
 				rel="noopener"
 				class="infosymbol"
-				aria-label="Datenschutz"
+				aria-label="Datenschutz (öffnet in neuem Fenster)"
 				data-tipp="Datenschutz"
 			>
 				<Icon d={SCHILD} size={20} stroke={1.7} />
@@ -219,9 +223,10 @@
 			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- externer Link -->
 			<a
 				href={data.rechtliches.impressum}
+				target="_blank"
 				rel="noopener"
 				class="infosymbol"
-				aria-label="Impressum"
+				aria-label="Impressum (öffnet in neuem Fenster)"
 				data-tipp="Impressum"
 			>
 				<Icon d={INFO} size={20} stroke={1.7} />
@@ -230,7 +235,12 @@
 	</div>
 {/snippet}
 
-<div class="app akzent" class:teams={data.inTeams} style={data.akzent}>
+<div
+	class="app akzent"
+	class:teams={data.inTeams}
+	style={data.akzent}
+	data-menue={menue.zu === null ? 'auto' : menue.zu ? 'zu' : 'auf'}
+>
 	<header class="kopf">
 		{#if zurueck}
 			<a
@@ -264,74 +274,16 @@
 	</header>
 
 	<div class="rumpf">
-		<!-- PC: Seitenleiste mit Bereichen und Unterseiten -->
-		<nav class="seitenleiste" aria-label="Hauptnavigation">
-			<div class="seiteninnen">
-				{#if data.inTeams}
-					<!-- In Teams ohne eigene Kopfzeile: Werkzeuge oben in der Seitenleiste -->
-					<div class="teams-werkzeuge">{@render werkzeuge(true)}</div>
-				{/if}
-				<Kopfsuche ort="seite" />
-				<div class="trenner" aria-hidden="true"></div>
-				<ul data-tour="navigation">
-					{#each areas as area (area.key)}
-						{@const an = aktuell.area?.key === area.key}
-						<li>
-							<a
-								class="bereich"
-								class:an
-								href={area.href}
-								aria-current={an && !aktuell.page ? 'page' : undefined}
-							>
-								<Icon d={area.icon} size={22} stroke={1.6} />
-								<span class="bereichsname">{area.label}</span>
-								{#if zahl(area.key)}<span class="zahl" aria-label="{zahl(area.key)} neu">
-										{zahl(area.key)}
-									</span>{/if}
-							</a>
-							{#if an && area.pages.length > 1}
-								<ul class="unter">
-									{#each area.pages as p (p.key)}
-										<li>
-											<a
-												href={p.href}
-												class:an={aktuell.page?.key === p.key}
-												aria-current={aktuell.page?.key === p.key ? 'page' : undefined}
-											>
-												<span class="bereichsname">{p.label}</span>
-												{#if zahl(p.key)}<span class="zahl" aria-label="{zahl(p.key)} neu">
-														{zahl(p.key)}
-													</span>{/if}
-											</a>
-										</li>
-									{/each}
-								</ul>
-							{/if}
-						</li>
-					{/each}
-				</ul>
-				{@render infoSymbole(false)}
-			</div>
-		</nav>
-
-		<!-- Tablet: schmale Leiste mit Bereichen -->
-		<nav class="leiste" aria-label="Hauptnavigation">
-			{#each areas as area (area.key)}
-				{@const an = aktuell.area?.key === area.key}
-				<a href={area.href} class:an aria-current={an ? 'page' : undefined}>
-					<span class="symbol">
-						<Icon d={area.icon} />{#if zahl(area.key)}<span
-								class="zahl klein"
-								aria-label="{zahl(area.key)} neu"
-							>
-								{zahl(area.key)}
-							</span>{/if}
-					</span>
-					<span>{area.kurz ?? area.label}</span>
-				</a>
-			{/each}
-			{@render infoSymbole(true)}
-		</nav>
+		<!-- PC und Tablet: Hauptmenü, aus- oder eingeklappt -->
+		<Hauptmenue
+			{areas}
+			{aktuell}
+			{zahl}
+			bind:stand={menue}
+			inTeams={data.inTeams}
+			werkzeuge={data.inTeams ? werkzeuge : undefined}
+			unten={infoSymbole}
+		/>
 
 		<div class="spalte">
 			{#if aktuell.area && aktuell.area.pages.length > 1}
@@ -397,9 +349,7 @@
 						{/each}
 						{#if reiter.mehr.length}
 							<details class="mehr" bind:open={mehrOffen}>
-								<summary class="pille">
-									Mehr <Icon d={PFEIL_RUNTER} size={14} stroke={2} />
-								</summary>
+								<summary class="pille"> Mehr </summary>
 								<ul class="mehrliste">
 									{#each reiter.mehr as p (p.key)}
 										<li>
@@ -597,12 +547,6 @@
 		outline: none;
 	}
 
-	/* PC-Seitenleiste wie im Entwurf: Suche, Trenner, Bereiche */
-	/* Kontomenü aus der Seitenleiste muss über dem Inhalt liegen */
-	.app.teams .seitenleiste {
-		position: relative;
-		z-index: 25;
-	}
 	.infosymbole {
 		display: flex;
 		gap: 4px;
@@ -660,102 +604,7 @@
 	.infosymbol:focus-visible::after {
 		opacity: 1;
 	}
-	.teams-werkzeuge {
-		display: flex;
-		align-items: center;
-		gap: 4px;
-		margin-bottom: 12px;
-	}
-	.teams-werkzeuge :global(form.ohne-xs) {
-		display: inline-flex;
-	}
-	.seitenleiste {
-		display: none;
-		flex: 0 0 260px;
-		box-sizing: border-box;
-		background: var(--sf);
-		border-right: 1px solid var(--bd);
-	}
-	.seiteninnen {
-		position: sticky;
-		top: 61px;
-		display: flex;
-		flex-direction: column;
-		box-sizing: border-box;
-		/* Symbole „Neu im Intranet“, Datenschutz, Impressum unten am Rand */
-		min-height: calc(100dvh - 61px);
-		padding: 20px 16px;
-	}
-	.trenner {
-		height: 1px;
-		background: var(--bd);
-		margin: 18px 4px 14px;
-	}
-	.seiteninnen > ul {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-	}
-	.bereich {
-		display: flex;
-		align-items: center;
-		gap: 14px;
-		min-height: 48px;
-		padding: 11px 14px;
-		box-sizing: border-box;
-		border-radius: 10px;
-		color: var(--mu);
-		text-decoration: none;
-		font-size: 15px;
-		font-weight: 500;
-		transition:
-			background 0.15s,
-			color 0.15s;
-	}
-	.bereich:hover {
-		background: var(--bg);
-		color: var(--tx);
-	}
-	.bereich.an {
-		background: var(--tint);
-		color: var(--ac);
-		font-weight: 600;
-	}
-	.unter {
-		list-style: none;
-		margin: 2px 0 8px 25px;
-		padding-left: 12px;
-		border-left: 1px solid var(--bd);
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-	}
-	.unter a {
-		display: flex;
-		align-items: center;
-		min-height: 40px;
-		padding: 8px 12px;
-		box-sizing: border-box;
-		border-radius: 8px;
-		color: var(--mu);
-		text-decoration: none;
-		font-size: 14px;
-	}
-	.unter a:hover {
-		background: var(--bg);
-		color: var(--tx);
-	}
-	.unter a.an {
-		color: var(--ac);
-		font-weight: 600;
-	}
 
-	.bereichsname {
-		flex: 1;
-	}
 	.zahl {
 		min-width: 22px;
 		height: 22px;
@@ -806,18 +655,6 @@
 	}
 
 	/* Tablet-Leiste */
-	.leiste {
-		display: none;
-		flex: 0 0 92px;
-		flex-direction: column;
-		align-items: center;
-		gap: 6px;
-		padding: 16px 6px;
-		box-sizing: border-box;
-		background: var(--sf);
-		border-right: 1px solid var(--bd);
-	}
-	.leiste a,
 	.unten a {
 		display: flex;
 		flex-direction: column;
@@ -833,14 +670,12 @@
 		font-size: 12px;
 		font-weight: 600;
 	}
-	.leiste a.an :global(svg),
 	.unten a.an :global(svg) {
 		background: var(--tint);
 		color: var(--ac);
 		border-radius: 999px;
 		padding: 4px 14px;
 	}
-	.leiste a.an,
 	.unten a.an {
 		color: var(--ac);
 	}
@@ -1007,19 +842,15 @@
 		.app.teams .kopf {
 			display: none;
 		}
-		.app.teams .seiteninnen {
-			top: 0;
-			min-height: 100dvh;
-		}
-		.seitenleiste {
-			display: block;
+	}
+	/* Unterseiten als Pillen, wenn das Hauptmenü eingeklappt ist */
+	@media (min-width: 600px) {
+		.app[data-menue='zu'] .reiter {
+			display: flex;
 		}
 	}
 	@media (min-width: 600px) and (max-width: 1023px) {
-		.leiste {
-			display: flex;
-		}
-		.reiter {
+		.app[data-menue='auto'] .reiter {
 			display: flex;
 		}
 	}
