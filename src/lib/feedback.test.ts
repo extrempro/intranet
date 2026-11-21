@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { isFeedbackStatus, safeReturnPath, validateFeedback } from './feedback.ts';
+import {
+	isFeedbackStatus,
+	safeReturnPath,
+	validateFeedback,
+	technikAusEingabe
+} from './feedback.ts';
 
 describe('Rückmeldungen', () => {
 	it('springt nur auf eigene Seiten zurück', () => {
@@ -18,5 +23,46 @@ describe('Rückmeldungen', () => {
 		expect(validateFeedback({ kind: 'idee', text: 'x'.repeat(2001) }).text).toBeTruthy();
 		expect(isFeedbackStatus('erledigt')).toBe(true);
 		expect(isFeedbackStatus('weg')).toBe(false);
+	});
+});
+
+describe('technikAusEingabe', () => {
+	it('übernimmt gültige Angaben', () => {
+		const t = technikAusEingabe(
+			JSON.stringify({
+				version: '0.12.1',
+				fenster: '1280 × 800',
+				teams: true,
+				fehler: ['a', 'b', 'c', 'd', 'e', 'f']
+			}),
+			'Mozilla/5.0'
+		);
+		expect(t).toEqual({
+			version: '0.12.1',
+			fenster: '1280 × 800',
+			browser: 'Mozilla/5.0',
+			teams: true,
+			fehler: ['b', 'c', 'd', 'e', 'f']
+		});
+	});
+	it('verwirft Ungültiges, Steuerzeichen und kaputtes JSON', () => {
+		expect(
+			technikAusEingabe(
+				JSON.stringify({
+					version: '1.0<script>',
+					fenster: 'groß',
+					teams: 'ja',
+					fehler: ['x\nINJ', 5]
+				}),
+				null
+			)
+		).toEqual({ version: null, fenster: null, browser: null, teams: false, fehler: ['x INJ'] });
+		expect(technikAusEingabe('{kaputt', 'UA')).toEqual({
+			version: null,
+			fenster: null,
+			browser: 'UA',
+			teams: false,
+			fehler: []
+		});
 	});
 });

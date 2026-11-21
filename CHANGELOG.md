@@ -10,6 +10,13 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.13.0 · 21.11.2026 · Fehler melden mit Bildschirmfoto
+
+- „Rückmeldung geben“ (Daumen oben rechts) öffnet jetzt ein Fenster direkt über der Seite, auf der du bist.
+- Bei einem Fehler kannst du ein Bildschirmfoto mitschicken: am PC direkt aufnehmen, ein Bild auswählen oder mit Strg + V einfügen. Du siehst es vor dem Senden und kannst es wieder entfernen.
+- Damit die IT den Fehler nachstellen kann, gehen ein paar technische Angaben mit, zum Beispiel Version und Browser. Was genau, siehst du vor dem Senden.
+- Fehlermeldungen liest jetzt die IT, Ideen weiter die Verwaltung deines Mandanten. Das Bildschirmfoto wird 30 Tage nach Abschluss gelöscht.
+
 ## 0.12.1 · 21.11.2026 · Menü und Rückmeldung
 
 - Im Menü kannst du jetzt jeden Bereich auf- und zuklappen, auch den, in dem du gerade bist. Mehrere Bereiche können gleichzeitig offen sein.

@@ -246,6 +246,13 @@
       "when": 1795274172871,
       "tag": "0034_hinweis_neue_version",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1795279280035,
+      "tag": "0035_fehlermeldung_technik",
+      "breakpoints": true
     }
   ]
 }

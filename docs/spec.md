@@ -390,7 +390,7 @@ Gruppen:
 - **Einführungen für Rollen**: Abteilungsverwaltung, Hub-Team, Redaktion, Moderation – einmalig beim ersten Öffnen des Bereichs nach Erhalt der Rolle angeboten.
 - **Handbuch** unter Wissen, nach Rolle gefiltert, mit Suche und Kapiteln (Grundlagen, Erstellen, Pflegen, Verwaltung).
 - **„i“-Erläuterungen** an Feldern.
-- **Rückmeldung** (Sprechblase): Fehler oder Idee, mit Angabe der Seite; Stand unter „Meine Meldungen“, Antworten und Rückfragen über Nachrichten. Nach dem Senden zurück zur Ausgangsseite.
+- **Rückmeldung** (Daumen, Fenster über der Seite): Fehler oder Idee, mit Angabe der Seite; Stand unter „Meine Meldungen“, Antworten und Rückfragen über Nachrichten. Fehler lesen nur System-Admins; mit technischen Angaben (Version, Fenstergröße, Browser, Teams, letzte Fehlermeldungen des Browsers) und freiwilligem Bildschirmfoto (aufnehmen am PC, auswählen oder einfügen; Vorschau vor dem Senden; 30 Tage nach Abschluss gelöscht). Ideen liest die Verwaltung des Mandanten.
 - Bewegungen respektieren „Bewegung reduzieren“ des Systems.
 
 ---
@@ -442,6 +442,7 @@ Standardwerte, in der Verwaltung einstellbar, sofern Optionen angegeben.
 | Kalender-Abo-Links                    | nach 12 Monaten ohne Abruf               | –                         |
 | Technische Fehlerprotokolle           | ohne Namen und Inhalte                   | einstellbar               |
 | Rückmeldungen                         | nach Abschluss                           | einstellbar               |
+| Bildschirmfotos zu Fehlermeldungen    | 30 Tage nach Abschluss                   | –                         |
 
 Weitere Regeln:
 
