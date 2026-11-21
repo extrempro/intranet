@@ -450,6 +450,7 @@ Weitere Regeln:
 
 - **Authentisierung** nach Kap. 4; Passwörter mit Argon2id gehasht (**Vorschlag**).
 - **Sitzungen**: sichere, HttpOnly-, SameSite-Cookies; Abmelden nach Inaktivität; Sitzungen beendbar.
+- **Erneute Anmeldung** vor kritischen Verwaltungsaktionen (Rollen vergeben und entziehen, Konten sperren und freigeben, Anmeldung und Entra, SMTP): Microsoft-Konten melden sich neu bei Microsoft an, lokale Konten bestätigen mit dem zweiten Faktor; gilt 10 Minuten. In der Teams-App nicht möglich, dort Link in den Browser.
 - **Zugriffskontrolle** serverseitig für jede Anfrage: Rolle, Geltungsbereich und Mandant. Mandantentrennung zusätzlich auf Datenbankebene absichern (**Vorschlag**: Row-Level Security in PostgreSQL).
 - **Eingaben**: Validierung serverseitig; HTML aus dem Editor wird bereinigt; Schutz gegen CSRF; Content Security Policy und übliche Sicherheits-Header.
 - **Dateien**: Verschlüsselung je Datei mit eigenem Schlüssel; Schlüssel werden mit einem Hauptschlüssel geschützt; Auslieferung nur nach Rechteprüfung; Typprüfung und Größenlimits beim Hochladen.

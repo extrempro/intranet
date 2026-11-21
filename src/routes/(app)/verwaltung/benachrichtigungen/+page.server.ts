@@ -1,4 +1,5 @@
 import { error, fail } from '@sveltejs/kit';
+import { bestaetigungFehlt } from '#lib/server/auth/bestaetigung.ts';
 import { parseMailForm, smtpFehlertext, type StoredMail } from '#lib/mail-config.ts';
 import { isSystemAdmin } from '#lib/server/auth/access.ts';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
@@ -130,6 +131,8 @@ export const actions: Actions = {
 
 	smtp: async ({ request, locals, getClientAddress }) => {
 		const p = requireSystemAdmin(locals);
+		const b = bestaetigungFehlt(locals);
+		if (b) return b;
 		const fd = await request.formData();
 		const form = Object.fromEntries(
 			[...fd].filter(([k]) => k !== 'passwort').map(([k, v]) => [k, String(v).slice(0, 300)])

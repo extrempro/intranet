@@ -9,10 +9,20 @@ import {
 	safeReturnTo
 } from '#lib/server/auth/entra.ts';
 
-/** Startet die Anmeldung mit Microsoft (Authorization Code Flow mit PKCE). */
-export const GET: RequestHandler = async ({ url, cookies }) => {
+/**
+ * Startet die Anmeldung mit Microsoft (Authorization Code Flow mit PKCE).
+ * Mit `bestaetigen=1`: erneute Anmeldung vor kritischen Verwaltungsaktionen,
+ * nur für die eigene Microsoft-Sitzung im Browser (nicht in der Teams-App).
+ */
+export const GET: RequestHandler = async ({ url, cookies, locals }) => {
 	const entra = await getEntraConfig();
 	if (!entra) redirect(303, '/anmelden?fehler=not_configured');
+	const bestaetigen =
+		url.searchParams.get('bestaetigen') === '1' &&
+		locals.session?.authMethod === 'entra' &&
+		!locals.teams
+			? locals.session.id
+			: null;
 
 	let authUrl: URL;
 	try {
@@ -23,7 +33,13 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 
 		cookies.set(
 			OIDC_COOKIE,
-			JSON.stringify({ verifier, state, nonce, ziel: safeReturnTo(url.searchParams.get('ziel')) }),
+			JSON.stringify({
+				verifier,
+				state,
+				nonce,
+				ziel: safeReturnTo(url.searchParams.get('ziel')),
+				...(bestaetigen ? { bestaetigen } : {})
+			}),
 			{ path: '/', httpOnly: true, secure: true, sameSite: 'lax', maxAge: 600 }
 		);
 
@@ -34,7 +50,10 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 			code_challenge_method: 'S256',
 			state,
 			nonce,
-			prompt: 'select_account'
+			// Bestätigen: Anmeldedaten neu eingeben (MFA nach den Entra-Richtlinien)
+			...(bestaetigen && locals.person
+				? { prompt: 'login', login_hint: locals.person.email }
+				: { prompt: 'select_account' })
 		});
 	} catch (err) {
 		console.error('Entra-Anmeldung konnte nicht gestartet werden:', err);

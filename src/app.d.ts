@@ -8,7 +8,7 @@ declare global {
 		interface Locals {
 			/** Angemeldete Person, sonst null. */
 			person: SessionPerson | null;
-			session: { id: string; authMethod: 'entra' | 'local' } | null;
+			session: { id: string; authMethod: 'entra' | 'local'; confirmedAt: Date | null } | null;
 			/** Rollen und Mitgliedschaften der angemeldeten Person für die Rechteprüfung. */
 			principal: Principal | null;
 			/** Gewählte Darstellung; „auto“ folgt dem System. */

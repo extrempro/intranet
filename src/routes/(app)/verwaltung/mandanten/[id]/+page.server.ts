@@ -1,4 +1,5 @@
 import { error, fail } from '@sveltejs/kit';
+import { bestaetigungFehlt } from '#lib/server/auth/bestaetigung.ts';
 import { isSystemAdmin } from '#lib/server/auth/access.ts';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import { readTenantForm } from '#lib/server/tenant-form.ts';
@@ -121,11 +122,15 @@ export const actions: Actions = {
 	},
 	adminHinzu: async ({ request, locals, params, getClientAddress }) => {
 		const p = requirePrincipal(locals);
+		const b = bestaetigungFehlt(locals);
+		if (b) return b;
 		const email = String((await request.formData()).get('email') ?? '').slice(0, 320);
 		return guarded(() => addAdmin(p, params.id, email, getClientAddress()));
 	},
 	adminEntfernen: async ({ request, locals, params, getClientAddress }) => {
 		const p = requirePrincipal(locals);
+		const b = bestaetigungFehlt(locals);
+		if (b) return b;
 		const person = String((await request.formData()).get('person') ?? '').slice(0, 40);
 		return guarded(() => removeAdmin(p, params.id, person, getClientAddress()));
 	}
