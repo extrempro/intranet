@@ -9,9 +9,7 @@
 		mandant,
 		darfVerwaltung,
 		darfRedaktion = false,
-		links = false,
-		datenschutz = null,
-		impressum = null
+		links = false
 	}: {
 		name: string;
 		kuerzel: string;
@@ -21,8 +19,6 @@
 		darfRedaktion?: boolean;
 		/** Menü nach rechts aufklappen (Knopf am linken Rand, z. B. in Teams) */
 		links?: boolean;
-		datenschutz?: string | null;
-		impressum?: string | null;
 	} = $props();
 
 	let offen = $state(false);
@@ -77,8 +73,7 @@
 				</div>
 				<div><strong>{name}</strong><br /><span class="mu">{mandant}</span></div>
 			</div>
-			<a href={resolve('/(app)/konto/profil')} class="eintrag">Mein Profil</a>
-			<a href={resolve('/(app)/konto')} class="eintrag">Konto und Einstellungen</a>
+			<a href={resolve('/(app)/konto')} class="eintrag">Mein Konto</a>
 			<a href={resolve('/(app)/handbuch')} class="eintrag">Handbuch</a>
 			<a href="{resolve('/(app)')}?fuehrung=1" class="eintrag">Führung starten</a>
 			<a href={resolve('/(app)/rueckmeldung/neu')} class="eintrag">Rückmeldung geben</a>
@@ -91,31 +86,11 @@
 			<form method="POST" action="/abmelden">
 				<button type="submit" class="eintrag abmelden">Abmelden</button>
 			</form>
-			{#if datenschutz || impressum}
-				<p class="rechtliches">
-					{#if datenschutz}
-						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- externer Link -->
-						<a href={datenschutz} rel="noopener">Datenschutz</a>
-					{/if}
-					{#if datenschutz && impressum}·{/if}
-					{#if impressum}
-						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- externer Link -->
-						<a href={impressum} rel="noopener">Impressum</a>
-					{/if}
-				</p>
-			{/if}
 		</div>
 	{/if}
 </div>
 
 <style>
-	.rechtliches {
-		margin: 6px 0 0;
-		padding: 8px 12px 2px;
-		border-top: 1px solid var(--bd);
-		font-size: 12px;
-		color: var(--mu);
-	}
 	.konto {
 		position: relative;
 	}

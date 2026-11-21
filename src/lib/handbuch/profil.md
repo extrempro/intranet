@@ -6,7 +6,7 @@ reihenfolge: 6
 kurz: Foto, Position, Telefon, Mobil und Raum pflegen.
 ---
 
-Unter **Konto → Mein Profil** pflegst du deine Angaben selbst; aus Microsoft wird nichts übernommen.
+Unter **Mein Konto** (Menü oben rechts, auf dem Handy **Konto**) pflegst du deine Angaben selbst; aus Microsoft wird nichts übernommen.
 
 - **Position, Telefon, Raum**: für alle sichtbar, die dich im Intranet sehen.
 - **Mobil**: Sichtbarkeit wählbar – Alle, Nur mein Team (Standard) oder Niemand. „Mein Team“ sind Personen, mit denen du in einer Abteilung oder einem Hub bist.

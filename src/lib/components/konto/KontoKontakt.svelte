@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { hierBleiben } from '#lib/formular.ts';
-	/** Kontaktdaten (Kap. 8.13); auf /konto und /konto/profil. */
+	/** Kontaktdaten (Kap. 8.13); auf /konto (Aktionen unter /konto/profil). */
 	import { enhance } from '$app/forms';
 	import { untrack } from 'svelte';
 	import Info from '#lib/components/Info.svelte';

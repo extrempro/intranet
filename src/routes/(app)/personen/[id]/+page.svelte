@@ -18,7 +18,7 @@
 			{#if x.position}<p class="position">{x.position}</p>{/if}
 			<p class="hinweis">{x.tenantName}</p>
 			{#if x.self}
-				<a class="knopf zweit klein" href={resolve('/(app)/konto/profil')}>Profil bearbeiten</a>
+				<a class="knopf zweit klein" href={resolve('/(app)/konto')}>Profil bearbeiten</a>
 			{/if}
 		</div>
 	</div>

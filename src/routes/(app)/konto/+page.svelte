@@ -216,9 +216,46 @@
 			{/if}
 		</section>
 	</div>
+
+	<!-- Handy: kein Hauptmenü an der Seite, daher hier -->
+	<p class="infolinks">
+		<a href={resolve('/(app)/neu-im-intranet')}>Neu im Intranet</a>
+		{#if data.rechtliches.datenschutz}
+			<span aria-hidden="true">·</span>
+			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- externer Link -->
+			<a href={data.rechtliches.datenschutz} rel="noopener">Datenschutz</a>
+		{/if}
+		{#if data.rechtliches.impressum}
+			<span aria-hidden="true">·</span>
+			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- externer Link -->
+			<a href={data.rechtliches.impressum} rel="noopener">Impressum</a>
+		{/if}
+		<span aria-hidden="true">·</span>
+		<span>Version {data.version}</span>
+	</p>
 </div>
 
 <style>
+	.infolinks {
+		display: none;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 4px 8px;
+		margin: 16px 0 0;
+		font-size: 13px;
+		color: var(--mu);
+	}
+	.infolinks a {
+		display: inline-flex;
+		align-items: center;
+		min-height: 24px;
+		color: var(--mu);
+	}
+	@media (max-width: 599px) {
+		.infolinks {
+			display: flex;
+		}
+	}
 	.konto {
 		display: flex;
 		flex-direction: column;
