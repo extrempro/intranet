@@ -37,7 +37,7 @@ details{margin-top:1rem}pre{white-space:pre-wrap;font-size:12px;background:#fff;
 <button id="kopieren" type="button" hidden>Ergebnis kopieren</button>
 <details id="roh"><summary>Ergebnis als Text</summary><pre id="rohtext"></pre></details>
 </main>
-<script src="/teams/test/teams.js"></script>
+<script src="/teams/teams.js"></script>
 <script src="/teams/test/app.js"></script>
 </body>
 </html>`;

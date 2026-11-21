@@ -13,6 +13,12 @@ import { ipPrefix } from '../net.ts';
 import { getSetting } from '../settings.ts';
 
 export const SESSION_COOKIE = '__Host-intranet-sitzung';
+/**
+ * Sitzung in der Teams-App: Das Intranet läuft dort eingebettet, Cookies
+ * gelten als Drittanbieter-Cookies. Darum SameSite=None und „Partitioned“:
+ * Das Cookie gilt nur unter Teams (Partition) und nie für andere Seiten.
+ */
+export const TEAMS_SESSION_COOKIE = '__Host-intranet-teams';
 
 export const IDLE_OPTIONS = {
 	'30m': 30 * 60 * 1000,
@@ -134,6 +140,27 @@ export function setSessionCookie(cookies: Cookies, token: string, expiresAt: Dat
 
 export function deleteSessionCookie(cookies: Cookies) {
 	cookies.delete(SESSION_COOKIE, { path: '/', httpOnly: true, secure: true, sameSite: 'lax' });
+}
+
+export function setTeamsSessionCookie(cookies: Cookies, token: string, expiresAt: Date) {
+	cookies.set(TEAMS_SESSION_COOKIE, token, {
+		path: '/',
+		httpOnly: true,
+		secure: true,
+		sameSite: 'none',
+		partitioned: true,
+		expires: expiresAt
+	});
+}
+
+export function deleteTeamsSessionCookie(cookies: Cookies) {
+	cookies.delete(TEAMS_SESSION_COOKIE, {
+		path: '/',
+		httpOnly: true,
+		secure: true,
+		sameSite: 'none',
+		partitioned: true
+	});
 }
 
 export interface SessionInfo {

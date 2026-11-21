@@ -27,10 +27,7 @@ export const actions: Actions = {
 								CHANNELS.map((c) => [c, f.get(`${t.key}_${FIELD[c]}`) === 'on'])
 							) as Record<Channel, boolean>),
 							// Teams nur ändern, wenn die Spalte angezeigt wurde
-							teams:
-								teams && t.teams !== undefined
-									? f.get(`${t.key}_teams`) === 'on'
-									: vorher.topics[t.key].teams
+							teams: teams ? f.get(`${t.key}_teams`) === 'on' : vorher.topics[t.key].teams
 						};
 		const zeit = (k: string) => String(f.get(k) ?? '').slice(0, 5);
 		await setNotify(p.personId, {

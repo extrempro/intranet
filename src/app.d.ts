@@ -13,6 +13,8 @@ declare global {
 			principal: Principal | null;
 			/** Gewählte Darstellung; „auto“ folgt dem System. */
 			theme: 'auto' | 'hell' | 'dunkel';
+			/** Anfrage aus der Teams-App (Sitzung über das Teams-Cookie) */
+			teams: boolean;
 		}
 		// interface PageData {}
 		// interface PageState {}

@@ -2,17 +2,13 @@ import { redirect, type RequestHandler } from '@sveltejs/kit';
 import * as oidc from 'openid-client';
 import { audit } from '#lib/server/audit.ts';
 import {
-	fetchGroupIds,
-	fetchMe,
 	getEntraConfig,
 	getOidcConfiguration,
 	OIDC_COOKIE,
 	safeReturnTo
 } from '#lib/server/auth/entra.ts';
-import { resolveEntraLogin } from '#lib/server/auth/entra-login.ts';
-import { loadLoginContext, upsertEntraPerson } from '#lib/server/auth/entra-persist.ts';
+import { finishEntraLogin } from '#lib/server/auth/entra-finish.ts';
 import { createSession, setSessionCookie } from '#lib/server/auth/session.ts';
-import { seedFavorites } from '#lib/server/preferences.ts';
 
 interface OidcCookie {
 	verifier: string;
@@ -82,38 +78,8 @@ export const GET: RequestHandler = async ({ url, cookies, request, getClientAddr
 		return deny('failed', { cause: 'token' });
 	}
 
-	let me: Awaited<ReturnType<typeof fetchMe>>;
-	let groupIds: string[];
-	try {
-		[me, groupIds] = await Promise.all([fetchMe(accessToken), fetchGroupIds(accessToken)]);
-	} catch (err) {
-		console.error('Microsoft Graph nicht erreichbar:', err);
-		return deny('failed', { cause: 'graph' });
-	}
-	if (me.id !== oid) return deny('failed', { cause: 'oid_mismatch' });
-
-	const context = await loadLoginContext();
-	const decision = resolveEntraLogin({
-		email: me.mail ?? me.userPrincipalName ?? '',
-		groupIds,
-		accountEnabled: me.accountEnabled !== false,
-		accessGroupId: entra.accessGroupId,
-		adminGroupId: entra.adminGroupId,
-		domains: context.domains,
-		mappings: context.mappings
-	});
-	if (!decision.ok) return deny(decision.reason, { oid });
-
-	const saved = await upsertEntraPerson({
-		oid,
-		email: decision.email,
-		displayName: me.displayName?.trim() || decision.email,
-		tenantId: decision.tenantId,
-		roles: decision.roles
-	});
-	if (!saved.ok) return deny(saved.reason, { oid });
-	// Neue Person: Standard-Favoriten ihres Mandanten (Kap. 7)
-	if (saved.created) await seedFavorites(saved.personId, decision.tenantId);
+	const saved = await finishEntraLogin(oid, accessToken);
+	if (!saved.ok) return deny(saved.reason, saved.cause ? { cause: saved.cause } : { oid });
 
 	const session = await createSession(saved.personId, 'entra', {
 		userAgent: request.headers.get('user-agent'),
@@ -124,8 +90,8 @@ export const GET: RequestHandler = async ({ url, cookies, request, getClientAddr
 		category: 'security',
 		action: 'login.entra.success',
 		actorId: saved.personId,
-		tenantId: decision.tenantId,
-		details: { created: saved.created, roles: decision.roles.map((r) => r.role) },
+		tenantId: saved.tenantId,
+		details: { created: saved.created, roles: saved.roles },
 		ip
 	});
 
