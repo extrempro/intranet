@@ -16,6 +16,15 @@ Die Verwaltung erreichst du über das Konto-Menü. Mandanten-Admins verwalten ih
 
 Gesperrte Konten werden nach der Löschfrist (Standard 90 Tage) gelöscht; Inhalte der Einheiten bleiben.
 
+## Erneute Anmeldung
+
+Bei besonders wichtigen Änderungen fragt das Intranet noch einmal nach, ob wirklich du es bist: beim Vergeben und Entziehen von Rollen (auch Mandanten-Admins und Rollen aus Entra-Gruppen), beim Sperren und Freigeben von Konten, bei den Einstellungen unter **Anmeldung** und beim **SMTP-Server**. So kann niemand eine offen gelassene Sitzung dafür nutzen.
+
+- Mit **Microsoft-Konto** meldest du dich in einem kleinen Fenster noch einmal bei Microsoft an.
+- Mit **lokalem Konto** bestätigst du mit dem Code aus deiner Authenticator-App, einem Wiederherstellungscode oder deinem Passkey.
+
+Danach geht deine Änderung automatisch weiter, und du kannst 10 Minuten lang ohne erneute Nachfrage ändern. In der **Teams-App** geht das nicht; öffne die Verwaltung dafür im Browser.
+
 ## Anmeldung
 
 Unter **Anmeldung** pflegst du als System-Admin:

@@ -4,6 +4,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
+	import BestaetigenDialog from '#lib/components/BestaetigenDialog.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import Kontomenue from '#lib/components/Kontomenue.svelte';
 	import Kopfsuche from '#lib/components/Kopfsuche.svelte';
@@ -96,6 +97,8 @@
 </script>
 
 <a class="skip" href="#inhalt">Zum Inhalt springen</a>
+
+<BestaetigenDialog />
 
 {#if hilfe.aktiv}
 	{#key hilfe.aktiv.key}<Tour tour={hilfe.aktiv} />{/key}

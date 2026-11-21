@@ -1,4 +1,5 @@
 import { error, fail } from '@sveltejs/kit';
+import { bestaetigungFehlt } from '#lib/server/auth/bestaetigung.ts';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import { getPerson, grantRole, revokeRole, setPersonActive, UserError } from '#lib/server/users.ts';
 import type { Actions, PageServerLoad } from './$types';
@@ -23,7 +24,10 @@ async function guarded(fn: () => Promise<unknown>) {
 }
 
 export const actions: Actions = {
+	// Rollen und Sperren nur nach erneuter Anmeldung (ASVS V3.7.1)
 	vergeben: async ({ request, locals, params, getClientAddress }) => {
+		const b = bestaetigungFehlt(locals);
+		if (b) return b;
 		const f = await request.formData();
 		const input = {
 			role: String(f.get('rolle') ?? ''),
@@ -33,11 +37,15 @@ export const actions: Actions = {
 		return guarded(() => grantRole(requirePrincipal(locals), params.id, input, getClientAddress()));
 	},
 	entziehen: async ({ request, locals, params, getClientAddress }) => {
+		const b = bestaetigungFehlt(locals);
+		if (b) return b;
 		const id = String((await request.formData()).get('zuordnung') ?? '');
 		return guarded(() => revokeRole(requirePrincipal(locals), params.id, id, getClientAddress()));
 	},
 	sperren: async ({ locals, params, getClientAddress }) =>
+		bestaetigungFehlt(locals) ??
 		guarded(() => setPersonActive(requirePrincipal(locals), params.id, false, getClientAddress())),
 	freigeben: async ({ locals, params, getClientAddress }) =>
+		bestaetigungFehlt(locals) ??
 		guarded(() => setPersonActive(requirePrincipal(locals), params.id, true, getClientAddress()))
 };

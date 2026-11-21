@@ -35,6 +35,8 @@ const LABELS: Record<string, string> = {
 	'plan.delete': 'Plan gelöscht',
 	'plan.retention_delete': 'Plan nach Frist gelöscht',
 	'plan.upload': 'Plan hochgeladen',
+	'reauth.failed': 'Erneute Anmeldung fehlgeschlagen',
+	'reauth.success': 'Anmeldung erneut bestätigt',
 	'recovery_codes.regenerated': 'Wiederherstellungscodes erneuert',
 	'role.grant': 'Rolle vergeben',
 	'role.revoke': 'Rolle entzogen',

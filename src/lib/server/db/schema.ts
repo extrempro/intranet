@@ -420,7 +420,9 @@ export const sessions = pgTable(
 		/** Für die Liste „Sitzungen“ im Konto. */
 		userAgent: text('user_agent'),
 		/** Gekürzte IP (IPv4 /24, IPv6 /48). */
-		ipPrefix: text('ip_prefix')
+		ipPrefix: text('ip_prefix'),
+		/** Letzte erneute Anmeldung vor kritischen Verwaltungsaktionen (gilt 10 Minuten). */
+		confirmedAt: timestamp('confirmed_at', { withTimezone: true })
 	},
 	(t) => [index('sessions_person').on(t.personId), index('sessions_expires').on(t.expiresAt)]
 );

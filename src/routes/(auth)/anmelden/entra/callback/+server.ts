@@ -7,6 +7,7 @@ import {
 	OIDC_COOKIE,
 	safeReturnTo
 } from '#lib/server/auth/entra.ts';
+import { mitEntraBestaetigen, BESTAETIGUNG_MS } from '#lib/server/auth/bestaetigung.ts';
 import { finishEntraLogin } from '#lib/server/auth/entra-finish.ts';
 import { createSession, setSessionCookie } from '#lib/server/auth/session.ts';
 
@@ -15,6 +16,8 @@ interface OidcCookie {
 	state: string;
 	nonce: string;
 	ziel: string;
+	/** Sitzung, deren Anmeldung bestätigt werden soll */
+	bestaetigen: string | null;
 }
 
 function readOidcCookie(raw: string | undefined): OidcCookie | null {
@@ -27,14 +30,20 @@ function readOidcCookie(raw: string | undefined): OidcCookie | null {
 			typeof v.nonce !== 'string'
 		)
 			return null;
-		return { verifier: v.verifier, state: v.state, nonce: v.nonce, ziel: safeReturnTo(v.ziel) };
+		return {
+			verifier: v.verifier,
+			state: v.state,
+			nonce: v.nonce,
+			ziel: safeReturnTo(v.ziel),
+			bestaetigen: typeof v.bestaetigen === 'string' ? v.bestaetigen : null
+		};
 	} catch {
 		return null;
 	}
 }
 
 /** Rückkehr von Microsoft: Code einlösen, Person abgleichen, Sitzung anlegen. */
-export const GET: RequestHandler = async ({ url, cookies, request, getClientAddress }) => {
+export const GET: RequestHandler = async ({ url, cookies, request, locals, getClientAddress }) => {
 	const ip = getClientAddress();
 	const flow = readOidcCookie(cookies.get(OIDC_COOKIE));
 	cookies.delete(OIDC_COOKIE, { path: '/', httpOnly: true, secure: true, sameSite: 'lax' });
@@ -43,9 +52,11 @@ export const GET: RequestHandler = async ({ url, cookies, request, getClientAddr
 		await audit({
 			category: 'security',
 			action: 'login.entra.denied',
-			details: { reason, ...details },
+			details: { reason, ...details, ...(flow?.bestaetigen ? { bestaetigen: true } : {}) },
 			ip
 		});
+		if (flow?.bestaetigen)
+			redirect(303, `/bestaetigen?ziel=${encodeURIComponent(flow.ziel)}&fehler=1`);
 		redirect(303, `/anmelden?fehler=${encodeURIComponent(reason)}`);
 	};
 
@@ -59,6 +70,7 @@ export const GET: RequestHandler = async ({ url, cookies, request, getClientAddr
 
 	let accessToken: string;
 	let oid: string;
+	let bestaetigt: boolean | null = null;
 	try {
 		const config = await getOidcConfiguration(entra);
 		const tokens = await oidc.authorizationCodeGrant(config, url, {
@@ -73,9 +85,23 @@ export const GET: RequestHandler = async ({ url, cookies, request, getClientAddr
 		}
 		accessToken = tokens.access_token;
 		oid = claims.oid;
+		if (flow.bestaetigen) {
+			// Erneute Anmeldung: frisch angemeldet (falls Microsoft auth_time mitschickt)?
+			const at = typeof claims.auth_time === 'number' ? claims.auth_time * 1000 : null;
+			if (at !== null && Date.now() - at > BESTAETIGUNG_MS) bestaetigt = false;
+			else
+				bestaetigt =
+					locals.session?.id === flow.bestaetigen &&
+					(await mitEntraBestaetigen(flow.bestaetigen, oid, ip));
+		}
 	} catch (err) {
 		console.error('Entra-Token konnte nicht eingelöst werden:', err);
 		return deny('failed', { cause: 'token' });
+	}
+
+	if (bestaetigt !== null) {
+		const zurueck = `/bestaetigen?ziel=${encodeURIComponent(flow.ziel)}&fehler=1`;
+		redirect(303, bestaetigt ? flow.ziel : zurueck);
 	}
 
 	const saved = await finishEntraLogin(oid, accessToken);
