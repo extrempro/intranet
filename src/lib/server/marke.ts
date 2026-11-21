@@ -7,8 +7,6 @@ import { and, eq, inArray } from 'drizzle-orm';
 import { db } from './db/index.ts';
 import { tenantAssets } from './db/schema.ts';
 
-export const LOGO_ARTEN = ['logo_hell', 'logo_dunkel'] as const;
-export const SYMBOL_GROESSEN = [32, 180, 192, 512] as const;
 export type MarkenArt = (typeof tenantAssets.$inferSelect)['art'];
 
 export class MarkeError extends Error {}

@@ -16,7 +16,7 @@ import { parseDomainList } from '../domain.ts';
 import { tenantFromEmail } from '../tenant.ts';
 import { HEX } from '../color.ts';
 import { audit } from './audit.ts';
-import { readInitialTenant } from './bootstrap-config.ts';
+import { readInitialTenant } from './einrichtung-vorbelegung.ts';
 import { randomToken, sha256Hex } from './crypto.ts';
 import { db } from './db/index.ts';
 import {

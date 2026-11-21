@@ -39,6 +39,8 @@ jobs:
         run: npm run check
       - name: Lint
         run: npm run lint
+      - name: Formatierung prüfen
+        run: npm run format:check
       - name: Tests
         run: npm test
         env:

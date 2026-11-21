@@ -36,8 +36,6 @@ export interface MailEnv {
 	SMTP_USER?: string;
 	SMTP_PASSWORD?: string;
 	MAIL_FROM?: string;
-	/** Früherer Name (Versand über Graph) – gilt weiter als Absender */
-	MAIL_SENDER?: string;
 	MAIL_FROM_NAME?: string;
 	MAIL_REPLY_TO?: string;
 }
@@ -81,7 +79,7 @@ export function effectiveMail(stored: StoredMail, env: MailEnv): EffectiveMail {
 		security,
 		user: clean(stored.user) ?? clean(env.SMTP_USER),
 		password: stored.passwordEnc ? 'gespeichert' : clean(env.SMTP_PASSWORD) ? 'env' : null,
-		from: clean(stored.from) ?? clean(env.MAIL_FROM) ?? clean(env.MAIL_SENDER),
+		from: clean(stored.from) ?? clean(env.MAIL_FROM),
 		fromName: clean(stored.fromName) ?? clean(env.MAIL_FROM_NAME),
 		replyTo: clean(stored.replyTo) ?? clean(env.MAIL_REPLY_TO),
 		insecure: stored.insecure === true

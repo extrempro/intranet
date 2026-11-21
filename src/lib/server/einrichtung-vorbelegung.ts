@@ -10,8 +10,9 @@ export interface InitialTenant {
 }
 
 /**
- * Erstbefüllung aus der Umgebung (INITIAL_TENANT_*). null, wenn nichts gesetzt ist.
- * Wirft bei unvollständigen oder ungültigen Angaben, damit der Fehler beim Start auffällt.
+ * Vorbelegung des Einrichtungsformulars (Hauptmandant) aus INITIAL_TENANT_*,
+ * siehe einrichtung.ts. null, wenn nichts gesetzt ist; wirft bei
+ * unvollständigen oder ungültigen Angaben (dann bleibt das Formular leer).
  */
 export function readInitialTenant(env: Record<string, string | undefined>): InitialTenant | null {
 	const name = env.INITIAL_TENANT_NAME?.trim();
