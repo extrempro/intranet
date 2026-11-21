@@ -84,6 +84,7 @@
 		linkAdresse = '';
 	}
 
+	// Sichtbarer Text steht vorn im Namen (WCAG 2.5.3, Sprachsteuerung „H2 klicken“)
 	const knoepfe = $derived([
 		{ l: 'Fett', t: 'B', on: aktiv('bold'), run: () => editor?.chain().focus().toggleBold().run() },
 		{
@@ -93,13 +94,13 @@
 			run: () => editor?.chain().focus().toggleItalic().run()
 		},
 		{
-			l: 'Überschrift',
+			l: 'H2 Überschrift',
 			t: 'H2',
 			on: aktiv('heading', { level: 2 }),
 			run: () => editor?.chain().focus().toggleHeading({ level: 2 }).run()
 		},
 		{
-			l: 'Zwischenüberschrift',
+			l: 'H3 Zwischenüberschrift',
 			t: 'H3',
 			on: aktiv('heading', { level: 3 }),
 			run: () => editor?.chain().focus().toggleHeading({ level: 3 }).run()
@@ -111,7 +112,7 @@
 			run: () => editor?.chain().focus().toggleBulletList().run()
 		},
 		{
-			l: 'Nummerierte Liste',
+			l: '1. Nummerierte Liste',
 			t: '1.',
 			on: aktiv('orderedList'),
 			run: () => editor?.chain().focus().toggleOrderedList().run()

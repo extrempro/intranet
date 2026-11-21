@@ -92,7 +92,7 @@
 <style>
 	.zwei {
 		display: grid;
-		grid-template-columns: minmax(160px, 1fr) minmax(220px, 3fr);
+		grid-template-columns: minmax(min(160px, 100%), 1fr) minmax(220px, 3fr);
 		gap: 12px;
 	}
 	@media (max-width: 600px) {

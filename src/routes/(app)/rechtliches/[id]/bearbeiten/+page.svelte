@@ -49,8 +49,8 @@
 		margin: 0;
 	}
 	.rot {
-		background: #b42318;
-		border-color: #b42318;
+		background: var(--rot);
+		border-color: var(--rot);
 		justify-self: start;
 	}
 	.option {

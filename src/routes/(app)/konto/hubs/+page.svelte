@@ -244,8 +244,8 @@
 		padding: 6px 12px;
 	}
 	.knopf.rot {
-		background: #b42318;
-		border-color: #b42318;
+		background: var(--rot);
+		border-color: var(--rot);
 		color: #fff;
 	}
 	.rotschrift {

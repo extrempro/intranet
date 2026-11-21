@@ -375,7 +375,7 @@
 	}
 	.zwei {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
 		gap: 12px;
 	}
 	.pruefzeile {
@@ -417,7 +417,7 @@
 		padding: 0;
 		margin: 8px 0;
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+		grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
 	}
 	.option {
 		display: flex;

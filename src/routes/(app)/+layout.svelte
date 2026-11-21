@@ -582,8 +582,12 @@
 		font-size: 12px;
 		color: var(--mu);
 	}
+	/* Zielgröße mindestens 24 px (WCAG 2.5.8) */
 	.fusszeile a {
 		color: var(--mu);
+		display: inline-flex;
+		align-items: center;
+		min-height: 24px;
 	}
 	.teams-werkzeuge {
 		display: flex;

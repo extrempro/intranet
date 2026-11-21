@@ -155,7 +155,7 @@
 	}
 	.spalten {
 		display: grid;
-		grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+		grid-template-columns: minmax(0, 2fr) minmax(min(260px, 100%), 1fr);
 		gap: 18px;
 		align-items: start;
 	}

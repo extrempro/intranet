@@ -158,7 +158,15 @@
 		{/if}
 	</div>
 
-	<div class="flaeche" bind:this={flaeche}>
+	<!-- Scrollbare Fläche per Tastatur erreichbar (Pfeiltasten beim Zoomen) -->
+	<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+	<div
+		class="flaeche"
+		bind:this={flaeche}
+		tabindex="0"
+		role="region"
+		aria-label="Vorschau: {titel}"
+	>
 		{#if laedt}<p class="hinweis" role="status">PDF wird geladen …</p>{/if}
 		{#if fehler}
 			<p class="meldung fehler" role="alert">

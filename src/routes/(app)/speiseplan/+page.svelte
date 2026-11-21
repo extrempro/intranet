@@ -196,13 +196,13 @@
 		border-radius: 16px;
 		background: #fcebeb;
 		border: 1px solid #f09595;
-		border-left: 6px solid #b42318;
+		border-left: 6px solid var(--err-tx);
 		color: #18201c;
 	}
 	.zu svg {
 		flex: none;
 		fill: none;
-		stroke: #b42318;
+		stroke: var(--err-tx);
 		stroke-width: 2;
 		stroke-linecap: round;
 	}
@@ -213,7 +213,7 @@
 	}
 	.zu strong {
 		font-size: 20px;
-		color: #b42318;
+		color: var(--err-tx);
 	}
 	.zu span {
 		font-weight: 600;

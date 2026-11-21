@@ -87,6 +87,8 @@
 <svelte:head><title>Kantinen-Pflege · {loc.name}</title></svelte:head>
 
 <div class="stapel">
+	<!-- Überschrift für Bildschirmleser; sichtbar steht „Kantinen-Pflege“ in der Kopfzeile -->
+	<h1 class="sr-only">Kantinen-Pflege {loc.name}: {infos ? 'Kantinen-Infos' : 'Speiseplan'}</h1>
 	<p class="karte rahmen hinweis mit-symbol">
 		<svg
 			width="20"
@@ -519,7 +521,7 @@
 	}
 	.zeile {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
 		gap: 14px;
 	}
 	.liste {
@@ -561,12 +563,12 @@
 		min-height: 0;
 	}
 	.rot {
-		background: #b42318;
-		border-color: #b42318;
+		background: var(--rot);
+		border-color: var(--rot);
 		color: #fff;
 	}
 	.rotschrift {
-		color: #b42318;
+		color: var(--err-tx);
 	}
 	.warnung {
 		display: flex;
@@ -695,12 +697,12 @@
 		border-radius: 16px;
 		background: #fcebeb;
 		border: 1px solid #f09595;
-		border-left: 6px solid #b42318;
+		border-left: 6px solid var(--err-tx);
 		color: #18201c;
 	}
 	.zu strong {
 		font-size: 20px;
-		color: #b42318;
+		color: var(--err-tx);
 	}
 	.feldfehler {
 		color: var(--err-tx);

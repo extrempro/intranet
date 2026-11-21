@@ -192,10 +192,10 @@
 		white-space: pre-line;
 	}
 	.rot {
-		background: #b42318;
-		border-color: #b42318;
+		background: var(--rot);
+		border-color: var(--rot);
 	}
 	.rotschrift {
-		color: #b42318;
+		color: var(--err-tx);
 	}
 </style>
