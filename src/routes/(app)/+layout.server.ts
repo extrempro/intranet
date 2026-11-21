@@ -1,8 +1,15 @@
-import { APP_VERSION } from '#lib/server/changelog.ts';
+import { APP_VERSION, releaseNotes } from '#lib/server/changelog.ts';
+import { neuerungsHinweis } from '#lib/neue-version.ts';
 import { initials } from '#lib/format.ts';
 import { canSeeAdministration, type Principal } from '#lib/server/auth/access.ts';
 import { photosOf } from '#lib/server/people.ts';
-import { getHelpSeen, getNewsSeen, markNewsSeen } from '#lib/server/preferences.ts';
+import {
+	getHelpSeen,
+	getNewsSeen,
+	getVersionHint,
+	markNewsSeen,
+	markVersionSeen
+} from '#lib/server/preferences.ts';
 import { countNewNews } from '#lib/server/news.ts';
 import { takeFlash } from '#lib/server/flash.ts';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
@@ -16,14 +23,16 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 	void url.pathname;
 	const principal = requirePrincipal(locals);
 	const person = locals.person!;
-	const [branding, ungelesen, nachrichten, fotos, hilfeGesehen, neueBeitraege] = await Promise.all([
-		brandingFor(person.tenantId),
-		unreadCount(person.id),
-		unreadConversations(principal),
-		photosOf([person.id]),
-		getHelpSeen(person.id),
-		neueNeuigkeiten(principal, url.pathname)
-	]);
+	const [branding, ungelesen, nachrichten, fotos, hilfeGesehen, neueBeitraege, neuInVersion] =
+		await Promise.all([
+			brandingFor(person.tenantId),
+			unreadCount(person.id),
+			unreadConversations(principal),
+			photosOf([person.id]),
+			getHelpSeen(person.id),
+			neueNeuigkeiten(principal, url.pathname),
+			neuerungen(person.id, url.pathname)
+		]);
 	return {
 		ich: {
 			name: person.displayName,
@@ -49,7 +58,9 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		nachrichten,
 		meldung: takeFlash(cookies),
 		hilfeGesehen,
-		neueBeitraege
+		neueBeitraege,
+		/** Nach einem Update einmal: „Neu in Version …“ */
+		neuInVersion
 	};
 };
 
@@ -68,4 +79,15 @@ async function neueNeuigkeiten(principal: Principal, pfad: string): Promise<numb
 		return 0;
 	}
 	return countNewNews(principal, seit);
+}
+
+/** Hinweis „Neu in Version …“: einmal je Person und Version (abschaltbar unter Konto). */
+async function neuerungen(
+	personId: string,
+	pfad: string
+): Promise<{ version: string; titel: string } | null> {
+	const e = neuerungsHinweis(await getVersionHint(personId), APP_VERSION, pfad);
+	if (e.merken) await markVersionSeen(personId, APP_VERSION);
+	const eintrag = releaseNotes()[0];
+	return e.zeigen && eintrag ? { version: eintrag.version, titel: eintrag.title } : null;
 }

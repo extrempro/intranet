@@ -27,6 +27,8 @@ Am PC stehen die Bereiche links, am Handy unten.
 
 Ganz unten auf jeder Seite stehen die Version und **Neu im Intranet**: Dort siehst du, was sich zuletzt geändert hat.
 
+Gibt es eine neue Version, während du das Intranet offen hast, erscheint oben der Hinweis **Neu laden**. Spätestens beim nächsten Klick auf einen Link bekommst du sie ohnehin. Danach zeigt das Intranet einmal kurz, was neu ist. Das kannst du unter **Konto → Weitere Einstellungen** abschalten.
+
 ## Führung und Einführungen
 
 Beim ersten Start zeigt dir eine kurze **Führung** die wichtigsten Stellen. Du kannst sie jederzeit beenden und später im Konto-Menü unter „Führung starten“ wiederholen.

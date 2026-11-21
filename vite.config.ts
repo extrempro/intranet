@@ -6,6 +6,9 @@ export default defineConfig({
 	plugins: [
 		sveltekit({
 			adapter: adapter(),
+			// Neue Version erkennen (Hinweis „Neu laden“, NeueVersion.svelte): zusätzlich zu
+			// Seitenwechseln und Rückkehr in den Tab alle 5 Minuten (lange offene Teams-Reiter)
+			version: { pollInterval: 5 * 60 * 1000 },
 			// Content Security Policy: Skripte und Styles nur von der eigenen Herkunft,
 			// SvelteKit ergänzt Hashes bzw. Nonces für eigene Inline-Skripte.
 			// Schutz gegen CSRF ist in SvelteKit immer aktiv.

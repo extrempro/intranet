@@ -10,6 +10,11 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.11.0 · 21.11.2026 · Hinweis auf neue Versionen
+
+- Gibt es eine neue Version des Intranets, während du es offen hast, erscheint oben der Hinweis „Neu laden“. Das gilt im Browser und in der Teams-App. Beim nächsten Klick auf einen Link bekommst du die neue Version ohnehin.
+- Nach einem Update zeigt das Intranet einmal kurz, was neu ist. Unter Konto → Weitere Einstellungen kannst du das abschalten.
+
 ## 0.10.1 · 21.11.2026 · Teams-App ohne Test-Reiter
 
 - Die Teams-App hat keinen Reiter „Test“ mehr.
