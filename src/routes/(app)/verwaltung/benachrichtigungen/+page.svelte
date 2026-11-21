@@ -1,4 +1,5 @@
 <script lang="ts">
+	import TeamsAussehen from '#lib/components/TeamsAussehen.svelte';
 	import { enhance } from '$app/forms';
 	import Info from '#lib/components/Info.svelte';
 	import { SMTP_SECURITY } from '#lib/mail-config.ts';
@@ -276,6 +277,16 @@
 							: t.status.meldung}
 					</p>
 				{/if}
+				<details open={Boolean(bereich('teams-marke'))}>
+					<summary>Aussehen der Teams-App</summary>
+					{#if bereich('teams-marke')?.ergebnis}
+						<p class="meldung" role="status">{bereich('teams-marke')?.ergebnis}</p>
+					{/if}
+					{#if bereich('teams-marke')?.fehler}
+						<p class="meldung fehler" role="alert">{bereich('teams-marke')?.fehler}</p>
+					{/if}
+					<TeamsAussehen aussehen={t.aussehen} />
+				</details>
 				<details>
 					<summary>Einrichtung</summary>
 					<ol class="schritte">

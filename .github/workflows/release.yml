@@ -2,11 +2,20 @@ name: Release
 
 # Legt nach dem Merge für eine neue Version (package.json) ein GitHub-Release an.
 # Der Text kommt aus CHANGELOG.md (gleicher Eintrag wie „Neu im Intranet“).
+# Von Hand (Actions → Release → Run workflow) lässt sich auch ein Release für
+# eine frühere Version an einem bestimmten Commit nachtragen.
 on:
   push:
     branches: [main]
     paths: [package.json, CHANGELOG.md]
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version aus CHANGELOG.md, z. B. 0.2.0 (leer = aktuelle Version)'
+        required: false
+      commit:
+        description: 'Commit für den Tag (leer = neuester Stand von main)'
+        required: false
 
 permissions:
   contents: write
@@ -22,12 +31,21 @@ jobs:
       - name: Release anlegen, falls es die Version noch nicht gibt
         env:
           GH_TOKEN: ${{ github.token }}
+          EINGABE_VERSION: ${{ inputs.version }}
+          EINGABE_COMMIT: ${{ inputs.commit }}
         run: |
-          V=$(node -p "require('./package.json').version")
+          AKTUELL=$(node -p "require('./package.json').version")
+          V=${EINGABE_VERSION:-$AKTUELL}
+          ZIEL=${EINGABE_COMMIT:-$GITHUB_SHA}
+          if ! [[ "$V" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then echo "Ungültige Version: $V"; exit 1; fi
+          if ! [[ "$ZIEL" =~ ^[0-9a-f]{7,40}$ ]]; then echo "Ungültiger Commit: $ZIEL"; exit 1; fi
           if gh release view "v$V" >/dev/null 2>&1; then
             echo "Release v$V gibt es schon."
             exit 0
           fi
           node scripts/release-notes.mjs "$V" > notes.md
           TITEL=$(node scripts/release-notes.mjs "$V" --titel)
-          gh release create "v$V" --target "$GITHUB_SHA" --title "$V · $TITEL" --notes-file notes.md
+          # Ältere Versionen nicht als „neueste“ markieren
+          LATEST=true
+          if [ "$V" != "$AKTUELL" ]; then LATEST=false; fi
+          gh release create "v$V" --target "$ZIEL" --title "$V · $TITEL" --notes-file notes.md --latest=$LATEST

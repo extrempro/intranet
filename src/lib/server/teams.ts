@@ -17,11 +17,11 @@ import {
 	TEAMS_TEST_ENTITY,
 	type TeamsItem
 } from '../teams.ts';
+import { teamsAppAussehen } from './teams-marke.ts';
 import { teamsResource } from './teams-sso.ts';
 import { getEntraConfig, GraphError, graphAppPost } from './auth/entra.ts';
 import { db } from './db/index.ts';
 import { notifications, persons } from './db/schema.ts';
-import { pageIcon } from './png.ts';
 import { getSetting, setSetting } from './settings.ts';
 import { teamsActive, teamsSettings } from './teams-config.ts';
 import { zip } from './zip.ts';
@@ -202,7 +202,8 @@ export async function teamsAppPackage(origin: string): Promise<{ name: string; d
 	const entra = await getEntraConfig();
 	if (!entra)
 		throw new Error('Die Anmeldung mit Microsoft ist nicht eingerichtet (Client-ID fehlt).');
-	const { appId, version } = await teamsSettings();
+	const [{ appId, version }, aussehen] = await Promise.all([teamsSettings(), teamsAppAussehen()]);
+	const m = aussehen.marke;
 	const host = new URL(origin).host;
 	const manifest = {
 		$schema: 'https://developer.microsoft.com/json-schemas/teams/v1.19/MicrosoftTeams.schema.json',
@@ -210,22 +211,20 @@ export async function teamsAppPackage(origin: string): Promise<{ name: string; d
 		version: `1.0.${version}`,
 		id: appId,
 		developer: {
-			name: 'IT',
+			name: m.herausgeber,
 			websiteUrl: origin,
-			privacyUrl: `${origin}/rechtliches`,
-			termsOfUseUrl: `${origin}/rechtliches`
+			// Datenschutz und Impressum des Hauptmandanten, sonst Rechtliches im Intranet
+			privacyUrl: aussehen.datenschutz ?? `${origin}/rechtliches`,
+			termsOfUseUrl: aussehen.impressum ?? `${origin}/rechtliches`
 		},
-		name: { short: 'Intranet', full: 'Intranet' },
-		description: {
-			short: 'Das Intranet in Teams',
-			full: 'Das Intranet direkt in Teams, mit Anmeldung über dein Microsoft-Konto. Benachrichtigungen erscheinen unter „Aktivität“; ein Klick öffnet den Beitrag in der App.'
-		},
+		name: { short: m.kurzname, full: m.langname },
+		description: { short: m.kurzbeschreibung, full: m.langbeschreibung },
 		icons: { color: 'color.png', outline: 'outline.png' },
-		accentColor: '#0F6E56',
+		accentColor: m.farbe,
 		staticTabs: [
 			{
 				entityId: TEAMS_TAB_ENTITY,
-				name: 'Intranet',
+				name: m.kurzname,
 				contentUrl: `${origin}/teams/app?ziel={subEntityId}`,
 				websiteUrl: origin,
 				scopes: ['personal']
@@ -242,13 +241,10 @@ export async function teamsAppPackage(origin: string): Promise<{ name: string; d
 		webApplicationInfo: { id: entra.clientId, resource: teamsResource(origin, entra.clientId) },
 		showLoadingIndicator: false
 	};
-	const gruen: [number, number, number, number] = [15, 110, 86, 255];
-	const weiss: [number, number, number, number] = [255, 255, 255, 255];
-	const leer: [number, number, number, number] = [0, 0, 0, 0];
 	const data = zip([
 		{ name: 'manifest.json', data: new TextEncoder().encode(JSON.stringify(manifest, null, 2)) },
-		{ name: 'color.png', data: pageIcon(192, weiss, gruen) },
-		{ name: 'outline.png', data: pageIcon(32, weiss, leer) }
+		{ name: 'color.png', data: aussehen.farbig },
+		{ name: 'outline.png', data: aussehen.umriss }
 	]);
 	return { name: `intranet-teams-${version}.zip`, data };
 }

@@ -17,6 +17,16 @@ import { getEntraConfig } from '#lib/server/auth/entra.ts';
 import { saveTeamsSettings, teamsSettings } from '#lib/server/teams-config.ts';
 import { sendTeamsTest, teamsStatus } from '#lib/server/teams.ts';
 import { teamsResource } from '#lib/server/teams-sso.ts';
+import {
+	deleteTeamsSymbole,
+	getTeamsMarke,
+	saveTeamsMarke,
+	saveTeamsSymbole,
+	TEAMS_MARKE_STANDARD,
+	teamsAppAussehen,
+	TeamsMarkeError,
+	type TeamsMarke
+} from '#lib/server/teams-marke.ts';
 import { db } from '#lib/server/db/index.ts';
 import { persons } from '#lib/server/db/schema.ts';
 import { eq } from 'drizzle-orm';
@@ -49,6 +59,17 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 						return e ? teamsResource(process.env.ORIGIN?.trim() || url.origin, e.clientId) : null;
 					})(),
 					status: await teamsStatus(),
+					aussehen: await (async () => {
+						const a = await teamsAppAussehen();
+						return {
+							gespeichert: await getTeamsMarke(),
+							standard: TEAMS_MARKE_STANDARD,
+							farbe: a.marke.farbe,
+							quelle: a.quelle,
+							farbig: `data:image/png;base64,${Buffer.from(a.farbig).toString('base64')}`,
+							umriss: `data:image/png;base64,${Buffer.from(a.umriss).toString('base64')}`
+						};
+					})(),
 					microsoftKonto: Boolean(
 						(
 							await db
@@ -61,6 +82,28 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			: null
 	};
 };
+
+/**
+ * Nach einer Änderung am Aussehen: Teams übernimmt ein neues Paket nur mit
+ * höherer Version. Darum gleich hochzählen.
+ */
+async function neueVersion(personId: string, ip: string, was: string, bereich: string) {
+	const s = await teamsSettings();
+	await saveTeamsSettings({ ...s, version: s.version + 1 }, personId);
+	await audit({
+		category: 'admin',
+		action: 'settings.update',
+		actorId: personId,
+		entityType: 'setting',
+		entityId: was,
+		details: { version: s.version + 1 },
+		ip
+	});
+	return {
+		bereich,
+		ergebnis: `Gespeichert. Neue Version 1.0.${s.version + 1}: Lade das Paket herunter und aktualisiere die App im Teams Admin Center.`
+	};
+}
 
 function requireSystemAdmin(locals: App.Locals) {
 	const p = requirePrincipal(locals);
@@ -148,6 +191,56 @@ export const actions: Actions = {
 			bereich: 'teams',
 			ergebnis: aktiv ? 'Teams-Benachrichtigungen sind an.' : 'Teams-Benachrichtigungen sind aus.'
 		};
+	},
+
+	teamsMarke: async ({ locals, request, getClientAddress }) => {
+		const p = requireSystemAdmin(locals);
+		const f = await request.formData();
+		const feld = (k: keyof TeamsMarke) => String(f.get(k) ?? '').slice(0, 5000);
+		try {
+			if (f.get('zuruecksetzen') === 'ja') await saveTeamsMarke({}, p.personId);
+			else
+				await saveTeamsMarke(
+					{
+						kurzname: feld('kurzname'),
+						langname: feld('langname'),
+						kurzbeschreibung: feld('kurzbeschreibung'),
+						langbeschreibung: feld('langbeschreibung'),
+						herausgeber: feld('herausgeber'),
+						farbe: feld('farbe')
+					},
+					p.personId
+				);
+		} catch (err) {
+			if (err instanceof TeamsMarkeError)
+				return fail(400, { bereich: 'teams-marke', fehler: err.message });
+			throw err;
+		}
+		return neueVersion(p.personId, getClientAddress(), 'teams.marke', 'teams-marke');
+	},
+
+	teamsSymbol: async ({ locals, request, getClientAddress }) => {
+		const p = requireSystemAdmin(locals);
+		const f = await request.formData();
+		try {
+			if (f.get('zuruecksetzen') === 'ja') await deleteTeamsSymbole(p.personId);
+			else {
+				const farbig = f.get('farbig');
+				const umriss = f.get('umriss');
+				if (!(farbig instanceof File))
+					return fail(400, { bereich: 'teams-marke', fehler: 'Bitte wähle ein Bild.' });
+				await saveTeamsSymbole(
+					new Uint8Array(await farbig.arrayBuffer()),
+					umriss instanceof File && umriss.size ? new Uint8Array(await umriss.arrayBuffer()) : null,
+					p.personId
+				);
+			}
+		} catch (err) {
+			if (err instanceof TeamsMarkeError)
+				return fail(400, { bereich: 'teams-marke', fehler: err.message });
+			throw err;
+		}
+		return neueVersion(p.personId, getClientAddress(), 'teams.symbole', 'teams-marke');
 	},
 
 	teamsVersion: async ({ locals, getClientAddress }) => {

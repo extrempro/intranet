@@ -10,6 +10,11 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.5.0 · 21.11.2026 · Eigenes Aussehen für die Teams-App
+
+- Die Teams-App zeigt jetzt Symbol und Farbe des Hauses.
+- Die IT kann Name, Beschreibung, Herausgeber, Farbe und Symbol der Teams-App selbst festlegen.
+
 ## 0.4.0 · 21.11.2026 · Neu im Intranet
 
 - Unten auf jeder Seite steht jetzt die Version. Ein Klick auf „Neu im Intranet“ zeigt, was sich geändert hat.
