@@ -408,11 +408,6 @@ export async function deletePost(p: Principal, id: string) {
 	await deleteStored([...post.images, ...post.files].map((a) => a.id));
 }
 
-/** Für die Verwaltung: „So geht’s“ bearbeiten dürfen alle System-Admins. */
-export function mayEditHowTo(p: Principal) {
-	return p.roles.some((r) => r.role === 'system_admin');
-}
-
 /** Angaben zu Dateien für das erneute Anzeigen des Formulars (eigene Uploads oder des Beitrags). */
 export async function describeFiles(p: Principal, ids: string[], postId: string | null) {
 	const valid = ids.filter((x) => GUID.test(x));

@@ -10,6 +10,11 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.8.1 · 21.11.2026 · Aufgeräumt
+
+- Der Hinweis zum E-Mail-Versand bei den Betreiber-Konten zeigt jetzt, wo er sich einrichten lässt.
+- Kleinere Aufräumarbeiten im Hintergrund.
+
 ## 0.8.0 · 21.11.2026 · Einrichtung ohne Microsoft
 
 - Ein neu aufgesetztes Intranet wird über einen einmaligen Link eingerichtet: Hauptmandant anlegen und den ersten Admin mit eigenem Passwort und zweitem Faktor.

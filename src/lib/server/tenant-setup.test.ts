@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { checkAccent, contrastRatio } from '../color';
 import { normalizeDomain, parseDomainList } from '../domain';
-import { readInitialTenant } from './bootstrap-config';
+import { readInitialTenant } from './einrichtung-vorbelegung';
 
 describe('Domains', () => {
 	it('vereinheitlicht', () => {

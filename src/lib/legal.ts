@@ -7,13 +7,11 @@ export const AGREEMENT_KINDS = [
 	{ key: 'betrieb', label: 'Betriebsvereinbarungen', single: 'Betriebsvereinbarung' },
 	{ key: 'dienst', label: 'Dienstvereinbarungen', single: 'Dienstvereinbarung' }
 ] as const;
-export type AgreementKind = (typeof AGREEMENT_KINDS)[number]['key'];
 
 export const LEGAL_KINDS = [
 	{ key: 'gesetz', label: 'Gesetze' },
 	{ key: 'tarif', label: 'Tarifverträge' }
 ] as const;
-export type LegalKind = (typeof LEGAL_KINDS)[number]['key'];
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 

@@ -48,15 +48,6 @@ export function roleAllows(p: Principal, box: RoleBox, tenantId: string): boolea
 // Rollen-Postfächer
 // ---------------------------------------------------------------------------
 
-/** Mandanten, deren Schwarzes Brett die Person moderiert. */
-export async function moderatedTenants(p: Principal) {
-	const all = await db
-		.select({ id: tenants.id, name: tenants.name, short: tenants.shortName })
-		.from(tenants)
-		.orderBy(asc(tenants.name));
-	return all.filter((t) => hasTenantRole(p, 'moderation_schwarzes_brett', t.id));
-}
-
 /** Personen, die das Rollen-Postfach dieses Mandanten bedienen (für Benachrichtigungen). */
 export async function roleMembers(box: RoleBox, tenantId: string): Promise<string[]> {
 	const role =
