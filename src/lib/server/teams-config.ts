@@ -11,11 +11,23 @@ export interface TeamsSettings {
 	version: number;
 }
 
+const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * App-ID aus der .env (TEAMS_APP_ID). Festgelegt bleibt sie auch bei einer neuen
+ * Datenbank gleich, sonst bekäme die Teams-App eine neue ID („App nicht gefunden“).
+ */
+export function teamsAppIdAusEnv(): string | null {
+	const v = process.env.TEAMS_APP_ID?.trim().toLowerCase();
+	return v && GUID.test(v) ? v : null;
+}
+
 export async function teamsSettings(): Promise<TeamsSettings> {
+	const fest = teamsAppIdAusEnv();
 	const s = await getSetting<Partial<TeamsSettings> | null>('teams', null);
-	if (s?.appId) return { aktiv: s.aktiv === true, appId: s.appId, version: s.version ?? 1 };
-	// Beim ersten Aufruf eine feste App-ID anlegen
-	const neu: TeamsSettings = { aktiv: false, appId: randomUUID(), version: 1 };
+	if (s?.appId) return { aktiv: s.aktiv === true, appId: fest ?? s.appId, version: s.version ?? 1 };
+	// Beim ersten Aufruf die App-ID festhalten (aus der .env oder neu)
+	const neu: TeamsSettings = { aktiv: false, appId: fest ?? randomUUID(), version: 1 };
 	await setSetting('teams', neu, null);
 	return neu;
 }

@@ -15,7 +15,7 @@ import {
 import { pushStatus, sendToPerson, vapidKeys } from '#lib/server/push.ts';
 import { setSetting } from '#lib/server/settings.ts';
 import { getEntraConfig } from '#lib/server/auth/entra.ts';
-import { saveTeamsSettings, teamsSettings } from '#lib/server/teams-config.ts';
+import { saveTeamsSettings, teamsAppIdAusEnv, teamsSettings } from '#lib/server/teams-config.ts';
 import { sendTeamsTest, teamsStatus } from '#lib/server/teams.ts';
 import { teamsResource } from '#lib/server/teams-sso.ts';
 import {
@@ -53,6 +53,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		teams: system
 			? {
 					einstellung: await teamsSettings(),
+					appIdFest: teamsAppIdAusEnv() !== null,
 					entra: Boolean(await getEntraConfig()),
 					// Application ID URI für den Test „Intranet ganz in Teams“
 					ssoResource: await (async () => {
