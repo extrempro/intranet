@@ -24,12 +24,15 @@
 				pinKonflikt={form?.pinKonflikt ?? null}
 				regeln={data.regeln}
 				knopf="Speichern und freigeben"
-			/>
-			<EntwurfSpeichern
-				art="news"
-				id={form?.entwurf ?? data.entwurf?.id ?? null}
-				gespeichert={data.entwurf?.gespeichert ?? null}
-			/>
+			>
+				{#snippet zusatz()}
+					<EntwurfSpeichern
+						art="news"
+						id={form?.entwurf ?? data.entwurf?.id ?? null}
+						gespeichert={data.entwurf?.gespeichert ?? null}
+					/>
+				{/snippet}
+			</Beitragsformular>
 		{/key}
 	</form>
 </div>
