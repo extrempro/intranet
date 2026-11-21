@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MitFrage from '#lib/components/MitFrage.svelte';
 	import { enhance } from '$app/forms';
 	import RolleWaehlen from '#lib/components/RolleWaehlen.svelte';
 
@@ -26,16 +27,20 @@
 						<strong>{z.groupName ?? z.groupId}</strong> → {z.roleLabel} · {z.scopeText}<br />
 						<span class="hinweis mono">{z.groupId}</span>
 					</span>
-					<form method="POST" action="?/entfernen" use:enhance>
-						<input type="hidden" name="zuordnung" value={z.id} />
-						<button
-							class="linkknopf"
-							type="submit"
-							aria-label="Zuordnung {z.groupName ?? z.groupId} entfernen"
-						>
-							Entfernen
-						</button>
-					</form>
+					<MitFrage
+						action="?/entfernen"
+						enhance
+						knopf="Entfernen"
+						knopfLabel="Zuordnung {z.groupName ?? z.groupId} entfernen"
+						frage={{
+							titel: 'Zuordnung entfernen?',
+							text: `${z.groupName ?? z.groupId} → ${z.roleLabel}. Mitglieder der Gruppe verlieren die Rolle bei ihrer nächsten Anmeldung.`,
+							ja: 'Entfernen',
+							gefahr: true
+						}}
+					>
+						{#snippet felder()}<input type="hidden" name="zuordnung" value={z.id} />{/snippet}
+					</MitFrage>
 				</li>
 			{/each}
 		</ul>

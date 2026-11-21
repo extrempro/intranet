@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MitFrage from '#lib/components/MitFrage.svelte';
 	/* eslint-disable svelte/no-navigation-without-resolve -- nur Suchparameter der eigenen Seite */
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
@@ -57,7 +58,6 @@
 			laedt = false;
 		}
 	}
-	let loeschenId = $state<string | null>(null);
 	const PAPIERKORB =
 		'M4 7l16 0M10 11l0 6M14 11l0 6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3';
 </script>
@@ -171,32 +171,29 @@
 								Öffnen<span class="sr-only">: {plan.title}</span>
 							</a>
 							{#if data.gewaehlt?.darfPflegen}
-								<button
-									type="button"
-									class="rund rot-text"
-									aria-label="{plan.title} löschen"
-									title="Löschen"
-									onclick={() => (loeschenId = loeschenId === plan.id ? null : plan.id)}
+								<MitFrage
+									action="{href}?/loeschen"
+									frage={{
+										titel: `„${plan.title}“ löschen?`,
+										text: 'Der Plan verschwindet endgültig für alle, auch für andere Mandanten.',
+										ja: 'Löschen',
+										gefahr: true
+									}}
 								>
-									<Icon d={PAPIERKORB} size={16} stroke={2} />
-								</button>
+									{#snippet ausloeser(klick: () => void)}
+										<button
+											type="button"
+											class="rund rot-text"
+											aria-label="{plan.title} löschen"
+											title="Löschen"
+											onclick={klick}
+										>
+											<Icon d={PAPIERKORB} size={16} stroke={2} />
+										</button>
+									{/snippet}
+								</MitFrage>
 							{/if}
 						</span>
-						{#if loeschenId === plan.id}
-							<form
-								method="POST"
-								action="{href}?/loeschen"
-								class="frage"
-								role="group"
-								aria-label="Löschen bestätigen"
-							>
-								<span>„{plan.title}“ endgültig löschen? Er verschwindet für alle.</span>
-								<button class="knopf rot klein" type="submit">Ja, löschen</button>
-								<button class="knopf zweit klein" type="button" onclick={() => (loeschenId = null)}>
-									Abbrechen
-								</button>
-							</form>
-						{/if}
 					</li>
 				{/each}
 			</ul>
@@ -331,12 +328,5 @@
 	}
 	.rot-text {
 		color: var(--err-tx);
-	}
-	.frage {
-		flex-basis: 100%;
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 8px;
 	}
 </style>

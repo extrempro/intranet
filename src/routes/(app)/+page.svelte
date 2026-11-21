@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import MitFrage from '#lib/components/MitFrage.svelte';
+	import { enhance, type SubmitFunction } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import Icon from '#lib/components/Icon.svelte';
 	import Info from '#lib/components/Info.svelte';
@@ -29,6 +30,13 @@
 	const WARNUNG =
 		'M12 9v4M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0zM12 16h.01';
 	const PIN = 'M15 4.5l-4 4l-4 1.5l-1.5 1.5l7 7l1.5 -1.5l1.5 -4l4 -4M9 15l-4.5 4.5M14.5 4l5.5 5.5';
+
+	const zuruecksetzen: SubmitFunction =
+		() =>
+		async ({ update }) => {
+			await update();
+			bearbeiten = false;
+		};
 </script>
 
 <svelte:head><title>Start · Intranet</title></svelte:head>
@@ -217,17 +225,16 @@
 					Abbrechen
 				</button>
 				{#if data.eigeneEinstellung}
-					<form
-						method="POST"
+					<MitFrage
 						action="?/zuruecksetzen"
-						use:enhance={() =>
-							async ({ update }) => {
-								await update();
-								bearbeiten = false;
-							}}
-					>
-						<button class="linkknopf" type="submit">Auf Standard zurücksetzen</button>
-					</form>
+						knopf="Auf Standard zurücksetzen"
+						enhance={zuruecksetzen}
+						frage={{
+							titel: 'Startseite zurücksetzen?',
+							text: 'Deine Anordnung der Startseite wird durch die Voreinstellung ersetzt.',
+							ja: 'Zurücksetzen'
+						}}
+					/>
 				{/if}
 			</div>
 		</section>

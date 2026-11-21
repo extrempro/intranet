@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MitFrage from '#lib/components/MitFrage.svelte';
 	/* eslint-disable svelte/no-navigation-without-resolve -- nur Suchparameter der eigenen Seite */
 	import { enhance, type SubmitFunction } from '$app/forms';
 	import { page } from '$app/state';
@@ -23,7 +24,6 @@
 	// Vorschlag: nächste Woche Montag bis Freitag
 	const montag = $derived(addDays(data.today, 7 - weekdayOf(data.today)));
 	let ersetzen = $state<string | null>(null);
-	let loeschen = $state<string | null>(null);
 	let schliessForm = $state<string | null>(null); // '' = neu, sonst ID
 	// Schalter je Tag; nach dem Speichern wieder aus den Daten
 	let offen = $derived(loc.hours.map((d) => d.open));
@@ -55,7 +55,6 @@
 				for (const el of formElement.querySelectorAll<HTMLInputElement>('input[type=file]'))
 					el.value = '';
 				ersetzen = null;
-				loeschen = null;
 				schliessForm = null;
 			}
 		};
@@ -203,14 +202,25 @@
 								<button class="knopf zweit klein" type="button" onclick={() => (ersetzen = m.id)}>
 									Ersetzen
 								</button>
-								<button
-									class="knopf zweit klein rotschrift"
-									type="button"
-									aria-expanded={loeschen === m.id}
-									onclick={() => (loeschen = m.id)}
+								<MitFrage
+									action="?/loeschen"
+									enhance={nachAktion}
+									frage={{
+										titel: `Speiseplan „${m.title}“ löschen?`,
+										text: aktuell
+											? 'Dieser Speiseplan ist gerade sichtbar. Danach steht bei den Beschäftigten „Für diese Woche liegt noch kein Speiseplan vor“.'
+											: 'Der Speiseplan wird endgültig gelöscht und erscheint nicht mehr.',
+										ja: 'Endgültig löschen',
+										gefahr: true
+									}}
 								>
-									Löschen
-								</button>
+									{#snippet felder()}<input type="hidden" name="id" value={m.id} />{/snippet}
+									{#snippet ausloeser(klick: () => void)}
+										<button class="knopf zweit klein rotschrift" type="button" onclick={klick}>
+											Löschen
+										</button>
+									{/snippet}
+								</MitFrage>
 							</div>
 							{#if ersetzen === m.id}
 								<form
@@ -231,26 +241,6 @@
 											Abbrechen
 										</button>
 									</div>
-								</form>
-							{/if}
-							{#if loeschen === m.id}
-								<form
-									method="POST"
-									action="?/loeschen"
-									class="warnung"
-									role="alert"
-									use:enhance={nachAktion}
-								>
-									<input type="hidden" name="id" value={m.id} />
-									<span>
-										{aktuell
-											? 'Dieser Speiseplan ist gerade sichtbar. Danach steht bei den Beschäftigten „Für diese Woche liegt noch kein Speiseplan vor“.'
-											: 'Der Speiseplan wird endgültig gelöscht und erscheint nicht mehr.'}
-									</span>
-									<button class="knopf zweit klein" type="button" onclick={() => (loeschen = null)}>
-										Abbrechen
-									</button>
-									<button class="knopf klein rot" type="submit">Endgültig löschen</button>
 								</form>
 							{/if}
 						</li>
@@ -569,21 +559,6 @@
 	}
 	.rotschrift {
 		color: var(--err-tx);
-	}
-	.warnung {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 8px 12px;
-		padding: 10px 12px;
-		border-radius: 12px;
-		background: #fcebeb;
-		border: 1px solid #f09595;
-		color: #18201c;
-	}
-	.warnung span {
-		flex: 1 1 220px;
-		font-size: 14px;
 	}
 	.unterform {
 		display: grid;

@@ -2,10 +2,10 @@
 	import { resolve } from '$app/paths';
 	import { dayHeading, timeLabel } from '#lib/calendar.ts';
 	import { berlinNow } from '#lib/canteen.ts';
+	import MitFrage from '#lib/components/MitFrage.svelte';
 
 	let { data, form } = $props();
 	const t = $derived(data.termin);
-	let loeschenFragen = $state(false);
 	const heute = berlinNow().date;
 	const zielgruppe = $derived(
 		t.allTenants
@@ -48,22 +48,18 @@
 			<a class="knopf zweit" href={resolve('/(app)/kalender/[id]/bearbeiten', { id: t.id })}>
 				Bearbeiten
 			</a>
-			{#if !loeschenFragen}
-				<button class="linkknopf" type="button" onclick={() => (loeschenFragen = true)}>
-					Löschen
-				</button>
-			{/if}
+			<MitFrage
+				action="?/loeschen"
+				knopf="Löschen"
+				frage={{
+					titel: `„${t.title}“ löschen?`,
+					text: 'Der Termin wird endgültig gelöscht.',
+					ja: 'Löschen',
+					gefahr: true
+				}}
+			/>
 		{/if}
 	</div>
-	{#if loeschenFragen}
-		<form method="POST" action="?/loeschen" class="karte aktionen">
-			<span>„{t.title}“ endgültig löschen?</span>
-			<button class="knopf rot" type="submit">Ja, löschen</button>
-			<button class="knopf zweit" type="button" onclick={() => (loeschenFragen = false)}>
-				Abbrechen
-			</button>
-		</form>
-	{/if}
 </div>
 
 <style>
@@ -99,9 +95,5 @@
 		flex-wrap: wrap;
 		gap: 10px;
 		align-items: center;
-	}
-	.rot {
-		background: var(--rot);
-		border-color: var(--rot);
 	}
 </style>

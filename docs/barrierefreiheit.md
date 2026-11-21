@@ -33,19 +33,19 @@ Nach den Korrekturen meldet axe auf keiner geprüften Seite einen Verstoß, in H
 
 ## Stand je Anforderung (Kap. 17)
 
-| Anforderung                                     | Stand                                                                                                  |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Per Tastatur bedienbar, sichtbarer Fokus        | erfüllt: Fokusrahmen 3 px für alle Bedienelemente, „Zum Inhalt springen“, Dialoge mit Fokusführung     |
-| Fokus nicht verdeckt                            | erfüllt: `scroll-padding-top` unter der festen Kopfzeile, geprüft                                      |
-| Zielgröße mindestens 24 × 24 px                 | erfüllt (B5); Links im Fließtext sind nach WCAG ausgenommen                                            |
-| Kontrast 4,5:1 in Hell und Dunkel               | erfüllt (B2); Farben der Mandanten prüft die Verwaltung beim Speichern (mindestens 4,5:1)              |
-| Überschriften, Bereiche, Beschriftungen         | erfüllt: genau eine `h1` je Seite (B1, B8), Formulare beschriftet                                      |
-| Schalter als `switch`, Auswahl als `radiogroup` | erfüllt (B9)                                                                                           |
-| Statusmeldungen über Live-Regionen              | erfüllt: Meldungen mit `role="status"` bzw. `role="alert"`                                             |
-| „Bewegung reduzieren“                           | erfüllt: Übergänge, Karussell und Führung halten an                                                    |
-| Bilder                                          | erfüllt (B10): Bildbeschreibung beim Hochladen, sonst allgemeiner Text                                 |
-| PDFs                                            | Hinweis unter jeder Vorschau, dass die Barrierefreiheit von der Quelle abhängt; Download immer möglich |
-| Umbruch bei 400 % Zoom (320 px)                 | erfüllt (B7)                                                                                           |
+| Anforderung                                     | Stand                                                                                                                                                                        |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Per Tastatur bedienbar, sichtbarer Fokus        | erfüllt: Fokusrahmen 3 px für alle Bedienelemente, „Zum Inhalt springen“, Dialoge mit Fokusführung (Bestätigungen als `alertdialog`, Fokus zurück auf den auslösenden Knopf) |
+| Fokus nicht verdeckt                            | erfüllt: `scroll-padding-top` unter der festen Kopfzeile, geprüft                                                                                                            |
+| Zielgröße mindestens 24 × 24 px                 | erfüllt (B5); Links im Fließtext sind nach WCAG ausgenommen                                                                                                                  |
+| Kontrast 4,5:1 in Hell und Dunkel               | erfüllt (B2); Farben der Mandanten prüft die Verwaltung beim Speichern (mindestens 4,5:1)                                                                                    |
+| Überschriften, Bereiche, Beschriftungen         | erfüllt: genau eine `h1` je Seite (B1, B8), Formulare beschriftet                                                                                                            |
+| Schalter als `switch`, Auswahl als `radiogroup` | erfüllt (B9)                                                                                                                                                                 |
+| Statusmeldungen über Live-Regionen              | erfüllt: Meldungen mit `role="status"` bzw. `role="alert"`                                                                                                                   |
+| „Bewegung reduzieren“                           | erfüllt: Übergänge, Karussell und Führung halten an                                                                                                                          |
+| Bilder                                          | erfüllt (B10): Bildbeschreibung beim Hochladen, sonst allgemeiner Text                                                                                                       |
+| PDFs                                            | Hinweis unter jeder Vorschau, dass die Barrierefreiheit von der Quelle abhängt; Download immer möglich                                                                       |
+| Umbruch bei 400 % Zoom (320 px)                 | erfüllt (B7)                                                                                                                                                                 |
 
 ## Offene Punkte
 

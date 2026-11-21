@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MitFrage from '#lib/components/MitFrage.svelte';
 	import { enhance } from '$app/forms';
 
 	let { data, form } = $props();
@@ -42,7 +43,22 @@
 					>
 						↓
 					</button>
-					<button class="knopf zweit klein rotschrift" formaction="?/loeschen">Löschen</button>
+					<MitFrage
+						action="?/loeschen"
+						imFormular
+						frage={{
+							titel: `Kategorie „${k.name}“ löschen?`,
+							text: 'Anzeigen dieser Kategorie kommen unter „Sonstiges“.',
+							ja: 'Löschen',
+							gefahr: true
+						}}
+					>
+						{#snippet ausloeser(klick: () => void)}
+							<button class="knopf zweit klein rotschrift" type="button" onclick={klick}>
+								Löschen
+							</button>
+						{/snippet}
+					</MitFrage>
 				</form>
 			</li>
 		{/each}

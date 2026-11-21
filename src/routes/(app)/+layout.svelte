@@ -7,6 +7,7 @@
 	import BestaetigenDialog from '#lib/components/BestaetigenDialog.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import Kontomenue from '#lib/components/Kontomenue.svelte';
+	import FrageDialog from '#lib/components/FrageDialog.svelte';
 	import Hauptmenue from '#lib/components/Hauptmenue.svelte';
 	import Kopfsuche from '#lib/components/Kopfsuche.svelte';
 	import RueckmeldungDialog from '#lib/components/RueckmeldungDialog.svelte';
@@ -116,6 +117,7 @@
 <a class="skip" href="#inhalt">Zum Inhalt springen</a>
 
 <BestaetigenDialog />
+<FrageDialog />
 <RueckmeldungDialog bind:offen={rueckmeldungOffen} version={data.version} inTeams={data.inTeams} />
 
 {#if hilfe.aktiv}

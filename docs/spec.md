@@ -183,17 +183,26 @@ Siehe Grundprinzip 1. Alle Rechte werden serverseitig geprüft, Mandantengrenzen
 
 ### 6.2 Darstellung je Gerät
 
-- **PC (ab 1024 px)**: Seitenleiste mit Bereichen und Unterseiten.
-- **Tablet**: Leiste links mit Bereichen; Unterseiten als Reiter oben. Was nicht in die Zeile passt, steht unter „Mehr ▾“; die aktuelle Seite ist immer als Reiter sichtbar.
+- **PC (ab 1024 px)** und **Tablet**: Hauptmenü links. Ausgeklappt mit Bereichen, deren Unterseiten sich auf- und zuklappen lassen (mehrere offen); eingeklappt nur Symbole, ein Klick zeigt die Unterseiten daneben. Ohne gemerkten Stand ist es auf dem PC aus-, auf dem Tablet eingeklappt; gemerkt wird je Gerät. Eingeklappt stehen die Unterseiten zusätzlich als Reiter über dem Inhalt („Mehr ▾“ für den Rest).
 - **Handy**: Leiste unten; ein Bereich öffnet zuerst eine Übersicht. Oben ein Knopf „Bereich · Unterseite – Wechseln“, der die Liste der Unterseiten von unten öffnet. Zurück-Pfeil oben links.
 
 ### 6.3 Kopfzeile
 
-Suche, Hell/Dunkel, Rückmeldung (Sprechblase), **Nachrichten** (Fach mit Zähler), **Glocke** (Zähler), Konto-Menü.
+Suche, Hell/Dunkel, Rückmeldung (Daumen, öffnet ein Fenster), **Nachrichten** (Fach mit Zähler), **Glocke** (Zähler), Konto-Menü.
 
 ### 6.4 Konto-Menü
 
-Konto, Redaktion (nur mit Rolle), Verwaltung (nur Admins), Handbuch, Führung erneut starten, Abmelden.
+Mein Konto, Redaktion (nur mit Rolle), Verwaltung (nur Admins), Handbuch, Führung erneut starten, Rückmeldung geben, Abmelden.
+
+### 6.5 Bestätigungen (Design-Regel)
+
+Jede Rückfrage vor einer Aktion („… löschen?“, „Konto sperren?“) erscheint als **eigenes Fenster**, nie als Zeile im Formular. Umsetzung: `MitFrage.svelte` (Knopf mit Rückfrage und Formular) bzw. `frage()` aus `src/lib/frage.svelte.ts`, angezeigt von `FrageDialog.svelte`.
+
+- **PC und Tablet**: Fenster in der Mitte, Titel als Frage, ein Satz, was passiert; rechts „Abbrechen“ und der Bestätigungsknopf mit dem Verb („Löschen“, „Sperren“).
+- **Handy**: Fenster von unten, große Knöpfe über die ganze Breite, Bestätigen oben.
+- **Endgültiges** (Löschen, Sperren, Entziehen): Bestätigungsknopf rot, Fokus zuerst auf „Abbrechen“.
+- Escape oder ein Klick daneben bricht ab; danach steht der Fokus wieder auf dem Knopf, der gefragt hat.
+- Einzelne, leicht rückgängig zu machende Aktionen (z. B. ein Abo beenden, Favorit entfernen) brauchen keine Rückfrage; alles, was Daten löscht, Rechte entzieht oder andere abmeldet, schon.
 
 ---
 
