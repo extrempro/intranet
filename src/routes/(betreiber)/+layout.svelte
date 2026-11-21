@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import FrageDialog from '#lib/components/FrageDialog.svelte';
 
 	let { data, children } = $props();
 	const sicherheit = $derived(page.url.pathname.startsWith('/betreiber/sicherheit'));
 </script>
+
+<FrageDialog />
 
 <div class="flaeche akzent" style={data.akzent}>
 	<a class="skip" href="#inhalt">Zum Inhalt springen</a>

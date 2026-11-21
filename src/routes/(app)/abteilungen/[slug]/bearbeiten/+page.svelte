@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MitFrage from '#lib/components/MitFrage.svelte';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import type { SubmitFunction } from '$app/forms';
@@ -310,9 +311,17 @@
 							<div class="aktionen">
 								<button class="knopf zweit klein" type="submit">Rechte speichern</button>
 								{#if !m.verwaltet || e.isAdmin}
-									<button class="linkknopf" type="submit" formaction="?/entfernen">
-										Aus dem Team entfernen
-									</button>
+									<MitFrage
+										action="?/entfernen"
+										imFormular
+										knopf="Aus dem Team entfernen"
+										frage={{
+											titel: `${m.name} aus dem Team entfernen?`,
+											text: 'Die Person verliert ihre Rechte in dieser Einheit sofort.',
+											ja: 'Entfernen',
+											gefahr: true
+										}}
+									/>
 								{/if}
 							</div>
 						</form>

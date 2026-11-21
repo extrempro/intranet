@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MitFrage from '#lib/components/MitFrage.svelte';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import Info from '#lib/components/Info.svelte';
@@ -9,7 +10,6 @@
 	let suche = $state('');
 	// Auswahl folgt dem gespeicherten Standard (auch nach dem Speichern)
 	let std = $derived({ ...data.standard });
-	let alleFragen = $state(false);
 
 	const kanaele = (h: { bell: boolean; push: boolean; email: boolean }) =>
 		[h.bell && 'Glocke', h.push && 'Push', h.email && 'E-Mail'].filter(Boolean).join(', ') ||
@@ -140,25 +140,24 @@
 			E-Mails kommen sofort oder gesammelt, wie unter Konto → Benachrichtigungen eingestellt.
 		</p>
 		{#if freiwilligGesamt}
-			{#if alleFragen}
-				<form method="POST" action="?/alleBeenden" class="zeile" use:enhance>
-					<span>Alle {freiwilligGesamt} freiwilligen Abos beenden?</span>
-					<button class="knopf rot klein" type="submit">Ja, beenden</button>
-					<button class="knopf zweit klein" type="button" onclick={() => (alleFragen = false)}>
-						Abbrechen
-					</button>
-				</form>
-			{:else}
-				<div>
-					<button
-						class="knopf zweit klein rotschrift"
-						type="button"
-						onclick={() => (alleFragen = true)}
-					>
-						Alle freiwilligen Abos beenden
-					</button>
-				</div>
-			{/if}
+			<div>
+				<MitFrage
+					action="?/alleBeenden"
+					enhance
+					frage={{
+						titel: `Alle ${freiwilligGesamt} freiwilligen Abos beenden?`,
+						text: 'Pflicht-Abos bleiben. Du kannst Hubs später wieder abonnieren.',
+						ja: 'Alle beenden',
+						gefahr: true
+					}}
+				>
+					{#snippet ausloeser(klick: () => void)}
+						<button class="knopf zweit klein rotschrift" type="button" onclick={klick}>
+							Alle freiwilligen Abos beenden
+						</button>
+					{/snippet}
+				</MitFrage>
+			</div>
 		{/if}
 	{/if}
 </div>
@@ -242,11 +241,6 @@
 	.klein {
 		min-height: 38px;
 		padding: 6px 12px;
-	}
-	.knopf.rot {
-		background: var(--rot);
-		border-color: var(--rot);
-		color: #fff;
 	}
 	.rotschrift {
 		color: var(--err-tx);

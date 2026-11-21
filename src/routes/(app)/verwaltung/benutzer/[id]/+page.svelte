@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MitFrage from '#lib/components/MitFrage.svelte';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import RolleWaehlen from '#lib/components/RolleWaehlen.svelte';
@@ -6,7 +7,6 @@
 
 	let { data, form } = $props();
 	const x = $derived(data.person);
-	let sperrenFragen = $state(false);
 </script>
 
 <svelte:head><title>{x.name} · Benutzer · Verwaltung · Intranet</title></svelte:head>
@@ -41,12 +41,20 @@
 						{#if r.source === 'entra'}
 							<span class="schild rand">aus Entra-Gruppe</span>
 						{:else if r.mayRevoke}
-							<form method="POST" action="?/entziehen" use:enhance>
-								<input type="hidden" name="zuordnung" value={r.id} />
-								<button class="linkknopf" type="submit" aria-label="{r.roleLabel} entziehen">
-									Entziehen
-								</button>
-							</form>
+							<MitFrage
+								action="?/entziehen"
+								enhance
+								knopf="Entziehen"
+								knopfLabel="{r.roleLabel} entziehen"
+								frage={{
+									titel: `Rolle „${r.roleLabel}“ entziehen?`,
+									text: `${r.scopeText}. Die Person verliert die Rechte sofort.`,
+									ja: 'Entziehen',
+									gefahr: true
+								}}
+							>
+								{#snippet felder()}<input type="hidden" name="zuordnung" value={r.id} />{/snippet}
+							</MitFrage>
 						{/if}
 					</li>
 				{/each}
@@ -77,32 +85,21 @@
 				<form method="POST" action="?/freigeben" use:enhance>
 					<button class="knopf zweit" type="submit">Wieder freigeben</button>
 				</form>
-			{:else if sperrenFragen}
-				<form
-					method="POST"
-					action="?/sperren"
-					class="frage"
-					use:enhance={() =>
-						async ({ update }) => {
-							sperrenFragen = false;
-							await update();
-						}}
-				>
-					<span>Konto sperren? Alle Sitzungen enden sofort.</span>
-					<button class="knopf rot" type="submit">Ja, sperren</button>
-					<button class="knopf zweit" type="button" onclick={() => (sperrenFragen = false)}>
-						Abbrechen
-					</button>
-				</form>
 			{:else}
-				<button class="knopf zweit" type="button" onclick={() => (sperrenFragen = true)}>
-					Konto sperren
-				</button>
-				{#if x.authSource === 'entra'}
-					<p class="hinweis">
-						Gesperrt bleibt das Konto hier gesperrt, auch wenn es in Entra aktiv ist.
-					</p>
-				{/if}
+				<MitFrage
+					action="?/sperren"
+					enhance
+					frage={{
+						titel: 'Konto sperren?',
+						text: 'Alle Sitzungen der Person enden sofort. Du kannst das Konto später wieder freigeben.',
+						ja: 'Sperren',
+						gefahr: true
+					}}
+				>
+					{#snippet ausloeser(klick: () => void)}
+						<button class="knopf zweit" type="button" onclick={klick}>Konto sperren</button>
+					{/snippet}
+				</MitFrage>
 			{/if}
 		</section>
 	{/if}
@@ -137,16 +134,6 @@
 		gap: 12px;
 		min-height: 48px;
 		border-bottom: 1px solid var(--bd);
-	}
-	.frage {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 10px;
-		align-items: center;
-	}
-	.rot {
-		background: var(--rot);
-		border-color: var(--rot);
 	}
 	.knopf {
 		justify-self: start;

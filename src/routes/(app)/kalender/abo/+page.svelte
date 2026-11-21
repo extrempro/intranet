@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MitFrage from '#lib/components/MitFrage.svelte';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 
@@ -168,9 +169,18 @@
 				<form method="POST" action="?/erneuern" use:enhance>
 					<button class="knopf zweit" type="submit">Neuen Link erzeugen</button>
 				</form>
-				<form method="POST" action="?/sperren" use:enhance>
-					<button class="knopf zweit rotschrift" type="submit">Link sperren</button>
-				</form>
+				<MitFrage
+					action="?/sperren"
+					enhance
+					knopf="Link sperren"
+					knopfKlasse="knopf zweit rotschrift"
+					frage={{
+						titel: 'Kalender-Link sperren?',
+						text: 'Kalender, die den Link abonniert haben, bekommen keine Termine mehr. Einen neuen Link kannst du jederzeit erzeugen.',
+						ja: 'Sperren',
+						gefahr: true
+					}}
+				/>
 			</div>
 			<p class="hinweis">
 				{data.feed.lastFetchedAt
@@ -282,8 +292,5 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 8px;
-	}
-	.rotschrift {
-		color: var(--err-tx);
 	}
 </style>

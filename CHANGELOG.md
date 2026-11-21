@@ -10,6 +10,11 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.13.1 · 21.11.2026 · Rückfragen als eigenes Fenster
+
+- Bevor etwas gelöscht, gesperrt oder entzogen wird, fragt das Intranet jetzt in einem eigenen Fenster nach. Am Handy kommt es von unten, mit großen Knöpfen.
+- Auch beim Abmelden anderer Geräte, beim Entfernen aus einem Team, beim Sperren des Kalender-Links und beim Zurücksetzen der Startseite fragt das Intranet jetzt vorher nach.
+
 ## 0.13.0 · 21.11.2026 · Fehler melden mit Bildschirmfoto
 
 - „Rückmeldung geben“ (Daumen oben rechts) öffnet jetzt ein Fenster direkt über der Seite, auf der du bist.

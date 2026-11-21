@@ -5,10 +5,10 @@
 	import LinkKopieren from '#lib/components/LinkKopieren.svelte';
 	import Reaktionen from '#lib/components/Reaktionen.svelte';
 	import { formatDay, formatWhen } from '#lib/news.ts';
+	import MitFrage from '#lib/components/MitFrage.svelte';
 
 	let { data, form } = $props();
 	const b = $derived(data.beitrag);
-	let loeschenFragen = $state(false);
 	const WARN =
 		'M12 9v4M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0zM12 16h.01';
 	const UHR = 'M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0M12 7v5l3 3';
@@ -109,25 +109,16 @@
 			<a class="knopf zweit" href={resolve('/(app)/neuigkeiten/[id]/bearbeiten', { id: b.id })}>
 				Bearbeiten
 			</a>
-			{#if loeschenFragen}
-				<form
-					method="POST"
-					action="?/loeschen"
-					class="frage"
-					role="group"
-					aria-label="Löschen bestätigen"
-				>
-					<span>Beitrag endgültig löschen?</span>
-					<button class="knopf loeschen" type="submit">Ja, löschen</button>
-					<button class="knopf zweit" type="button" onclick={() => (loeschenFragen = false)}>
-						Abbrechen
-					</button>
-				</form>
-			{:else}
-				<button class="linkknopf" type="button" onclick={() => (loeschenFragen = true)}>
-					Löschen
-				</button>
-			{/if}
+			<MitFrage
+				action="?/loeschen"
+				knopf="Löschen"
+				frage={{
+					titel: 'Beitrag löschen?',
+					text: 'Der Beitrag wird samt Anhängen endgültig gelöscht.',
+					ja: 'Löschen',
+					gefahr: true
+				}}
+			/>
 		</div>
 	{/if}
 </div>
@@ -261,15 +252,10 @@
 		padding: 6px 12px;
 		font-size: 13px;
 	}
-	.aktionen,
-	.frage {
+	.aktionen {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 10px;
 		align-items: center;
-	}
-	.loeschen {
-		background: var(--rot);
-		border-color: var(--rot);
 	}
 </style>

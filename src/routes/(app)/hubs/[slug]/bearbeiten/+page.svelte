@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MitFrage from '#lib/components/MitFrage.svelte';
 	import { untrack } from 'svelte';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
@@ -38,7 +39,6 @@
 		if (j < 0 || j >= aufbau.length) return;
 		[aufbau[i], aufbau[j]] = [aufbau[j], aufbau[i]];
 	}
-	let archivFragen = $state(false);
 </script>
 
 <svelte:head><title>{h.name} bearbeiten · Hubs · Intranet</title></svelte:head>
@@ -135,21 +135,21 @@
 				Nur für die Verwaltung. Ein archivierter Hub ist nirgends mehr sichtbar und wird nach zwei
 				Jahren gelöscht.
 			</p>
-			{#if archivFragen}
-				<form method="POST" action="?/archivieren" class="aktionen">
-					<span>„{h.name}“ wirklich archivieren?</span>
-					<button class="knopf rot" type="submit">Ja, archivieren</button>
-					<button class="knopf zweit" type="button" onclick={() => (archivFragen = false)}>
-						Abbrechen
-					</button>
-				</form>
-			{:else}
-				<div>
-					<button class="knopf zweit" type="button" onclick={() => (archivFragen = true)}>
-						Hub archivieren
-					</button>
-				</div>
-			{/if}
+			<div>
+				<MitFrage
+					action="?/archivieren"
+					frage={{
+						titel: `„${h.name}“ archivieren?`,
+						text: 'Der Hub ist danach nirgends mehr sichtbar und wird nach zwei Jahren gelöscht.',
+						ja: 'Archivieren',
+						gefahr: true
+					}}
+				>
+					{#snippet ausloeser(klick: () => void)}
+						<button class="knopf zweit" type="button" onclick={klick}>Hub archivieren</button>
+					{/snippet}
+				</MitFrage>
+			</div>
 		</section>
 	{/if}
 </div>
@@ -199,15 +199,5 @@
 	.klein {
 		min-height: 40px;
 		padding: 6px 12px;
-	}
-	.aktionen {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 10px;
-		align-items: center;
-	}
-	.rot {
-		background: var(--rot);
-		border-color: var(--rot);
 	}
 </style>

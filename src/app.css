@@ -226,6 +226,17 @@ html {
 	font-weight: 500;
 }
 
+/* Endgültige Aktionen (Löschen, Sperren …) */
+.rotschrift {
+	color: var(--err-tx);
+}
+
+.knopf.rot {
+	background: var(--rot);
+	border-color: var(--rot);
+	color: #fff;
+}
+
 .knopf.dunkel {
 	background: var(--tx);
 	border-color: var(--tx);

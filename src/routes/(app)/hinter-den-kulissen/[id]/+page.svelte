@@ -6,11 +6,11 @@
 	import LinkKopieren from '#lib/components/LinkKopieren.svelte';
 	import Reaktionen from '#lib/components/Reaktionen.svelte';
 	import { formatSize } from '#lib/format.ts';
+	import MitFrage from '#lib/components/MitFrage.svelte';
 
 	let { data, form } = $props();
 	const b = $derived(data.post);
 	const datum = new Intl.DateTimeFormat('de-DE', { dateStyle: 'long', timeZone: 'Europe/Berlin' });
-	let loeschenFragen = $state(false);
 </script>
 
 <svelte:head><title>{b.title} · Hinter den Kulissen · Intranet</title></svelte:head>
@@ -80,19 +80,16 @@
 			>
 				Bearbeiten
 			</a>
-			{#if loeschenFragen}
-				<form method="POST" action="?/loeschen" class="aktionen">
-					<span>Endgültig löschen?</span>
-					<button class="knopf rot" type="submit">Ja, löschen</button>
-					<button class="knopf zweit" type="button" onclick={() => (loeschenFragen = false)}>
-						Abbrechen
-					</button>
-				</form>
-			{:else}
-				<button class="linkknopf" type="button" onclick={() => (loeschenFragen = true)}>
-					Löschen
-				</button>
-			{/if}
+			<MitFrage
+				action="?/loeschen"
+				knopf="Löschen"
+				frage={{
+					titel: 'Beitrag löschen?',
+					text: 'Der Beitrag wird samt Fotos endgültig gelöscht.',
+					ja: 'Löschen',
+					gefahr: true
+				}}
+			/>
 		</div>
 	{/if}
 </article>
@@ -162,9 +159,5 @@
 		flex-wrap: wrap;
 		gap: 10px;
 		align-items: center;
-	}
-	.rot {
-		background: var(--rot);
-		border-color: var(--rot);
 	}
 </style>

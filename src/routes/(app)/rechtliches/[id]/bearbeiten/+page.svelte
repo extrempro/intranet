@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MitFrage from '#lib/components/MitFrage.svelte';
 	import { resolve } from '$app/paths';
 	import VereinbarungFormular from '#lib/components/VereinbarungFormular.svelte';
 
@@ -30,10 +31,22 @@
 		</label>
 		<button class="knopf" type="submit">Speichern</button>
 	</form>
-	<form method="POST" action="?/loeschen" class="karte stapel">
+	<section class="karte stapel">
 		<p class="hinweis">Löschen entfernt die Vereinbarung und alle Dokumente endgültig.</p>
-		<button class="knopf rot" type="submit">Vereinbarung löschen</button>
-	</form>
+		<div>
+			<MitFrage
+				action="?/loeschen"
+				knopf="Vereinbarung löschen"
+				knopfKlasse="knopf rot"
+				frage={{
+					titel: 'Vereinbarung löschen?',
+					text: 'Die Vereinbarung und alle Dokumente werden endgültig gelöscht.',
+					ja: 'Löschen',
+					gefahr: true
+				}}
+			/>
+		</div>
+	</section>
 </div>
 
 <style>
@@ -47,11 +60,6 @@
 	}
 	h1 {
 		margin: 0;
-	}
-	.rot {
-		background: var(--rot);
-		border-color: var(--rot);
-		justify-self: start;
 	}
 	.option {
 		display: flex;
