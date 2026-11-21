@@ -29,7 +29,13 @@ export interface StartklarEingaben {
 	sicherung: { eingerichtet: boolean; befunde: { stufe: 'fehler' | 'warnung'; text: string }[] };
 	push: boolean;
 	rechtliches: { datenschutz: boolean; impressum: boolean };
-	teams: { aktiv: boolean; letzte: { ok: boolean; meldung: string } | null };
+	teams: {
+		aktiv: boolean;
+		/** App-ID im Manifest; appIdFest: per TEAMS_APP_ID in der .env festgelegt */
+		appId?: string;
+		appIdFest?: boolean;
+		letzte: { ok: boolean; meldung: string } | null;
+	};
 	migrationen: { vorhanden: number | null; eingespielt: number | null };
 }
 
@@ -240,6 +246,14 @@ export function bewerteStartklar(e: StartklarEingaben, jetzt = Date.now()): Prue
 			titel: 'Teams-App',
 			stufe: 'fehler',
 			text: `Letzte Meldung an Teams fehlgeschlagen: ${e.teams.letzte.meldung}`,
+			link: '/verwaltung/benachrichtigungen'
+		});
+	else if (e.teams.appIdFest === false)
+		p.push({
+			id: 'teams',
+			titel: 'Teams-App',
+			stufe: 'warnung',
+			text: `Eingeschaltet, aber die App-ID ist nicht in der .env festgelegt. Trage TEAMS_APP_ID=${e.teams.appId ?? '…'} ein, sonst bekommt die Teams-App bei einer neuen Datenbank eine neue ID und Teams meldet „App nicht gefunden“.`,
 			link: '/verwaltung/benachrichtigungen'
 		});
 	else

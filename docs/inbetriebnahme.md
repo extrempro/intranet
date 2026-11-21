@@ -68,6 +68,7 @@ Tenant-ID und Client-ID stehen auf der Übersichtsseite der Registrierung.
 | `ENCRYPTION_KEY`                                                        | aus 2.                                                                                    |
 | `BACKUP_AGE_RECIPIENTS`                                                 | öffentlicher age-Schlüssel aus 2.                                                         |
 | `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, `ENTRA_CLIENT_SECRET`             | aus 3.                                                                                    |
+| `TEAMS_APP_ID`                                                          | erst nach dem Verteilen der Teams-App (siehe 7.)                                          |
 | `ENTRA_ACCESS_GROUP_ID`                                                 | aus 3.                                                                                    |
 | `SMTP_HOST`, `SMTP_SECURITY`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` | SMTP (auch später in der Verwaltung pflegbar)                                             |
 | `PUSH_CONTACT`                                                          | `mailto:it@example.org`                                                         |
@@ -102,7 +103,8 @@ Tenant-ID und Client-ID stehen auf der Übersichtsseite der Registrierung.
 
 1. Verwaltung → Benachrichtigungen → Teams: **Aussehen** festlegen, Teams-Meldungen einschalten, **App-Paket** herunterladen.
 2. Im **Teams Admin Center** unter „Apps verwalten“ hochladen und per **Setup-Richtlinie** für die Intranet-Gruppe installieren.
-3. „Testmeldung an mich“ senden und in Teams auf Desktop, im Browser, auf iPhone und Android prüfen: Die Meldung erscheint unter „Aktivität“, ein Klick öffnet das Intranet.
+3. Die **App-ID** (steht unter „Aussehen der Teams-App“) als `TEAMS_APP_ID` in die `.env` eintragen. So bleibt sie auch nach einer Neuinstallation mit neuer Datenbank gleich (eine Wiederherstellung aus der Sicherung behält sie ohnehin); sonst meldet Teams „App nicht gefunden“ und die App muss neu verteilt werden. Nach einer neuen Datenbank beginnt die Paketversion wieder bei 1.0.1: vor dem Aktualisieren im Teams Admin Center so oft „Neue Version erzeugen“, bis sie über der hochgeladenen liegt.
+4. „Testmeldung an mich“ senden und in Teams auf Desktop, im Browser, auf iPhone und Android prüfen: Die Meldung erscheint unter „Aktivität“, ein Klick öffnet das Intranet.
 
 ## 8. Vor dem Start
 
