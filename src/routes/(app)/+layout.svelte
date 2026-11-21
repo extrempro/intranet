@@ -101,7 +101,89 @@
 	{#key hilfe.aktiv.key}<Tour tour={hilfe.aktiv} />{/key}
 {/if}
 
-<div class="app akzent" style={data.akzent}>
+{#snippet werkzeuge(links: boolean)}
+	<form
+		class="ohne-xs"
+		method="POST"
+		action="/konto/darstellung?/umschalten"
+		use:enhance={({ formData }) => {
+			const neu = dunkel ? 'hell' : 'dunkel';
+			formData.set('wert', neu);
+			theme = neu;
+			document.documentElement.dataset.theme = neu;
+			return async () => {};
+		}}
+	>
+		<button
+			type="submit"
+			class="symbolknopf"
+			aria-label={dunkel ? 'Helle Darstellung' : 'Dunkle Darstellung'}
+			title={dunkel ? 'Helle Darstellung' : 'Dunkle Darstellung'}
+		>
+			<Icon d={dunkel ? SONNE : MOND} size={20} stroke={1.8} />
+		</button>
+	</form>
+
+	<a
+		class="symbolknopf"
+		data-tour="rueckmeldung"
+		href="{resolve('/(app)/rueckmeldung/neu')}?von={encodeURIComponent(
+			page.url.pathname + page.url.search
+		)}"
+		aria-label="Rückmeldung geben"
+		title="Rückmeldung: Fehler oder Idee"
+	>
+		<Icon d={SPRECHBLASE} size={20} stroke={1.8} />
+	</a>
+
+	<a
+		class="symbolknopf glocke"
+		data-tour="nachrichten"
+		href={resolve('/(app)/nachrichten')}
+		aria-label={data.nachrichten
+			? `Nachrichten, ${data.nachrichten} mit neuen Antworten`
+			: 'Nachrichten'}
+		title="Nachrichten"
+		aria-current={page.url.pathname.startsWith('/nachrichten') ? 'page' : undefined}
+	>
+		<Icon d={BRIEF} size={20} stroke={1.8} />
+		{#if data.nachrichten}<span class="zaehler akzentzahl" aria-hidden="true">
+				{data.nachrichten > 99 ? '99+' : data.nachrichten}
+			</span>{/if}
+	</a>
+
+	<a
+		class="symbolknopf glocke umrandet"
+		data-tour="glocke"
+		href={resolve('/(app)/benachrichtigungen')}
+		aria-label={data.ungelesen
+			? `Benachrichtigungen, ${data.ungelesen} ungelesen`
+			: 'Benachrichtigungen'}
+		title="Benachrichtigungen"
+		aria-current={page.url.pathname === '/benachrichtigungen' ? 'page' : undefined}
+	>
+		<Icon d={GLOCKE} size={20} stroke={1.8} />
+		{#if data.ungelesen}<span class="zaehler" aria-hidden="true">
+				{data.ungelesen > 99 ? '99+' : data.ungelesen}
+			</span>{/if}
+	</a>
+
+	<span class="nur-gross-flex">
+		<Kontomenue
+			{links}
+			name={data.ich.name}
+			kuerzel={data.ich.kuerzel}
+			foto={data.ich.foto}
+			mandant={data.ich.mandant}
+			darfVerwaltung={data.darfVerwaltung}
+			darfRedaktion={data.darfRedaktion}
+			datenschutz={data.rechtliches.datenschutz}
+			impressum={data.rechtliches.impressum}
+		/>
+	</span>
+{/snippet}
+
+<div class="app akzent" class:teams={data.inTeams} style={data.akzent}>
 	<header class="kopf">
 		{#if zurueck}
 			<a
@@ -131,90 +213,17 @@
 		<Kopfsuche ort="kopf" />
 		<span class="luecke nur-gross"></span>
 
-		<form
-			class="ohne-xs"
-			method="POST"
-			action="/konto/darstellung?/umschalten"
-			use:enhance={({ formData }) => {
-				const neu = dunkel ? 'hell' : 'dunkel';
-				formData.set('wert', neu);
-				theme = neu;
-				document.documentElement.dataset.theme = neu;
-				return async () => {};
-			}}
-		>
-			<button
-				type="submit"
-				class="symbolknopf"
-				aria-label={dunkel ? 'Helle Darstellung' : 'Dunkle Darstellung'}
-				title={dunkel ? 'Helle Darstellung' : 'Dunkle Darstellung'}
-			>
-				<Icon d={dunkel ? SONNE : MOND} size={20} stroke={1.8} />
-			</button>
-		</form>
-
-		<a
-			class="symbolknopf"
-			data-tour="rueckmeldung"
-			href="{resolve('/(app)/rueckmeldung/neu')}?von={encodeURIComponent(
-				page.url.pathname + page.url.search
-			)}"
-			aria-label="Rückmeldung geben"
-			title="Rückmeldung: Fehler oder Idee"
-		>
-			<Icon d={SPRECHBLASE} size={20} stroke={1.8} />
-		</a>
-
-		<a
-			class="symbolknopf glocke"
-			data-tour="nachrichten"
-			href={resolve('/(app)/nachrichten')}
-			aria-label={data.nachrichten
-				? `Nachrichten, ${data.nachrichten} mit neuen Antworten`
-				: 'Nachrichten'}
-			title="Nachrichten"
-			aria-current={page.url.pathname.startsWith('/nachrichten') ? 'page' : undefined}
-		>
-			<Icon d={BRIEF} size={20} stroke={1.8} />
-			{#if data.nachrichten}<span class="zaehler akzentzahl" aria-hidden="true">
-					{data.nachrichten > 99 ? '99+' : data.nachrichten}
-				</span>{/if}
-		</a>
-
-		<a
-			class="symbolknopf glocke umrandet"
-			data-tour="glocke"
-			href={resolve('/(app)/benachrichtigungen')}
-			aria-label={data.ungelesen
-				? `Benachrichtigungen, ${data.ungelesen} ungelesen`
-				: 'Benachrichtigungen'}
-			title="Benachrichtigungen"
-			aria-current={page.url.pathname === '/benachrichtigungen' ? 'page' : undefined}
-		>
-			<Icon d={GLOCKE} size={20} stroke={1.8} />
-			{#if data.ungelesen}<span class="zaehler" aria-hidden="true">
-					{data.ungelesen > 99 ? '99+' : data.ungelesen}
-				</span>{/if}
-		</a>
-
-		<span class="nur-gross-flex">
-			<Kontomenue
-				name={data.ich.name}
-				kuerzel={data.ich.kuerzel}
-				foto={data.ich.foto}
-				mandant={data.ich.mandant}
-				darfVerwaltung={data.darfVerwaltung}
-				darfRedaktion={data.darfRedaktion}
-				datenschutz={data.rechtliches.datenschutz}
-				impressum={data.rechtliches.impressum}
-			/>
-		</span>
+		{@render werkzeuge(false)}
 	</header>
 
 	<div class="rumpf">
 		<!-- PC: Seitenleiste mit Bereichen und Unterseiten -->
 		<nav class="seitenleiste" aria-label="Hauptnavigation">
 			<div class="seiteninnen">
+				{#if data.inTeams}
+					<!-- In Teams ohne eigene Kopfzeile: Werkzeuge oben in der Seitenleiste -->
+					<div class="teams-werkzeuge">{@render werkzeuge(true)}</div>
+				{/if}
 				<Kopfsuche ort="seite" />
 				<div class="trenner" aria-hidden="true"></div>
 				<ul data-tour="navigation">
@@ -539,6 +548,20 @@
 	}
 
 	/* PC-Seitenleiste wie im Entwurf: Suche, Trenner, Bereiche */
+	/* Kontomenü aus der Seitenleiste muss über dem Inhalt liegen */
+	.app.teams .seitenleiste {
+		position: relative;
+		z-index: 25;
+	}
+	.teams-werkzeuge {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		margin-bottom: 12px;
+	}
+	.teams-werkzeuge :global(form.ohne-xs) {
+		display: inline-flex;
+	}
 	.seitenleiste {
 		display: none;
 		flex: 0 0 260px;
@@ -870,6 +893,13 @@
 		}
 	}
 	@media (min-width: 1024px) {
+		/* Teams zeigt oben schon App-Name und Symbol: keine eigene Kopfzeile */
+		.app.teams .kopf {
+			display: none;
+		}
+		.app.teams .seiteninnen {
+			top: 0;
+		}
 		.seitenleiste {
 			display: block;
 		}
@@ -881,6 +911,10 @@
 		.reiter {
 			display: flex;
 		}
+	}
+	/* In Teams auf Tablet und Handy: Kopfzeile ohne Logo (Teams zeigt den App-Namen) */
+	.app.teams .marke {
+		display: none;
 	}
 	@media (max-width: 599px) {
 		.unten {

@@ -6,7 +6,10 @@ describe('Benachrichtigungen', () => {
 		const r = resolveNotify(null);
 		expect(r.emailMode).toBe('taeglich');
 		expect(r.topics.dringend).toEqual({ bell: true, push: true, email: true, teams: true });
-		expect(r.topics.angeheftet).toEqual({ bell: true, push: true, email: false, teams: false });
+		// Teams wie Push voreingestellt
+		expect(r.topics.angeheftet).toEqual({ bell: true, push: true, email: false, teams: true });
+		expect(r.topics.nachrichten.teams).toBe(true);
+		expect(r.topics.hubs.teams).toBe(false);
 		expect(r.topics.speiseplan).toEqual({ bell: false, push: false, email: false, teams: false });
 	});
 

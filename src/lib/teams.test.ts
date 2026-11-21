@@ -50,18 +50,19 @@ describe('Teams', () => {
 		expect(body.recipients).toHaveLength(2);
 	});
 
-	it('Voreinstellungen: dringend an, angeheftet aus, sonst kein Teams', () => {
+	it('Voreinstellungen: Teams wie Push, für alle Themen wählbar', () => {
 		const t = resolveNotify(null).topics;
-		expect([t.dringend.teams, t.angeheftet.teams, t.neuigkeiten.teams]).toEqual([
-			true,
-			false,
-			false
-		]);
+		expect([
+			t.dringend.teams,
+			t.angeheftet.teams,
+			t.neuigkeiten.teams,
+			t.nachrichten.teams
+		]).toEqual([true, true, false, true]);
 		const s = resolveNotify({
-			topics: { neuigkeiten: { teams: true }, angeheftet: { teams: true } },
+			topics: { neuigkeiten: { teams: true }, angeheftet: { teams: false } },
 			emailMode: 'sofort'
 		});
-		expect([s.topics.neuigkeiten.teams, s.topics.angeheftet.teams]).toEqual([false, true]);
+		expect([s.topics.neuigkeiten.teams, s.topics.angeheftet.teams]).toEqual([true, false]);
 	});
 
 	it('App-Paket: gültige Prüfsummen, PNG und ZIP', () => {

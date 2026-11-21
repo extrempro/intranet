@@ -18,7 +18,9 @@ In Ruhezeiten kommen keine Push- und Teams-Nachrichten, danach gesammelt als ein
 
 ## Teams
 
-Mit einem Microsoft-Konto kommen **dringende Meldungen** auch in Teams unter „Aktivität“ an, **angeheftete Beiträge** auf Wunsch. Die Spalte „Teams“ erscheint, sobald die IT Teams eingerichtet hat. Ein Klick auf die Meldung öffnet in Teams einen kleinen Tab; mit „Im Intranet öffnen“ geht der Beitrag im Browser auf. Ruhezeiten gelten wie bei Push.
+Mit einem Microsoft-Konto gibt es das Intranet auch als App in Teams. Du bist dort automatisch angemeldet. Meldungen kommen in Teams unter „Aktivität“ an; welche, stellst du in der Spalte „Teams“ ein. Voreingestellt ist sie wie Push. Die Spalte erscheint, sobald die IT Teams eingerichtet hat. Ein Klick auf die Meldung öffnet den Beitrag direkt in der App. Ruhezeiten gelten wie bei Push.
+
+In der Teams-App gibt es kein Push. Für Handy oder Browser schaltest du Push dort ein, wo du das Intranet außerhalb von Teams öffnest.
 
 ## E-Mails
 

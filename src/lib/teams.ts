@@ -1,9 +1,8 @@
 /**
  * Teams-Aktivitätsfeed (Kap. 11.1): Bausteine ohne Ein-/Ausgabe, damit testbar.
  *
- * Ein Klick auf die Benachrichtigung öffnet in Teams den Tab der Intranet-App
- * (/teams/tab). Der Tab zeigt nur einen Knopf „Im Intranet öffnen“ (Browser);
- * das Intranet selbst läuft nicht in Teams.
+ * Ein Klick auf die Benachrichtigung öffnet in Teams den Reiter der
+ * Intranet-App (/teams/app): Anmeldung per SSO, dann direkt der Beitrag.
  */
 
 /** entityId des Tabs im Manifest */

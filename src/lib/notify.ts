@@ -1,6 +1,6 @@
 /**
  * Benachrichtigungen (Kap. 11): Themen, Voreinstellungen und Einstellungen
- * je Person. Glocke, Web Push, E-Mail und Teams (nur dringend/angeheftet). Themen
+ * je Person. Glocke, Web Push, E-Mail und Teams (alle Themen, Voreinstellung wie Push). Themen
  * erscheinen erst, wenn es die Funktion gibt.
  */
 import { berlinNow } from './canteen.ts';
@@ -20,8 +20,6 @@ export interface TopicDefinition {
 	onlyFor?: 'moderation' | 'pflege' | 'verwaltung' | 'system';
 	/** Nicht in der Tabelle: Einstellung woanders (Hubs: „Meine Hubs“) */
 	hidden?: boolean;
-	/** Teams-Aktivitätsfeed möglich, mit dieser Voreinstellung (Kap. 11.2) */
-	teams?: boolean;
 }
 
 /** Reihenfolge und Voreinstellungen nach Tabelle 11.2 */
@@ -30,14 +28,12 @@ export const TOPICS: TopicDefinition[] = [
 		key: 'dringend',
 		label: 'Dringende Meldungen',
 		defaults: { bell: true, push: true, email: true },
-		fixed: ['bell', 'push'],
-		teams: true
+		fixed: ['bell', 'push']
 	},
 	{
 		key: 'angeheftet',
 		label: 'Angeheftete Beiträge',
-		defaults: { bell: true, push: true, email: false },
-		teams: false
+		defaults: { bell: true, push: true, email: false }
 	},
 	{ key: 'neuigkeiten', label: 'Neuigkeiten', defaults: { bell: true, push: false, email: true } },
 	{
@@ -128,7 +124,7 @@ export const DEFAULT_QUIET: QuietHours = {
 	urgent: true
 };
 
-/** Kanäle je Thema; teams nur bei Themen mit Teams, sonst immer false */
+/** Kanäle je Thema; Teams für alle sichtbaren Themen, voreingestellt wie Push */
 export type TopicChannels = Record<Channel, boolean> & { teams: boolean };
 
 export interface NotifySettings {
@@ -163,7 +159,8 @@ export function resolveNotify(stored: NotifySettings | null | undefined): {
 			bell: pick('bell'),
 			push: pick('push'),
 			email: pick('email'),
-			teams: t.teams === undefined ? false : (s.teams ?? t.teams)
+			// Hubs haben eigene Kanäle (Meine Hubs), dort kein Teams
+			teams: t.hidden ? false : (s.teams ?? t.defaults.push)
 		};
 	}
 	const mode = stored?.emailMode;
