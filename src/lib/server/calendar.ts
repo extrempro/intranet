@@ -92,6 +92,8 @@ const columns = {
 	unitId: events.unitId,
 	unitName: units.name,
 	isHub: sql<boolean>`${units.type} = 'hub'`,
+	unitType: units.type,
+	unitTitle: units.title,
 	tenantId: events.tenantId,
 	tenantShort: tenants.shortName,
 	updatedAt: events.updatedAt
@@ -133,6 +135,8 @@ export async function listEvents(p: Principal, o: ListOptions) {
 	const abos = new Set(await subscribedHubIds(p));
 	return rows.map((r) => ({
 		...r,
+		/** Art der Einheit fürs Schild, z. B. „Abteilung“ oder „Hub“ */
+		art: unitTypeLabel({ type: r.unitType }),
 		canEdit: writable.has(r.unitId),
 		own: r.tenantId === p.tenantId,
 		subscribed: abos.has(r.unitId)

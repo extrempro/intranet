@@ -11,6 +11,14 @@
 	let { data, form } = $props();
 	const offen = $derived(page.url.hash.replace('#faq-', ''));
 	const anzahl = $derived(data.groups.reduce((n, g) => n + g.items.length, 0));
+	function filterHref(meine: boolean) {
+		const teile = [
+			meine ? 'filter=meine' : '',
+			data.unitId ? `einheit=${data.unitId}` : '',
+			data.q ? `q=${encodeURIComponent(data.q)}` : ''
+		].filter(Boolean);
+		return teile.length ? `?${teile.join('&')}` : '?';
+	}
 	const neuHref = $derived(
 		`${resolve('/(app)/faqs/neu')}${data.unitId ? `?einheit=${data.unitId}` : ''}`
 	);
@@ -33,7 +41,6 @@
 				</button>
 			</form>
 		</div>
-		{#if data.canWrite}<a class="knopf hauptaktion" href={neuHref}>FAQ erstellen</a>{/if}
 	</div>
 	{#if form?.fehler}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
 
@@ -55,26 +62,41 @@
 				maxlength="100"
 			/>
 		</label>
-		{#if data.units.length > 1}
-			<label class="feld">
-				<span class="sr-only">Bereich</span>
-				<select
-					name="einheit"
-					class="pille"
-					class:an={!!data.unitId}
-					value={data.unitId ?? ''}
-					onchange={(e) => e.currentTarget.form?.requestSubmit()}
-				>
-					<option value="">Von: alle</option>
-					{#each data.units as u (u.id)}<option value={u.id}>Von: {u.name}</option>{/each}
-				</select>
-			</label>
-		{/if}
+		{#if data.meine}<input type="hidden" name="filter" value="meine" />{/if}
+		{#if data.unitId}<input type="hidden" name="einheit" value={data.unitId} />{/if}
+	</form>
+
+	<form method="GET" class="filter" data-sveltekit-reset="false">
+		<nav class="pillen" aria-label="Filter">
+			<a href={filterHref(false)} class="pille" aria-current={!data.meine ? 'true' : undefined}>
+				Alle
+			</a>
+			<a href={filterHref(true)} class="pille" aria-current={data.meine ? 'true' : undefined}>
+				Meine
+			</a>
+		</nav>
+		{#if data.meine}<input type="hidden" name="filter" value="meine" />{/if}
+		{#if data.q}<input type="hidden" name="q" value={data.q} />{/if}
+		<label>
+			<span class="sr-only">Von</span>
+			<select
+				name="einheit"
+				class="pille"
+				class:an={!!data.unitId}
+				value={data.unitId ?? ''}
+				onchange={(e) => e.currentTarget.form?.requestSubmit()}
+			>
+				<option value="">Von: alle</option>
+				{#each data.units as u (u.id)}<option value={u.id}>Von: {u.name}</option>{/each}
+			</select>
+		</label>
+		<noscript><button class="knopf zweit" type="submit">Anwenden</button></noscript>
+		{#if data.canWrite}<a class="knopf hauptaktion erstellen" href={neuHref}>FAQ erstellen</a>{/if}
 	</form>
 
 	{#if anzahl === 0}
 		<p class="hinweis" role="status">
-			{#if data.q || data.unitId}
+			{#if data.q || data.unitId || data.meine}
 				Keine FAQs zu dieser Suche gefunden. <a href="?">Alle FAQs zeigen</a>
 			{:else}
 				Es gibt noch keine FAQs.
@@ -199,13 +221,17 @@
 		cursor: pointer;
 	}
 	.suche {
+		max-width: 560px;
+	}
+	.filter,
+	.pillen {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 10px;
-		align-items: end;
+		align-items: center;
+		gap: 8px;
 	}
-	.suche .feld:first-child {
-		flex: 1 1 260px;
+	.erstellen {
+		margin-left: auto;
 	}
 	.gruppe {
 		padding: 0;

@@ -13,6 +13,7 @@ import { listFavorites, toggleFavorite } from '#lib/server/preferences.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
+const QUELLEN = ['einheit', 'hub'];
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const p = requirePrincipal(locals);
@@ -23,6 +24,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const monatParam = url.searchParams.get('monat');
 	const monat = isMonth(monatParam) ? monatParam : (tag ?? heute).slice(0, 7);
 	const q = url.searchParams.get('q')?.trim().slice(0, 100) ?? '';
+	// Quelle: Abteilungen/Stabsstellen und Hubs; ohne Angabe beide
+	const gewaehlt = url.searchParams.getAll('quelle').filter((x) => QUELLEN.includes(x));
+	const quellen = gewaehlt.length ? gewaehlt : QUELLEN;
 
 	const [extra, mandanten, schreibbar, favs] = await Promise.all([
 		getCalendarTenants(p),
@@ -35,7 +39,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const von = monatsansicht ? `${monat}-01` : q ? heute : (tag ?? heute);
 	const bis = monatsansicht ? addDays(`${monat}-01`, 31) : addDays(von, q ? 365 : 90);
 	const termine = (await listEvents(p, { from: von, to: bis, tenantIds: extra, q })).filter(
-		(t) => !monatsansicht || t.date.startsWith(monat)
+		(t) =>
+			(!monatsansicht || t.date.startsWith(monat)) && quellen.includes(t.isHub ? 'hub' : 'einheit')
 	);
 
 	return {
@@ -44,6 +49,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		monat,
 		tag: monatsansicht ? (tag ?? (heute.startsWith(monat) ? heute : null)) : tag,
 		q,
+		quellen,
 		termine,
 		mandanten: mandanten.map((m) => ({
 			...m,

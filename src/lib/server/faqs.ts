@@ -41,10 +41,15 @@ export interface FaqItem {
 }
 
 /** Alle sichtbaren FAQs, nach Einheit gruppiert; optional gefiltert. */
-export async function listFaqs(p: Principal, opts: { unitId?: string | null; q?: string | null }) {
+export async function listFaqs(
+	p: Principal,
+	opts: { unitId?: string | null; q?: string | null; meine?: boolean }
+) {
 	const q = opts.q?.trim().slice(0, 100) ?? '';
 	const like = `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 	const unitId = opts.unitId && GUID.test(opts.unitId) ? opts.unitId : null;
+	// „Meine“: nur Einheiten, in denen die Person Mitglied ist (wie bei Neuigkeiten)
+	const meineIds = p.memberships.map((m) => m.unitId);
 	const writable = new Set((await faqWritableUnits(p)).map((u) => u.id));
 
 	const { rows, unitsWithFaqs } = await scoped(p, async (tx) => {
@@ -64,6 +69,7 @@ export async function listFaqs(p: Principal, opts: { unitId?: string | null; q?:
 			.where(
 				and(
 					unitId ? eq(faqs.unitId, unitId) : undefined,
+					opts.meine ? (meineIds.length ? inArray(faqs.unitId, meineIds) : sql`false`) : undefined,
 					q ? or(ilike(faqs.question, like), ilike(faqs.answerText, like)) : undefined
 				)
 			)
@@ -117,7 +123,14 @@ export async function listFaqs(p: Principal, opts: { unitId?: string | null; q?:
 			canEdit: writable.has(r.unitId)
 		});
 	}
-	return { groups, units: unitsWithFaqs, canWrite: writable.size > 0, q, unitId };
+	return {
+		groups,
+		units: unitsWithFaqs,
+		canWrite: writable.size > 0,
+		q,
+		unitId,
+		meine: Boolean(opts.meine)
+	};
 }
 
 /** FAQ zum Bearbeiten, nur mit Schreibrecht für die Einheit. */

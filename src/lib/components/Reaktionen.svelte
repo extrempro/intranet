@@ -4,12 +4,15 @@
 	let {
 		newsId,
 		reaktionen,
-		basis = '/neuigkeiten'
+		basis = '/neuigkeiten',
+		hinweis = false
 	}: {
 		newsId: string;
 		reaktionen: { emoji: string; n: number; mine: boolean }[];
 		/** Seite mit der Aktion „reagieren“, z. B. /hinter-den-kulissen */
 		basis?: string;
+		/** Hinweis, dass Reaktionen anonym sind (Beitragsseite) */
+		hinweis?: boolean;
 	} = $props();
 
 	const NAMEN: Record<string, string> = {
@@ -43,8 +46,16 @@
 		</button>
 	{/each}
 </form>
+{#if hinweis}
+	<p class="anonym">Reaktionen sind anonym. Im Intranet sieht niemand, wer wie reagiert hat.</p>
+{/if}
 
 <style>
+	.anonym {
+		margin: 6px 0 0;
+		font-size: 12px;
+		color: var(--mu);
+	}
 	.reaktionen {
 		display: flex;
 		flex-wrap: wrap;
