@@ -15,3 +15,5 @@ kurz: Einblicke teilen – mit Zustimmung der abgebildeten Personen.
 - Bilder kannst du auch direkt in den Text setzen, klein, mittel oder in voller Breite, links oder rechts. Dort ist die Bildbeschreibung Pflicht (siehe „Neuigkeiten schreiben“).
 
 Diese Beiträge erscheinen nicht auf den Abteilungsseiten.
+
+Neue Einträge werden beim Schreiben automatisch als Entwurf gespeichert (siehe „Neuigkeiten schreiben“, Abschnitt Entwürfe).

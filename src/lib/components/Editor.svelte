@@ -304,6 +304,9 @@
 			},
 			onUpdate: ({ editor: e }) => {
 				html = e.isEmpty ? '' : e.getHTML();
+				// Auch Änderungen ohne Tippen (Bild, Tabelle) zählen als Eingabe:
+				// Entwurf speichern, Schutz vor Verlassen
+				element?.dispatchEvent(new Event('input', { bubbles: true }));
 			},
 			onTransaction: () => {
 				tick++;

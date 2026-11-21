@@ -9,6 +9,7 @@
 		mandant,
 		darfVerwaltung,
 		darfRedaktion = false,
+		darfEntwuerfe = false,
 		links = false
 	}: {
 		name: string;
@@ -17,6 +18,7 @@
 		mandant: string;
 		darfVerwaltung: boolean;
 		darfRedaktion?: boolean;
+		darfEntwuerfe?: boolean;
 		/** Menü nach rechts aufklappen (Knopf am linken Rand, z. B. in Teams) */
 		links?: boolean;
 	} = $props();
@@ -74,6 +76,9 @@
 				<div><strong>{name}</strong><br /><span class="mu">{mandant}</span></div>
 			</div>
 			<a href={resolve('/(app)/konto')} class="eintrag">Mein Konto</a>
+			{#if darfEntwuerfe}
+				<a href={resolve('/(app)/entwuerfe')} class="eintrag">Meine Entwürfe</a>
+			{/if}
 			<a href={resolve('/(app)/handbuch')} class="eintrag">Handbuch</a>
 			<a href="{resolve('/(app)')}?fuehrung=1" class="eintrag">Führung starten</a>
 			<a href={resolve('/(app)/rueckmeldung/neu')} class="eintrag">Rückmeldung geben</a>

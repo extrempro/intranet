@@ -2,6 +2,7 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import { readFaqForm } from '#lib/server/faq-form.ts';
 import { describeFaqAttachments, faqWritableUnits, saveFaq } from '#lib/server/faqs.ts';
+import { entwuerfeListe, entwurfLaden, entwurfLoeschen } from '#lib/server/entwuerfe.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -9,21 +10,34 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const einheiten = await faqWritableUnits(p);
 	if (einheiten.length === 0) error(403, 'Dafür fehlt dir das Recht.');
 	const gewuenscht = url.searchParams.get('einheit');
+	const entwurf = await entwurfLaden(p, url.searchParams.get('entwurf'), 'faq');
+	const ausEntwurf = entwurf ? readFaqForm(entwurf.form) : null;
 	return {
 		einheiten,
-		werte: {
-			unitId: einheiten.find((e) => e.id === gewuenscht)?.id ?? einheiten[0].id,
-			question: '',
-			answerHtml: '',
-			attachments: []
-		}
+		entwurf: entwurf ? { id: entwurf.id, gespeichert: entwurf.gespeichert } : null,
+		entwuerfe: entwurf ? [] : await entwuerfeListe(p, 'faq'),
+		werte: ausEntwurf
+			? {
+					unitId: ausEntwurf.unitId,
+					question: ausEntwurf.question,
+					answerHtml: ausEntwurf.answerHtml,
+					attachments: await describeFaqAttachments(p, ausEntwurf.attachmentIds, null)
+				}
+			: {
+					unitId: einheiten.find((e) => e.id === gewuenscht)?.id ?? einheiten[0].id,
+					question: '',
+					answerHtml: '',
+					attachments: []
+				}
 	};
 };
 
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
 		const p = requirePrincipal(locals);
-		const input = readFaqForm(await request.formData());
+		const fd = await request.formData();
+		const entwurf = String(fd.get('entwurf') ?? '') || null;
+		const input = readFaqForm(fd);
 		const r = await saveFaq(p, null, input);
 		if (!r.ok) {
 			return fail(400, {
@@ -33,9 +47,11 @@ export const actions: Actions = {
 					answerHtml: input.answerHtml,
 					attachments: await describeFaqAttachments(p, input.attachmentIds, null)
 				},
-				fehler: r.errors
+				fehler: r.errors,
+				entwurf
 			});
 		}
+		await entwurfLoeschen(p, entwurf);
 		redirect(303, `/faqs?einheit=${input.unitId}#faq-${r.id}`);
 	}
 };

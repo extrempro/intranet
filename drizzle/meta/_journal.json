@@ -260,6 +260,13 @@
       "when": 1795285189249,
       "tag": "0036_bilder_im_text",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1795289411329,
+      "tag": "0037_entwuerfe",
+      "breakpoints": true
     }
   ]
 }

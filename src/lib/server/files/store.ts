@@ -102,7 +102,14 @@ export async function deleteOrphans() {
 	const rows = await db
 		.select({ id: files.id })
 		.from(files)
-		.where(and(lt(files.createdAt, sql`now() - interval '24 hours'`), unlinked));
+		.where(
+			and(
+				lt(files.createdAt, sql`now() - interval '24 hours'`),
+				unlinked,
+				// Dateien in Entwürfen bleiben, bis der Entwurf gelöscht ist
+				sql`not exists (select 1 from draft_files df where df.file_id = ${files.id})`
+			)
+		);
 	await deleteStored(rows.map((r) => r.id));
 }
 

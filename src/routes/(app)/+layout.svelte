@@ -19,8 +19,11 @@
 	import { hilfe } from '#lib/hilfe.svelte.ts';
 	import { FUEHRUNG } from '#lib/tours.ts';
 	import { currentNav, navAreas } from '#lib/nav.ts';
+	import { verlassenSchutz } from '#lib/verlassen.svelte.ts';
 
 	let { data, children } = $props();
+	// Eingaben nicht versehentlich verlieren (Rückfrage beim Verlassen)
+	verlassenSchutz();
 
 	const areas = navAreas();
 	const aktuell = $derived(currentNav(areas, page.url.pathname));
@@ -207,6 +210,7 @@
 			mandant={data.ich.mandant}
 			darfVerwaltung={data.darfVerwaltung}
 			darfRedaktion={data.darfRedaktion}
+			darfEntwuerfe={data.darfEntwuerfe}
 		/>
 	</span>
 {/snippet}
