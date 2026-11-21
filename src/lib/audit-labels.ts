@@ -1,5 +1,6 @@
 /** Lesbare Bezeichnungen für Einträge im Protokoll (Kap. 14). */
 const LABELS: Record<string, string> = {
+	'access.denied': 'Zugriff verweigert',
 	'board_category.anlegen': 'Kategorie Schwarzes Brett angelegt',
 	'entra.sync': 'Abgleich mit Entra',
 	'entra.sync_start': 'Abgleich mit Entra von Hand gestartet',

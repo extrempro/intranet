@@ -15,6 +15,8 @@ declare global {
 			theme: 'auto' | 'hell' | 'dunkel';
 			/** Anfrage aus der Teams-App (Sitzung über das Teams-Cookie) */
 			teams: boolean;
+			/** 403 nur wegen fehlender erneuter Anmeldung (kein verweigerter Zugriff fürs Protokoll) */
+			bestaetigungVerlangt?: boolean;
 		}
 		// interface PageData {}
 		// interface PageState {}

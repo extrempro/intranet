@@ -139,6 +139,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 	for (const [name, value] of Object.entries(securityHeaders)) {
 		response.headers.set(name, value);
 	}
+	// Verweigerte Zugriffe angemeldeter Personen protokollieren (ASVS 5.0 V16.3.2)
+	if (response.status === 403 && event.locals.person && !event.locals.bestaetigungVerlangt) {
+		const { zugriffVerweigert } = await import('#lib/server/audit-zugriff.ts');
+		await zugriffVerweigert(event);
+	}
 	// Angemeldete Inhalte nicht in gemeinsamen Caches ablegen
 	// (Mandantenbilder unter /marke sind öffentlich und dürfen zwischengespeichert werden)
 	if (event.locals.person && !event.url.pathname.startsWith('/marke/'))
