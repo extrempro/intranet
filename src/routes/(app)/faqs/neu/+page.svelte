@@ -23,13 +23,13 @@
 			/>
 			<div class="aktionen">
 				<button class="knopf" type="submit">Speichern</button>
+				<EntwurfSpeichern
+					art="faq"
+					id={form?.entwurf ?? data.entwurf?.id ?? null}
+					gespeichert={data.entwurf?.gespeichert ?? null}
+				/>
 				<a class="knopf zweit" href={resolve('/(app)/faqs')}>Abbrechen</a>
 			</div>
-			<EntwurfSpeichern
-				art="faq"
-				id={form?.entwurf ?? data.entwurf?.id ?? null}
-				gespeichert={data.entwurf?.gespeichert ?? null}
-			/>
 		</form>
 	{/key}
 </div>
@@ -49,6 +49,7 @@
 	.aktionen {
 		display: flex;
 		flex-wrap: wrap;
+		align-items: center;
 		gap: 10px;
 	}
 </style>

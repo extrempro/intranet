@@ -129,13 +129,13 @@
 </div>
 
 <style>
+	/* Knopf steht in der Zeile der anderen Knöpfe, der Status darunter */
 	.entwurf {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 8px 14px;
+		display: contents;
 	}
 	.status {
+		order: 99;
+		flex-basis: 100%;
 		color: var(--mu);
 		font-size: 14px;
 	}
