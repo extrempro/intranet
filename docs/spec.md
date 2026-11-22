@@ -198,6 +198,10 @@ Mein Konto, Redaktion (nur mit Rolle), Verwaltung (nur Admins), Handbuch, Führu
 
 Jede Rückfrage vor einer Aktion („… löschen?“, „Konto sperren?“) erscheint als **eigenes Fenster**, nie als Zeile im Formular. Umsetzung: `MitFrage.svelte` (Knopf mit Rückfrage und Formular) bzw. `frage()` aus `src/lib/frage.svelte.ts`, angezeigt von `FrageDialog.svelte`.
 
+### 6.6 Rückmeldungen immer sichtbar (Design-Regel)
+
+Rückmeldungen nach einer Aktion („Gespeichert.“, Fehler, Hinweise) müssen auf PC, Tablet und Handy **immer zu sehen** sein, auch auf langen Seiten. Sie stehen als `.meldung` mit `role="status"` (Erfolg) oder `role="alert"` (Fehler) beim Bereich, um den es geht. Liegt eine solche Meldung außerhalb des sichtbaren Bereichs, zeigt `MeldungImBlick.svelte` (im Layout) sie zusätzlich unten im Fenster an, auf dem Handy über der Leiste unten: Erfolg verschwindet nach 6 Sekunden, Fehler erst beim Schließen; ein Klick springt zur Meldung. Neue Seiten brauchen dafür nichts weiter, solange sie diese Klassen und Rollen verwenden.
+
 - **PC und Tablet**: Fenster in der Mitte, Titel als Frage, ein Satz, was passiert; rechts „Abbrechen“ und der Bestätigungsknopf mit dem Verb („Löschen“, „Sperren“).
 - **Handy**: Fenster von unten, große Knöpfe über die ganze Breite, Bestätigen oben.
 - **Endgültiges** (Löschen, Sperren, Entziehen): Bestätigungsknopf rot, Fokus zuerst auf „Abbrechen“.
