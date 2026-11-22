@@ -164,6 +164,28 @@ describe.skipIf(!url)('Mediathek', () => {
 		expect(v?.status).toBe('entwurf');
 	});
 
+	it('bewusst ohne Untertitel: mit Grund veröffentlichen, Untertitel heben es auf', async () => {
+		const id = await entwurf(ZENTRAL);
+		await expect(m.veroeffentlichen(pflege, id, true)).rejects.toThrow(/keine braucht/);
+		await expect(m.ohneUntertitel(pflege, id, 'quatsch')).rejects.toThrow(/Grund/);
+		await expect(m.ohneUntertitel(leser, id, 'nur_musik')).rejects.toThrow(/Recht/);
+		await m.ohneUntertitel(pflege, id, 'nur_musik');
+		await m.veroeffentlichen(pflege, id, true);
+		expect((await m.videoDetail(leser, id))?.status).toBe('veroeffentlicht');
+		// Grund zurücknehmen: ohne Untertitel wieder Entwurf
+		await m.ohneUntertitel(pflege, id, null);
+		expect((await m.bearbeitenDaten(pflege, id)).status).toBe('entwurf');
+		// Mit Untertiteln, dann Verzicht: Untertitel werden entfernt
+		await m.untertitelSetzen(pflege, id, VTT);
+		await m.ohneUntertitel(pflege, id, 'keine_sprache');
+		const d = await m.bearbeitenDaten(pflege, id);
+		expect(d.captionsVtt).toBeNull();
+		expect(d.noCaptionsReason).toBe('keine_sprache');
+		// Hochladen hebt den Verzicht auf
+		await m.untertitelSetzen(pflege, id, VTT);
+		expect((await m.bearbeitenDaten(pflege, id)).noCaptionsReason).toBeNull();
+	});
+
 	it('Untertitel werden zu reinem Text bereinigt', () => {
 		const { vtt, text } = m.vttBereinigen(VTT);
 		expect(vtt).not.toMatch(/<|script/);

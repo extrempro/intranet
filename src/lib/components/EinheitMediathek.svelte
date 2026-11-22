@@ -21,6 +21,11 @@
 {#if m.videos.length || m.darf}
 	<section {id} class="karte stapel" aria-labelledby="{id}-h">
 		<h2 id="{id}-h">Videos</h2>
+		{#if m.darf && m.videos.some((v) => v.status !== 'veroeffentlicht')}
+			<p class="hinweis">
+				Nicht veröffentlichte Videos sehen nur Personen mit dem Recht „Mediathek“.
+			</p>
+		{/if}
 		{#if m.videos.length === 0}
 			<p class="hinweis">Noch keine Videos.</p>
 		{:else}
@@ -35,7 +40,9 @@
 							{v.title}
 						</a>
 						<span class="hinweis">
-							{v.status === 'veroeffentlicht' ? zeitText(v.durationSec) : STATUS_TEXT[v.status]}
+							{v.status === 'veroeffentlicht'
+								? zeitText(v.durationSec)
+								: `${STATUS_TEXT[v.status]} · nicht veröffentlicht`}
 						</span>
 					</li>
 				{/each}
@@ -79,7 +86,7 @@
 	.liste a {
 		font-weight: 600;
 	}
-	.hinweis {
+	.liste .hinweis {
 		white-space: nowrap;
 	}
 	.knoepfe {

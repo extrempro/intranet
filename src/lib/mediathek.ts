@@ -60,3 +60,11 @@ export const STATUS_TEXT: Record<string, string> = {
 	entwurf: 'Entwurf',
 	veroeffentlicht: 'Veröffentlicht'
 };
+
+/** Gründe, ein Video bewusst ohne Untertitel zu veröffentlichen */
+export const OHNE_UNTERTITEL = {
+	keine_sprache: 'Im Video wird nicht gesprochen',
+	nur_musik: 'Nur Musik oder Geräusche',
+	text_im_bild: 'Alles Gesprochene steht auch als Text im Bild'
+} as const;
+export type OhneUntertitelGrund = keyof typeof OHNE_UNTERTITEL;

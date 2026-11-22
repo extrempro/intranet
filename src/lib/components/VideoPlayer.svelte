@@ -99,6 +99,49 @@
 	$effect(() => {
 		if (video) video.playbackRate = tempo;
 	});
+
+	// Untertitel an/aus: eigener Knopf (nicht jeder Browser zeigt einen), Wahl im Browser gemerkt
+	const UT_SCHLUESSEL = 'intranet.mediathek.untertitel';
+	let utAn = $state(true);
+	onMount(() => {
+		try {
+			utAn = localStorage.getItem(UT_SCHLUESSEL) !== 'aus';
+		} catch {
+			/* kein Speicher im Browser */
+		}
+	});
+	function utSpur(): TextTrack | undefined {
+		return [...(video?.textTracks ?? [])].find((t) => t.kind === 'subtitles');
+	}
+	$effect(() => {
+		const an = utAn;
+		if (!video || !untertitel) return;
+		const setzen = () => {
+			const t = utSpur();
+			if (t) t.mode = an ? 'showing' : 'disabled';
+		};
+		setzen();
+		// Spuren laden teils später; auch die Bedienung des Browsers soll den Knopf mitnehmen
+		const spuren = video.textTracks;
+		const geaendert = () => {
+			const t = utSpur();
+			if (t) utAn = t.mode === 'showing';
+		};
+		spuren.addEventListener('addtrack', setzen);
+		spuren.addEventListener('change', geaendert);
+		return () => {
+			spuren.removeEventListener('addtrack', setzen);
+			spuren.removeEventListener('change', geaendert);
+		};
+	});
+	function utUmschalten() {
+		utAn = !utAn;
+		try {
+			localStorage.setItem(UT_SCHLUESSEL, utAn ? 'an' : 'aus');
+		} catch {
+			/* kein Speicher im Browser */
+		}
+	}
 </script>
 
 <svelte:document onvisibilitychange={verborgen} />
@@ -124,7 +167,7 @@
 				src={untertitel}
 				srclang="de"
 				label="Deutsch"
-				default
+				default={utAn}
 			/>{/if}
 		{#if kapitel}<track kind="chapters" src={kapitel} srclang="de" label="Kapitel" />{/if}
 	</video>
@@ -137,6 +180,17 @@
 		<button type="button" class="knopf zweit klein" onclick={() => schritt(10)}>
 			<span aria-hidden="true">+10 s</span><span class="sr-only">10 Sekunden vor</span>
 		</button>
+		{#if untertitel}
+			<button
+				type="button"
+				class="knopf klein"
+				class:zweit={!utAn}
+				aria-pressed={utAn}
+				onclick={utUmschalten}
+			>
+				Untertitel<span class="ut-stand" aria-hidden="true">{utAn ? 'an' : 'aus'}</span>
+			</button>
+		{/if}
 		<label class="tempo">
 			<span>Geschwindigkeit</span>
 			<select bind:value={tempo}>
@@ -165,6 +219,12 @@
 		flex-wrap: wrap;
 		align-items: center;
 		gap: 8px;
+	}
+	.ut-stand {
+		margin-left: 6px;
+		font-size: 12px;
+		font-weight: 700;
+		text-transform: uppercase;
 	}
 	.zeit {
 		font-variant-numeric: tabular-nums;

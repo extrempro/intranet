@@ -3,10 +3,13 @@
 	import { untrack } from 'svelte';
 	import { resolve } from '$app/paths';
 	import VideoKarte from '#lib/components/VideoKarte.svelte';
-	import { zeitText } from '#lib/mediathek.ts';
+	import { STATUS_TEXT, zeitText } from '#lib/mediathek.ts';
 
 	let { data } = $props();
 	let q = $state(untrack(() => data.filter.q));
+	/** Für Bearbeiter getrennt: was noch nicht veröffentlicht ist */
+	const inArbeit = $derived(data.videos.filter((v) => v.status !== 'veroeffentlicht'));
+	const veroeffentlicht = $derived(data.videos.filter((v) => v.status === 'veroeffentlicht'));
 </script>
 
 <svelte:head><title>Mediathek · Intranet</title></svelte:head>
@@ -35,6 +38,29 @@
 							{w.unitName} · bei {zeitText(w.positionSec)} von {zeitText(w.durationSec)}
 						</span>
 						<progress max={w.durationSec} value={w.positionSec} aria-hidden="true"></progress>
+					</li>
+				{/each}
+			</ul>
+		</section>
+	{/if}
+
+	{#if inArbeit.length}
+		<section class="karte stapel eng arbeit" aria-labelledby="h-arbeit">
+			<h2 id="h-arbeit">In Arbeit und Entwürfe</h2>
+			<p class="hinweis">
+				Noch nicht veröffentlicht: Diese Videos sehen nur Personen mit dem Recht „Mediathek“ in der
+				jeweiligen Abteilung oder dem Hub, alle anderen noch nicht.
+			</p>
+			<ul class="arbeitsliste">
+				{#each inArbeit as v (v.id)}
+					<li>
+						<a href={resolve('/(app)/mediathek/[id]/bearbeiten', { id: v.id })}>{v.title}</a>
+						<span class="hinweis">{v.unitName}</span>
+						<span class="stand s-{v.status}">
+							{STATUS_TEXT[v.status] ?? v.status}{v.status === 'umwandeln'
+								? ` · ${v.progress} %`
+								: ''}
+						</span>
 					</li>
 				{/each}
 			</ul>
@@ -80,11 +106,11 @@
 	</form>
 
 	<p class="hinweis" role="status">
-		{data.videos.length === 1 ? '1 Video' : `${data.videos.length} Videos`}
+		{veroeffentlicht.length === 1 ? '1 Video' : `${veroeffentlicht.length} Videos`}
 	</p>
-	{#if data.videos.length}
+	{#if veroeffentlicht.length}
 		<ul class="raster">
-			{#each data.videos as v (v.id)}<li><VideoKarte {v} /></li>{/each}
+			{#each veroeffentlicht as v (v.id)}<li><VideoKarte {v} /></li>{/each}
 		</ul>
 	{:else}
 		<p class="karte leer">Keine Videos gefunden.</p>
@@ -154,6 +180,37 @@
 	.weiter progress {
 		width: 100%;
 		height: 6px;
+	}
+	.arbeitsliste {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	.arbeitsliste li {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 4px 12px;
+		padding: 8px 0;
+		border-top: 1px solid var(--bd);
+	}
+	.arbeitsliste a {
+		font-weight: 600;
+	}
+	.stand {
+		margin-left: auto;
+		font-size: 12px;
+		font-weight: 700;
+		border-radius: 999px;
+		padding: 2px 10px;
+		background: var(--warn-bg);
+		color: var(--warn-tx);
+		border: 1px solid var(--warn-bd);
+	}
+	.stand.s-fehler {
+		background: var(--err-bg);
+		color: var(--err-tx);
+		border-color: var(--err-bd);
 	}
 	.leer {
 		text-align: center;
