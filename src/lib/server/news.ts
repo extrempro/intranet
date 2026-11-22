@@ -47,6 +47,7 @@ import { excerpt, htmlToText } from './html.ts';
 import { bilderVerknuepfen, textMitBildern } from './textbilder.ts';
 import { doc, headline, matches, rank } from './fts.ts';
 import { getContentRules } from './rules.ts';
+import { lesezeit, tabellenVorschau } from './news-vorschau.ts';
 
 export class NewsError extends Error {}
 
@@ -131,6 +132,14 @@ const columns = {
 	unitId: news.unitId,
 	title: news.title,
 	bodyText: news.bodyText,
+	/** Ab der ersten Tabelle (für die Vorschau in Listen), sonst null */
+	tableHtml: sql<
+		string | null
+	>`case when position('<table' in ${news.bodyHtml}) > 0 then substring(${news.bodyHtml} from position('<table' in ${news.bodyHtml}) for 8000) end`,
+	/** Text ohne Tabellen für den Auszug (die Tabelle zeigt die Vorschau), sonst null */
+	ohneTabellen: sql<
+		string | null
+	>`case when position('<table' in ${news.bodyHtml}) > 0 then regexp_replace(${news.bodyHtml}, '<table.*?</table>', ' ', 'g') end`,
 	publishAt: news.publishAt,
 	expiresAt: news.expiresAt,
 	pinnedUntil: news.pinnedUntil,
@@ -150,6 +159,8 @@ type Row = {
 	unitId: string;
 	title: string;
 	bodyText: string;
+	tableHtml: string | null;
+	ohneTabellen: string | null;
 	publishAt: Date;
 	expiresAt: Date | null;
 	pinnedUntil: Date | null;
@@ -167,7 +178,11 @@ type Row = {
 async function decorate(p: Principal, rows: Row[], now: Date) {
 	if (rows.length === 0) return [];
 	const ids = rows.map((r) => r.id);
-	const [targets, counts, mine, rules, attachmentCounts] = await Promise.all([
+	const liste = sql.join(
+		ids.map((id) => sql`${id}::uuid`),
+		sql`, `
+	);
+	const [targets, counts, mine, rules, attachmentCounts, bilder] = await Promise.all([
 		db
 			.select({ newsId: newsTenants.newsId, name: tenants.name })
 			.from(newsTenants)
@@ -191,7 +206,16 @@ async function decorate(p: Principal, rows: Row[], now: Date) {
 			.select({ newsId: newsAttachments.newsId, n: sql<number>`count(*)::int` })
 			.from(newsAttachments)
 			.where(inArray(newsAttachments.newsId, ids))
-			.groupBy(newsAttachments.newsId)
+			.groupBy(newsAttachments.newsId),
+		// Bilder je Beitrag: angehängte zuerst (in ihrer Reihenfolge), dann Bilder im Text
+		db.execute<{ news_id: string; file_id: string; quelle: number }>(sql`
+			select x.news_id, x.file_id, x.quelle from (
+				select a.news_id, a.file_id, 0 as quelle, a.position as pos
+					from news_attachments a join files f on f.id = a.file_id
+					where a.news_id in (${liste}) and f.kind in ('jpeg', 'png', 'webp')
+				union all
+				select t.news_id, t.file_id, 1, 0 from text_images t where t.news_id in (${liste})
+			) x order by x.news_id, x.quelle, x.pos`)
 	]);
 	const writable = newsUnitIds(p);
 	return rows.map((r) => {
@@ -200,7 +224,7 @@ async function decorate(p: Principal, rows: Row[], now: Date) {
 		return {
 			id: r.id,
 			title: r.title,
-			excerpt: excerpt(r.bodyText),
+			excerpt: excerpt(r.ohneTabellen === null ? r.bodyText : htmlToText(r.ohneTabellen)),
 			publishAt: r.publishAt,
 			expiresAt: r.expiresAt,
 			pinnedUntil: state.pinned ? r.pinnedUntil : null,
@@ -221,6 +245,11 @@ async function decorate(p: Principal, rows: Row[], now: Date) {
 					: (tenantNames[0] ?? ''),
 			canEdit: writable.has(r.unitId),
 			attachmentCount: attachmentCounts.find((a) => a.newsId === r.id)?.n ?? 0,
+			vorschau: vorschauVon(
+				bilder.filter((b) => b.news_id === r.id),
+				r.tableHtml,
+				r.bodyText
+			),
 			reactions: rules.reactions.map((emoji) => ({
 				emoji,
 				n: counts.find((c) => c.newsId === r.id && c.emoji === emoji)?.n ?? 0,
@@ -228,6 +257,24 @@ async function decorate(p: Principal, rows: Row[], now: Date) {
 			}))
 		};
 	});
+}
+
+/** Vorschau in Listen: bis zu drei Bilder, sonst die erste Tabelle; dazu Lesezeit */
+function vorschauVon(
+	bilder: { file_id: string; quelle: number }[],
+	tableHtml: string | null,
+	text: string
+) {
+	const bildIds = bilder.map((b) => b.file_id);
+	return {
+		bilder: bildIds.slice(0, 3).map((id) => `/dateien/${id}`),
+		anzahlBilder: bildIds.length,
+		/** Angehängte Bilder (zählen bei „Anhänge“ nicht noch einmal) */
+		bilderImAnhang: bilder.filter((b) => Number(b.quelle) === 0).length,
+		tabelle: bildIds.length ? null : tabellenVorschau(tableHtml),
+		hatTabelle: Boolean(tableHtml),
+		minuten: lesezeit(text)
+	};
 }
 
 export type NewsItem = Awaited<ReturnType<typeof decorate>>[number];

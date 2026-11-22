@@ -10,6 +10,12 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.31.0 · 22.11.2026 · Vorschau in den Neuigkeiten
+
+- In den Neuigkeiten und unter „Aus den Hubs“ zeigt jeder Beitrag eine Vorschau: bis zu drei Bilder, sonst die ersten Zeilen einer Tabelle. Auf dem Handy steht die Vorschau über dem Text.
+- Unter dem Auszug siehst du, was der Beitrag enthält („4 Bilder“, „Tabelle“, Anhänge), und wie lange das Lesen etwa dauert.
+- Der Auszug lässt Tabellen weg, damit er lesbar bleibt.
+
 ## 0.30.0 · 22.11.2026 · Videos auf Handy und Tablet
 
 - Auf Handy und Tablet bleibt das Video beim Scrollen oben stehen.
