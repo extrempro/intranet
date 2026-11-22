@@ -10,6 +10,13 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.20.0 · 22.11.2026 · Speicherorte für Dateien
+
+- System-Admins legen unter Verwaltung → Speicher fest, wo die Dateien des Intranets liegen: auf dem Server oder in einem S3-Speicher.
+- Für jede Art von Dateien, etwa Anhänge, Pläne oder Profilfotos, lässt sich der Speicherort einzeln wählen.
+- Vorhandene Dateien ziehen auf Wunsch im Hintergrund um. Jede Datei wird geprüft, bevor sie am alten Ort gelöscht wird.
+- Alle Dateien bleiben verschlüsselt, egal wo sie liegen.
+
 ## 0.19.2 · 22.11.2026 · Allgemeine Beispiele
 
 - Die Beispiele in Eingabefeldern, etwa bei Domains und Gruppennamen, sind jetzt allgemein gehalten.

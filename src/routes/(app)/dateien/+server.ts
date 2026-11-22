@@ -37,7 +37,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const file = form?.get('datei');
 	if (!(file instanceof File)) return json({ fehler: 'Keine Datei erhalten.' }, { status: 400 });
 	try {
-		const stored = await storeUpload(file, p.personId);
+		const stored = await storeUpload(file, p.personId, 'inhalte');
 		if (!writer && !['jpeg', 'png', 'webp'].includes(stored.kind)) {
 			await deleteStored([stored.id]);
 			return json({ fehler: 'Hier sind nur Fotos (JPG, PNG, WebP) erlaubt.' }, { status: 400 });

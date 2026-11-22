@@ -41,11 +41,34 @@ jobs:
         run: npm run lint
       - name: Formatierung prüfen
         run: npm run format:check
+      # S3-kompatibler Testspeicher (SeaweedFS, Version und Prüfsumme fest) für die
+      # Tests der Speicherorte. Lauscht nur auf 127.0.0.1.
+      - name: S3-Testspeicher starten
+        env:
+          WEED_VERSION: '4.54'
+          WEED_SHA256: e7424a82eee327809bfa449fda4924c9a0f42f6669a01288eebb1b79674c8196
+        run: |
+          curl -fsSL -o weed.tgz "https://github.com/seaweedfs/seaweedfs/releases/download/${WEED_VERSION}/linux_amd64.tar.gz"
+          echo "${WEED_SHA256}  weed.tgz" | sha256sum -c -
+          tar -xzf weed.tgz -C "$RUNNER_TEMP" weed && rm weed.tgz
+          mkdir -p "$RUNNER_TEMP/weed-daten"
+          echo '{"identities":[{"name":"ci","credentials":[{"accessKey":"ci-zugang","secretKey":"ci-geheimnis-nur-zum-testen"}],"actions":["Admin","Read","Write","List","Tagging"]}]}' > "$RUNNER_TEMP/s3.json"
+          nohup "$RUNNER_TEMP/weed" server -dir="$RUNNER_TEMP/weed-daten" -ip=127.0.0.1 -ip.bind=127.0.0.1 \
+            -volume.max=200 -master.volumeSizeLimitMB=64 -filer -s3 -s3.port=8333 \
+            -s3.config="$RUNNER_TEMP/s3.json" > "$RUNNER_TEMP/weed.log" 2>&1 &
+          for i in $(seq 1 60); do
+            [ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8333/)" = "403" ] && exit 0
+            sleep 1
+          done
+          tail -20 "$RUNNER_TEMP/weed.log"; exit 1
       - name: Tests
         run: npm test
         env:
           TEST_DATABASE_URL: postgres://intranet:ci-nur-zum-testen@localhost:5432/intranet_test
           APP_DATABASE_PASSWORD: ci-app-nur-zum-testen
+          TEST_S3_ENDPOINT: http://127.0.0.1:8333
+          TEST_S3_ACCESS_KEY: ci-zugang
+          TEST_S3_SECRET_KEY: ci-geheimnis-nur-zum-testen
       - name: Bauen
         run: npm run build
       - name: Abhängigkeiten auf bekannte Sicherheitslücken prüfen

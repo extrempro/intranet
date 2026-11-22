@@ -72,7 +72,9 @@ export async function createFeedback(
 			throw err;
 		}
 	}
-	const datei = bild ? await storeBytes(bild, 'bildschirmfoto.jpg', 'jpeg', p.personId) : null;
+	const datei = bild
+		? await storeBytes(bild, 'bildschirmfoto.jpg', 'jpeg', p.personId, 'rueckmeldungen')
+		: null;
 	let row: { id: string };
 	try {
 		[row] = await db

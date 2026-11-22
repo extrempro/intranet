@@ -231,7 +231,7 @@ export async function setPhoto(p: Principal, file: File) {
 	}
 	if (clean.width !== clean.height || clean.width < 128 || clean.width > 1024)
 		throw new ProfileError('Das Foto muss quadratisch sein (128 bis 1024 Pixel).');
-	const stored = await storeBytes(clean.data, 'profilfoto.jpg', 'jpeg', p.personId);
+	const stored = await storeBytes(clean.data, 'profilfoto.jpg', 'jpeg', p.personId, 'bilder');
 	const [old] = await db
 		.select({ fileId: persons.photoFileId })
 		.from(persons)

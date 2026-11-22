@@ -1,32 +1,23 @@
 /**
- * Dateiablage im Volume (FILES_DIR, im Container /data/files).
- * Ablage: <FILES_DIR>/<erste 2 Zeichen der ID>/<ID>, Inhalt verschlüsselt.
+ * Dateiablage: Inhalt verschlüsselt, abgelegt am Speicherort der Inhaltsart
+ * (lokal im Volume FILES_DIR oder in einem S3-Speicher, siehe speicherorte.ts).
  */
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
 import { and, eq, inArray, lt, sql } from 'drizzle-orm';
 import { db } from '../db/index.ts';
 import { files } from '../db/schema.ts';
 import { decryptFile, encryptFile, newFileKey, unwrapFileKey } from './crypto.ts';
 import { detectKind, MIME, safeFileName, type FileKind } from './types.ts';
 import { stripWebp, WebpError } from './webp.ts';
+import { objektLesen, objektLoeschen, objektSchreiben, zielFuer } from './speicherorte.ts';
+import type { Kategorie } from '../../speicher.ts';
 
 export const MAX_FILE_BYTES = 20 * 1024 * 1024;
 export const MAX_ATTACHMENTS = 10;
 
 export class FileError extends Error {}
 
-function root(): string {
-	return resolve(process.env.FILES_DIR ?? 'data/files');
-}
-
-function pathFor(id: string): string {
-	if (!/^[0-9a-f-]{36}$/.test(id)) throw new FileError('Ungültige Datei');
-	return join(root(), id.slice(0, 2), id);
-}
-
 /** Prüft und speichert eine hochgeladene Datei (noch ohne Verknüpfung). */
-export async function storeUpload(file: File, personId: string) {
+export async function storeUpload(file: File, personId: string, category: Kategorie) {
 	if (file.size === 0) throw new FileError('Die Datei ist leer.');
 	if (file.size > MAX_FILE_BYTES) throw new FileError('Die Datei ist größer als 20 MB.');
 	const bytes = new Uint8Array(await file.arrayBuffer());
@@ -46,7 +37,7 @@ export async function storeUpload(file: File, personId: string) {
 			throw err;
 		}
 	}
-	return storeBytes(inhalt, safeFileName(file.name, kind), kind, personId);
+	return storeBytes(inhalt, safeFileName(file.name, kind), kind, personId, category);
 }
 
 /** Geprüfte Bytes verschlüsselt ablegen (ohne Verknüpfung). */
@@ -54,9 +45,11 @@ export async function storeBytes(
 	bytes: Uint8Array,
 	name: string,
 	kind: FileKind,
-	personId: string
+	personId: string,
+	category: Kategorie
 ) {
 	const { key, keyEnc } = newFileKey();
+	const ziel = await zielFuer(category);
 	const [row] = await db
 		.insert(files)
 		.values({
@@ -65,13 +58,13 @@ export async function storeBytes(
 			kind,
 			size: bytes.length,
 			keyEnc,
+			category,
+			storageTargetId: ziel,
 			createdBy: personId
 		})
 		.returning({ id: files.id, name: files.name, size: files.size, kind: files.kind });
 	try {
-		const target = pathFor(row.id);
-		await mkdir(join(root(), row.id.slice(0, 2)), { recursive: true, mode: 0o700 });
-		await writeFile(target, encryptFile(bytes, key, row.id), { mode: 0o600, flag: 'wx' });
+		await objektSchreiben(ziel, row.id, encryptFile(bytes, key, row.id));
 	} catch (err) {
 		await db.delete(files).where(eq(files.id, row.id));
 		throw err;
@@ -83,15 +76,25 @@ export async function storeBytes(
 export async function readStored(id: string) {
 	const [row] = await db.select().from(files).where(eq(files.id, id));
 	if (!row) return null;
-	const data = decryptFile(await readFile(pathFor(id)), unwrapFileKey(row.keyEnc), id);
+	const data = decryptFile(
+		await objektLesen(row.storageTargetId, id),
+		unwrapFileKey(row.keyEnc),
+		id
+	);
 	return { ...row, kind: row.kind as FileKind, data };
 }
 
 /** Löscht Schlüssel und Datei. Ohne Schlüssel ist die Datei ohnehin unlesbar. */
 export async function deleteStored(ids: string[]) {
 	if (ids.length === 0) return;
-	await db.delete(files).where(inArray(files.id, ids));
-	await Promise.all(ids.map((id) => rm(pathFor(id), { force: true })));
+	const rows = await db
+		.delete(files)
+		.where(inArray(files.id, ids))
+		.returning({ id: files.id, ziel: files.storageTargetId });
+	// Ohne Schlüssel ist der Inhalt unlesbar; Fehler beim Entfernen nur protokollieren
+	const ergebnisse = await Promise.allSettled(rows.map((r) => objektLoeschen(r.ziel, r.id)));
+	for (const e of ergebnisse)
+		if (e.status === 'rejected') console.warn('Datei am Speicherort nicht gelöscht');
 }
 
 /**
@@ -139,8 +142,8 @@ export async function ownUnlinkedFiles(personId: string, ids: string[]): Promise
 }
 
 /** PDF hochladen (Pläne, Organigramm): andere Typen werden sofort wieder gelöscht. */
-export async function storePdf(file: File, personId: string) {
-	const stored = await storeUpload(file, personId);
+export async function storePdf(file: File, personId: string, category: Kategorie = 'plaene') {
+	const stored = await storeUpload(file, personId, category);
 	if (stored.kind !== 'pdf') {
 		await deleteStored([stored.id]);
 		throw new FileError('Hier sind nur PDF-Dateien erlaubt.');
