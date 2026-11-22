@@ -94,6 +94,13 @@ export const VERWALTUNG: VerwaltungsGruppe[] = [
 				system: true
 			},
 			{
+				key: 'themen',
+				label: 'Themen',
+				text: 'Themen der Mediathek und FAQs, Vorschläge',
+				icon: 'M7.5 7.5m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0M3 6v5.172a2 2 0 0 0 .586 1.414l7.71 7.71a2.41 2.41 0 0 0 3.408 0l5.592 -5.592a2.41 2.41 0 0 0 0 -3.408l-7.71 -7.71a2 2 0 0 0 -1.414 -.586h-5.172a3 3 0 0 0 -3 3z',
+				system: true
+			},
+			{
 				key: 'loeschfristen',
 				label: 'Löschfristen',
 				text: 'Wann was gelöscht wird',

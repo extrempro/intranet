@@ -80,7 +80,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Skripte der Sicherung prüfen (ShellCheck)
-        run: shellcheck backup/*.sh scripts/*.sh e2e/*.sh
+        run: shellcheck backup/*.sh scripts/*.sh e2e/*.sh video/*.sh
       # Baut App und Backup mit der echten docker-compose.yml und prüft Sicherung,
       # Wiederherstellungstest und Wiederherstellen gegen eine frische Datenbank.
       - name: Images bauen, Sicherung und Wiederherstellung testen
@@ -89,6 +89,9 @@ jobs:
       # schreibgeschützt, Sicherheits-Header, Daten überstehen Neustart und neuen Container
       - name: Container-Rauchtest
         run: bash scripts/ci-container.sh
+      # Umwandlung der Mediathek: echtes Video ohne Netz und schreibgeschützt umwandeln
+      - name: Umwandlung der Videos testen
+        run: bash video/ci-test.sh
       # Sucht in den gebauten Images (Basis-Image mit Systempaketen und node_modules)
       # nach bekannten Lücken. Rot bei hohen und kritischen Lücken, für die es schon
       # eine behobene Version gibt. Läuft auch im täglichen Zeitplan, damit neu
@@ -117,6 +120,19 @@ jobs:
           version: v0.76.2
           scan-type: image
           image-ref: ghcr.io/extrempro/intranet-backup:latest
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+        env:
+          TRIVY_IMAGE_SRC: docker
+      - name: Image intranet-video auf Sicherheitslücken prüfen (Trivy)
+        if: ${{ !cancelled() }}
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.76.2
+          scan-type: image
+          image-ref: ghcr.io/extrempro/intranet-video:latest
           scanners: vuln
           severity: HIGH,CRITICAL
           ignore-unfixed: true

@@ -11,6 +11,7 @@
 import { sql } from 'drizzle-orm';
 import {
 	type AnyPgColumn,
+	bigint,
 	boolean,
 	check,
 	customType,
@@ -228,6 +229,8 @@ export const unitMembers = pgTable(
 		mayWriteBehindScenes: boolean('may_write_behind_scenes').notNull().default(false),
 		/** Dokumente der Einheit pflegen (Hubs) */
 		mayWriteDocuments: boolean('may_write_documents').notNull().default(false),
+		/** Mediathek: Videos hochladen, bearbeiten, veröffentlichen (Kap. 8.15) */
+		mayWriteMedia: boolean('may_write_media').notNull().default(false),
 		/** Hub-Team: Aufgabe im Hub (z. B. „Technik und Aufbau“) */
 		hubTask: text('hub_task'),
 		createdAt: createdAt()
@@ -1637,4 +1640,104 @@ export const tenantAssets = pgTable(
 		updatedAt: updatedAt()
 	},
 	(t) => [primaryKey({ columns: [t.tenantId, t.art] })]
+);
+
+// ---------------------------------------------------------------------------
+// Themen (Mediathek und FAQs, Kap. 8.15)
+// ---------------------------------------------------------------------------
+
+export const topics = pgTable(
+	'topics',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		name: text('name').notNull(),
+		createdAt: createdAt()
+	},
+	(t) => [uniqueIndex('topics_name_lower').on(sql`lower(${t.name})`)]
+);
+
+export const topicSuggestions = pgTable('topic_suggestions', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	name: text('name').notNull(),
+	suggestedBy: uuid('suggested_by').references(() => persons.id, { onDelete: 'cascade' }),
+	createdAt: createdAt()
+});
+
+export const faqTopics = pgTable(
+	'faq_topics',
+	{
+		faqId: uuid('faq_id')
+			.notNull()
+			.references(() => faqs.id, { onDelete: 'cascade' }),
+		topicId: uuid('topic_id')
+			.notNull()
+			.references(() => topics.id, { onDelete: 'cascade' })
+	},
+	(t) => [primaryKey({ columns: [t.faqId, t.topicId] })]
+);
+
+// ---------------------------------------------------------------------------
+// Mediathek (Kap. 8.15)
+// ---------------------------------------------------------------------------
+
+/**
+ * Ein Video gehört zu einer Einheit. Die Medien (HLS-Stücke, Vorschaubild)
+ * liegen verschlüsselt unter videos/<id>/ am Speicherort; der Schlüssel des
+ * Videos liegt nur hier (mit ENCRYPTION_KEY geschützt).
+ */
+export const videos = pgTable(
+	'videos',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		unitId: uuid('unit_id')
+			.notNull()
+			.references(() => units.id, { onDelete: 'cascade' }),
+		title: text('title').notNull(),
+		description: text('description').notNull().default(''),
+		/** hochladen, warten, umwandeln, fehler, entwurf, veroeffentlicht */
+		status: text('status').notNull().default('hochladen'),
+		/** Nur zentrale Einheiten: auf Mandanten einschränken (leer = alle) */
+		tenantIds: uuid('tenant_ids').array(),
+		keyEnc: text('key_enc').notNull(),
+		storageTargetId: uuid('storage_target_id').references(() => storageTargets.id, {
+			onDelete: 'restrict'
+		}),
+		/** Größe der umgewandelten Medien in Bytes */
+		bytes: bigint('bytes', { mode: 'number' }).notNull().default(0),
+		durationSec: integer('duration_sec').notNull().default(0),
+		/** Qualitätsstufen, z. B. [360, 720] */
+		heights: integer('heights')
+			.array()
+			.notNull()
+			.default(sql`'{}'::integer[]`),
+		progress: integer('progress').notNull().default(0),
+		errorMessage: text('error_message'),
+		/** Untertitel (WebVTT, vom Server geprüft) */
+		captionsVtt: text('captions_vtt'),
+		/** Reiner Text der Untertitel für die Suche */
+		captionsText: text('captions_text').notNull().default(''),
+		/** Kapitel: [{ s: Sekunde, t: Titel }] */
+		chapters: jsonb('chapters').$type<{ s: number; t: string }[]>().notNull().default([]),
+		/** Hochladen in Teilen: erwartete Größe und bisher erhaltene Bytes */
+		uploadSize: bigint('upload_size', { mode: 'number' }).notNull().default(0),
+		uploadReceived: bigint('upload_received', { mode: 'number' }).notNull().default(0),
+		createdBy: uuid('created_by').references(() => persons.id, { onDelete: 'set null' }),
+		createdAt: createdAt(),
+		updatedAt: updatedAt(),
+		publishedAt: timestamp('published_at', { withTimezone: true })
+	},
+	(t) => [index('videos_unit').on(t.unitId), index('videos_status').on(t.status)]
+);
+
+export const videoTopics = pgTable(
+	'video_topics',
+	{
+		videoId: uuid('video_id')
+			.notNull()
+			.references(() => videos.id, { onDelete: 'cascade' }),
+		topicId: uuid('topic_id')
+			.notNull()
+			.references(() => topics.id, { onDelete: 'cascade' })
+	},
+	(t) => [primaryKey({ columns: [t.videoId, t.topicId] })]
 );

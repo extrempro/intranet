@@ -73,7 +73,7 @@ Tenant-ID und Client-ID stehen auf der Übersichtsseite der Registrierung.
 | `SMTP_HOST`, `SMTP_SECURITY`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` | SMTP (auch später in der Verwaltung pflegbar)                                             |
 | `PUSH_CONTACT`                                                          | z. B. `mailto:it@example.org` (ohne Angabe: `ORIGIN`)                                     |
 
-3. **Images**: Das Paket `ghcr.io/extrempro/intranet` (und `intranet-backup`) muss öffentlich sein (GitHub → Packages → Package settings → Change visibility). Sonst auf dem Host `docker login ghcr.io` mit einem Token mit `read:packages`.
+3. **Images**: Die Pakete `ghcr.io/extrempro/intranet`, `intranet-backup` und `intranet-video` müssen öffentlich sein (GitHub → Packages → Package settings → Change visibility). Sonst auf dem Host `docker login ghcr.io` mit einem Token mit `read:packages`.
 
 ## 5. Reverse Proxy
 
@@ -109,6 +109,17 @@ Ohne weitere Einstellung liegen alle Dateien lokal im Volume `files-data`. Für 
 4. Unter **Was wo liegt** je Inhaltsart den Speicherort wählen. Mit „Vorhandene Dateien umziehen“ zieht ein Hintergrundauftrag die bisherigen Dateien um: kopieren, prüfen, erst dann am alten Ort löschen.
 
 Die Dateien im Bucket sind vom Intranet verschlüsselt; der Anbieter sieht keine Inhalte. Die Sicherung des Intranets (Dienst `backup`) enthält für diese Dateien nur die Verweise in der Datenbank; gesichert werden sie über die Versionierung im Bucket.
+
+**Videos der Mediathek:** Bei der Inhaltsart „Videos“ landen neue Videos am gewählten Ort; vorhandene bleiben, wo sie sind (kein Umzug). Liegen sie lokal, wachsen `files-data` und damit die Sicherung entsprechend. Die **Obergrenze** der Mediathek (Standard 500 GB) stellst du unter Verwaltung → Speicher ein.
+
+### Umwandlung der Videos (Dienst `video`)
+
+Der Dienst `video` wandelt hochgeladene Videos mit ffmpeg um. Er hat kein Netz, ein schreibgeschütztes Dateisystem und keine Rechte; mit der Anwendung teilt er nur das Volume `video-arbeit`, in dem Originale kurz liegen. Es läuft immer nur eine Umwandlung gleichzeitig. Grenzen in der `.env`:
+
+- `VIDEO_CPUS` (Standard 2): CPU-Kerne für die Umwandlung. Mehr Kerne = schneller, aber weniger Luft für die Anwendung.
+- `VIDEO_SPEICHER` (Standard `2g`): Arbeitsspeicher.
+
+Als Faustregel dauert eine Umwandlung mit 2 Kernen etwa so lange wie das Video. Für die Arbeitsdateien braucht der Host freien Platz in der Größe der größten Uploads (bis 4 GB je Video, höchstens 3 gleichzeitig je Person).
 
 ## 8. Teams-App
 

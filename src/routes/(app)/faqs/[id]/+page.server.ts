@@ -9,6 +9,7 @@ import {
 	faqWritableUnits,
 	saveFaq
 } from '#lib/server/faqs.ts';
+import { alleThemen } from '#lib/server/themen.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 /** Bearbeiten einer FAQ; nur mit Schreibrecht „FAQs“ für die Einheit. */
@@ -19,11 +20,13 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	return {
 		id: faq.id,
 		einheiten: await faqWritableUnits(p),
+		themen: await alleThemen(),
 		werte: {
 			unitId: faq.unitId,
 			question: faq.question,
 			answerHtml: faq.answerHtml,
-			attachments: faq.attachments
+			attachments: faq.attachments,
+			themen: faq.themen
 		}
 	};
 };
@@ -40,7 +43,8 @@ export const actions: Actions = {
 						unitId: input.unitId,
 						question: input.question,
 						answerHtml: input.answerHtml,
-						attachments: await describeFaqAttachments(p, input.attachmentIds, params.id)
+						attachments: await describeFaqAttachments(p, input.attachmentIds, params.id),
+						themen: input.themen ?? []
 					},
 					fehler: r.errors
 				});

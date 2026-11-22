@@ -6,7 +6,8 @@ import { statfs } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { desc, eq, sql } from 'drizzle-orm';
 import { db } from './db/index.ts';
-import { files, storageMoves, storageTargets } from './db/schema.ts';
+import { files, storageMoves, storageTargets, videos } from './db/schema.ts';
+import { belegtBytes, grenzeGb } from './mediathek.ts';
 import { decryptSecret, encryptSecret } from './crypto.ts';
 import {
 	clientVergessen,
@@ -152,6 +153,14 @@ export async function s3Loeschen(id: string) {
 		throw new SpeicherFehler(
 			`Dort liegen noch ${n} Dateien. Zieh sie zuerst an einen anderen Ort um.`
 		);
+	const [{ v }] = await db
+		.select({ v: sql<number>`count(*)::int` })
+		.from(videos)
+		.where(eq(videos.storageTargetId, id));
+	if (v > 0)
+		throw new SpeicherFehler(
+			`Dort liegen noch ${v === 1 ? '1 Video' : `${v} Videos`}. Lösche sie zuerst in der Mediathek.`
+		);
 	const z = await zuordnung();
 	if (Object.values(z).includes(id))
 		throw new SpeicherFehler('Der Speicher ist noch einer Inhaltsart zugeordnet.');
@@ -176,15 +185,28 @@ export async function speicherUebersicht() {
 		})
 		.from(storageTargets)
 		.orderBy(storageTargets.name);
-	const belegung = await db
-		.select({
-			category: files.category,
-			ziel: files.storageTargetId,
-			anzahl: sql<number>`count(*)::int`,
-			bytes: sql<number>`coalesce(sum(${files.size}), 0)::float8`
-		})
-		.from(files)
-		.groupBy(files.category, files.storageTargetId);
+	const belegung = [
+		...(await db
+			.select({
+				category: files.category,
+				ziel: files.storageTargetId,
+				anzahl: sql<number>`count(*)::int`,
+				bytes: sql<number>`coalesce(sum(${files.size}), 0)::float8`
+			})
+			.from(files)
+			.groupBy(files.category, files.storageTargetId)),
+		// Videos zählen je Video (umgewandelte Dateien zusammen)
+		...(await db
+			.select({
+				category: sql<string>`'videos'`,
+				ziel: videos.storageTargetId,
+				anzahl: sql<number>`count(*)::int`,
+				bytes: sql<number>`coalesce(sum(${videos.bytes}), 0)::float8`
+			})
+			.from(videos)
+			.where(sql`${videos.status} in ('entwurf', 'veroeffentlicht')`)
+			.groupBy(videos.storageTargetId))
+	];
 	const umzuege = await db
 		.select()
 		.from(storageMoves)
@@ -199,6 +221,7 @@ export async function speicherUebersicht() {
 	}
 	const z = await zuordnung();
 	return {
+		mediathek: { grenzeGb: await grenzeGb(), belegt: await belegtBytes() },
 		ziele,
 		platte,
 		kategorien: KATEGORIEN.map((k) => {
@@ -210,6 +233,7 @@ export async function speicherUebersicht() {
 				label: k.label,
 				text: k.text,
 				ziel: z[k.key],
+				umziehbar: k.key !== 'videos',
 				anzahl: zeilen.reduce((a, b) => a + b.anzahl, 0),
 				bytes: zeilen.reduce((a, b) => a + b.bytes, 0),
 				orte: zeilen.map((b) => ({ ziel: b.ziel, anzahl: b.anzahl, bytes: b.bytes })),

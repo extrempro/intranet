@@ -281,6 +281,13 @@
       "when": 1795335558790,
       "tag": "0039_speicherorte",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1795338093396,
+      "tag": "0040_mediathek",
+      "breakpoints": true
     }
   ]
 }

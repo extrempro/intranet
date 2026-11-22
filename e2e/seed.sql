@@ -26,6 +26,13 @@ insert into unit_members (unit_id, person_id, is_primary, may_write_news) values
 	('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-0000000000c2', true, false),
 	('00000000-0000-4000-8000-0000000000b1', '00000000-0000-4000-8000-0000000000c3', false, false);
 
+-- Mediathek: ein Thema, ein veröffentlichtes Video (nur Beispielhaus), ein Entwurf im Chor
+insert into topics (id, name) values ('00000000-0000-4000-8000-0000000000e1', 'Software');
+insert into videos (id, unit_id, title, description, status, tenant_ids, key_enc, bytes, duration_sec, heights, captions_vtt, captions_text, chapters, created_by, published_at) values
+	('00000000-0000-4000-8000-0000000000d1', '00000000-0000-4000-8000-0000000000a1', 'Drucker einrichten', 'So richtest du den Drucker ein.', 'veroeffentlicht', '{00000000-0000-4000-8000-000000000001}', 'x', 1000, 125, '{360}', E'WEBVTT\n\n00:00.000 --> 00:02.000\nHallo\n', 'Hallo', '[{"s":0,"t":"Einleitung"},{"s":60,"t":"Treiber"}]', '00000000-0000-4000-8000-0000000000c1', now()),
+	('00000000-0000-4000-8000-0000000000d2', '00000000-0000-4000-8000-0000000000b1', 'Probe im Entwurf', '', 'entwurf', null, 'x', 1000, 60, '{360}', null, '', '[]', '00000000-0000-4000-8000-0000000000c3', null);
+insert into video_topics (video_id, topic_id) values ('00000000-0000-4000-8000-0000000000d1', '00000000-0000-4000-8000-0000000000e1');
+
 -- Einführungen und „Neu in Version“ als gesehen, damit nichts die Seiten überdeckt
 insert into person_preferences (person_id, help_seen, version_hint)
 select id, '["fuehrung","seite:neuigkeiten","seite:kalender","seite:brett","seite:nachrichten","rolle:abteilungsverwaltung","rolle:hub_team","rolle:redaktion","rolle:moderation"]'::jsonb, false

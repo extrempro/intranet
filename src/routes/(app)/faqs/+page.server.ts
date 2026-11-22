@@ -10,7 +10,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		listFaqs(p, {
 			unitId: url.searchParams.get('einheit'),
 			q: url.searchParams.get('q'),
-			meine: url.searchParams.get('filter') === 'meine'
+			meine: url.searchParams.get('filter') === 'meine',
+			thema: url.searchParams.get('thema')
 		}),
 		listFavorites(p.personId)
 	]);

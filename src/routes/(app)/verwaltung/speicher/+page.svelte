@@ -53,6 +53,10 @@
 		offen && offen !== 'neu' ? data.ziele.find((t) => t.id === offen) : null
 	);
 	const fs3 = $derived(bereich('s3'));
+	const fgrenze = $derived(bereich('grenze'));
+	const prozentMedien = $derived(
+		Math.min(100, Math.round((data.mediathek.belegt / (data.mediathek.grenzeGb * 1024 ** 3)) * 100))
+	);
 	const wert = (name: string, gespeichert: string | undefined) =>
 		fs3?.werte && name in fs3.werte ? String(fs3.werte[name]) : (gespeichert ?? '');
 
@@ -327,6 +331,45 @@
 		</section>
 	{/if}
 
+	<section class="karte stapel" aria-labelledby="h-grenze">
+		<h2 id="h-grenze">Obergrenze der Mediathek</h2>
+		<p class="hinweis">
+			Neue Videos lassen sich nur hochladen, solange die Grenze nicht erreicht ist. Ab 90 % bekommen
+			System-Admins eine Benachrichtigung.
+		</p>
+		<span>
+			Belegt: {groesse(data.mediathek.belegt)} von {data.mediathek.grenzeGb.toLocaleString('de-DE')} GB
+			({prozentMedien} %)
+		</span>
+		<div
+			class="balken"
+			role="progressbar"
+			aria-label="Belegung der Mediathek"
+			aria-valuemin="0"
+			aria-valuemax="100"
+			aria-valuenow={prozentMedien}
+		>
+			<div style:width="{prozentMedien}%"></div>
+		</div>
+		{#if fgrenze?.ergebnis}<p class="meldung" role="status">{fgrenze.ergebnis}</p>{/if}
+		{#if fgrenze?.fehler}<p class="meldung fehler" role="alert">{fgrenze.fehler}</p>{/if}
+		<form method="POST" action="?/grenze" class="reihe unten" use:enhance>
+			<label class="feld">
+				<span>Obergrenze in GB</span>
+				<input
+					name="gb"
+					type="number"
+					min="1"
+					max="100000"
+					step="1"
+					required
+					value={data.mediathek.grenzeGb}
+				/>
+			</label>
+			<button class="knopf zweit" type="submit">Speichern</button>
+		</form>
+	</section>
+
 	<section class="karte stapel" aria-labelledby="h-zu">
 		<h2 id="h-zu">Was wo liegt</h2>
 		<p class="hinweis">
@@ -343,7 +386,8 @@
 							<span class="hinweis">{k.text}</span>
 						</div>
 						<span class="hinweis">
-							{k.anzahl.toLocaleString('de-DE')} Dateien · {groesse(k.bytes)}
+							{k.anzahl.toLocaleString('de-DE')}
+							{k.key === 'videos' ? 'Videos' : 'Dateien'} · {groesse(k.bytes)}
 						</span>
 					</div>
 					{#if k.orte.length > 1}
@@ -411,10 +455,14 @@
 									{/each}
 								</select>
 							</label>
-							<label class="option">
-								<input type="checkbox" name="umziehen" />
-								<span>Vorhandene Dateien umziehen</span>
-							</label>
+							{#if k.umziehbar}
+								<label class="option">
+									<input type="checkbox" name="umziehen" />
+									<span>Vorhandene Dateien umziehen</span>
+								</label>
+							{:else}
+								<span class="hinweis">Vorhandene Videos bleiben am bisherigen Ort.</span>
+							{/if}
 							<button class="knopf zweit" type="submit">Speichern</button>
 						</form>
 					{/if}

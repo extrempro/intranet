@@ -66,6 +66,7 @@ export const actions: Actions = {
 					mayWriteBehindScenes: on('kulissen'),
 					// Nur bei Hubs gibt es das Feld
 					mayWriteDocuments: f.has('dokumente_feld') ? on('dokumente') : undefined,
+					mayWriteMedia: on('mediathek'),
 					verwaltet: on('verwaltet'),
 					fachpflege: f.has('fachpflege_feld') ? on('fachpflege') : undefined
 				},

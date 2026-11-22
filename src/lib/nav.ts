@@ -34,6 +34,8 @@ const ICONS = {
 	aktuelles: ZEITUNG,
 	organisation: GEBAEUDE,
 	wissen: BUCH,
+	mediathek:
+		'M4 6a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2zM10 9l5 3l-5 3z',
 	plaene:
 		'M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2zM16 3v4M8 3v4M4 11h16',
 	kalender:
@@ -158,6 +160,13 @@ const AREAS: NavArea[] = [
 		href: '/wissen',
 		pages: [
 			{ key: 'faqs', label: 'FAQs', href: '/faqs', icon: ICONS.faqs, text: 'Häufige Fragen' },
+			{
+				key: 'mediathek',
+				label: 'Mediathek',
+				href: '/mediathek',
+				icon: ICONS.mediathek,
+				text: 'Schulungen und Anleitungen als Video'
+			},
 			{
 				key: 'rechtliches',
 				label: 'Rechtliches',

@@ -120,6 +120,17 @@ describe.skipIf(!url)('Speicherorte', () => {
 			);
 		}
 
+		it('Medien der Mediathek: schreiben, lesen, alle eines Videos löschen', async () => {
+			const vid = '00000000-0000-4000-8000-00000000aa01';
+			for (const rel of ['master.m3u8', '360/index.m3u8', '360/s00000.m4s'])
+				await orte.medienSchreiben(ziel, `videos/${vid}/${rel}`, Buffer.from(rel));
+			expect((await orte.medienLesen(ziel, `videos/${vid}/360/index.m3u8`)).toString()).toBe(
+				'360/index.m3u8'
+			);
+			await orte.medienLoeschen(ziel, vid);
+			await expect(orte.medienLesen(ziel, `videos/${vid}/master.m3u8`)).rejects.toThrow();
+		});
+
 		it('neue Dateien landen im zugeordneten S3-Speicher und sind dort nur verschlüsselt', async () => {
 			await orte.zuordnungSetzen('bilder', ziel, ICH);
 			const f = await store.storeBytes(bytes(5000), 'b.jpg', 'jpeg', ICH, 'bilder');

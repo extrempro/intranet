@@ -137,6 +137,7 @@ export interface HubDaten {
 		faqs: boolean;
 		termine: boolean;
 		dokumente: boolean;
+		mediathek: boolean;
 	}[];
 	kontakte: { personId: string; aufgabe: string }[];
 	links: { label: string; description: string; url: string; icon: string }[];
@@ -171,7 +172,8 @@ export function hubDatenLesen(roh: string): HubDaten {
 			news: b(m.news),
 			faqs: b(m.faqs),
 			termine: b(m.termine),
-			dokumente: b(m.dokumente)
+			dokumente: b(m.dokumente),
+			mediathek: b(m.mediathek)
 		})),
 		kontakte: liste(j.kontakte, HUB_GRENZEN.ansprechpersonen).map((k) => ({
 			personId: s(k.personId, 40),
@@ -251,7 +253,8 @@ export async function hubSpeichern(
 				v.mayWriteNews !== m.news ||
 				v.mayWriteFaqs !== m.faqs ||
 				v.mayWriteEvents !== m.termine ||
-				v.mayWriteDocuments !== m.dokumente;
+				v.mayWriteDocuments !== m.dokumente ||
+				v.mayWriteMedia !== m.mediathek;
 			if (geaendert)
 				await setMemberRights(
 					p,
@@ -264,6 +267,7 @@ export async function hubSpeichern(
 						mayWriteEvents: m.termine,
 						mayWriteBehindScenes: false,
 						mayWriteDocuments: m.dokumente,
+						mayWriteMedia: m.mediathek,
 						verwaltet: m.hubteam || Boolean(v?.ausEntra)
 					},
 					ip

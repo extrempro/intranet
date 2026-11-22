@@ -1,9 +1,10 @@
 /**
  * Globale Suche (Kap. 8.14) über Personen, Abteilungen, Zuständigkeiten,
- * Beiträge, FAQs, Termine, Hubs, Schwarzes Brett und Hinter den Kulissen.
+ * Beiträge, FAQs, Videos, Termine, Hubs, Schwarzes Brett und Hinter den Kulissen.
  * Jede Quelle prüft ihre Sichtbarkeit selbst (Rechte und Mandantengrenzen).
  */
 import { matchesSearch } from '../departments.ts';
+import { zeitText } from '../mediathek.ts';
 import { searchTerms, toTsQuery, type SearchKind } from '../search.ts';
 import type { Principal } from './auth/access.ts';
 import { searchAds } from './board.ts';
@@ -11,6 +12,7 @@ import { searchEvents } from './calendar.ts';
 import { listDepartments } from './departments.ts';
 import { searchFaqs } from './faqs.ts';
 import { listHubs } from './hubs.ts';
+import { searchVideos } from './mediathek.ts';
 import { searchPosts } from './kulissen.ts';
 import { searchNews } from './news.ts';
 import { searchLegal } from './legal.ts';
@@ -51,6 +53,7 @@ export async function search(
 			zustaendigkeiten: [],
 			beitraege: [],
 			faqs: [],
+			videos: [],
 			rechtliches: [],
 			termine: [],
 			hubs: [],
@@ -64,7 +67,7 @@ export async function search(
 	const limit = Math.min(opts.limit ?? 20, 50);
 	const text = searchTerms(q).join(' ');
 
-	const [personen, abteilungen, beitraege, faqs, termine, hubs, brett, kulissen, recht] =
+	const [personen, abteilungen, beitraege, faqs, termine, hubs, brett, kulissen, recht, filme] =
 		await Promise.all([
 			want('personen') ? searchPersons(p, q, tsq, limit) : [],
 			want('einheiten') || want('zustaendigkeiten') ? listDepartments(p) : [],
@@ -74,7 +77,8 @@ export async function search(
 			want('hubs') ? listHubs(p) : [],
 			want('brett') ? searchAds(p, tsq, limit) : [],
 			want('kulissen') ? searchPosts(p, tsq, limit) : [],
-			want('rechtliches') ? searchLegal(p, text, limit) : { vereinbarungen: [], links: [] }
+			want('rechtliches') ? searchLegal(p, text, limit) : { vereinbarungen: [], links: [] },
+			want('videos') ? searchVideos(p, tsq, limit) : []
 		]);
 
 	out.personen = personen.map((x) => ({
@@ -129,6 +133,14 @@ export async function search(
 		title: x.question,
 		href: `/faqs?einheit=${x.unitId}#faq-${x.id}`,
 		meta: x.unitName,
+		snippet: x.snippet
+	}));
+	out.videos = filme.map((x) => ({
+		kind: 'videos',
+		id: x.id,
+		title: x.title,
+		href: `/mediathek/${x.id}`,
+		meta: `${x.unitName} · ${zeitText(x.durationSec)}`,
 		snippet: x.snippet
 	}));
 	out.rechtliches = [

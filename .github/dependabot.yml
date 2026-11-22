@@ -14,7 +14,7 @@ updates:
       actions:
         patterns: ['*']
   - package-ecosystem: docker
-    directories: ['/', '/backup']
+    directories: ['/', '/backup', '/video']
     schedule:
       interval: monthly
     cooldown:

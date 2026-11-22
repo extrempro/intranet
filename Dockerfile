@@ -25,7 +25,7 @@ COPY --from=build --chown=node:node /app/scripts/notfall-admin.mjs ./scripts/not
 # apk upgrade: Sicherheitskorrekturen von Alpine, auch wenn das Basis-Image noch älter ist.
 RUN apk upgrade --no-cache && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 # Ablage für verschlüsselte Dateien (Volume in docker-compose.yml)
-RUN mkdir -p /data/files && chown node:node /data/files && chmod 700 /data/files
+RUN mkdir -p /data/files /data/arbeit && chown node:node /data/files /data/arbeit && chmod 700 /data/files /data/arbeit
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \

@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import Avatar from '#lib/components/Avatar.svelte';
 	import HubGlocke from '#lib/components/HubGlocke.svelte';
+	import EinheitMediathek from '#lib/components/EinheitMediathek.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import { animierteBilder } from '#lib/animiert.ts';
 	import { timeLabel } from '#lib/calendar.ts';
@@ -460,6 +461,7 @@
 		</div>
 		<aside class="stapel" aria-label="Mehr zum Hub">
 			{#each h.layout.side as key (key)}{@render abschnitt(key)}{/each}
+			<EinheitMediathek unitId={h.id} m={data.mediathek} />
 		</aside>
 	</div>
 </div>

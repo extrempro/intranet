@@ -1,0 +1,154 @@
+<script lang="ts">
+	/** Video hochladen (Kap. 8.15): in Teilen, danach wandelt der Server um. */
+	import { untrack } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { MAX_TITEL, MAX_VIDEO_BYTES, TEIL_BYTES } from '#lib/mediathek.ts';
+
+	let { data } = $props();
+	let einheit = $state(untrack(() => data.einheit));
+	let titel = $state('');
+	let datei = $state<File | null>(null);
+	let fehler = $state('');
+	let laeuft = $state(false);
+	let gesendet = $state(0);
+	const prozent = $derived(datei ? Math.floor((gesendet / datei.size) * 100) : 0);
+	const mb = (b: number) => (b / 1024 ** 2).toLocaleString('de-DE', { maximumFractionDigits: 0 });
+
+	function waehlen(e: Event) {
+		const f = (e.currentTarget as HTMLInputElement).files?.[0] ?? null;
+		fehler = '';
+		if (f && f.size > MAX_VIDEO_BYTES) {
+			fehler = 'Die Datei ist größer als 4 GB.';
+			datei = null;
+			return;
+		}
+		datei = f;
+		if (f && !titel)
+			titel = f.name
+				.replace(/\.[^.]+$/, '')
+				.replace(/[_-]+/g, ' ')
+				.slice(0, MAX_TITEL);
+	}
+
+	async function senden(e: SubmitEvent) {
+		e.preventDefault();
+		if (!datei || laeuft) return;
+		fehler = '';
+		laeuft = true;
+		gesendet = 0;
+		try {
+			const r = await fetch('/mediathek/hochladen', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ unitId: einheit, title: titel, size: datei.size })
+			});
+			const j = (await r.json().catch(() => ({}))) as { id?: string; fehler?: string };
+			if (!r.ok || !j.id) throw new Error(j.fehler ?? 'Das Hochladen hat nicht geklappt.');
+			while (gesendet < datei.size) {
+				const teil = datei.slice(gesendet, Math.min(datei.size, gesendet + TEIL_BYTES));
+				let ok = false;
+				let meldung = '';
+				for (let versuch = 0; versuch < 3 && !ok; versuch++) {
+					const t = await fetch(`/mediathek/${j.id}/teil?offset=${gesendet}`, {
+						method: 'PUT',
+						body: teil
+					}).catch(() => null);
+					const a = (await t?.json().catch(() => ({}))) as
+						{ erhalten?: number; fehler?: string } | undefined;
+					if (t?.ok && typeof a?.erhalten === 'number') {
+						gesendet = a.erhalten;
+						ok = true;
+					} else {
+						meldung =
+							a?.fehler ??
+							(t?.status === 413
+								? 'Der Server nimmt die Teile nicht an (zu groß). Wende dich bitte an die IT.'
+								: 'Die Verbindung ist unterbrochen. Versuch es bitte noch einmal.');
+						if (t && t.status < 500) break;
+						await new Promise((w) => setTimeout(w, 2000 * (versuch + 1)));
+					}
+				}
+				if (!ok) throw new Error(meldung);
+			}
+			await goto(resolve('/(app)/mediathek/[id]/bearbeiten', { id: j.id }));
+		} catch (err) {
+			fehler = err instanceof Error ? err.message : 'Das Hochladen hat nicht geklappt.';
+		} finally {
+			laeuft = false;
+		}
+	}
+</script>
+
+<svelte:head><title>Video hochladen · Mediathek · Intranet</title></svelte:head>
+
+<div class="stapel seite">
+	<a class="zurueck" href={resolve('/(app)/mediathek')}>← Mediathek</a>
+	<h1>Video hochladen</h1>
+	{#if fehler}<p class="meldung fehler" role="alert">{fehler}</p>{/if}
+	<form class="karte felder" onsubmit={senden}>
+		<label class="feld">
+			<span>Abteilung oder Hub</span>
+			<select bind:value={einheit} disabled={laeuft}>
+				{#each data.einheiten as u (u.id)}<option value={u.id}>{u.name} ({u.label})</option>{/each}
+			</select>
+		</label>
+		<label class="feld">
+			<span>Videodatei</span>
+			<input
+				type="file"
+				accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm"
+				required
+				onchange={waehlen}
+				disabled={laeuft}
+			/>
+			<span class="hinweis">
+				MP4, MOV oder WebM, bis 4 GB und 3 Stunden.{datei ? ` Gewählt: ${mb(datei.size)} MB.` : ''}
+			</span>
+		</label>
+		<label class="feld">
+			<span>Titel</span>
+			<input bind:value={titel} required maxlength={MAX_TITEL} disabled={laeuft} />
+		</label>
+		<p class="hinweis">
+			Nach dem Hochladen wandelt das Intranet das Video um und benachrichtigt dich, wenn es fertig
+			ist. Dann ergänzt du Beschreibung, Themen, Untertitel und Kapitel und veröffentlichst es. Die
+			Originaldatei wird danach gelöscht.
+		</p>
+		{#if laeuft}
+			<div class="stapel eng" role="status">
+				<span>
+					Wird hochgeladen: {prozent} % ({mb(gesendet)} von {mb(datei?.size ?? 0)} MB). Lass die Seite
+					bitte offen.
+				</span>
+				<progress max="100" value={prozent} aria-label="Fortschritt beim Hochladen"></progress>
+			</div>
+		{/if}
+		<div><button class="knopf" type="submit" disabled={!datei || laeuft}>Hochladen</button></div>
+	</form>
+</div>
+
+<style>
+	.seite {
+		max-width: 44rem;
+	}
+	h1 {
+		margin: 0;
+	}
+	p {
+		margin: 0;
+	}
+	.zurueck {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+		align-self: flex-start;
+	}
+	.eng {
+		gap: 4px;
+	}
+	progress {
+		width: 100%;
+		height: 10px;
+	}
+</style>

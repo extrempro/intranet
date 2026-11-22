@@ -353,7 +353,8 @@ export async function getDepartmentForEdit(p: Principal, slug: string) {
 				mayWriteNews: unitMembers.mayWriteNews,
 				mayWriteFaqs: unitMembers.mayWriteFaqs,
 				mayWriteEvents: unitMembers.mayWriteEvents,
-				mayWriteBehindScenes: unitMembers.mayWriteBehindScenes
+				mayWriteBehindScenes: unitMembers.mayWriteBehindScenes,
+				mayWriteMedia: unitMembers.mayWriteMedia
 			})
 			.from(unitMembers)
 			.innerJoin(persons, eq(persons.id, unitMembers.personId))

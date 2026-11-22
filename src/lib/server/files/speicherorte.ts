@@ -7,6 +7,8 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import {
 	DeleteObjectCommand,
+	DeleteObjectsCommand,
+	ListObjectsV2Command,
 	GetBucketVersioningCommand,
 	GetObjectCommand,
 	HeadBucketCommand,
@@ -139,6 +141,68 @@ export async function objektLoeschen(targetId: string | null, id: string) {
 	}
 	const { client, bucket } = await clientFuer(targetId);
 	await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: s3Key(id) }));
+}
+
+// ---------------------------------------------------------------------------
+// Medien der Mediathek: Schlüssel videos/<id>/<pfad>
+// ---------------------------------------------------------------------------
+
+const MEDIEN =
+	/^videos\/[0-9a-f-]{36}(\/[a-z0-9_-]{1,40})*(\/[a-z0-9_-]{1,60}\.(m3u8|mp4|m4s|jpg))?$/;
+
+function medienSchluessel(key: string): string {
+	if (!MEDIEN.test(key) || key.includes('..')) throw new SpeicherFehler('Ungültiger Pfad');
+	return key;
+}
+
+export async function medienSchreiben(targetId: string | null, key: string, data: Uint8Array) {
+	const k = medienSchluessel(key);
+	if (!targetId) {
+		const pfad = join(root(), k);
+		await mkdir(join(pfad, '..'), { recursive: true, mode: 0o700 });
+		await writeFile(pfad, data, { mode: 0o600 });
+		return;
+	}
+	const { client, bucket } = await clientFuer(targetId);
+	await client.send(
+		new PutObjectCommand({
+			Bucket: bucket,
+			Key: k,
+			Body: data,
+			ContentType: 'application/octet-stream'
+		})
+	);
+}
+
+export async function medienLesen(targetId: string | null, key: string): Promise<Buffer> {
+	const k = medienSchluessel(key);
+	if (!targetId) return readFile(join(root(), k));
+	const { client, bucket } = await clientFuer(targetId);
+	const res = await client.send(new GetObjectCommand({ Bucket: bucket, Key: k }));
+	if (!res.Body) throw new SpeicherFehler('Leere Antwort des Speichers');
+	return Buffer.from(await res.Body.transformToByteArray());
+}
+
+/** Alle Medien eines Videos löschen */
+export async function medienLoeschen(targetId: string | null, videoId: string) {
+	const praefix = medienSchluessel(`videos/${videoId}`);
+	if (!targetId) {
+		await rm(join(root(), praefix), { recursive: true, force: true });
+		return;
+	}
+	const { client, bucket } = await clientFuer(targetId);
+	let token: string | undefined;
+	do {
+		const liste = await client.send(
+			new ListObjectsV2Command({ Bucket: bucket, Prefix: `${praefix}/`, ContinuationToken: token })
+		);
+		const keys = (liste.Contents ?? []).map((o) => ({ Key: o.Key as string }));
+		if (keys.length)
+			await client.send(
+				new DeleteObjectsCommand({ Bucket: bucket, Delete: { Objects: keys, Quiet: true } })
+			);
+		token = liste.IsTruncated ? liste.NextContinuationToken : undefined;
+	} while (token);
 }
 
 export interface PruefErgebnis {

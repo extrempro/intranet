@@ -70,6 +70,7 @@
 			mayWriteFaqs: boolean;
 			mayWriteEvents: boolean;
 			mayWriteDocuments: boolean;
+			mayWriteMedia: boolean;
 		}[];
 		termine: {
 			id: string;
@@ -118,6 +119,7 @@
 		faqs: boolean;
 		termine: boolean;
 		dokumente: boolean;
+		mediathek: boolean;
 	};
 	let team = $state<Mitglied[]>(
 		(pf?.team ?? []).map((m) => ({
@@ -133,7 +135,8 @@
 			news: m.mayWriteNews,
 			faqs: m.mayWriteFaqs,
 			termine: m.mayWriteEvents,
-			dokumente: m.mayWriteDocuments
+			dokumente: m.mayWriteDocuments,
+			mediathek: m.mayWriteMedia
 		}))
 	);
 	let kontakte = $state(
@@ -198,14 +201,15 @@
 	const hubTeam = $derived(team.filter((m) => m.hubteam));
 	const schreibende = $derived(team.filter((m) => !m.hubteam));
 	const mitRecht = $derived(
-		schreibende.filter((m) => m.news || m.faqs || m.termine || m.dokumente).length
+		schreibende.filter((m) => m.news || m.faqs || m.termine || m.dokumente || m.mediathek).length
 	);
 	const voll = $derived(pf ? mitRecht >= pf.maxSchreibende : false);
 	const RECHTE = [
 		['news', 'Neuigkeiten'],
 		['faqs', 'FAQs'],
 		['termine', 'Termine'],
-		['dokumente', 'Dokumente']
+		['dokumente', 'Dokumente'],
+		['mediathek', 'Mediathek']
 	] as const;
 	const ordnerNamen = $derived(
 		[...new Set(dokumente.map((d) => d.ordner.trim()).filter(Boolean))].sort()
@@ -228,7 +232,8 @@
 				news: m.news,
 				faqs: m.faqs,
 				termine: m.termine,
-				dokumente: m.dokumente
+				dokumente: m.dokumente,
+				mediathek: m.mediathek
 			})),
 			kontakte,
 			links,
@@ -258,7 +263,8 @@
 			news: !hubteam,
 			faqs: false,
 			termine: false,
-			dokumente: false
+			dokumente: false,
+			mediathek: false
 		});
 	}
 	function entfernen(m: Mitglied) {
@@ -392,7 +398,9 @@
 										class="chip"
 										aria-pressed={m[k]}
 										aria-label="{text} für {m.name}"
-										disabled={!m[k] && voll && !(m.news || m.faqs || m.termine || m.dokumente)}
+										disabled={!m[k] &&
+											voll &&
+											!(m.news || m.faqs || m.termine || m.dokumente || m.mediathek)}
 										onclick={() => (m[k] = !m[k])}
 									>
 										{#if m[k]}<Icon d="M5 12l5 5l10 -10" size={14} stroke={2.4} />{/if}{text}

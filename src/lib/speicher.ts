@@ -14,7 +14,8 @@ export const KATEGORIEN = [
 		label: 'Profilfotos und Bilder der Einheiten',
 		text: 'Profilfotos, Titelbilder und Symbole'
 	},
-	{ key: 'rueckmeldungen', label: 'Bildschirmfotos', text: 'aus Rückmeldungen' }
+	{ key: 'rueckmeldungen', label: 'Bildschirmfotos', text: 'aus Rückmeldungen' },
+	{ key: 'videos', label: 'Videos der Mediathek', text: 'umgewandelte Videos und Vorschaubilder' }
 ] as const;
 
 export type Kategorie = (typeof KATEGORIEN)[number]['key'];

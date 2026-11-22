@@ -6,6 +6,7 @@
 	let {
 		einheiten,
 		werte,
+		themen = [],
 		fehler = {}
 	}: {
 		einheiten: { id: string; name: string; label: string }[];
@@ -14,7 +15,10 @@
 			question: string;
 			answerHtml: string;
 			attachments: { id: string; name: string; size: number }[];
+			themen?: string[];
 		};
+		/** Feste Themenliste (Kap. 8.15) */
+		themen?: { id: string; name: string }[];
 		fehler?: Partial<Record<'unitId' | 'question' | 'answer' | 'attachments', string>>;
 	} = $props();
 </script>
@@ -57,9 +61,48 @@
 	{#if fehler.answer}<span id="f-antwort" class="feldfehler">{fehler.answer}</span>{/if}
 </div>
 
+{#if themen.length}
+	<fieldset class="feld themen">
+		<legend>Themen</legend>
+		<div class="auswahl">
+			{#each themen as t (t.id)}
+				<label class="haken">
+					<input
+						type="checkbox"
+						name="thema"
+						value={t.id}
+						checked={werte.themen?.includes(t.id) ?? false}
+					/>
+					{t.name}
+				</label>
+			{/each}
+		</div>
+	</fieldset>
+{/if}
+
 <Anhaenge start={werte.attachments} fehler={fehler.attachments} />
 
 <style>
+	.themen {
+		border: 0;
+		padding: 0;
+		margin: 0;
+	}
+	.themen legend {
+		font-weight: 600;
+		margin-bottom: 6px;
+	}
+	.auswahl {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px 16px;
+	}
+	.haken {
+		display: inline-flex;
+		gap: 6px;
+		align-items: center;
+		min-height: 32px;
+	}
 	.feldfehler {
 		color: var(--err-tx);
 		font-size: 0.93rem;

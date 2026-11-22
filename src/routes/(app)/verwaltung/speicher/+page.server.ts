@@ -16,6 +16,7 @@ import { umzugAbbrechen, umzugStarten, UmzugFehler } from '#lib/server/files/umz
 import { db } from '#lib/server/db/index.ts';
 import { storageTargets } from '#lib/server/db/schema.ts';
 import { istKategorie } from '#lib/speicher.ts';
+import { grenzeSetzen, MediathekFehler } from '#lib/server/mediathek.ts';
 import { eq } from 'drizzle-orm';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -151,6 +152,26 @@ export const actions: Actions = {
 				? 'Gespeichert. Der Umzug läuft im Hintergrund.'
 				: 'Gespeichert. Neue Dateien landen ab jetzt am gewählten Ort.'
 		};
+	},
+
+	grenze: async ({ request, locals, getClientAddress }) => {
+		const p = requireSystemAdmin(locals);
+		const gb = Number((await request.formData()).get('gb'));
+		try {
+			await grenzeSetzen(gb, p.personId);
+		} catch (err) {
+			if (err instanceof MediathekFehler)
+				return fail(400, { bereich: 'grenze', fehler: err.message });
+			throw err;
+		}
+		await audit({
+			category: 'admin',
+			action: 'media.limit',
+			actorId: p.personId,
+			details: { gb },
+			ip: getClientAddress()
+		});
+		return { bereich: 'grenze', ergebnis: `Gespeichert. Die Obergrenze liegt jetzt bei ${gb} GB.` };
 	},
 
 	abbrechen: async ({ request, locals, getClientAddress }) => {
