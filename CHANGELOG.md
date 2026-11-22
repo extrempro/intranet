@@ -10,6 +10,14 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.33.0 · 22.11.2026 · Lange Listen
+
+- Neuigkeiten und „Aus den Hubs“ zeigen über der Liste, wie viele Beiträge es gibt, und gliedern sie nach Monaten. Mit „ältere laden“ kommst du an alle Beiträge, nicht mehr nur an die neuesten 50.
+- Neben der Suche schaltest du zwischen der ausführlichen und einer kompakten Ansicht um. Kompakt passen etwa doppelt so viele Beiträge auf den Bildschirm. Die Wahl gilt für dein Konto.
+- Pläne (KBB): Aktuelle und kommende Pläne stehen oben, abgelaufene im Archiv nach Jahr und Monat. Die Suche durchsucht alle Pläne.
+- Im Reiter „Neues“ eines Hubs lädst du ältere Beiträge nach.
+- Ein großes Hub-Team lässt sich durchsuchen.
+
 ## 0.32.0 · 22.11.2026 · Startseite neu aufgebaut
 
 - Favoriten sind jetzt Symbol-Kacheln, auf dem Handy vier je Reihe. Die Beschreibung siehst du, wenn du mit der Maus darauf zeigst.

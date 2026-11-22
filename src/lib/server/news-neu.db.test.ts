@@ -88,4 +88,28 @@ describe.skipIf(!url)('Zähler neue Beiträge', () => {
 		});
 		expect(liste.find((x) => x.title === 'Neu 1')?.vorschau.tabelle).toBeNull();
 	});
+
+	it('lange Liste: Monate zählen alles, Schritte und Angeheftete getrennt (Kap. 6.7)', async () => {
+		const { db } = await import('./db/index.ts');
+		await db.execute(sql`
+			insert into news (unit_id, tenant_id, title, body_html, body_text, publish_at, all_tenants, pinned_until) values
+				(${U.it}, ${T.haupt}, 'Angeheftet', '<p>x</p>', 'x', now() - interval '4 hours', true, now() + interval '3 days'),
+				(${U.it}, ${T.haupt}, 'Vor zwei Monaten', '<p>x</p>', 'x', now() - interval '62 days', true, null)`);
+		const alle = await news.listNews(ich, { angeheftet: 'ohne', nachDatum: true, limit: 100 });
+		const zahlen = await news.newsMonths(ich, { angeheftet: 'ohne' });
+		expect(zahlen.gesamt).toBe(alle.length);
+		expect(zahlen.monate.length).toBeGreaterThanOrEqual(2);
+		expect(alle.map((x) => x.title)).not.toContain('Angeheftet');
+		const nur = await news.listNews(ich, { angeheftet: 'nur' });
+		expect(nur.map((x) => x.title)).toEqual(['Angeheftet']);
+		const zwei = await news.listNews(ich, { angeheftet: 'ohne', nachDatum: true, limit: 2 });
+		expect(zwei.map((x) => x.id)).toEqual(alle.slice(0, 2).map((x) => x.id));
+		expect(alle.at(-1)?.title).toBe('Vor zwei Monaten');
+	});
+
+	it('Ansicht langer Listen wird je Person gespeichert', async () => {
+		expect(await prefs.getListView(P)).toBe('ausfuehrlich');
+		await prefs.setListView(P, 'kompakt');
+		expect(await prefs.getListView(P)).toBe('kompakt');
+	});
 });

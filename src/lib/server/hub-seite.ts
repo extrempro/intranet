@@ -5,7 +5,7 @@ import { requirePrincipal } from './auth/guard.ts';
 import { db } from './db/index.ts';
 import { subscriptionActions } from './hub-actions.ts';
 import { getHub } from './hubs.ts';
-import { listNews } from './news.ts';
+import { listNews, newsMonths } from './news.ts';
 import { toggleFavorite, unitFavoriteKey } from './preferences.ts';
 
 /** Erstes Bild je Beitrag (Anhang, sonst Bild im Text) für die Kacheln */
@@ -31,12 +31,15 @@ export async function hubBeitraege(
 	hubId: string,
 	anzahl: number
 ) {
-	const liste = await listNews(p, { unitIds: [hubId], limit: anzahl + 1 });
-	const beitraege = liste.slice(0, anzahl);
+	const [beitraege, zahlen] = await Promise.all([
+		listNews(p, { unitIds: [hubId], nachDatum: true, limit: anzahl }),
+		newsMonths(p, { unitIds: [hubId] })
+	]);
 	const bilder = await vorschaubilder(beitraege.map((b) => b.id));
 	return {
 		beitraege: beitraege.map((b) => ({ ...b, bild: bilder.get(b.id) ?? null })),
-		weitere: liste.length > anzahl
+		gesamt: zahlen.gesamt,
+		anzahl
 	};
 }
 

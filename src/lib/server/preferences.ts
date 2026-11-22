@@ -426,3 +426,24 @@ export async function markVersionSeen(personId: string, version: string) {
 		.values({ personId, versionSeen: version })
 		.onConflictDoUpdate({ target: personPreferences.personId, set: { versionSeen: version } });
 }
+
+// ---------------------------------------------------------------------------
+// Ansicht langer Listen (Kap. 6.7)
+// ---------------------------------------------------------------------------
+
+export type ListView = 'ausfuehrlich' | 'kompakt';
+
+export async function getListView(personId: string): Promise<ListView> {
+	const [row] = await db
+		.select({ v: personPreferences.listView })
+		.from(personPreferences)
+		.where(eq(personPreferences.personId, personId));
+	return row?.v ?? 'ausfuehrlich';
+}
+
+export async function setListView(personId: string, listView: ListView) {
+	await db
+		.insert(personPreferences)
+		.values({ personId, listView })
+		.onConflictDoUpdate({ target: personPreferences.personId, set: { listView } });
+}
