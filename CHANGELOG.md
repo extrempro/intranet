@@ -10,6 +10,13 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.30.0 · 22.11.2026 · Videos auf Handy und Tablet
+
+- Auf Handy und Tablet bleibt das Video beim Scrollen oben stehen.
+- Darunter siehst du das laufende Kapitel und springst mit den Pfeilen zum vorigen oder nächsten.
+- Kapitel, Info, Textfassung und Anhänge stehen in Reitern direkt unter dem Titel, statt weit unten unter der Beschreibung.
+- Die Knöpfe unter dem Video passen auf dem Handy in eine Zeile.
+
 ## 0.29.0 · 22.11.2026 · Vorschlag gleich beim Hochladen
 
 - Beim Hochladen eines Videos ist „Zusammenfassung und Kapitel gleich vorschlagen“ voreingestellt. Der Vorschlag liegt dann bereit, sobald das Video umgewandelt ist.

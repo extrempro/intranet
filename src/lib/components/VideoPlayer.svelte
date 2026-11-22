@@ -175,10 +175,14 @@
 	<div class="leiste">
 		<span class="zeit" aria-live="off">{zeitText(zeit)} / {zeitText(dauer || 0)}</span>
 		<button type="button" class="knopf zweit klein" onclick={() => schritt(-10)}>
-			<span aria-hidden="true">−10 s</span><span class="sr-only">10 Sekunden zurück</span>
+			<span aria-hidden="true">−10<span class="lang">&nbsp;s</span></span><span class="sr-only">
+				10 Sekunden zurück
+			</span>
 		</button>
 		<button type="button" class="knopf zweit klein" onclick={() => schritt(10)}>
-			<span aria-hidden="true">+10 s</span><span class="sr-only">10 Sekunden vor</span>
+			<span aria-hidden="true">+10<span class="lang">&nbsp;s</span></span><span class="sr-only">
+				10 Sekunden vor
+			</span>
 		</button>
 		{#if untertitel}
 			<button
@@ -188,11 +192,16 @@
 				aria-pressed={utAn}
 				onclick={utUmschalten}
 			>
-				Untertitel<span class="ut-stand" aria-hidden="true">{utAn ? 'an' : 'aus'}</span>
+				<span class="utname">Untertitel</span><span class="kurz" aria-hidden="true">UT</span><span
+					class="ut-stand"
+					aria-hidden="true"
+				>
+					{utAn ? 'an' : 'aus'}
+				</span>
 			</button>
 		{/if}
 		<label class="tempo">
-			<span>Geschwindigkeit</span>
+			<span class="tempotext">Geschwindigkeit</span>
 			<select bind:value={tempo}>
 				{#each [0.75, 1, 1.25, 1.5, 2] as t (t)}
 					<option value={t}>{String(t).replace('.', ',')}×</option>
@@ -242,5 +251,48 @@
 	}
 	.klein {
 		min-height: 40px;
+	}
+	.kurz {
+		display: none;
+	}
+	/* Handy: alles in einer Zeile, damit der Player oben wenig Platz braucht */
+	@media (max-width: 599px) {
+		.player {
+			gap: 6px;
+		}
+		.leiste {
+			flex-wrap: nowrap;
+			gap: 6px;
+		}
+		.zeit {
+			font-size: 13px;
+			white-space: nowrap;
+		}
+		.leiste .klein {
+			min-width: 44px;
+			padding: 4px 8px;
+		}
+		.lang {
+			display: none;
+		}
+		.kurz {
+			display: inline;
+		}
+		.ut-stand {
+			margin-left: 4px;
+		}
+		.tempotext,
+		.utname {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+			white-space: nowrap;
+		}
+		.tempo select {
+			min-height: 40px;
+			padding: 0 4px;
+		}
 	}
 </style>
