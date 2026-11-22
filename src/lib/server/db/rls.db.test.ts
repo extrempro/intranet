@@ -23,7 +23,7 @@ const P = {
 };
 
 const N = {
-	oper: '00000000-0000-0000-0000-0000000000c1',
+	hausA: '00000000-0000-0000-0000-0000000000c1',
 	zentralB: '00000000-0000-0000-0000-0000000000c2',
 	zentralAlle: '00000000-0000-0000-0000-0000000000c3'
 };
@@ -49,13 +49,13 @@ describe.skipIf(!url)('Row-Level Security', () => {
 		await db.execute(sql`
 			insert into units (id, tenant_id, type, name, slug, is_central) values
 				(${U.it}, ${T.haupt}, 'abteilung', 'IT', 'it', true),
-				(${U.kbbHaupt}, ${T.haupt}, 'abteilung', 'KBB Oper', 'kbb-oper', false),
+				(${U.kbbHaupt}, ${T.haupt}, 'abteilung', 'KBB Haus A', 'kbb-haus-a', false),
 				(${U.kbbB}, ${T.b}, 'abteilung', 'KBB Zweithaus', 'kbb-zweithaus', false)`);
 		await db.execute(sql`
 			insert into persons (id, tenant_id, email, display_name, auth_source) values
-				(${P.itPerson}, ${T.haupt}, 'it@oper.de', 'IT-Person', 'local'),
+				(${P.itPerson}, ${T.haupt}, 'it@haus-a.example', 'IT-Person', 'local'),
 				(${P.b}, ${T.b}, 'b@zweithaus.de', 'Zweithaus-Person', 'local'),
-				(${P.haupt}, ${T.haupt}, 'oper@oper.de', 'Opern-Person', 'local')`);
+				(${P.haupt}, ${T.haupt}, 'person@haus-a.example', 'Haus-A-Person', 'local')`);
 		await db.execute(sql`
 			insert into unit_members (unit_id, person_id) values
 				(${U.it}, ${P.itPerson}), (${U.kbbHaupt}, ${P.haupt}), (${U.kbbB}, ${P.b})`);
@@ -64,18 +64,18 @@ describe.skipIf(!url)('Row-Level Security', () => {
 		);
 		await db.execute(sql`
 			insert into news (id, unit_id, tenant_id, title, body_html, body_text, publish_at, all_tenants) values
-				(${N.oper}, ${U.kbbHaupt}, ${T.haupt}, 'Nur Oper', '<p>x</p>', 'x', now(), false),
+				(${N.hausA}, ${U.kbbHaupt}, ${T.haupt}, 'Nur Haus A', '<p>x</p>', 'x', now(), false),
 				(${N.zentralB}, ${U.it}, ${T.haupt}, 'Zentral für B', '<p>x</p>', 'x', now(), false),
 				(${N.zentralAlle}, ${U.it}, ${T.haupt}, 'Zentral für alle', '<p>x</p>', 'x', now(), true)`);
 		await db.execute(sql`
 			insert into news_tenants (news_id, tenant_id) values
-				(${N.oper}, ${T.haupt}), (${N.zentralB}, ${T.b})`);
+				(${N.hausA}, ${T.haupt}), (${N.zentralB}, ${T.b})`);
 		await db.execute(sql`
 			insert into urgent_dismissals (news_id, person_id) values (${N.zentralAlle}, ${P.itPerson})`);
 		await db.execute(sql`
 			insert into faqs (unit_id, question, answer_html, answer_text) values
 				(${U.it}, 'Zentrale Frage?', '<p>a</p>', 'a'),
-				(${U.kbbHaupt}, 'Frage der Oper?', '<p>a</p>', 'a'),
+				(${U.kbbHaupt}, 'Frage aus Haus A?', '<p>a</p>', 'a'),
 				(${U.kbbB}, 'Frage aus dem Zweithaus?', '<p>a</p>', 'a')`);
 	});
 

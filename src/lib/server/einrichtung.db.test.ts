@@ -9,7 +9,7 @@ const url = process.env.TEST_DATABASE_URL;
 const MANDANT = {
 	name: 'Beispielhaus',
 	kurz: 'BH',
-	domains: 'oper.test, zweithaus.test',
+	domains: 'haus-a.test, zweithaus.test',
 	akzent: '#0F6E56',
 	akzentDunkel: '#5DCAA5'
 };
@@ -68,15 +68,15 @@ describe.skipIf(!url)('Einrichtung', () => {
 		).rejects.toThrow(/Domain/);
 		const einladung = await e.systemAdminAnlegen(
 			token,
-			{ name: 'Kai Krüger', email: 'kai@oper.test' },
+			{ name: 'Kai Krüger', email: 'kai@haus-a.test' },
 			'203.0.113.1'
 		);
 		// Einrichtungslink verbraucht, weiter mit der Einladung
 		expect(await e.pruefeLink(token)).toBeNull();
 		const inv = await local.findInvitation(einladung);
-		expect(inv).toMatchObject({ email: 'kai@oper.test', displayName: 'Kai Krüger' });
+		expect(inv).toMatchObject({ email: 'kai@haus-a.test', displayName: 'Kai Krüger' });
 		const [r] = await db.execute<{ role: string; scope: string; status: string; src: string }>(
-			sql`select r.role, r.scope, p.status, p.auth_source as src from role_assignments r join persons p on p.id = r.person_id where p.email = 'kai@oper.test'`
+			sql`select r.role, r.scope, p.status, p.auth_source as src from role_assignments r join persons p on p.id = r.person_id where p.email = 'kai@haus-a.test'`
 		);
 		expect(r).toEqual({ role: 'system_admin', scope: 'all', status: 'invited', src: 'local' });
 	});
@@ -86,7 +86,7 @@ describe.skipIf(!url)('Einrichtung', () => {
 		const token = await e.neuerLink('erst');
 		expect(await e.hatMandant()).toBe(true);
 		await expect(
-			e.systemAdminAnlegen(token, { name: 'Kai Krüger', email: 'KAI@oper.test' }, 'x')
+			e.systemAdminAnlegen(token, { name: 'Kai Krüger', email: 'KAI@haus-a.test' }, 'x')
 		).resolves.toBeTruthy();
 		const [{ n }] = await db.execute<{ n: number }>(
 			sql`select count(*)::int as n from role_assignments where role = 'system_admin'`
@@ -98,7 +98,7 @@ describe.skipIf(!url)('Einrichtung', () => {
 		const token = await e.neuerLink('notfall');
 		const r = await Promise.allSettled(
 			[1, 2, 3, 4].map((i) =>
-				e.systemAdminAnlegen(token, { name: `Race ${i}`, email: `race${i}@oper.test` }, 'x')
+				e.systemAdminAnlegen(token, { name: `Race ${i}`, email: `race${i}@haus-a.test` }, 'x')
 			)
 		);
 		expect(r.filter((x) => x.status === 'fulfilled')).toHaveLength(1);
@@ -111,7 +111,7 @@ describe.skipIf(!url)('Einrichtung', () => {
 	});
 
 	it('mit aktivem Admin: kein Erst-Link mehr, Notfall-Link geht', async () => {
-		await db.execute(sql`update persons set status = 'active' where email = 'kai@oper.test'`);
+		await db.execute(sql`update persons set status = 'active' where email = 'kai@haus-a.test'`);
 		expect(await e.einrichtungNoetig()).toBe(false);
 		const log = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		await e.einrichtungslinkBeimStart('https://intranet.test');
@@ -120,17 +120,17 @@ describe.skipIf(!url)('Einrichtung', () => {
 		const erst = await e.neuerLink('erst');
 		expect(await e.pruefeLink(erst)).toBeNull();
 		await expect(
-			e.systemAdminAnlegen(erst, { name: 'X Y', email: 'x@oper.test' }, 'x')
+			e.systemAdminAnlegen(erst, { name: 'X Y', email: 'x@haus-a.test' }, 'x')
 		).rejects.toThrow(/gilt nicht/);
 
 		const notfall = await e.neuerLink('notfall');
 		expect(await e.pruefeLink(notfall)).toBe('notfall');
 		await expect(e.hauptmandantAnlegen(notfall, MANDANT, 'x')).rejects.toThrow(/gilt nicht/);
 		await expect(
-			e.systemAdminAnlegen(notfall, { name: 'Kai', email: 'kai@oper.test' }, 'x')
+			e.systemAdminAnlegen(notfall, { name: 'Kai', email: 'kai@haus-a.test' }, 'x')
 		).rejects.toThrow(/gibt es schon/);
 		await expect(
-			e.systemAdminAnlegen(notfall, { name: 'IT Notfall', email: 'it-notfall@oper.test' }, 'x')
+			e.systemAdminAnlegen(notfall, { name: 'IT Notfall', email: 'it-notfall@haus-a.test' }, 'x')
 		).resolves.toBeTruthy();
 		const [{ a }] = await db.execute<{ a: number }>(
 			sql`select count(*)::int as a from audit_log where action = 'setup.emergency_admin'`

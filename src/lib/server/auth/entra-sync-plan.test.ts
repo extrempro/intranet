@@ -15,7 +15,7 @@ const T2 = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 
 const ctx: SyncContext = {
 	accessGroupId: ZUGANG,
-	domains: { 'oper.test': T1, 'zweithaus.test': T2 },
+	domains: { 'haus-a.test': T1, 'zweithaus.test': T2 },
 	mappings: [
 		{ groupId: REDAKTION, role: 'redaktion', scope: 'tenant', scopeTenantId: T1, scopeUnitId: null }
 	]
@@ -24,7 +24,7 @@ const ctx: SyncContext = {
 const person = (x: Partial<SyncPerson> = {}): SyncPerson => ({
 	id: 'p1',
 	oid: 'o1',
-	email: 'kai@oper.test',
+	email: 'kai@haus-a.test',
 	displayName: 'Kai Krüger',
 	tenantId: T1,
 	status: 'active',
@@ -35,8 +35,8 @@ const person = (x: Partial<SyncPerson> = {}): SyncPerson => ({
 const user = (x: Record<string, unknown> = {}) => ({
 	id: 'o1',
 	displayName: 'Kai Krüger',
-	mail: 'kai@oper.test',
-	userPrincipalName: 'kai@oper.test',
+	mail: 'kai@haus-a.test',
+	userPrincipalName: 'kai@haus-a.test',
 	accountEnabled: true,
 	...x
 });

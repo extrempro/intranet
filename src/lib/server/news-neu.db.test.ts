@@ -34,7 +34,7 @@ describe.skipIf(!url)('Zähler neue Beiträge', () => {
 		prefs = await import('./preferences.ts');
 		await db.execute(sql`
 			insert into tenants (id, name, short_name, is_main) values
-				(${T.haupt}, 'Oper', 'BH', true), (${T.b}, 'Zweithaus', 'B', false)`);
+				(${T.haupt}, 'Haus A', 'BH', true), (${T.b}, 'Zweithaus', 'B', false)`);
 		await db.execute(sql`
 			insert into units (id, tenant_id, type, name, slug, is_central) values
 				(${U.it}, ${T.haupt}, 'abteilung', 'IT', 'it', true),
@@ -42,7 +42,7 @@ describe.skipIf(!url)('Zähler neue Beiträge', () => {
 				(${U.hub}, ${T.haupt}, 'hub', 'Chor', 'chor', false)`);
 		await db.execute(sql`
 			insert into persons (id, tenant_id, email, display_name, auth_source) values
-				(${P}, ${T.haupt}, 'ich@oper.de', 'Ich', 'local')`);
+				(${P}, ${T.haupt}, 'ich@haus-a.example', 'Ich', 'local')`);
 		await db.execute(sql`
 			insert into news (unit_id, tenant_id, title, body_html, body_text, publish_at, all_tenants) values
 				(${U.it}, ${T.haupt}, 'Alt', '<p>x</p>', 'x', now() - interval '5 days', true),

@@ -35,13 +35,13 @@ describe.skipIf(!url)('Bilder im Text', () => {
 		await migrateWithRetry(() => runMigrations());
 		tb = await import('./textbilder.ts');
 		await db.execute(
-			sql`insert into tenants (id, name, short_name, is_main) values (${T}, 'Oper', 'BH', true)`
+			sql`insert into tenants (id, name, short_name, is_main) values (${T}, 'Haus A', 'BH', true)`
 		);
 		await db.execute(sql`
 			insert into units (id, tenant_id, type, name, slug, is_central) values (${U}, ${T}, 'abteilung', 'IT', 'it', true)`);
 		await db.execute(sql`
 			insert into persons (id, tenant_id, email, display_name, auth_source) values
-				(${ICH}, ${T}, 'ich@oper.de', 'Ich', 'local'), (${ANDERE}, ${T}, 'du@oper.de', 'Du', 'local')`);
+				(${ICH}, ${T}, 'ich@haus-a.example', 'Ich', 'local'), (${ANDERE}, ${T}, 'du@haus-a.example', 'Du', 'local')`);
 		await db.execute(sql`
 			insert into faqs (id, unit_id, question, answer_html, answer_text) values (${FAQ}, ${U}, 'Frage?', '', '')`);
 		await db.execute(sql`

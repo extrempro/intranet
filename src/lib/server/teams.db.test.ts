@@ -57,14 +57,14 @@ describe.skipIf(!url)('Teams-Benachrichtigungen', () => {
 		notify = await import('./notify.ts');
 		teams = await import('./teams.ts');
 		await db.execute(
-			sql`insert into tenants (id, name, short_name, is_main) values (${T}, 'Oper', 'BH', true)`
+			sql`insert into tenants (id, name, short_name, is_main) values (${T}, 'Haus A', 'BH', true)`
 		);
 		await db.execute(sql`
 			insert into persons (id, tenant_id, email, display_name, auth_source, entra_oid) values
-				(${P.entra}, ${T}, 'a@oper.test', 'Anna', 'entra', 'oid-a'),
-				(${P.entraRuhe}, ${T}, 'b@oper.test', 'Ben', 'entra', 'oid-b'),
-				(${P.entraAus}, ${T}, 'c@oper.test', 'Cem', 'entra', 'oid-c'),
-				(${P.lokal}, ${T}, 'd@oper.test', 'Dora', 'local', null)`);
+				(${P.entra}, ${T}, 'a@haus-a.test', 'Anna', 'entra', 'oid-a'),
+				(${P.entraRuhe}, ${T}, 'b@haus-a.test', 'Ben', 'entra', 'oid-b'),
+				(${P.entraAus}, ${T}, 'c@haus-a.test', 'Cem', 'entra', 'oid-c'),
+				(${P.lokal}, ${T}, 'd@haus-a.test', 'Dora', 'local', null)`);
 		// Ben: Ruhezeit rund um die Uhr, dringend nicht sofort; Cem: Teams aus
 		await db.execute(sql`
 			insert into person_preferences (person_id, notify) values
