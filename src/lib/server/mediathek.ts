@@ -586,6 +586,21 @@ export async function metaSpeichern(
 	await themenSetzen('video', id, await gueltigeThemen(input.themen));
 }
 
+/**
+ * Alles zwischen „<“ und „>“ samt Klammern entfernen, ebenso einzelne Klammern.
+ * Zeichenweise statt mit regulären Ausdrücken: Es bleibt keine spitze Klammer übrig.
+ */
+export function ohneMarkup(zeile: string): string {
+	let out = '';
+	let inTag = false;
+	for (const c of zeile) {
+		if (c === '<') inTag = true;
+		else if (c === '>') inTag = false;
+		else if (!inTag) out += c;
+	}
+	return out;
+}
+
 /** WebVTT prüfen und bereinigt speichern (nur Zeiten und reiner Text) */
 export function vttBereinigen(raw: string): { vtt: string; text: string } {
 	if (raw.length > 2_000_000)
@@ -611,10 +626,7 @@ export function vttBereinigen(raw: string): { vtt: string; text: string } {
 		const text: string[] = [];
 		while (i < zeilen.length && zeilen[i].trim() !== '') {
 			// Nur reiner Text: Tags und Steuerzeichen weg
-			const t = zeilen[i]
-				.replace(/<[^>]*>/g, '')
-				// Übrige spitze Klammern ganz entfernen (kein Markup möglich)
-				.replace(/[<>]/g, '')
+			const t = ohneMarkup(zeilen[i])
 				// eslint-disable-next-line no-control-regex -- Steuerzeichen entfernen ist der Zweck
 				.replace(/[\u0000-\u0008\u000B-\u001F\u007F]/g, '')
 				.slice(0, 300);
