@@ -109,10 +109,11 @@ Logs: Docker behält je Container höchstens 3 Dateien à 10 MB (`x-logging` in 
 ## Aktualität der Pakete
 
 - **Wöchentlich** (montags) hebt der Workflow _Abhängigkeiten aktualisieren_ alle npm-Pakete auf die neueste Version,
-  auch auf neue Hauptversionen. Er prüft Typen, Lint, Tests, Build und bekannte Sicherheitslücken und committet
+  auch auf neue Hauptversionen, sobald diese 7 Tage alt ist. Er prüft Typen, Lint, Tests, Build und bekannte Sicherheitslücken und committet
   nur, wenn alles grün ist. Ist er rot, braucht es eine Anpassung im Code.
 - **Täglich** läuft die CI zusätzlich, damit neu bekannte Sicherheitslücken auffallen.
-- **Monatlich** schlägt Dependabot neue Versionen für GitHub Actions und das Docker-Basis-Image vor.
+- **Monatlich** schlägt Dependabot neue Versionen für GitHub Actions und das Docker-Basis-Image vor, ebenfalls erst nach
+  7 Tagen. GitHub Actions sind auf Commits festgelegt (Version als Kommentar).
 - Der Workflow lässt sich unter _Actions_ auch von Hand starten.
 
 ## Versionen und Release Notes

@@ -50,7 +50,7 @@
 			});
 			const r = await res.json().catch(() => ({}));
 			if (!res.ok || !r.ok) return zeigeFehler(r.fehler || 'Die Anmeldung hat nicht geklappt.');
-			location.replace(r.ziel || ziel);
+			location.replace(sicher(r.ziel || ziel));
 		} catch {
 			zeigeFehler(
 				'Teams konnte dich nicht anmelden. Versuch es noch einmal oder öffne das Intranet im Browser.'
@@ -68,6 +68,7 @@
 				new Promise((_, nein) => setTimeout(() => nein(new Error('timeout')), 5000))
 			]);
 		} catch {
+			// nosemgrep: javascript.browser.security.open-redirect.js-open-redirect -- ziel ist durch sicher() auf einen Pfad derselben Herkunft begrenzt
 			return location.replace(ziel);
 		}
 		try {

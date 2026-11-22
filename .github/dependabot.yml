@@ -1,12 +1,15 @@
 # npm-Pakete aktualisiert der Workflow „Abhängigkeiten aktualisieren“ selbst.
 # Dependabot kümmert sich nur um GitHub Actions und die Docker-Basis-Images
 # (App und Sicherung), jeweils gebündelt in einem Pull Request pro Monat.
+# Neue Versionen erst, wenn sie 7 Tage alt sind (manipulierte Releases fallen meist vorher auf).
 version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+    cooldown:
+      default-days: 7
     groups:
       actions:
         patterns: ['*']
@@ -14,6 +17,8 @@ updates:
     directories: ['/', '/backup']
     schedule:
       interval: monthly
+    cooldown:
+      default-days: 7
     groups:
       basis-images:
         patterns: ['*']

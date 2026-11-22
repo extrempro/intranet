@@ -10,4 +10,5 @@ LABEL org.opencontainers.image.source=https://github.com/extrempro/intranet \
 RUN apk upgrade --no-cache && apk add --no-cache age rsync tzdata su-exec && rm -f /usr/local/bin/gosu
 ENV TZ=Europe/Berlin
 COPY --chmod=755 sicherung.sh pruefung.sh zeitplan.sh wiederherstellen.sh /usr/local/bin/
+# nosemgrep: dockerfile.security.missing-user-entrypoint.missing-user-entrypoint -- läuft bewusst als root, Begründung in .trivyignore.yaml
 ENTRYPOINT ["/usr/local/bin/zeitplan.sh"]
