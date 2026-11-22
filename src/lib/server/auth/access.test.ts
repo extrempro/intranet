@@ -10,11 +10,11 @@ import {
 	type Principal
 } from './access';
 
-const BH = 'm-haupt';
+const HAUPT = 'm-haupt';
 const B = 'm-b';
-const it_ = { id: 'u-it', tenantId: BH, isCentral: true };
+const it_ = { id: 'u-it', tenantId: HAUPT, isCentral: true };
 const kbbB = { id: 'u-kbb-b', tenantId: B, isCentral: false };
-const kbbHaupt = { id: 'u-kbb-haupt', tenantId: BH, isCentral: false };
+const kbbHaupt = { id: 'u-kbb-haupt', tenantId: HAUPT, isCentral: false };
 
 function person(overrides: Partial<Principal> = {}): Principal {
 	return { personId: 'p', tenantId: B, roles: [], memberships: [], ...overrides };
@@ -51,7 +51,7 @@ describe('Verwaltung', () => {
 			roles: [{ role: 'mandanten_admin', scope: 'tenant', scopeTenantId: B, scopeUnitId: null }]
 		});
 		expect(canAdministerTenant(p, B)).toBe(true);
-		expect(canAdministerTenant(p, BH)).toBe(false);
+		expect(canAdministerTenant(p, HAUPT)).toBe(false);
 		expect(canSeeAdministration(p)).toBe(true);
 	});
 
@@ -59,7 +59,7 @@ describe('Verwaltung', () => {
 		const p = person({
 			roles: [{ role: 'system_admin', scope: 'all', scopeTenantId: null, scopeUnitId: null }]
 		});
-		expect(canAdministerTenant(p, BH)).toBe(true);
+		expect(canAdministerTenant(p, HAUPT)).toBe(true);
 	});
 
 	it('ohne Rolle keine Verwaltung', () => {
@@ -85,7 +85,7 @@ describe('Einheiten pflegen', () => {
 	it('Redaktion pflegt nur Einheiten ohne eigene Pflege im eigenen Geltungsbereich', () => {
 		expect(canManageUnit(redaktionB, kbbB, false)).toBe(true);
 		expect(canManageUnit(redaktionB, kbbB, true)).toBe(false);
-		expect(isEditorial(redaktionB, BH)).toBe(false);
+		expect(isEditorial(redaktionB, HAUPT)).toBe(false);
 	});
 });
 

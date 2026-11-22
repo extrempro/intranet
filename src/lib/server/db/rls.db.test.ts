@@ -76,7 +76,7 @@ describe.skipIf(!url)('Row-Level Security', () => {
 			insert into faqs (unit_id, question, answer_html, answer_text) values
 				(${U.it}, 'Zentrale Frage?', '<p>a</p>', 'a'),
 				(${U.kbbHaupt}, 'Frage der Oper?', '<p>a</p>', 'a'),
-				(${U.kbbB}, 'Frage des Zweithauses?', '<p>a</p>', 'a')`);
+				(${U.kbbB}, 'Frage aus dem Zweithaus?', '<p>a</p>', 'a')`);
 	});
 
 	afterAll(async () => {
@@ -141,7 +141,7 @@ describe.skipIf(!url)('Row-Level Security', () => {
 		const rows = await mod.scoped(asB, (tx) =>
 			tx.execute<{ question: string }>(sql`select question from faqs order by question`)
 		);
-		expect(rows.map((r) => r.question)).toEqual(['Frage des Zweithauses?', 'Zentrale Frage?']);
+		expect(rows.map((r) => r.question)).toEqual(['Frage aus dem Zweithaus?', 'Zentrale Frage?']);
 		await expect(mod.scoped(asB, (tx) => tx.execute(sql`delete from faqs`))).rejects.toMatchObject({
 			cause: { code: '42501' }
 		});

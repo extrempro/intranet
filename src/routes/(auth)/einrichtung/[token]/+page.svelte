@@ -51,7 +51,7 @@
 				<input
 					name="domains"
 					required
-					placeholder="beispielhaus-Beispielstadt.de"
+					placeholder="example.org"
 					value={v?.domains ?? ''}
 					aria-describedby="domains-hinweis"
 				/>

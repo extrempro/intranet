@@ -1,4 +1,4 @@
-# Betrieb hinter dem Reverse Proxy, Bereitstellung per Compose.
+# Betrieb hinter einem Reverse Proxy (TLS), fertige Images aus der GitHub Container Registry.
 # Werte kommen aus .env (Vorlage: .env.example). Keine Secrets ins Repo.
 # Images baut GitHub Actions bei jedem Release (ghcr.io/extrempro/intranet und
 # …/intranet-backup); INTRANET_VERSION wählt die Version. Selbst bauen:
@@ -47,7 +47,7 @@ services:
       INITIAL_TENANT_ACCENT_DARK: ${INITIAL_TENANT_ACCENT_DARK:-}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY fehlt in .env}
     ports:
-      # APP_BIND: nur auf dieser Adresse des Hosts lauschen (z. B. interne Adresse), siehe .env.example
+      # APP_BIND: nur auf dieser Adresse des Hosts lauschen (z. B. interne Adresse im VPN), siehe .env.example
       - '${APP_BIND:-0.0.0.0}:${APP_PORT:-3000}:3000'
     depends_on:
       db:

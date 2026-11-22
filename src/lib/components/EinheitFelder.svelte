@@ -67,7 +67,7 @@
 			name="titel"
 			maxlength="80"
 			value={werte.title ?? ''}
-			placeholder="z. B. Intendanz, GMD, Datenschutzbeauftragte"
+			placeholder="z. B. Intendanz, Kaufmännische Leitung, Datenschutzbeauftragte"
 		/>
 		<span class="hinweis">
 			Erscheint statt „Geschäftsführung“ bzw. „Stabsstelle“ auf der Seite und in Listen.

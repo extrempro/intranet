@@ -206,7 +206,7 @@ export async function addDomain(p: Principal, id: string, raw: string, ip: strin
 	requireSystemAdmin(p);
 	await getTenant(p, id);
 	const domain = normalizeDomain(raw);
-	if (!domain) throw new TenantError('Das ist keine gültige Domain (z. B. beispielhaus-Beispielstadt.de).');
+	if (!domain) throw new TenantError('Das ist keine gültige Domain (z. B. example.org).');
 	const [hit] = await db
 		.select({ tenantId: tenantDomains.tenantId })
 		.from(tenantDomains)

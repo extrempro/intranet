@@ -56,7 +56,10 @@ export async function vapidKeys() {
 export function pushContact(): string {
 	const c = process.env.PUSH_CONTACT?.trim();
 	if (c && /^(mailto:[^\s@]+@[^\s@]+|https:\/\/\S+)$/.test(c)) return c;
-	return 'mailto:it@example.org';
+	// Ohne PUSH_CONTACT: die eigene Adresse des Intranets (VAPID erlaubt https-Adressen)
+	const origin = process.env.ORIGIN?.trim();
+	if (origin && /^https:\/\/\S+$/.test(origin)) return origin;
+	return 'mailto:postmaster@localhost';
 }
 
 // ---------------------------------------------------------------------------
