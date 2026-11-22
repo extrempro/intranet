@@ -131,6 +131,15 @@ Neu: Mediathek mit Hochladen in Teilen, Umwandlung im eigenen Container, HLS-Aus
 - **Untertitel**: nur WebVTT bis 2 MB; gespeichert werden nur Zeitangaben und reiner Text (Tags und Steuerzeichen entfernt, Test). Kapitel serverseitig geprüft (Anzahl, Reihenfolge, Länge).
 - **Kein Nachweis**: Aufrufe werden nicht protokolliert oder gezählt. Löschen eines Videos steht im Verwaltungsprotokoll.
 
+## Nachprüfung Fortschritt der Mediathek (22.11.2026, Version 0.22.0)
+
+Neu: „Weiter, wo du warst“ am Konto.
+
+- **Datensparsam**: je Person und Video nur Sekunde und Zeitpunkt der letzten Änderung; kein Verlauf, keine Zählung, nichts im Protokoll (Test). Eintrag weg am Ende des Videos (letzte 15 Sekunden), beim Ausschalten im Konto und nach 90 Tagen (Aufräumauftrag).
+- **Nur die eigene Person**: Lesen und Schreiben über die eingeschränkte Rolle mit Row-Level Security (`person_id = app_person_id()`); eine andere Person kann weder lesen noch für jemand anderen schreiben (DB-Test). Keine Ansicht für Admins, Leitungen oder Hub-Teams, kein Export.
+- **Nur sichtbare Videos**: Gemerkt wird nur nach derselben Rechteprüfung wie beim Ansehen (Entwürfe ohne Recht: nichts). Endpunkt mit Origin-Prüfung, Größen- und Wertgrenzen.
+- **Ausgeschaltet**: Stand nur im Browser (`localStorage`, 90 Tage), beim Löschen im Konto ebenfalls entfernt.
+
 ## Stand je ASVS-Kapitel (5.0)
 
 | Kapitel                                    | Stand             | Umsetzung, Belege                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |

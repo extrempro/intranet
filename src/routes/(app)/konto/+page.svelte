@@ -6,6 +6,7 @@
 	import FotoZuschnitt from '#lib/components/FotoZuschnitt.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import Info from '#lib/components/Info.svelte';
+	import MitFrage from '#lib/components/MitFrage.svelte';
 	import StandortWahl from '#lib/components/StandortWahl.svelte';
 	import KontoBenachrichtigungen from '#lib/components/konto/KontoBenachrichtigungen.svelte';
 	import KontoKontakt from '#lib/components/konto/KontoKontakt.svelte';
@@ -18,6 +19,16 @@
 	let fotoOffen = $state(false);
 	let theme = $derived<string>(data.theme);
 	let neuerungen = $derived<boolean>(data.neuerungen);
+	let fortschritt = $derived<boolean>(data.fortschritt);
+	/** Stand im Browser (Schalter aus) mit löschen */
+	function lokalenFortschrittLoeschen() {
+		try {
+			for (const k of Object.keys(localStorage))
+				if (k.startsWith('intranet.mediathek.')) localStorage.removeItem(k);
+		} catch {
+			/* kein Speicher im Browser */
+		}
+	}
 	const DARSTELLUNG = [
 		{ wert: 'auto', text: 'Automatisch' },
 		{ wert: 'hell', text: 'Hell' },
@@ -187,6 +198,56 @@
 				</button>
 			</form>
 			<p class="unter">Nach einem Update einmal kurz zeigen, was neu ist.</p>
+		</section>
+
+		<section class="karte block" aria-labelledby="h-fortschritt">
+			<h3 id="h-fortschritt" class="mit-info">
+				Mediathek
+				<Info
+					thema="Fortschritt in der Mediathek"
+					text="Gespeichert wird je Video nur die Stelle, an der du aufgehört hast, und wann. Niemand sonst sieht das, auch keine Admins. Am Ende eines Videos und nach 90 Tagen wird der Eintrag gelöscht."
+				/>
+			</h3>
+			<h4 id="h-fortschritt-wahl">Fortschritt auf meinem Konto speichern</h4>
+			<form
+				method="POST"
+				action="?/fortschritt"
+				class="pillen"
+				aria-labelledby="h-fortschritt-wahl"
+				use:enhance={({ formData }) => {
+					fortschritt = formData.get('wert') === 'an';
+					return async ({ result }) => hierAnwenden(result);
+				}}
+			>
+				<button class="pille" type="submit" name="wert" value="an" aria-pressed={fortschritt}>
+					An
+				</button>
+				<button class="pille" type="submit" name="wert" value="aus" aria-pressed={!fortschritt}>
+					Aus
+				</button>
+			</form>
+			<p class="unter">
+				{fortschritt
+					? 'Du machst auf jedem Gerät dort weiter, wo du aufgehört hast.'
+					: 'Der Fortschritt bleibt nur in diesem Browser. Beim Ausschalten wird der Stand am Konto gelöscht.'}
+			</p>
+			<MitFrage
+				action="?/fortschrittLoeschen"
+				enhance={() => {
+					lokalenFortschrittLoeschen();
+					return async ({ result }) => hierAnwenden(result);
+				}}
+				knopf="Meinen Fortschritt löschen"
+				knopfKlasse="knopf zweit"
+				frage={{
+					titel: 'Fortschritt löschen?',
+					text: 'Bei allen Videos beginnst du danach wieder von vorn.',
+					ja: 'Löschen'
+				}}
+			/>
+			{#if fuer('fortschritt')?.geloescht !== undefined}<p class="meldung" role="status">
+					Gelöscht.
+				</p>{/if}
 		</section>
 
 		<section class="karte block" aria-labelledby="h-sicherheit">

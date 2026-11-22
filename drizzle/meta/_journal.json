@@ -288,6 +288,13 @@
       "when": 1795338093396,
       "tag": "0040_mediathek",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1795343094068,
+      "tag": "0041_fortschritt",
+      "breakpoints": true
     }
   ]
 }

@@ -14,7 +14,9 @@
 		vorschau = null,
 		titel,
 		zeit = $bindable(0),
-		dauer = $bindable(0)
+		dauer = $bindable(0),
+		start = 0,
+		onfortschritt
 	}: {
 		/** Adresse der master.m3u8 */
 		quelle: string;
@@ -24,6 +26,10 @@
 		titel: string;
 		zeit?: number;
 		dauer?: number;
+		/** Startposition in Sekunden („Weiter, wo du warst“) */
+		start?: number;
+		/** Stand melden: alle 15 Sekunden beim Abspielen, bei Pause, am Ende und beim Verlassen */
+		onfortschritt?: (sek: number, dauer: number, ende: boolean) => void;
 	} = $props();
 
 	let video = $state<HTMLVideoElement>();
@@ -51,7 +57,34 @@
 		h.attachMedia(video);
 		hls = h;
 	});
-	onDestroy(() => hls?.destroy());
+	onDestroy(() => {
+		melden(false);
+		hls?.destroy();
+	});
+
+	let gestartet = false;
+	let zuletzt = 0;
+	function anfangen() {
+		if (gestartet || !video) return;
+		gestartet = true;
+		if (start > 0 && start < (video.duration || Infinity)) video.currentTime = start;
+	}
+	function melden(ende: boolean) {
+		if (!video || !onfortschritt || !gestartet) return;
+		const d = video.duration || 0;
+		if (!d) return;
+		onfortschritt(ende ? d : video.currentTime, d, ende);
+	}
+	function weiter() {
+		if (!video || video.paused) return;
+		if (Math.abs(video.currentTime - zuletzt) >= 15) {
+			zuletzt = video.currentTime;
+			melden(false);
+		}
+	}
+	function verborgen() {
+		if (document.visibilityState === 'hidden') melden(false);
+	}
 
 	/** Von außen: an eine Stelle springen und abspielen */
 	export function springen(s: number, abspielen = true) {
@@ -68,6 +101,9 @@
 	});
 </script>
 
+<svelte:document onvisibilitychange={verborgen} />
+<svelte:window onpagehide={() => melden(false)} />
+
 <div class="player">
 	<video
 		bind:this={video}
@@ -78,6 +114,10 @@
 		playsinline
 		poster={vorschau ?? undefined}
 		aria-label={titel}
+		onloadedmetadata={anfangen}
+		ontimeupdate={weiter}
+		onpause={() => melden(false)}
+		onended={() => melden(true)}
 	>
 		{#if untertitel}<track
 				kind="subtitles"

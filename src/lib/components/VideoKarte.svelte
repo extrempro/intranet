@@ -18,6 +18,7 @@
 		};
 		einheitZeigen?: boolean;
 	} = $props();
+	let ohneBild = $state(false);
 	const fertig = $derived(['entwurf', 'veroeffentlicht'].includes(v.status));
 	const ziel = $derived(
 		v.status === 'veroeffentlicht'
@@ -28,12 +29,12 @@
 
 <article class="karte videokarte">
 	<div class="bild" aria-hidden="true">
-		{#if fertig}
+		{#if fertig && !ohneBild}
 			<img
 				src="/mediathek/{v.id}/medien/vorschau.jpg"
 				alt=""
 				loading="lazy"
-				onerror={(e) => ((e.currentTarget as HTMLImageElement).hidden = true)}
+				onerror={() => (ohneBild = true)}
 			/>
 		{/if}
 		{#if v.durationSec}<span class="dauer">{zeitText(v.durationSec)}</span>{/if}

@@ -303,4 +303,51 @@ describe.skipIf(!url)('Mediathek', () => {
 		expect(r.status).toBe('fehler');
 		expect(r.error_message).toContain('keine Videodatei');
 	});
+
+	it('Fortschritt: nur die eigene Person, gelöscht am Ende, beim Ausschalten und nach 90 Tagen', async () => {
+		const f = await import('./fortschritt.ts');
+		const id = await entwurf(ZENTRAL);
+		await m.untertitelSetzen(pflege, id, VTT);
+		await m.veroeffentlichen(pflege, id, true);
+		// Ganz am Anfang nichts merken, mitten drin schon
+		expect(await f.merken(leser, id, 3)).toBe(true);
+		expect(await f.position(leser, id)).toBeNull();
+		await f.merken(leser, id, 42.7);
+		expect(await f.position(leser, id)).toBe(42);
+		expect((await f.weiterAnsehen(leser)).map((w) => w.id)).toContain(id);
+		// Andere sehen den Stand nicht, auch nicht über die Datenbank (RLS)
+		expect(await f.position(pflege, id)).toBeNull();
+		const { scoped } = await import('./db/index.ts');
+		const { videoProgress } = await import('./db/schema.ts');
+		expect(await scoped(pflege, (tx) => tx.select().from(videoProgress))).toEqual([]);
+		await expect(
+			scoped(pflege, (tx) =>
+				tx.insert(videoProgress).values({ personId: LESER, videoId: id, positionSec: 9 })
+			)
+		).rejects.toThrow();
+		// Kurz vor dem Ende gilt als gesehen (120 s: letzte 12 s)
+		await f.merken(leser, id, 107);
+		expect(await f.position(leser, id)).toBe(107);
+		await f.merken(leser, id, 109);
+		expect(await f.position(leser, id)).toBeNull();
+		// Entwürfe ohne Recht: nichts merken
+		const geheim = await entwurf(ZENTRAL);
+		expect(await f.merken(leser, geheim, 30)).toBe(false);
+		// Ausschalten löscht und verhindert weiteres Merken
+		await f.merken(leser, id, 30);
+		await f.fortschrittSchalten(leser, false);
+		expect(await f.position(leser, id)).toBeNull();
+		expect(await f.merken(leser, id, 30)).toBe(false);
+		await f.fortschrittSchalten(leser, true);
+		// Nach 90 Tagen weg
+		await f.merken(leser, id, 30);
+		await db.execute(sql`update video_progress set updated_at = now() - interval '91 days'`);
+		await f.alterFortschrittLoeschen();
+		expect(await f.position(leser, id)).toBeNull();
+		// Kein Eintrag im Protokoll
+		const [{ n }] = (await db.execute(
+			sql`select count(*)::int as n from audit_log where entity_id = ${id}`
+		)) as unknown as { n: number }[];
+		expect(n).toBe(0);
+	});
 });

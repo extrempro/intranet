@@ -40,3 +40,34 @@ test('Mediathek: Hub-Team pflegt Videos seines Hubs', async ({ page }) => {
 	});
 	expect(r.status()).toBe(403);
 });
+
+test('Mediathek: Weiter, wo du warst', async ({ page }) => {
+	await anmelden(page, 'nils');
+	const fremd = await page.request.post(`/mediathek/${VIDEO}/fortschritt`, {
+		headers: { origin: 'https://example.com', 'content-type': 'application/json' },
+		data: { s: 30 }
+	});
+	expect(fremd.status()).toBe(403);
+	const r = await page.request.post(`/mediathek/${VIDEO}/fortschritt`, {
+		headers: {
+			origin: new URL(process.env.BASE_URL ?? 'http://localhost:3999').origin,
+			'content-type': 'application/json'
+		},
+		data: { s: 70 }
+	});
+	expect(r.status()).toBe(204);
+	await page.goto(`/mediathek/${VIDEO}`);
+	await expect(page.getByText('Weiter bei 1:10')).toBeVisible();
+	await page.goto('/mediathek');
+	await expect(page.getByRole('heading', { name: 'Weiter ansehen' })).toBeVisible();
+	await page.goto('/konto');
+	await expect(
+		page.getByRole('heading', { name: 'Fortschritt auf meinem Konto speichern' })
+	).toBeVisible();
+	await keineA11yFehler(page);
+	await page.getByRole('button', { name: 'Meinen Fortschritt löschen' }).click();
+	await page.getByRole('alertdialog').getByRole('button', { name: 'Löschen' }).click();
+	await expect(page.getByText('Gelöscht.')).toBeVisible();
+	await page.goto(`/mediathek/${VIDEO}`);
+	await expect(page.getByText(/Weiter bei/)).toHaveCount(0);
+});

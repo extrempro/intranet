@@ -3,6 +3,7 @@
 	import { untrack } from 'svelte';
 	import { resolve } from '$app/paths';
 	import VideoKarte from '#lib/components/VideoKarte.svelte';
+	import { zeitText } from '#lib/mediathek.ts';
 
 	let { data } = $props();
 	let q = $state(untrack(() => data.filter.q));
@@ -22,6 +23,23 @@
 			<a class="knopf" href={resolve('/(app)/mediathek/neu')}>Video hochladen</a>
 		{/if}
 	</div>
+
+	{#if data.weiter.length}
+		<section class="karte stapel eng" aria-labelledby="h-weiter">
+			<h2 id="h-weiter">Weiter ansehen</h2>
+			<ul class="weiter">
+				{#each data.weiter as w (w.id)}
+					<li>
+						<a href={resolve('/(app)/mediathek/[id]', { id: w.id })}>{w.title}</a>
+						<span class="hinweis">
+							{w.unitName} · bei {zeitText(w.positionSec)} von {zeitText(w.durationSec)}
+						</span>
+						<progress max={w.durationSec} value={w.positionSec} aria-hidden="true"></progress>
+					</li>
+				{/each}
+			</ul>
+		</section>
+	{/if}
 
 	<form
 		method="GET"
@@ -112,6 +130,30 @@
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
 		gap: 16px;
+	}
+	h2 {
+		margin: 0;
+		font-size: 1.1rem;
+	}
+	.weiter {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+		gap: 12px 20px;
+	}
+	.weiter li {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+	.weiter a {
+		font-weight: 600;
+	}
+	.weiter progress {
+		width: 100%;
+		height: 6px;
 	}
 	.leer {
 		text-align: center;

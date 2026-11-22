@@ -15,6 +15,52 @@
 	const aktuell = $derived(
 		v.chapters.reduce((a: number, k: { s: number }, i: number) => (zeit >= k.s ? i : a), -1)
 	);
+	// „Weiter, wo du warst“: am Konto oder, wenn ausgeschaltet, nur in diesem Browser
+	const lokalSchluessel = (id: string) => `intranet.mediathek.${id}`;
+	function lokalLesen(id: string): number | null {
+		try {
+			const r = JSON.parse(localStorage.getItem(lokalSchluessel(id)) ?? 'null') as {
+				s: number;
+				t: number;
+			} | null;
+			if (!r || Date.now() - r.t > 90 * 86_400_000) return null;
+			return r.s;
+		} catch {
+			return null;
+		}
+	}
+	function lokalSchreiben(id: string, sek: number | null) {
+		try {
+			if (sek === null) localStorage.removeItem(lokalSchluessel(id));
+			else localStorage.setItem(lokalSchluessel(id), JSON.stringify({ s: sek, t: Date.now() }));
+		} catch {
+			/* Speicher nicht verfügbar: dann eben ohne */
+		}
+	}
+	const start = $derived(
+		data.fortschritt.amKonto ? (data.fortschritt.sek ?? 0) : (lokalLesen(v.id) ?? 0)
+	);
+	let hinweisWeg = $state(false);
+
+	function fortschritt(sek: number, dauer: number, ende: boolean) {
+		const s = Math.floor(sek);
+		if (data.fortschritt.amKonto) {
+			void fetch(`/mediathek/${v.id}/fortschritt`, {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ s }),
+				keepalive: true
+			}).catch(() => undefined);
+		} else {
+			lokalSchreiben(v.id, ende || s < 5 || s >= dauer - Math.min(15, dauer * 0.1) ? null : s);
+		}
+	}
+	function vonVorn() {
+		hinweisWeg = true;
+		player?.springen(0, false);
+		fortschritt(0, 1, false);
+	}
+
 	const einheitPfad = $derived(
 		v.unit.type === 'hub'
 			? resolve('/(app)/hubs/[slug]', { slug: v.unit.slug })
@@ -40,8 +86,16 @@
 					vorschau="/mediathek/{v.id}/medien/vorschau.jpg"
 					untertitel={v.hatUntertitel ? `/mediathek/${v.id}/untertitel.vtt` : null}
 					kapitel={v.chapters.length ? `/mediathek/${v.id}/kapitel.vtt` : null}
+					{start}
+					onfortschritt={fortschritt}
 				/>
 			{/key}
+			{#if start > 0 && !hinweisWeg}
+				<p class="weiterhinweis" role="status">
+					<span>Weiter bei {zeitText(start)}, wo du aufgehört hast.</span>
+					<button class="linkknopf" type="button" onclick={vonVorn}>Von vorn beginnen</button>
+				</p>
+			{/if}
 			<div class="titelzeile">
 				<div class="stapel eng">
 					<h1>{v.title}</h1>
@@ -145,6 +199,14 @@
 		justify-content: space-between;
 		align-items: flex-start;
 		gap: 12px;
+	}
+	.weiterhinweis {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px 12px;
+		align-items: center;
+		font-size: 14px;
+		color: var(--mu);
 	}
 	.beschreibung {
 		white-space: pre-line;

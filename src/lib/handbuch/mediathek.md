@@ -13,4 +13,10 @@ Unter Wissen → Mediathek findest du alle Videos, die du sehen darfst. Auf den 
 - **Kapitel:** Hat ein Video Kapitel, stehen sie neben dem Video. Ein Klick springt an die Stelle.
 - **Qualität** passt sich deiner Verbindung an. Im Mobilfunk lohnt WLAN.
 
+## Weiter, wo du warst
+
+Hörst du mitten in einem Video auf, startet es beim nächsten Mal an derselben Stelle, auch auf einem anderen Gerät. Mit „Von vorn beginnen“ startest du neu. Angefangene Videos stehen oben in der Mediathek unter „Weiter ansehen“.
+
+Gespeichert wird je Video nur die Stelle und wann du zuletzt geschaut hast. Niemand sonst sieht das, auch keine Admins. Am Ende eines Videos und nach 90 Tagen wird der Eintrag gelöscht. Unter Konto → Mediathek schaltest du das Speichern am Konto aus (dann merkt sich nur dein Browser die Stelle) oder löschst deinen Fortschritt.
+
 Niemand sieht, wer welches Video angeschaut hat.
