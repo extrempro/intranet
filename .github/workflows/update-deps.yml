@@ -20,14 +20,21 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 26
       - name: Versionen auf den neuesten Stand heben
-        run: npx --yes npm-check-updates@latest --upgrade --peer
+        run: npx --yes npm-check-updates@latest --upgrade --peer --cooldown 7
       - name: Installieren und Lock-Datei erzeugen
         run: npm install
+      - name: Pakete der Browser-Tests aktualisieren (e2e)
+        working-directory: e2e
+        run: |
+          npx --yes npm-check-updates@latest --upgrade --peer --cooldown 7
+          npm install
+          npx tsc -p .
+          npm audit --audit-level=high
       - name: Typen prüfen
         run: npm run check
       - name: Lint
@@ -42,12 +49,12 @@ jobs:
         run: docker build -t intranet:update .
       - name: Änderungen übernehmen
         run: |
-          if git diff --quiet -- package.json package-lock.json; then
+          if git diff --quiet -- package.json package-lock.json e2e/package.json e2e/package-lock.json; then
             echo "Alles ist aktuell."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json
+          git add package.json package-lock.json e2e/package.json e2e/package-lock.json
           git commit -m "Abhängigkeiten aktualisieren"
           git push

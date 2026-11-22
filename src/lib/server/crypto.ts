@@ -26,7 +26,10 @@ export function encryptSecret(plain: Uint8Array, rawKey?: string): string {
 export function decryptSecret(value: string, rawKey?: string): Uint8Array {
 	const [version, iv, tag, enc] = value.split('.');
 	if (version !== 'v1' || !iv || !tag || enc === undefined) throw new Error('Unbekanntes Format');
-	const decipher = createDecipheriv('aes-256-gcm', loadKey(rawKey), Buffer.from(iv, 'base64url'));
+	// Tag-Länge fest: ein gekürzter Tag würde sonst angenommen
+	const decipher = createDecipheriv('aes-256-gcm', loadKey(rawKey), Buffer.from(iv, 'base64url'), {
+		authTagLength: 16
+	});
 	decipher.setAuthTag(Buffer.from(tag, 'base64url'));
 	return new Uint8Array(
 		Buffer.concat([decipher.update(Buffer.from(enc, 'base64url')), decipher.final()])

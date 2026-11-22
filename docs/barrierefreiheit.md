@@ -52,3 +52,13 @@ Nach den Korrekturen meldet axe auf keiner geprüften Seite einen Verstoß, in H
 - **Test mit Bildschirmleser** (NVDA mit Firefox, VoiceOver auf iPhone) und mit betroffenen Beschäftigten, z. B. über die Schwerbehindertenvertretung.
 - **Inhalte**: PDFs sollten barrierefrei erstellt werden; das Handbuch („Beitrag schreiben“) gibt dazu Hinweise.
 - Die Prüfung nach größeren Änderungen an der Oberfläche wiederholen.
+
+## Laufende Prüfung in der CI
+
+Seit Version 0.19.1 prüft die CI bei jedem Pull Request automatisch (`e2e/`, siehe README):
+
+- rund 30 Seiten (auch Verwaltung, Hub bearbeiten, Beitrag schreiben) mit axe-core nach WCAG 2.0, 2.1 und 2.2 (A und AA), auf PC, Tablet und Handy; jeder Verstoß macht die CI rot
+- kein waagerechtes Scrollen auf Tablet und Handy
+- Lighthouse auf Start, Hub und Neuigkeiten: Barrierefreiheit mindestens 95, Best Practices mindestens 90
+
+Dabei gefunden und behoben: Name des Logo-Links und des Kontomenüs passte nicht zum sichtbaren Text (WCAG 2.5.3), zu wenig Kontrast der Hinweise im Kopf eines Hubs (1.4.3), Liste „Wer darf schreiben?“ mit falscher Struktur (1.3.1).

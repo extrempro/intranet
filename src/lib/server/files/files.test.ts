@@ -66,4 +66,8 @@ describe('Verschlüsselung je Datei', () => {
 		enc[enc.length - 1] ^= 1;
 		expect(() => decryptFile(enc, key, 'id-1')).toThrow();
 	});
+	it('lehnt eine abgeschnittene Datei ab', () => {
+		const enc = encryptFile(Buffer.from('Inhalt'), key, 'id-1');
+		expect(() => decryptFile(enc.subarray(0, 20), key, 'id-1')).toThrow();
+	});
 });
