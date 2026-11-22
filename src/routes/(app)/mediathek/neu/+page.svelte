@@ -9,6 +9,7 @@
 	let { data } = $props();
 	let einheit = $state(untrack(() => data.einheit));
 	let titel = $state('');
+	let vorschlag = $state(true);
 	let datei = $state<File | null>(null);
 	let fehler = $state('');
 	let laeuft = $state(false);
@@ -48,7 +49,8 @@
 				const j = await anfragen<{ id: string }>('/mediathek/hochladen', {
 					unitId: einheit,
 					title: titel,
-					size: datei.size
+					size: datei.size,
+					vorschlag
 				});
 				videoId = j.id;
 			}
@@ -97,6 +99,16 @@
 				disabled={laeuft || Boolean(videoId)}
 			/>
 		</label>
+		<label class="vorschlag">
+			<input type="checkbox" bind:checked={vorschlag} disabled={laeuft || Boolean(videoId)} />
+			<span>
+				Zusammenfassung und Kapitel gleich vorschlagen
+				<span class="hinweis">
+					Aus den automatischen Untertiteln, auf dem eigenen Server. Das Video ist dann ein paar
+					Minuten später fertig; übernommen wird nur, was du bestätigst.
+				</span>
+			</span>
+		</label>
 		<p class="hinweis">
 			Nach dem Hochladen wandelt das Intranet das Video um und benachrichtigt dich, wenn es fertig
 			ist. Dann ergänzt du Beschreibung, Themen, Untertitel und Kapitel und veröffentlichst es. Die
@@ -128,6 +140,22 @@
 <style>
 	.seite {
 		max-width: 44rem;
+	}
+	.vorschlag {
+		display: flex;
+		gap: 10px;
+		align-items: flex-start;
+		cursor: pointer;
+	}
+	.vorschlag input {
+		width: 20px;
+		height: 20px;
+		margin-top: 2px;
+		flex: none;
+	}
+	.vorschlag .hinweis {
+		display: block;
+		font-size: 13px;
 	}
 	h1 {
 		margin: 0;

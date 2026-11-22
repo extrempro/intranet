@@ -515,12 +515,7 @@
 
 				<section class="karte stapel vorschlag" aria-labelledby="h-vorschlag">
 					<h2 id="h-vorschlag">Zusammenfassung und Kapitel vorschlagen</h2>
-					{#if !v.hatUntertitel || !v.bereit}
-						<p class="hinweis">
-							Sobald das Video geprüfte Untertitel hat, kann das Intranet daraus eine
-							Zusammenfassung und Kapitel vorschlagen.
-						</p>
-					{:else if v.suggestionStatus === 'warten'}
+					{#if v.suggestionStatus === 'warten'}
 						<p class="laeuft" role="status">
 							<span class="kreisel" aria-hidden="true"></span>
 							Der Vorschlag wird erstellt. Das dauert einige Minuten; du bekommst eine Nachricht, wenn
@@ -535,6 +530,13 @@
 							Ein Vorschlag aus den Untertiteln, erstellt von einem Sprachmodell auf unserem Server.
 							Lies ihn bitte gegen, bevor du ihn übernimmst.
 						</p>
+						{#if s.ungeprueft}
+							<p class="hinweis ungeprueft">
+								Er beruht auf den automatischen Untertiteln, bevor sie geprüft wurden. Hast du dort
+								Namen oder Begriffe korrigiert, hol dir mit „Neu vorschlagen“ einen frischen
+								Vorschlag.
+							</p>
+						{/if}
 						{#if s.zusammenfassung}
 							<div class="vorschlagteil stapel eng">
 								<h3>Zusammenfassung</h3>
@@ -597,6 +599,16 @@
 								<button class="linkknopf" type="submit">Vorschlag verwerfen</button>
 							</form>
 						</div>
+					{:else if !v.hatUntertitel || !v.bereit}
+						{#if v.suggestionStatus === 'fehler'}
+							<p class="meldung fehler" role="alert">
+								{v.suggestionError ?? 'Der Vorschlag hat nicht geklappt.'}
+							</p>
+						{/if}
+						<p class="hinweis">
+							Sobald das Video geprüfte Untertitel hat, kann das Intranet daraus eine
+							Zusammenfassung und Kapitel vorschlagen.
+						</p>
 					{:else}
 						{#if v.suggestionStatus === 'fehler'}
 							<p class="meldung fehler" role="alert">
@@ -874,6 +886,12 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 8px 18px;
+	}
+	.ungeprueft {
+		padding: 8px 12px;
+		border-radius: 10px;
+		background: var(--warn-bg);
+		color: var(--warn-tx);
 	}
 	.vorschlag h3 {
 		margin: 0;

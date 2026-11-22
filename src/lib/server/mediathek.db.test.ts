@@ -372,6 +372,29 @@ describe.skipIf(!url)('Mediathek', () => {
 	}
 
 	it.skipIf(!ffmpeg)(
+		'Vorschlag beim Hochladen: startet nach den automatischen Untertiteln',
+		async () => {
+			const inhalt = testvideo('vorschlag.mp4');
+			const id = await m.videoAnlegen(pflege, {
+				unitId: EIGEN,
+				title: 'Mit Vorschlag',
+				size: inhalt.length,
+				vorschlag: true
+			});
+			await hochladen(id, inhalt);
+			await umwandeln();
+			const d = await m.bearbeitenDaten(pflege, id);
+			expect(d.status).toBe('entwurf');
+			expect(d.captionsCheckedAt).toBeNull();
+			expect(d.suggestionStatus).toBe('warten');
+			expect(d.suggestion?.ungeprueft).toBe(true);
+			const eingabe = readFileSync(join(arbeit, `vorschlag-${id}`, 'eingabe.txt'), 'utf8');
+			expect(eingabe).toContain('[0:00] Hallo Welt');
+		},
+		60_000
+	);
+
+	it.skipIf(!ffmpeg)(
 		'automatische Untertitel: erst nach „geprüft“ veröffentlichen, korrigierbar',
 		async () => {
 			const inhalt = testvideo('auto.mp4');

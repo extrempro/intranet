@@ -34,7 +34,12 @@ export const MAX_VORSCHLAG_KAPITEL = 20;
 export interface Vorschlag {
 	zusammenfassung: string;
 	kapitel: { s: number; t: string }[];
+	/** Aus noch nicht geprüften automatischen Untertiteln */
+	ungeprueft?: boolean;
 }
+
+/** Mindestlänge der Untertitel für einen Vorschlag */
+const MIN_EINGABE = 20;
 
 export function vorschlagOrdner(id: string): string {
 	return join(arbeitsOrdner(), `vorschlag-${id}`);
@@ -123,9 +128,24 @@ export async function vorschlagAnfordern(p: Principal, id: string) {
 		throw new MediathekFehler('Prüfe zuerst die Untertitel, dann kann ein Vorschlag entstehen.');
 	if (v.suggestionStatus === 'warten')
 		throw new MediathekFehler('Der Vorschlag wird schon erstellt.');
-	const eingabe = vorschlagEingabe(v.captionsVtt);
-	if (eingabe.length < 40)
+	if (vorschlagEingabe(v.captionsVtt).length < MIN_EINGABE)
 		throw new MediathekFehler('Die Untertitel sind zu kurz für einen Vorschlag.');
+	await vorschlagStarten(id, p.personId, v.captionsVtt, false);
+}
+
+/**
+ * Auftrag an den Dienst video schreiben. Ohne Prüfung der Rechte: Aufrufer sind
+ * vorschlagAnfordern und die Umwandlung (Vorschlag beim Hochladen gewählt).
+ * false = Untertitel zu kurz, kein Auftrag.
+ */
+export async function vorschlagStarten(
+	id: string,
+	personId: string | null,
+	vtt: string,
+	ungeprueft: boolean
+): Promise<boolean> {
+	const eingabe = vorschlagEingabe(vtt);
+	if (eingabe.length < MIN_EINGABE) return false;
 	const ordner = vorschlagOrdner(id);
 	await rm(ordner, { recursive: true, force: true });
 	await mkdir(ordner, { recursive: true, mode: 0o700 });
@@ -135,12 +155,14 @@ export async function vorschlagAnfordern(p: Principal, id: string) {
 		.update(videos)
 		.set({
 			suggestionStatus: 'warten',
-			suggestion: null,
+			// Bis zum Ergebnis merkt sich der Vorschlag nur, worauf er beruht
+			suggestion: ungeprueft ? { zusammenfassung: '', kapitel: [], ungeprueft: true } : null,
 			suggestionError: null,
-			suggestionBy: p.personId,
+			suggestionBy: personId,
 			suggestionAt: new Date()
 		})
 		.where(eq(videos.id, id));
+	return true;
 }
 
 async function lies(pfad: string): Promise<string | null> {
@@ -158,6 +180,7 @@ export async function vorschlaegeAbholen() {
 			id: videos.id,
 			title: videos.title,
 			durationSec: videos.durationSec,
+			suggestion: videos.suggestion,
 			suggestionBy: videos.suggestionBy
 		})
 		.from(videos)
@@ -172,7 +195,10 @@ export async function vorschlaegeAbholen() {
 		} else if (ergebnis !== null) {
 			const vorschlag = vorschlagLesen(ergebnis, v.durationSec);
 			neu = vorschlag
-				? { suggestionStatus: 'fertig', suggestion: vorschlag }
+				? {
+						suggestionStatus: 'fertig',
+						suggestion: v.suggestion?.ungeprueft ? { ...vorschlag, ungeprueft: true } : vorschlag
+					}
 				: {
 						suggestionStatus: 'fehler',
 						suggestionError: 'Aus der Antwort ließ sich kein Vorschlag machen.'

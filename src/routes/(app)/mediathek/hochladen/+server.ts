@@ -10,12 +10,14 @@ export const POST: RequestHandler = async ({ request, locals, url }) => {
 		unitId?: unknown;
 		title?: unknown;
 		size?: unknown;
+		vorschlag?: unknown;
 	} | null;
 	try {
 		const id = await videoAnlegen(p, {
 			unitId: String(body?.unitId ?? ''),
 			title: String(body?.title ?? ''),
-			size: Number(body?.size)
+			size: Number(body?.size),
+			vorschlag: body?.vorschlag === true
 		});
 		return json({ id });
 	} catch (err) {

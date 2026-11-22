@@ -1748,7 +1748,11 @@ export const videos = pgTable(
 		suggestion: jsonb('suggestion').$type<{
 			zusammenfassung: string;
 			kapitel: { s: number; t: string }[];
+			/** Aus noch nicht geprüften automatischen Untertiteln (Vorschlag beim Hochladen) */
+			ungeprueft?: boolean;
 		}>(),
+		/** Beim Hochladen gewählt: Vorschlag gleich nach den automatischen Untertiteln */
+		suggestOnUpload: boolean('suggest_on_upload').notNull().default(false),
 		suggestionError: text('suggestion_error'),
 		suggestionBy: uuid('suggestion_by').references(() => persons.id, { onDelete: 'set null' }),
 		suggestionAt: timestamp('suggestion_at', { withTimezone: true }),
