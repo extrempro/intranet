@@ -64,4 +64,28 @@ describe.skipIf(!url)('Zähler neue Beiträge', () => {
 		expect(gesehen).toBeInstanceOf(Date);
 		expect(await news.countNewNews(ich, gesehen!)).toBe(0);
 	});
+
+	it('Liste: Vorschau mit Tabelle, Auszug ohne Tabellentext, Lesezeit', async () => {
+		const { db } = await import('./db/index.ts');
+		await db.execute(sql`
+			insert into news (unit_id, tenant_id, title, body_html, body_text, publish_at, all_tenants) values
+				(${U.it}, ${T.haupt}, 'Mit Tabelle',
+				'<p>Die Zeiten:</p><table><tbody><tr><th>Tag</th><th>Zeit</th></tr><tr><td>Mo</td><td>9–12</td></tr></tbody></table><p>Ende.</p>',
+				'Die Zeiten: Tag Zeit Mo 9–12 Ende.', now() - interval '3 hours', true)`);
+		const liste = await news.listNews(ich, {});
+		const b = liste.find((x) => x.title === 'Mit Tabelle');
+		expect(b?.excerpt).toBe('Die Zeiten: Ende.');
+		expect(b?.vorschau).toEqual({
+			bilder: [],
+			anzahlBilder: 0,
+			bilderImAnhang: 0,
+			tabelle: [
+				['Tag', 'Zeit'],
+				['Mo', '9–12']
+			],
+			hatTabelle: true,
+			minuten: 1
+		});
+		expect(liste.find((x) => x.title === 'Neu 1')?.vorschau.tabelle).toBeNull();
+	});
 });
