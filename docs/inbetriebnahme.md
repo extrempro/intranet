@@ -114,14 +114,14 @@ Die Dateien im Bucket sind vom Intranet verschlüsselt; der Anbieter sieht keine
 
 ### Umwandlung der Videos (Dienst `video`)
 
-Der Dienst `video` wandelt hochgeladene Videos mit ffmpeg um und erzeugt deutsche Untertitel mit Whisper (whisper.cpp, Modell large-v3-turbo, im Image enthalten, etwa 600 MB). Er hat kein Netz, ein schreibgeschütztes Dateisystem und keine Rechte; mit der Anwendung teilt er nur das Volume `video-arbeit`, in dem Originale kurz liegen. Es läuft immer nur eine Umwandlung gleichzeitig. Grenzen in der `.env`:
+Der Dienst `video` wandelt hochgeladene Videos mit ffmpeg um und erzeugt deutsche Untertitel mit Whisper (whisper.cpp, Modell large-v3-turbo, im Image enthalten, etwa 600 MB). Auf Wunsch schlägt er aus den geprüften Untertiteln eine Zusammenfassung und Kapitel vor (llama.cpp mit dem Sprachmodell Gemma 4 E4B von Google, Apache 2.0, im Image enthalten, etwa 5 GB). Er hat kein Netz, ein schreibgeschütztes Dateisystem und keine Rechte; mit der Anwendung teilt er nur das Volume `video-arbeit`, in dem Originale kurz liegen. Es läuft immer nur eine Umwandlung gleichzeitig. Grenzen in der `.env`:
 
 - `VIDEO_CPUS` (Standard 2, ganze Zahl): CPU-Kerne für Umwandlung und Spracherkennung. Mehr Kerne = schneller, aber weniger Luft für die Anwendung.
-- `VIDEO_SPEICHER` (Standard `3g`): Arbeitsspeicher; die Spracherkennung braucht etwa 1 GB.
+- `VIDEO_SPEICHER` (Standard `8g`): Arbeitsspeicher; die Spracherkennung braucht etwa 1 GB, das Sprachmodell für Vorschläge etwa 6 GB. Mit `3g` laufen Umwandlung und Untertitel, Vorschläge schlagen dann fehl.
 
 Die Spracherkennung setzt einen x86-64-Prozessor mit AVX2 voraus (alle Server-CPUs seit etwa 2013).
 
-Als Faustregel dauern Umwandlung und Untertitel mit 2 Kernen zusammen etwa doppelt so lange wie das Video. Für die Arbeitsdateien braucht der Host freien Platz in der Größe der größten Uploads (bis 4 GB je Video, höchstens 3 gleichzeitig je Person).
+Als Faustregel dauern Umwandlung und Untertitel mit 2 Kernen zusammen etwa doppelt so lange wie das Video. Ein Vorschlag dauert mit 2 Kernen einige Minuten, bei langen Videos länger; Umwandlungen haben Vorrang. Für die Arbeitsdateien braucht der Host freien Platz in der Größe der größten Uploads (bis 4 GB je Video, höchstens 3 gleichzeitig je Person).
 
 ## 8. Teams-App
 

@@ -82,7 +82,7 @@ services:
     volumes:
       - video-arbeit:/arbeit
     cpus: ${VIDEO_CPUS:-2}
-    mem_limit: ${VIDEO_SPEICHER:-3g}
+    mem_limit: ${VIDEO_SPEICHER:-8g}
     pids_limit: 200
     cap_drop:
       - ALL

@@ -19,6 +19,11 @@ import {
 	videoLoeschen
 } from '#lib/server/mediathek.ts';
 import { alleThemen, ThemaFehler } from '#lib/server/themen.ts';
+import {
+	vorschlagAnfordern,
+	vorschlagUebernehmen,
+	vorschlagVerwerfen
+} from '#lib/server/video-vorschlag.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 /** Video bearbeiten (Kap. 8.15): nur mit dem Recht „Mediathek“ der Einheit. */
@@ -113,6 +118,26 @@ export const actions: Actions = {
 			return 'Kapitel gespeichert.';
 		});
 	},
+	vorschlag: async ({ locals, params }) =>
+		mit(locals, async (p) => {
+			await vorschlagAnfordern(p, params.id);
+			return 'Der Vorschlag wird erstellt. Das dauert einige Minuten, du kannst die Seite verlassen.';
+		}),
+	vorschlagZusammenfassung: async ({ locals, params }) =>
+		mit(locals, async (p) => {
+			await vorschlagUebernehmen(p, params.id, 'zusammenfassung');
+			return 'Zusammenfassung als Beschreibung übernommen (Schritt 1). Du kannst sie dort noch ändern.';
+		}),
+	vorschlagKapitel: async ({ locals, params }) =>
+		mit(locals, async (p) => {
+			await vorschlagUebernehmen(p, params.id, 'kapitel');
+			return 'Kapitel übernommen (Schritt 3). Du kannst sie dort noch ändern.';
+		}),
+	vorschlagVerwerfen: async ({ locals, params }) =>
+		mit(locals, async (p) => {
+			await vorschlagVerwerfen(p, params.id);
+			return 'Vorschlag verworfen.';
+		}),
 	veroeffentlichen: async ({ locals, params }) =>
 		mit(locals, async (p) => {
 			await veroeffentlichen(p, params.id, true);
