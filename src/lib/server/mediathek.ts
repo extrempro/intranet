@@ -5,7 +5,7 @@
  * Arbeitsordner, Umwandlung im Dienst video, danach verschlüsselt an den
  * Speicherort der Inhaltsart „videos“.
  */
-import { appendFile, mkdir, open, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, open, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 import { and, asc, desc, eq, ilike, inArray, isNull, lt, or, sql } from 'drizzle-orm';
 import { canSeeUnit, canWriteMedia, mediaUnitIds, type Principal } from './auth/access.ts';
@@ -330,13 +330,14 @@ export async function teilAnhaengen(p: Principal, id: string, offset: number, te
 		throw new MediathekFehler('Das ist keine Videodatei. Erlaubt sind MP4, MOV und WebM.');
 	const datei = join(ordnerVon(id), 'eingang.bin');
 	// Falls ein früherer Versuch mehr geschrieben hat: auf den bestätigten Stand kürzen
-	const fh = await open(datei, 'a');
+	// Ein Dateihandle für Kürzen und Anhängen (keine Lücke zwischen Prüfen und Schreiben)
+	const fh = await open(datei, 'a', 0o600);
 	try {
 		await fh.truncate(offset);
+		await fh.appendFile(teil);
 	} finally {
 		await fh.close();
 	}
-	await appendFile(datei, teil, { mode: 0o600 });
 	const erhalten = offset + teil.length;
 	const fertig = erhalten === v.uploadSize;
 	await db
@@ -612,10 +613,13 @@ export function vttBereinigen(raw: string): { vtt: string; text: string } {
 			// Nur reiner Text: Tags und Steuerzeichen weg
 			const t = zeilen[i]
 				.replace(/<[^>]*>/g, '')
+				// Übrige spitze Klammern ganz entfernen (kein Markup möglich)
+				.replace(/[<>]/g, '')
 				// eslint-disable-next-line no-control-regex -- Steuerzeichen entfernen ist der Zweck
 				.replace(/[\u0000-\u0008\u000B-\u001F\u007F]/g, '')
 				.slice(0, 300);
-			if (t.trim()) text.push(t.replace(/-->/g, '→'));
+			// Ohne „>“ kann kein Zeitpfeil („-->“) mehr im Text stehen
+			if (t.trim()) text.push(t);
 			i++;
 		}
 		if (!text.length) continue;

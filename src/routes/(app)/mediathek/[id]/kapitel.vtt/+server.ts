@@ -17,7 +17,7 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 	const zeilen = ['WEBVTT', ''];
 	k.forEach((c, i) => {
 		const ende = k[i + 1]?.s ?? Math.max(c.s + 1, s.v.durationSec);
-		zeilen.push(`${ts(c.s)} --> ${ts(ende)}`, c.t.replace(/-->/g, '→').replace(/[<>]/g, ''), '');
+		zeilen.push(`${ts(c.s)} --> ${ts(ende)}`, c.t.replace(/[<>]/g, ''), '');
 	});
 	return new Response(zeilen.join('\n'), {
 		headers: {

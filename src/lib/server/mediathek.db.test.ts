@@ -4,6 +4,7 @@
  * Untertitel, Kapitel, Veröffentlichen, Löschen. Läuft nur mit TEST_DATABASE_URL.
  */
 import { execFileSync, spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { mkdtemp, readdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -166,6 +167,8 @@ describe.skipIf(!url)('Mediathek', () => {
 		const { vtt, text } = m.vttBereinigen(VTT);
 		expect(vtt).not.toMatch(/<|script/);
 		expect(text).toBe('Hallo xWelt Zweite Zeile');
+		const pfeil = m.vttBereinigen('WEBVTT\n\n00:00.000 --> 00:01.000\na --> b <<script>>c --!>\n');
+		expect(pfeil.vtt.split('\n').slice(2)).toEqual(['00:00.000 --> 00:01.000', 'a -- b c --!', '']);
 		expect(() => m.vttBereinigen('1\n00:00:01,000 --> 00:00:02,000\nSRT')).toThrow(/WebVTT/);
 		expect(() => m.vttBereinigen('WEBVTT\n\nnur Text')).toThrow(/keine Untertitel/);
 	});
@@ -250,7 +253,7 @@ describe.skipIf(!url)('Mediathek', () => {
 				'-shortest',
 				quelle
 			]);
-			const inhalt = execFileSync('cat', [quelle]);
+			const inhalt = readFileSync(quelle);
 			const id = await m.videoAnlegen(pflege, {
 				unitId: ZENTRAL,
 				title: 'Echt',
