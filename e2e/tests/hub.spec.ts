@@ -54,9 +54,30 @@ test('Hub-Team pflegt den Hub auf einer Seite', async ({ page }, info) => {
 test('Hub-Liste: Suche filtert', async ({ page }) => {
 	await anmelden(page, 'nils');
 	await page.goto('/hubs');
+	const alle = page.getByRole('region', { name: 'Alle Hubs entdecken' });
 	await page.getByRole('searchbox', { name: 'Hubs durchsuchen' }).fill('Lauf');
-	await expect(page.getByRole('link', { name: 'Laufgruppe' })).toBeVisible();
-	await expect(page.getByRole('link', { name: 'Chor' })).toHaveCount(0);
+	await expect(alle.getByRole('link', { name: 'Laufgruppe' })).toBeVisible();
+	await expect(alle.getByRole('link', { name: 'Chor' })).toHaveCount(0);
+	await expect(page.getByRole('heading', { name: /^Deine Hubs/ })).toBeVisible();
+	await keineA11yFehler(page);
+	await nichtZuBreit(page);
+});
+
+test('Hub-Liste: abonnieren verschiebt den Hub zu „Deine Hubs“', async ({ page }) => {
+	await anmelden(page, 'nils');
+	await page.goto('/hubs');
+	const meine = page.getByRole('region', { name: /^Deine Hubs/ });
+	const knopf = page.getByRole('button', { name: /: Laufgruppe$/ });
+	if ((await knopf.getAttribute('aria-pressed')) === 'true') {
+		await knopf.click();
+		await expect(knopf).toHaveAttribute('aria-pressed', 'false');
+	}
+	await expect(meine.getByRole('link', { name: /Laufgruppe/ })).toHaveCount(0);
+	await knopf.click();
+	await expect(knopf).toHaveAttribute('aria-pressed', 'true');
+	await expect(meine.getByRole('link', { name: /Laufgruppe/ })).toBeVisible();
+	await knopf.click();
+	await expect(knopf).toHaveAttribute('aria-pressed', 'false');
 });
 
 test('Hub-Seite: Reiter sind eigene Unterseiten, leere zeigen einen Platzhalter', async ({

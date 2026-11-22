@@ -70,6 +70,22 @@ function inScope(p: Principal) {
 // Liste, Seite, Abo
 // ---------------------------------------------------------------------------
 
+/** Veröffentlichte, sichtbare Beiträge des Hubs der äußeren Abfrage (Alias n). */
+function hubNewsFor(p: Principal) {
+	return sql`n.unit_id = ${units.id} and n.channel = 'news' and n.publish_at <= now()
+		and (n.expires_at is null or n.expires_at > now())
+		and (n.all_tenants or n.tenant_id = ${p.tenantId}
+			or exists (select 1 from news_tenants nt where nt.news_id = n.id and nt.tenant_id = ${p.tenantId}))`;
+}
+
+/** Hub-Seite besucht: Zähler „n neu“ zurücksetzen (nur mit Abo). */
+export async function markHubSeen(p: Principal, unitId: string) {
+	await db
+		.update(hubSubscriptions)
+		.set({ seenAt: new Date() })
+		.where(and(eq(hubSubscriptions.personId, p.personId), eq(hubSubscriptions.unitId, unitId)));
+}
+
 export async function listHubs(p: Principal, onlyMine = false) {
 	const rows = await db
 		.select({
@@ -83,7 +99,12 @@ export async function listHubs(p: Principal, onlyMine = false) {
 			iconFileId: units.iconFileId,
 			tenantId: units.tenantId,
 			tenantShort: tenants.shortName,
-			subscribed: sql<boolean>`exists (select 1 from hub_subscriptions s where s.unit_id = ${units.id} and s.person_id = ${p.personId})`
+			subscribed: sql<boolean>`exists (select 1 from hub_subscriptions s where s.unit_id = ${units.id} and s.person_id = ${p.personId})`,
+			abos: sql<number>`(select count(*)::int from hub_subscriptions s where s.unit_id = ${units.id})`,
+			// Für die Übersicht (Kap. 8.12): nur Beiträge, die die Person sehen kann
+			proMonat: sql<number>`(select count(*)::int from news n where ${hubNewsFor(p)} and n.publish_at > now() - interval '30 days')`,
+			zuletzt: sql<Date | null>`(select max(n.publish_at) from news n where ${hubNewsFor(p)})`,
+			neu: sql<number>`(select count(*)::int from news n join hub_subscriptions s on s.unit_id = n.unit_id and s.person_id = ${p.personId} where ${hubNewsFor(p)} and n.publish_at > coalesce(s.seen_at, s.created_at))`
 		})
 		.from(units)
 		.innerJoin(tenants, eq(tenants.id, units.tenantId))
@@ -92,6 +113,7 @@ export async function listHubs(p: Principal, onlyMine = false) {
 	return rows
 		.map(({ iconFileId, ...r }) => ({
 			...r,
+			zuletzt: r.zuletzt ? new Date(r.zuletzt) : null,
 			iconUrl: iconFileId ? `/dateien/${iconFileId}` : null,
 			subscribed: r.subscribed || r.mandatory
 		}))

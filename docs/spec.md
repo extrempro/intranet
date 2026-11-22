@@ -348,7 +348,11 @@ Je Einheit; Schreibrecht „FAQs“. Frage, Antwort im Editor mit Links, Anhäng
 - **Aufbau der Seite** einstellbar: Reihenfolge der Reiter; Blöcke im Überblick (Schnellzugriff, Als Nächstes, Häufige Fragen, Neues zum Thema, Dokumente) sortieren und ein-/ausblenden. Daneben fest: Ansprechpersonen (sonst Hub-Team) und Videos.
 - **Bearbeiten** als eine Seite mit einem „Speichern“: Kurzinfo, Koordination, Vorstellung, Wer darf schreiben? (Personensuche, Rechte als Schalter), Hinweis oben, Aufbau, Schnellzugriff („Ziel wählen“: Seite im Intranet, Dokument des Hubs oder Adresse), Dokumente, Termine (direkt anlegen, wenn Hubs Termine haben dürfen), Ansprechpersonen, Hub-Team (Aufgabe, Koordination), Ruhen; dazu Titelbild/Symbol und Archivieren.
 - **Pflege**: Hub-Team, Verwaltung und Redaktion (ohne Hub-Team). Das Hub-Team nimmt selbst Personen ins Hub-Team auf (mindestens eine bleibt) und vergibt Rechte: Beiträge, FAQs, Termine, Dokumente. Bei zentralen Hubs aus allen Mandanten.
-- Hub-Liste mit Suche und Filter nach Mandant; Hubs als Favorit auf der Startseite.
+- **Hub-Übersicht** (`/hubs`):
+  - **Deine Hubs** oben (abonnierte und Pflicht-Abos): Symbol, Name, „Letzter Beitrag …“ und „n neu“ seit dem letzten Besuch der Hub-Seite; Link zu „Aus den Hubs“.
+  - **Alle Hubs entdecken**: Suche, Sortierung **Aktiv** (Beiträge der letzten 30 Tage), **Beliebt** (Anzahl der Abos), **A–Z**; Chips „Für alle Mandanten“ und je Mandant; Karten mit Symbol (ohne Bild: Anfangsbuchstabe), Abos, Beiträge im Monat, zwei Zeilen Beschreibung und Knopf „Abonnieren“ bzw. „Pflicht-Abo“; 9 je Schritt, „weitere anzeigen“ (Kap. 6.7).
+  - **Ruhende Hubs** eingeklappt darunter; am Ende „Dir fehlt ein Thema? Hub beantragen“.
+  - Gezählt werden nur Beiträge, die die Person sehen darf. Hubs als Favorit auf der Startseite.
 - **Ruhen** (Hub-Team) und **Archivieren** (nur Verwaltung).
 - Benachrichtigungen je Hub einstellbar (Kap. 11).
 

@@ -112,4 +112,20 @@ describe.skipIf(!url)('Zähler neue Beiträge', () => {
 		await prefs.setListView(P, 'kompakt');
 		expect(await prefs.getListView(P)).toBe('kompakt');
 	});
+
+	it('Hubs-Übersicht: n neu seit dem letzten Besuch, Beiträge im Monat (Kap. 8.12)', async () => {
+		const { db } = await import('./db/index.ts');
+		const hubs = await import('./hubs.ts');
+		await db.execute(sql`
+			insert into hub_subscriptions (person_id, unit_id, created_at)
+			values (${P}, ${U.hub}, now() - interval '2 days')`);
+		let chor = (await hubs.listHubs(ich)).find((h) => h.id === U.hub);
+		expect(chor?.neu).toBe(1);
+		expect(chor?.proMonat).toBe(1);
+		expect(chor?.abos).toBe(1);
+		expect(chor?.zuletzt).toBeInstanceOf(Date);
+		await hubs.markHubSeen(ich, U.hub);
+		chor = (await hubs.listHubs(ich)).find((h) => h.id === U.hub);
+		expect(chor?.neu).toBe(0);
+	});
 });

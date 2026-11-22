@@ -1436,6 +1436,8 @@ export const hubSubscriptions = pgTable(
 		bell: boolean('bell').notNull().default(true),
 		push: boolean('push').notNull().default(false),
 		email: boolean('email').notNull().default(false),
+		/** Zuletzt die Hub-Seite besucht: Zähler „n neu“ in der Übersicht */
+		seenAt: timestamp('seen_at', { withTimezone: true }),
 		createdAt: createdAt()
 	},
 	(t) => [
