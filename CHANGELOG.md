@@ -10,11 +10,11 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
-## 0.24.1 · 22.11.2026 · Ruhezeiten verständlicher
+## 0.25.0 · 22.11.2026 · Ruhezeiten je Tag und Abwesenheit
 
-- Die Ruhezeiten unter Konto → Benachrichtigungen sind neu geordnet: Montag bis Freitag, Samstag und Sonntag, Ausnahme für dringende Meldungen.
-- Fürs Wochenende wählst du jetzt klar zwischen „ganztägig Ruhe“ und „dieselben Zeiten wie Montag bis Freitag“.
-- Ein Satz unter den Einstellungen sagt, was gerade gilt.
+- Ruhezeiten stellst du jetzt für jeden Wochentag einzeln ein: Zeitraum, ganztägig oder keine Ruhe. Ein Satz darunter sagt, was gerade gilt.
+- Neu: Abwesenheit, etwa für den Urlaub. In dieser Zeit kommen keine Push- und Teams-Nachrichten und keine E-Mails, danach alles gesammelt. Ob dringende Meldungen trotzdem kommen, entscheidest du selbst.
+- Die Abwesenheit sieht niemand außer dir.
 
 ## 0.24.0 · 22.11.2026 · Mediathek übersichtlicher
 

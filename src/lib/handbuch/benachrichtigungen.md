@@ -16,11 +16,15 @@ Push-Nachrichten schaltest du je Gerät ein: „Push auf diesem Gerät einschalt
 
 In der Ruhezeit kommen keine Push- und Teams-Nachrichten. Was in der Zeit passiert, bekommst du danach gesammelt als eine Nachricht. Glocke und E-Mail sind nicht betroffen. Die Zeiten gelten in deutscher Zeit.
 
-- **Montag bis Freitag:** Ruhe ab und bis, auch über Mitternacht (Standard 20:00 bis 07:00).
-- **Samstag und Sonntag:** ganztägig Ruhe (Standard) oder dieselben Zeiten wie Montag bis Freitag.
+- **Jeder Wochentag einzeln:** „Ruhe von … bis“, „Ganztägig Ruhe“ oder „Keine Ruhe“. Voreingestellt ist Montag bis Freitag 20:00 bis 07:00 und Samstag und Sonntag ganztägig. „Montag für Dienstag bis Freitag übernehmen“ spart Tipparbeit.
+- **Über Mitternacht:** 20:00 bis 07:00 heißt an diesem Tag morgens bis 7 Uhr und abends ab 20 Uhr Ruhe.
 - **Ausnahme:** „Dringende Meldungen trotzdem sofort“ ist voreingestellt. Dringend sind nur Meldungen, die alle sofort wissen müssen.
 
 Unter den Einstellungen steht in einem Satz, was gerade gilt.
+
+## Abwesenheit
+
+Bist du länger weg, etwa im Urlaub, trag den Zeitraum unter **Abwesenheit** ein (von, bis einschließlich). In dieser Zeit kommen keine Push- und Teams-Nachrichten und keine E-Mails. Danach bekommst du alles gesammelt, und die Glocke zeigt wie gewohnt alles an. Ob dringende Meldungen trotzdem kommen, entscheidest du selbst (voreingestellt: nein). Die Abwesenheit sieht niemand außer dir. Du kannst sie jederzeit vorzeitig beenden.
 
 ## Teams
 
