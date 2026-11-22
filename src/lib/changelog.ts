@@ -12,8 +12,18 @@ export interface ChangelogEntry {
 
 const KOPF = /^## (\d+\.\d+\.\d+) · (\d{2}\.\d{2}\.\d{4}) · (.+)$/;
 
+/** HTML-Kommentare entfernen, so lange bis keiner mehr übrig ist (auch verschachtelte Reste). */
+export function ohneKommentare(raw: string): string {
+	let text = raw;
+	for (;;) {
+		const weiter = text.replace(/<!--[\s\S]*?-->/g, '');
+		if (weiter === text) return text.replace(/<!--/g, '');
+		text = weiter;
+	}
+}
+
 export function parseChangelog(raw: string): ChangelogEntry[] {
-	const text = raw.replace(/<!--[\s\S]*?-->/g, '');
+	const text = ohneKommentare(raw);
 	const entries: ChangelogEntry[] = [];
 	let current: ChangelogEntry | null = null;
 	for (const line of text.split(/\r?\n/)) {

@@ -87,23 +87,30 @@ export function cleanHtml(html: string, { bilder, erweitert }: HtmlOptionen = {}
 	);
 }
 
+const ENTITAETEN: Record<string, string> = {
+	nbsp: ' ',
+	amp: '&',
+	lt: '<',
+	gt: '>',
+	quot: '"',
+	'#39': "'"
+};
+
 /** Reiner Text für Suche und Vorschau. */
 export function htmlToText(html: string): string {
-	return sanitizeHtml(
-		html.replace(/<\/(p|h2|h3|li|blockquote|td|th|div)>/g, '$& ').replace(/<br\s*\/?>/g, ' '),
-		{
-			allowedTags: [],
-			allowedAttributes: {}
-		}
-	)
-		.replace(/&nbsp;/g, ' ')
-		.replace(/&amp;/g, '&')
-		.replace(/&lt;/g, '<')
-		.replace(/&gt;/g, '>')
-		.replace(/&quot;/g, '"')
-		.replace(/&#39;/g, "'")
-		.replace(/\s+/g, ' ')
-		.trim();
+	return (
+		sanitizeHtml(
+			html.replace(/<\/(p|h2|h3|li|blockquote|td|th|div)>/g, '$& ').replace(/<br\s*\/?>/g, ' '),
+			{
+				allowedTags: [],
+				allowedAttributes: {}
+			}
+		)
+			// In einem Durchgang, sonst würde aus „&amp;lt;“ ein „<“
+			.replace(/&(nbsp|amp|lt|gt|quot|#39);/g, (_, e: string) => ENTITAETEN[e])
+			.replace(/\s+/g, ' ')
+			.trim()
+	);
 }
 
 /** Kurzer Anriss für Listen. */
