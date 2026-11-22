@@ -16,14 +16,7 @@
 	import Info from './Info.svelte';
 	import PersonSuche, { type Treffer } from './PersonSuche.svelte';
 	import ZielWaehlen, { type Ziel } from './ZielWaehlen.svelte';
-	import {
-		DEFAULT_HUB_LAYOUT,
-		HUB_GRENZEN,
-		HUB_SECTIONS,
-		LINK_SYMBOLE,
-		type HubLayout,
-		type HubSection
-	} from '#lib/hubs.ts';
+	import { HUB_BLOECKE, HUB_GRENZEN, HUB_REITER, LINK_SYMBOLE, type HubLayout } from '#lib/hubs.ts';
 	import { navAreas } from '#lib/nav.ts';
 
 	interface Hub {
@@ -168,26 +161,27 @@
 		}))
 	);
 
-	// --- Aufbau: zwei Listen, je Abschnitt an oder aus ---
-	type Bereich = 'main' | 'side';
+	// --- Aufbau: Reihenfolge der Reiter, Blöcke im Überblick an oder aus ---
+	type Bereich = 'reiter' | 'block';
 	interface Zeile {
-		key: HubSection;
+		key: string;
 		bereich: Bereich;
 		an: boolean;
 	}
 	const aufbauStart: Zeile[] = [
-		...h.layout.main.map((key) => ({ key, bereich: 'main' as const, an: true })),
-		...h.layout.side.map((key) => ({ key, bereich: 'side' as const, an: true }))
+		...h.layout.reiter.map((key) => ({ key, bereich: 'reiter' as const, an: true })),
+		...h.layout.ueberblick.map((key) => ({ key, bereich: 'block' as const, an: true })),
+		...HUB_BLOECKE.filter((b) => !h.layout.ueberblick.includes(b.key)).map((b) => ({
+			key: b.key,
+			bereich: 'block' as const,
+			an: false
+		}))
 	];
-	for (const s of HUB_SECTIONS)
-		if (!aufbauStart.some((z) => z.key === s.key))
-			aufbauStart.push({
-				key: s.key,
-				bereich: DEFAULT_HUB_LAYOUT.side.includes(s.key) ? 'side' : 'main',
-				an: false
-			});
 	let aufbau = $state<Zeile[]>(aufbauStart);
-	const LABEL = Object.fromEntries(HUB_SECTIONS.map((s) => [s.key, s.label]));
+	const LABEL: Record<Bereich, Record<string, string>> = {
+		reiter: Object.fromEntries(HUB_REITER.map((r) => [r.key, r.label])),
+		block: Object.fromEntries(HUB_BLOECKE.map((b) => [b.key, b.label]))
+	};
 	function schieben(z: Zeile, d: -1 | 1) {
 		const gleich = aufbau.filter((x) => x.bereich === z.bereich);
 		const nachbar = gleich[gleich.indexOf(z) + d];
@@ -221,8 +215,8 @@
 			koordination: hubTeam.some((m) => m.personId === koordination) ? koordination : null,
 			hinweis,
 			aufbau: {
-				main: aufbau.filter((z) => z.bereich === 'main' && z.an).map((z) => z.key),
-				side: aufbau.filter((z) => z.bereich === 'side' && z.an).map((z) => z.key)
+				reiter: aufbau.filter((z) => z.bereich === 'reiter').map((z) => z.key),
+				ueberblick: aufbau.filter((z) => z.bereich === 'block' && z.an).map((z) => z.key)
 			},
 			ruhen,
 			team: team.map((m) => ({
@@ -467,22 +461,28 @@
 			<h2 id="he-l" class="mit-info">
 				Aufbau der Seite<Info
 					thema="Aufbau der Seite"
-					text="Leg fest, welche Abschnitte auf der Hub-Seite erscheinen und in welcher Reihenfolge. Auf dem Handy steht der Hauptbereich vor der Seitenleiste. Ausgeblendete Abschnitte behalten ihre Inhalte."
+					text="Die Hub-Seite hat Reiter: den Überblick und Unterseiten wie Termine oder Fragen. Leg fest, in welcher Reihenfolge die Reiter stehen und welche Blöcke der Überblick zeigt. Leere Reiter und Blöcke sehen Leser nicht, Ausgeblendetes behält seine Inhalte."
 				/>
 			</h2>
 			<div class="bereiche">
-				{#each [['main', 'Hauptbereich'], ['side', 'Seitenleiste']] as const as [bereich, titel] (bereich)}
+				{#each [['reiter', 'Reihenfolge der Reiter'], ['block', 'Blöcke im Überblick']] as const as [bereich, titel] (bereich)}
 					{@const liste = aufbau.filter((z) => z.bereich === bereich)}
 					<div role="list" aria-label={titel}>
 						<span class="bereichstitel">{titel}</span>
+						{#if bereich === 'reiter'}
+							<div class="aufbauzeile fest" role="listitem">
+								<span>Überblick (immer vorne)</span>
+							</div>
+						{/if}
 						{#each liste as z, i (z.key)}
+							{@const name = LABEL[bereich][z.key]}
 							<div class="aufbauzeile" role="listitem">
-								<span id="ab-{z.key}" class:aus={!z.an}>{LABEL[z.key]}</span>
+								<span id="ab-{bereich}-{z.key}" class:aus={!z.an}>{name}</span>
 								<button
 									type="button"
 									class="knopf zweit mini"
 									disabled={i === 0}
-									aria-label="{LABEL[z.key]} nach oben"
+									aria-label="{name} nach oben"
 									onclick={() => schieben(z, -1)}
 								>
 									↑
@@ -491,20 +491,27 @@
 									type="button"
 									class="knopf zweit mini"
 									disabled={i === liste.length - 1}
-									aria-label="{LABEL[z.key]} nach unten"
+									aria-label="{name} nach unten"
 									onclick={() => schieben(z, 1)}
 								>
 									↓
 								</button>
-								<input
-									type="checkbox"
-									class="schalter"
-									role="switch"
-									aria-labelledby="ab-{z.key}"
-									bind:checked={z.an}
-								/>
+								{#if bereich === 'block'}
+									<input
+										type="checkbox"
+										class="schalter"
+										role="switch"
+										aria-labelledby="ab-{bereich}-{z.key}"
+										bind:checked={z.an}
+									/>
+								{/if}
 							</div>
 						{/each}
+						{#if bereich === 'block'}
+							<p class="hinweis aufbauhinweis">
+								Daneben stehen immer die Ansprechpersonen (sonst das Hub-Team) und die Videos.
+							</p>
+						{/if}
 					</div>
 				{/each}
 			</div>
@@ -975,6 +982,16 @@
 		flex: 1;
 		min-width: 0;
 	}
+	.aufbauhinweis {
+		margin: 8px 0 0;
+		font-size: 13px;
+	}
+	.aufbauzeile.fest span {
+		color: var(--mu);
+		min-height: 36px;
+		display: flex;
+		align-items: center;
+	}
 	.aufbauzeile span.aus {
 		color: var(--mu);
 	}
@@ -989,6 +1006,8 @@
 		color: var(--ac);
 	}
 	.ziel {
+		/* hält auch den Text für Screenreader im Kasten */
+		position: relative;
 		max-width: 220px;
 		overflow: hidden;
 		text-overflow: ellipsis;

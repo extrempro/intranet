@@ -153,7 +153,7 @@ export async function getHub(p: Principal, slug: string) {
 				and(eq(events.unitId, u.id), gte(events.date, today), lt(events.date, addDays(today, 120)))
 			)
 			.orderBy(asc(events.date), asc(events.startTime))
-			.limit(5)
+			.limit(30)
 	]);
 	return {
 		id: u.id,

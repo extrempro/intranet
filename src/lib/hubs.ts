@@ -1,27 +1,102 @@
-/** Hubs (Kap. 8.12): Abschnitte der Hub-Seite und Prüfungen, auf Server und im Browser nutzbar. */
-export const HUB_SECTIONS = [
-	{ key: 'schnellzugriff', label: 'Schnellzugriff' },
-	{ key: 'beitraege', label: 'Neues zum Thema' },
-	{ key: 'termine', label: 'Termine' },
-	{ key: 'dokumente', label: 'Dokumente und Anleitungen' },
-	{ key: 'hubteam', label: 'Hub-Team' },
-	{ key: 'ansprechpersonen', label: 'Ansprechpersonen' },
-	{ key: 'faqs', label: 'Häufige Fragen' },
-	{ key: 'ueber', label: 'Über uns' }
+/** Hubs (Kap. 8.12): Aufbau der Hub-Seite und Prüfungen, auf Server und im Browser nutzbar. */
+
+/** Reiter (Unterseiten) einer Hub-Seite; der Überblick steht immer vorne. */
+export const HUB_REITER = [
+	{ key: 'neues', label: 'Neues', pfad: 'neues' },
+	{ key: 'termine', label: 'Termine', pfad: 'termine' },
+	{ key: 'dokumente', label: 'Dokumente', pfad: 'dokumente' },
+	{ key: 'videos', label: 'Videos', pfad: 'videos' },
+	{ key: 'fragen', label: 'Fragen', pfad: 'fragen' },
+	{ key: 'team', label: 'Über uns & Team', pfad: 'team' }
 ] as const;
+export type HubReiter = (typeof HUB_REITER)[number]['key'];
 
-export type HubSection = (typeof HUB_SECTIONS)[number]['key'];
+/** Blöcke im Überblick (Hauptspalte); Ansprechpersonen und Videos stehen fest daneben. */
+export const HUB_BLOECKE = [
+	{ key: 'schnellzugriff', label: 'Schnellzugriff' },
+	{ key: 'termine', label: 'Als Nächstes (die nächsten Termine)' },
+	{ key: 'faqs', label: 'Häufige Fragen' },
+	{ key: 'beitraege', label: 'Neues zum Thema' },
+	{ key: 'dokumente', label: 'Dokumente (die ersten fünf)' }
+] as const;
+export type HubBlock = (typeof HUB_BLOECKE)[number]['key'];
 
-/** Hauptbereich und Seitenleiste, jeweils sichtbare Abschnitte in Reihenfolge. */
+/** Reihenfolge der Reiter und sichtbare Blöcke im Überblick */
 export interface HubLayout {
-	main: HubSection[];
-	side: HubSection[];
+	reiter: HubReiter[];
+	ueberblick: HubBlock[];
 }
 
 export const DEFAULT_HUB_LAYOUT: HubLayout = {
-	main: ['schnellzugriff', 'beitraege', 'termine', 'dokumente'],
-	side: ['hubteam', 'ansprechpersonen', 'faqs', 'ueber']
+	reiter: HUB_REITER.map((r) => r.key),
+	ueberblick: ['schnellzugriff', 'termine', 'faqs', 'beitraege']
 };
+
+/** Was eine Hub-Seite für die Reiter wissen muss */
+export interface HubReiterQuelle {
+	hatNeues: boolean;
+	termine: number;
+	dokumente: number;
+	videos: number;
+	fragen: number;
+	team: number;
+	resting: boolean;
+	canPost: boolean;
+	canDocs: boolean;
+	canFaqs: boolean;
+	canManage: boolean;
+	canVideos: boolean;
+}
+
+export interface HubReiterStand {
+	key: HubReiter;
+	label: string;
+	pfad: string;
+	/** Zahl am Reiter, null ohne Zahl */
+	anzahl: number | null;
+	leer: boolean;
+	/** Wer ihn füllen darf, sieht ihn auch leer */
+	pflegbar: boolean;
+}
+
+/** Stand der Reiter in der eingestellten Reihenfolge. Leere Reiter sehen nur, die sie füllen dürfen. */
+export function hubReiter(layout: HubLayout, q: HubReiterQuelle): HubReiterStand[] {
+	const zahlen: Record<HubReiter, number | null> = {
+		neues: null,
+		termine: q.termine,
+		dokumente: q.dokumente,
+		videos: q.videos,
+		fragen: q.fragen,
+		team: null
+	};
+	const leer: Record<HubReiter, boolean> = {
+		neues: !q.hatNeues,
+		termine: q.termine === 0,
+		dokumente: q.dokumente === 0,
+		videos: q.videos === 0,
+		fragen: q.fragen === 0,
+		team: q.team === 0
+	};
+	const pflegbar: Record<HubReiter, boolean> = {
+		neues: q.canPost && !q.resting,
+		termine: q.canPost,
+		dokumente: q.canDocs,
+		videos: q.canVideos,
+		fragen: q.canFaqs,
+		team: q.canManage
+	};
+	return layout.reiter.map((key) => {
+		const r = HUB_REITER.find((x) => x.key === key)!;
+		return {
+			key,
+			label: r.label,
+			pfad: r.pfad,
+			anzahl: zahlen[key] || null,
+			leer: leer[key],
+			pflegbar: pflegbar[key]
+		};
+	});
+}
 
 /** Grenzen für die Pflege eines Hubs */
 export const HUB_GRENZEN = {
@@ -109,17 +184,37 @@ export function linkAdresse(roh: string): string | null {
 	}
 }
 
-const KEYS = new Set<string>(HUB_SECTIONS.map((s) => s.key));
+const REITER = new Set<string>(HUB_REITER.map((r) => r.key));
+const BLOECKE = new Set<string>(HUB_BLOECKE.map((b) => b.key));
 
-/** Bereinigt ein gespeichertes Layout: nur bekannte Abschnitte, jeder höchstens einmal. */
-export function cleanLayout(l: Partial<HubLayout> | null | undefined): HubLayout {
-	if (!l) return DEFAULT_HUB_LAYOUT;
+function eindeutig<T extends string>(list: unknown, erlaubt: Set<string>): T[] {
 	const seen = new Set<string>();
-	const pick = (list: unknown) =>
-		(Array.isArray(list) ? list : []).filter(
-			(k): k is HubSection => typeof k === 'string' && KEYS.has(k) && !seen.has(k) && !!seen.add(k)
-		);
-	return { main: pick(l.main), side: pick(l.side) };
+	return (Array.isArray(list) ? list : []).filter(
+		(k): k is T => typeof k === 'string' && erlaubt.has(k) && !seen.has(k) && !!seen.add(k)
+	);
+}
+
+/**
+ * Bereinigt einen gespeicherten Aufbau: Reiter immer vollständig (fehlende hinten),
+ * Blöcke nur bekannte, jeder höchstens einmal. Ältere Aufbauten mit Haupt- und
+ * Seitenbereich werden übernommen: Was dort sichtbar war, bleibt im Überblick.
+ */
+export function cleanLayout(l: unknown): HubLayout {
+	if (!l || typeof l !== 'object') return DEFAULT_HUB_LAYOUT;
+	const o = l as Record<string, unknown>;
+	if (!('reiter' in o) && !('ueberblick' in o) && ('main' in o || 'side' in o)) {
+		const alt = new Set([
+			...(Array.isArray(o.main) ? o.main : []),
+			...(Array.isArray(o.side) ? o.side : [])
+		]);
+		return {
+			reiter: DEFAULT_HUB_LAYOUT.reiter,
+			ueberblick: DEFAULT_HUB_LAYOUT.ueberblick.filter((k) => alt.has(k))
+		};
+	}
+	const reiter = eindeutig<HubReiter>(o.reiter, REITER);
+	for (const r of DEFAULT_HUB_LAYOUT.reiter) if (!reiter.includes(r)) reiter.push(r);
+	return { reiter, ueberblick: eindeutig<HubBlock>(o.ueberblick, BLOECKE) };
 }
 
 export interface HubApplicationInput {
