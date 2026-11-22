@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { parseChangelog } from './changelog.ts';
+import { ohneKommentare, parseChangelog } from './changelog.ts';
 
 describe('Neu im Intranet (CHANGELOG.md)', () => {
 	const raw = readFileSync('CHANGELOG.md', 'utf8');
@@ -32,8 +32,17 @@ describe('Neu im Intranet (CHANGELOG.md)', () => {
 	});
 
 	it('jede Überschrift „## …“ hat das richtige Format', () => {
-		const ohneKommentar = raw.replace(/<!--[\s\S]*?-->/g, '');
+		const ohneKommentar = ohneKommentare(raw);
 		const koepfe = ohneKommentar.split('\n').filter((l) => l.startsWith('## '));
 		expect(koepfe.length).toBe(entries.length);
+	});
+});
+
+describe('ohneKommentare', () => {
+	it('entfernt Kommentarblöcke zeilenweise, auch verschachtelte Reste', () => {
+		expect(ohneKommentare('a\n<!-- x -->\nb')).toBe('a\nb');
+		expect(ohneKommentare('a\n<!--\nText\n-->\nb')).toBe('a\nb');
+		expect(ohneKommentare('a\n<!<!-- x\n-- y -->\nb')).toBe('a\nb');
+		expect(ohneKommentare('a\n<!-- offen\nb')).toBe('a');
 	});
 });

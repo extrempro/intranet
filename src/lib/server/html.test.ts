@@ -31,6 +31,8 @@ describe('cleanHtml', () => {
 describe('htmlToText und excerpt', () => {
 	it('liefert lesbaren Text', () => {
 		expect(htmlToText('<h2>A</h2><p>B &amp; C</p><ul><li>D</li></ul>')).toBe('A B & C D');
+		// nur einmal dekodieren: „&amp;lt;“ bleibt „&lt;“
+		expect(htmlToText('<p>&amp;lt;b&amp;gt;</p>')).toBe('&lt;b&gt;');
 	});
 	it('kürzt an Wortgrenzen', () => {
 		expect(excerpt('eins zwei drei vier', 12)).toBe('eins zwei …');
