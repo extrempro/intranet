@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { untrack } from 'svelte';
 	import { hierBleiben } from '#lib/formular.ts';
 	/**
 	 * Benachrichtigungen je Thema (Kap. 11) als Schalter-Pillen wie im Entwurf,
@@ -40,6 +41,29 @@
 	const SCHLOSS =
 		'M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2zM11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0M8 11v-4a4 4 0 1 1 8 0v4';
 	const HAKEN = 'M5 12l5 5l10 -10';
+	// Ruhezeiten: Werte für die Zusammenfassung in Klartext
+	let ruheAn = $state(untrack(() => daten.einstellung.quiet.on));
+	let ruheVon = $state(untrack(() => daten.einstellung.quiet.start));
+	let ruheBis = $state(untrack(() => daten.einstellung.quiet.end));
+	let ruheWochenende = $state(untrack(() => (daten.einstellung.quiet.weekend ? 'on' : '')));
+	let ruheDringend = $state(untrack(() => daten.einstellung.quiet.urgent));
+	const zusammenfassung = $derived.by(() => {
+		if (!ruheAn) return 'Zurzeit: keine Ruhezeiten. Push und Teams kommen sofort.';
+		const werktags =
+			ruheVon === ruheBis
+				? 'Montag bis Freitag keine Ruhezeit'
+				: `Montag bis Freitag von ${ruheVon} bis ${ruheBis} Uhr`;
+		const wochenende = ruheWochenende
+			? 'am Wochenende ganztägig'
+			: ruheVon === ruheBis
+				? 'am Wochenende auch nicht'
+				: 'am Wochenende zu denselben Zeiten';
+		return `Zurzeit: Ruhe ${werktags}, ${wochenende}. ${
+			ruheDringend
+				? 'Dringende Meldungen kommen trotzdem sofort.'
+				: 'Auch dringende Meldungen warten bis zum Ende der Ruhezeit.'
+		}`;
+	});
 	const ZUSATZ: Record<string, string> = {
 		dringend: 'z. B. von Intendanz, Geschäftsführung, Betriebsrat oder KBB',
 		angeheftet: 'Oben in Neuigkeiten und auf der Startseite',
@@ -157,43 +181,102 @@
 		</section>
 
 		<div class="zwei">
-			<fieldset class="karte block">
+			<fieldset class="karte block ruhe" aria-describedby="ruhe-zusammenfassung">
 				<legend>
 					Ruhezeiten
 					<Info
 						thema="Ruhezeiten"
-						text="Die Zeiten gelten in deutscher Zeit, auch wenn dein Gerät anders eingestellt ist. Über Mitternacht geht, zum Beispiel 20 bis 7 Uhr. Dringende Meldungen kommen trotzdem sofort, wenn du das unten nicht ausschaltest."
+						text="In der Ruhezeit kommen keine Push- und Teams-Nachrichten. Was in der Zeit passiert, bekommst du danach gesammelt als eine Nachricht. Glocke und E-Mail sind nicht betroffen. Die Zeiten gelten in deutscher Zeit, auch wenn dein Gerät anders eingestellt ist."
 					/>
 				</legend>
+				<p class="hinweis klein">
+					Keine Push- und Teams-Nachrichten zu bestimmten Zeiten. Was dazwischen passiert, kommt
+					danach gesammelt als eine Nachricht. Glocke und E-Mail sind nicht betroffen.
+				</p>
 				<label class="option-schalter">
 					<span>Ruhezeiten einhalten</span>
-					<input type="checkbox" role="switch" class="schalter" name="ruhe" checked={e.quiet.on} />
+					<input type="checkbox" role="switch" class="schalter" name="ruhe" bind:checked={ruheAn} />
 				</label>
-				<p class="hinweis klein">Kein Push und keine Teams-Nachricht in dieser Zeit.</p>
-				<div class="zeiten">
-					<label class="feld">
-						<span>Von</span>
-						<input type="time" name="ruhe_von" value={e.quiet.start} required />
-					</label>
-					<label class="feld">
-						<span>Bis</span>
-						<input type="time" name="ruhe_bis" value={e.quiet.end} required />
-					</label>
+
+				<div class="ruhe-teile" class:aus={!ruheAn}>
+					<fieldset class="teil">
+						<legend class="teil-titel">Montag bis Freitag</legend>
+						<div class="zeiten">
+							<label class="feld">
+								<span>Ruhe ab</span>
+								<input
+									type="time"
+									name="ruhe_von"
+									bind:value={ruheVon}
+									required
+									disabled={!ruheAn}
+								/>
+							</label>
+							<label class="feld">
+								<span>bis</span>
+								<input
+									type="time"
+									name="ruhe_bis"
+									bind:value={ruheBis}
+									required
+									disabled={!ruheAn}
+								/>
+							</label>
+						</div>
+						<p class="hinweis klein">Über Mitternacht geht, zum Beispiel 20:00 bis 07:00.</p>
+					</fieldset>
+
+					<fieldset class="teil">
+						<legend class="teil-titel">Samstag und Sonntag</legend>
+						<label class="option">
+							<input
+								type="radio"
+								name="ruhe_wochenende"
+								value="on"
+								bind:group={ruheWochenende}
+								disabled={!ruheAn}
+							/>
+							<span>Ganztägig Ruhe</span>
+						</label>
+						<label class="option">
+							<input
+								type="radio"
+								name="ruhe_wochenende"
+								value=""
+								bind:group={ruheWochenende}
+								disabled={!ruheAn}
+							/>
+							<span>Dieselben Zeiten wie Montag bis Freitag</span>
+						</label>
+					</fieldset>
+
+					<fieldset class="teil">
+						<legend class="teil-titel">Ausnahme</legend>
+						<label class="option-schalter">
+							<span>Dringende Meldungen trotzdem sofort</span>
+							<input
+								type="checkbox"
+								role="switch"
+								class="schalter"
+								name="ruhe_dringend"
+								bind:checked={ruheDringend}
+								disabled={!ruheAn}
+							/>
+						</label>
+						<p class="hinweis klein">
+							Dringend sind nur Meldungen, die alle sofort wissen müssen, etwa ein Ausfall oder eine
+							kurzfristige Absage. Sie kommen auch als rotes Banner auf der Startseite.
+						</p>
+					</fieldset>
 				</div>
-				<label class="option">
-					<input type="checkbox" name="ruhe_wochenende" checked={e.quiet.weekend} />
-					<span>Am Wochenende auch</span>
-				</label>
-				<label class="option-schalter trenner">
-					<span>Dringende Meldungen trotzdem sofort</span>
-					<input
-						type="checkbox"
-						role="switch"
-						class="schalter"
-						name="ruhe_dringend"
-						checked={e.quiet.urgent}
-					/>
-				</label>
+				<!-- Ohne JavaScript bleiben die Werte erhalten, auch wenn die Felder gesperrt sind -->
+				{#if !ruheAn}
+					<input type="hidden" name="ruhe_von" value={ruheVon} />
+					<input type="hidden" name="ruhe_bis" value={ruheBis} />
+					{#if ruheWochenende}<input type="hidden" name="ruhe_wochenende" value="on" />{/if}
+					{#if ruheDringend}<input type="hidden" name="ruhe_dringend" value="on" />{/if}
+				{/if}
+				<p id="ruhe-zusammenfassung" class="zusammenfassung">{zusammenfassung}</p>
 			</fieldset>
 
 			<fieldset class="karte block">
@@ -241,11 +324,6 @@
 		gap: 12px;
 		min-height: 44px;
 		font-weight: 600;
-	}
-	.option-schalter.trenner {
-		margin-top: 6px;
-		padding-top: 8px;
-		border-top: 1px solid var(--bd);
 	}
 	.benachrichtigungen {
 		display: flex;
@@ -371,6 +449,36 @@
 		width: 20px;
 		height: 20px;
 		accent-color: var(--fill);
+	}
+	.ruhe-teile {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+	.ruhe-teile.aus {
+		opacity: 0.55;
+	}
+	.teil {
+		border: 0;
+		margin: 0;
+		padding: 10px 0 0;
+		border-top: 1px solid var(--bd);
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	fieldset legend.teil-titel {
+		font-size: 15px;
+		font-weight: 700;
+		float: none;
+		margin-bottom: 2px;
+	}
+	.zusammenfassung {
+		margin: 4px 0 0;
+		padding: 10px 12px;
+		border-radius: 8px;
+		background: var(--tint);
+		font-size: 14px;
 	}
 	.zeiten {
 		display: grid;

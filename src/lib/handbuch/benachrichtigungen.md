@@ -14,7 +14,13 @@ Push-Nachrichten schaltest du je Gerät ein: „Push auf diesem Gerät einschalt
 
 ## Ruhezeiten
 
-In Ruhezeiten kommen keine Push- und Teams-Nachrichten, danach gesammelt als eine Nachricht. Standard: werktags 20 bis 7 Uhr und das ganze Wochenende. Glocke und E-Mail sind nicht betroffen. „Dringende Meldungen trotzdem sofort“ ist voreingestellt.
+In der Ruhezeit kommen keine Push- und Teams-Nachrichten. Was in der Zeit passiert, bekommst du danach gesammelt als eine Nachricht. Glocke und E-Mail sind nicht betroffen. Die Zeiten gelten in deutscher Zeit.
+
+- **Montag bis Freitag:** Ruhe ab und bis, auch über Mitternacht (Standard 20:00 bis 07:00).
+- **Samstag und Sonntag:** ganztägig Ruhe (Standard) oder dieselben Zeiten wie Montag bis Freitag.
+- **Ausnahme:** „Dringende Meldungen trotzdem sofort“ ist voreingestellt. Dringend sind nur Meldungen, die alle sofort wissen müssen.
+
+Unter den Einstellungen steht in einem Satz, was gerade gilt.
 
 ## Teams
 
