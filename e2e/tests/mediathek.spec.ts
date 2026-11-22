@@ -75,6 +75,7 @@ test('Mediathek: Weiter, wo du warst', async ({ page }) => {
 test('Rückmeldungen bleiben sichtbar, auch auf langen Seiten', async ({ page }) => {
 	await anmelden(page, 'hanna');
 	await page.goto(`/mediathek/${ENTWURF}/bearbeiten`);
+	await page.getByText('Eigene Untertitel-Datei hochladen').click();
 	const datei = page.locator('input[name="datei"]');
 	await datei.scrollIntoViewIfNeeded();
 	await datei.setInputFiles({

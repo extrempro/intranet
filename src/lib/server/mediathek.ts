@@ -36,6 +36,8 @@ import {
 	MAX_KAPITEL,
 	MAX_TITEL,
 	MAX_VIDEO_BYTES,
+	OHNE_UNTERTITEL,
+	type OhneUntertitelGrund,
 	TEIL_BYTES,
 	type Kapitel
 } from '../mediathek.ts';
@@ -370,11 +372,11 @@ export async function teilAnhaengen(p: Principal, id: string, offset: number, te
 		// Untertitel erzeugen: neue Videos immer, neue Fassungen nur ohne hochgeladene Untertitel
 		const [eltern] = v.replacesId
 			? await db
-					.select({ quelle: videos.captionsSource })
+					.select({ quelle: videos.captionsSource, ohne: videos.noCaptionsReason })
 					.from(videos)
 					.where(eq(videos.id, v.replacesId))
 			: [];
-		if (eltern?.quelle !== 'hochgeladen')
+		if (eltern?.quelle !== 'hochgeladen' && !eltern?.ohne)
 			await writeFile(join(ordnerVon(id), 'untertitel'), '', { mode: 0o600 });
 		await writeFile(join(ordnerVon(id), 'auftrag'), '', { mode: 0o600 });
 	}
@@ -496,7 +498,9 @@ async function ersatzTauschen(
 		await db.delete(videos).where(eq(videos.id, neu.id));
 		return;
 	}
-	const hochgeladen = alt.captionsSource === 'hochgeladen' && Boolean(alt.captionsVtt);
+	const hochgeladen =
+		(alt.captionsSource === 'hochgeladen' && Boolean(alt.captionsVtt)) ||
+		Boolean(alt.noCaptionsReason);
 	const untertitel = hochgeladen
 		? {}
 		: auto
@@ -773,11 +777,17 @@ export async function untertitelSetzen(p: Principal, id: string, raw: string | n
 				updatedAt: new Date()
 			})
 			.where(eq(videos.id, id));
-		// Ohne Untertitel nicht veröffentlicht
+		// Ohne Untertitel (und ohne Grund) nicht veröffentlicht
 		await db
 			.update(videos)
 			.set({ status: 'entwurf', publishedAt: null })
-			.where(and(eq(videos.id, id), eq(videos.status, 'veroeffentlicht')));
+			.where(
+				and(
+					eq(videos.id, id),
+					eq(videos.status, 'veroeffentlicht'),
+					isNull(videos.noCaptionsReason)
+				)
+			);
 		return;
 	}
 	const { vtt, text } = vttBereinigen(raw);
@@ -789,6 +799,7 @@ export async function untertitelSetzen(p: Principal, id: string, raw: string | n
 			captionsSource: 'hochgeladen',
 			captionsCheckedAt: null,
 			captionsCheckedBy: null,
+			noCaptionsReason: null,
 			updatedAt: new Date()
 		})
 		.where(eq(videos.id, id));
@@ -850,10 +861,43 @@ export function untertitelBereit(v: {
 	captionsVtt: string | null;
 	captionsSource: string | null;
 	captionsCheckedAt: Date | null;
+	noCaptionsReason?: string | null;
 }): boolean {
-	return (
-		Boolean(v.captionsVtt) && (v.captionsSource !== 'automatisch' || Boolean(v.captionsCheckedAt))
-	);
+	if (!v.captionsVtt) return Boolean(v.noCaptionsReason);
+	return v.captionsSource !== 'automatisch' || Boolean(v.captionsCheckedAt);
+}
+
+/** Bewusst ohne Untertitel (mit Grund) oder wieder mit Untertitel-Pflicht (null) */
+export async function ohneUntertitel(p: Principal, id: string, grund: string | null) {
+	const { v } = await zumBearbeiten(p, id);
+	if (grund !== null && !(grund in OHNE_UNTERTITEL))
+		throw new MediathekFehler('Wähle einen Grund aus.');
+	if (grund) {
+		// Vorhandene Untertitel fallen weg
+		await db
+			.update(videos)
+			.set({
+				noCaptionsReason: grund as OhneUntertitelGrund,
+				captionsVtt: null,
+				captionsText: '',
+				captionsSource: null,
+				captionsCheckedAt: null,
+				captionsCheckedBy: null,
+				updatedAt: new Date()
+			})
+			.where(eq(videos.id, id));
+		return;
+	}
+	await db
+		.update(videos)
+		.set({ noCaptionsReason: null, updatedAt: new Date() })
+		.where(eq(videos.id, id));
+	// Ohne Untertitel und ohne Grund nicht veröffentlicht
+	if (!v.captionsVtt)
+		await db
+			.update(videos)
+			.set({ status: 'entwurf' })
+			.where(and(eq(videos.id, id), eq(videos.status, 'veroeffentlicht')));
 }
 
 export async function kapitelSetzen(p: Principal, id: string, liste: Kapitel[]) {
@@ -871,7 +915,10 @@ export async function veroeffentlichen(p: Principal, id: string, an: boolean) {
 	if (an) {
 		if (v.status !== 'entwurf')
 			throw new MediathekFehler('Das Video ist noch nicht fertig umgewandelt.');
-		if (!v.captionsVtt) throw new MediathekFehler('Füge zuerst Untertitel hinzu (WebVTT).');
+		if (!v.captionsVtt && !v.noCaptionsReason)
+			throw new MediathekFehler(
+				'Füge zuerst Untertitel hinzu oder gib an, warum das Video keine braucht.'
+			);
 		if (!untertitelBereit(v))
 			throw new MediathekFehler('Prüfe zuerst die automatisch erzeugten Untertitel.');
 		await db

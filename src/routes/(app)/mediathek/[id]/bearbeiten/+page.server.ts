@@ -9,6 +9,7 @@ import {
 	kapitelSetzen,
 	MediathekFehler,
 	metaSpeichern,
+	ohneUntertitel,
 	textSpeichern,
 	untertitelBereit,
 	untertitelKorrigieren,
@@ -133,6 +134,16 @@ export const actions: Actions = {
 		return mit(locals, async (p) => {
 			await untertitelKorrigieren(p, params.id, texte);
 			return 'Untertitel gespeichert.';
+		});
+	},
+	ohneUntertitel: async ({ request, locals, params }) => {
+		const fd = await request.formData();
+		const grund = fd.get('aus') === '1' ? null : String(fd.get('grund') ?? '');
+		return mit(locals, async (p) => {
+			await ohneUntertitel(p, params.id, grund);
+			return grund
+				? 'Gespeichert: Dieses Video braucht keine Untertitel.'
+				: 'Gespeichert: Das Video braucht wieder Untertitel.';
 		});
 	},
 	geprueft: async ({ request, locals, params }) => {

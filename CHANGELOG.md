@@ -10,6 +10,13 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.24.0 · 22.11.2026 · Mediathek übersichtlicher
+
+- Im Player gibt es einen Knopf, um die Untertitel ein- und auszuschalten. Der Browser merkt sich die Wahl.
+- Videos ohne Sprache, etwa mit nur Musik, lassen sich ohne Untertitel veröffentlichen, wenn du den Grund angibst.
+- Die Seite zum Bearbeiten ist neu geordnet: links das Video und ein Überblick, wer es sieht und was noch fehlt, rechts die Schritte von den Angaben bis zum Veröffentlichen.
+- In der Mediathek stehen noch nicht veröffentlichte Videos getrennt unter „In Arbeit und Entwürfe“, mit dem Hinweis, wer sie sehen kann.
+
 ## 0.23.1 · 22.11.2026 · Rückmeldungen immer im Blick
 
 - Meldungen wie „Gespeichert.“ oder Fehler erscheinen zusätzlich unten im Fenster, wenn sie auf einer langen Seite gerade nicht zu sehen sind, auf PC, Tablet und Handy.

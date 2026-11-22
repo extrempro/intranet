@@ -1,5 +1,9 @@
 <script lang="ts">
-	/** Video bearbeiten (Kap. 8.15): Angaben, Untertitel, Kapitel, Veröffentlichen. */
+	/**
+	 * Video bearbeiten (Kap. 8.15): links Video und „Was fehlt noch“ (bleibt beim
+	 * Scrollen stehen), rechts die Schritte 1 Angaben, 2 Untertitel, 3 Kapitel,
+	 * 4 Textfassung und Anhänge, 5 Veröffentlichen; darunter weitere Aktionen.
+	 */
 	import { untrack } from 'svelte';
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
@@ -17,6 +21,7 @@
 		MAX_KAPITEL,
 		MAX_TITEL,
 		MAX_VIDEO_BYTES,
+		OHNE_UNTERTITEL,
 		STATUS_TEXT,
 		zeitLesen,
 		zeitText
@@ -136,6 +141,48 @@
 		textStart = absaetze.map((a) => `<p>${esc(a)}</p>`).join('');
 		textVersion++;
 	}
+
+	// Überblick: Sichtbarkeit und was zum Veröffentlichen noch fehlt
+	const sichtbarText = $derived(
+		v.status === 'veroeffentlicht'
+			? `Veröffentlicht: Alle mit Zugriff auf ${v.unit.name} sehen das Video${
+					v.tenantIds?.length ? ' (nur ausgewählte Mandanten)' : ''
+				}.`
+			: `Nicht veröffentlicht: Nur Personen mit dem Recht „Mediathek“ in ${v.unit.name} sehen dieses Video.`
+	);
+	type Punkt = { text: string; stand: 'ok' | 'offen' | 'optional'; ziel?: string };
+	const punkte = $derived<Punkt[]>([
+		{
+			text: fertig ? 'Video umgewandelt' : 'Video wird noch umgewandelt',
+			stand: fertig ? 'ok' : 'offen'
+		},
+		{
+			text: v.noCaptionsReason
+				? `Ohne Untertitel: ${OHNE_UNTERTITEL[v.noCaptionsReason as keyof typeof OHNE_UNTERTITEL]}`
+				: !v.hatUntertitel
+					? 'Untertitel fehlen'
+					: v.captionsSource === 'automatisch' && !v.captionsCheckedAt
+						? 'Automatische Untertitel noch prüfen'
+						: 'Untertitel vorhanden',
+			stand: v.bereit ? 'ok' : 'offen',
+			ziel: 'schritt-2'
+		},
+		{
+			text: v.chapters.length ? `${v.chapters.length} Kapitel` : 'Kapitel (freiwillig)',
+			stand: v.chapters.length ? 'ok' : 'optional',
+			ziel: 'schritt-3'
+		},
+		{
+			text:
+				v.transcriptHtml || data.anhaenge.length
+					? 'Textfassung oder Anhänge vorhanden'
+					: 'Textfassung und Anhänge (freiwillig)',
+			stand: v.transcriptHtml || data.anhaenge.length ? 'ok' : 'optional',
+			ziel: 'schritt-4'
+		}
+	]);
+	const bereitZumVeroeffentlichen = $derived(fertig && v.bereit && v.status === 'entwurf');
+	let grund = $state<string>(untrack(() => data.v.noCaptionsReason ?? 'keine_sprache'));
 </script>
 
 <svelte:head><title>{v.title} bearbeiten · Mediathek · Intranet</title></svelte:head>
@@ -153,56 +200,10 @@
 	{#if form && 'ergebnis' in form}<p class="meldung" role="status">{form.ergebnis}</p>{/if}
 	{#if form && 'fehler' in form}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
 
-	{#if inArbeit}
-		<section class="karte stapel" aria-labelledby="h-stand">
-			<h2 id="h-stand">Stand</h2>
-			{#if v.status === 'hochladen'}
-				<p>
-					Das Hochladen wurde nicht abgeschlossen ({mb(v.uploadReceived)} von {mb(v.uploadSize)} MB).
-					Ohne Fortschritt wird es nach 24 Stunden gelöscht.
-				</p>
-				{#if v.eigenerUpload}
-					<form class="reihe unten" onsubmit={(e) => hochladen(e, 'fortsetzen')}>
-						<label class="feld">
-							<span>Dieselbe Datei noch einmal wählen</span>
-							<input
-								type="file"
-								accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm"
-								required
-								disabled={laeuft}
-							/>
-						</label>
-						<button class="knopf" type="submit" disabled={laeuft}>Hochladen fortsetzen</button>
-					</form>
-				{:else}
-					<p class="hinweis">Fortsetzen kann nur die Person, die das Hochladen begonnen hat.</p>
-				{/if}
-			{:else}
-				<p>
-					{v.status === 'warten'
-						? 'Das Video wartet auf die Umwandlung.'
-						: 'Das Video wird umgewandelt.'} Du kannst die Seite schließen; du bekommst eine Benachrichtigung,
-					wenn es fertig ist.
-				</p>
-				<progress
-					max="100"
-					value={v.status === 'umwandeln' ? v.progress : undefined}
-					aria-label="Fortschritt der Umwandlung"
-				>
-					{v.progress} %
-				</progress>
-			{/if}
-		</section>
-	{:else if v.status === 'fehler'}
-		<p class="meldung fehler" role="alert">
-			Die Umwandlung ist fehlgeschlagen: {v.errorMessage || 'unbekannter Fehler'}. Lösche das Video
-			und lade es bitte neu hoch.
-		</p>
-	{/if}
-
-	{#if fertig}
-		<div class="zweispaltig">
-			<div class="stapel">
+	<div class="aufbau">
+		<!-- Links: Video und Überblick, bleibt beim Scrollen stehen -->
+		<div class="seitenleiste">
+			{#if fertig}
 				<VideoPlayer
 					bind:this={player}
 					bind:zeit
@@ -211,407 +212,550 @@
 					vorschau="/mediathek/{v.id}/medien/vorschau.jpg"
 					untertitel={v.hatUntertitel ? `/mediathek/${v.id}/untertitel.vtt` : null}
 				/>
-				<section class="karte stapel" aria-labelledby="h-pub">
-					<h2 id="h-pub">Veröffentlichen</h2>
-					{#if v.status === 'veroeffentlicht'}
-						<p>Das Video ist veröffentlicht. Alle mit Zugriff auf {v.unit.name} sehen es.</p>
-						<form method="POST" action="?/zurueckziehen" use:enhance>
-							<button class="knopf zweit" type="submit">Zurückziehen</button>
-						</form>
-					{:else if !v.hatUntertitel}
-						<p class="hinweis">
-							Zum Veröffentlichen braucht das Video Untertitel (Barrierefreiheit).
+			{:else if inArbeit}
+				<section class="karte stapel" aria-labelledby="h-stand">
+					<h2 id="h-stand">Stand</h2>
+					{#if v.status === 'hochladen'}
+						<p>
+							Das Hochladen wurde nicht abgeschlossen ({mb(v.uploadReceived)} von {mb(v.uploadSize)} MB).
+							Ohne Fortschritt wird es nach 24 Stunden gelöscht.
 						</p>
-						<button class="knopf" type="button" disabled>Veröffentlichen</button>
-					{:else if !v.bereit}
-						<p class="hinweis">
-							Die Untertitel wurden automatisch erzeugt. Prüfe sie unten und markiere sie als
-							geprüft, dann kannst du veröffentlichen.
-						</p>
-						<button class="knopf" type="button" disabled>Veröffentlichen</button>
-					{:else}
-						<p class="hinweis">Bis dahin sehen das Video nur Personen mit dem Recht „Mediathek“.</p>
-						<form method="POST" action="?/veroeffentlichen" use:enhance>
-							<button class="knopf" type="submit">Veröffentlichen</button>
-						</form>
-					{/if}
-				</section>
-			</div>
-
-			<section class="karte stapel" aria-labelledby="h-kap">
-				<h2 id="h-kap">Kapitel</h2>
-				<p class="hinweis">
-					Spiel das Video ab und setze an der passenden Stelle ein Kapitel, oder füge eine Liste ein
-					(„0:00 Einleitung“ je Zeile).
-				</p>
-				<div class="reihe">
-					<button
-						class="knopf zweit"
-						type="button"
-						onclick={hierBeginnen}
-						disabled={zeilen.length >= MAX_KAPITEL}
-					>
-						Kapitel hier beginnen ({zeitText(zeit)})
-					</button>
-					<button
-						class="knopf zweit"
-						type="button"
-						onclick={() => (einfuegen = !einfuegen)}
-						aria-expanded={einfuegen}
-					>
-						Als Text einfügen
-					</button>
-				</div>
-				{#if einfuegen}
-					<label class="feld">
-						<span>Liste (ersetzt die Kapitel unten)</span>
-						<textarea rows="6" bind:value={textEin} placeholder={beispielKapitel}></textarea>
-					</label>
-					<div><button class="knopf" type="button" onclick={uebernehmen}>Übernehmen</button></div>
-				{/if}
-				{#if zeilen.length}
-					<ol class="kapitel">
-						{#each zeilen as z, i (i)}
-							<li class="stapel null">
-								<div class="kzeile">
+						{#if v.eigenerUpload}
+							<form class="stapel" onsubmit={(e) => hochladen(e, 'fortsetzen')}>
+								<label class="feld">
+									<span>Dieselbe Datei noch einmal wählen</span>
 									<input
-										class="zeit"
-										aria-label="Beginn von Kapitel {i + 1}"
-										bind:value={z.zeit}
-										inputmode="numeric"
+										type="file"
+										accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm"
+										required
+										disabled={laeuft}
 									/>
-									<input aria-label="Titel von Kapitel {i + 1}" bind:value={z.t} maxlength="120" />
-									<button
-										class="knopf zweit klein"
-										type="button"
-										aria-label="Zu Kapitel {i + 1} springen"
-										onclick={() => player?.springen(zeitLesen(z.zeit) || 0)}
-									>
-										▶
-									</button>
-									<button
-										class="knopf zweit klein"
-										type="button"
-										aria-label="Kapitel {i + 1} entfernen"
-										onclick={() => (zeilen = zeilen.filter((_, j) => j !== i))}
-									>
-										✕
+								</label>
+								<div>
+									<button class="knopf" type="submit" disabled={laeuft}>
+										Hochladen fortsetzen
 									</button>
 								</div>
-								{#if fehler[i]}<span class="feldfehler">{fehler[i]}</span>{/if}
-							</li>
-						{/each}
-					</ol>
-				{:else}
-					<p class="hinweis">Noch keine Kapitel.</p>
+							</form>
+						{:else}
+							<p class="hinweis">Fortsetzen kann nur die Person, die das Hochladen begonnen hat.</p>
+						{/if}
+					{:else}
+						<p>
+							{v.status === 'warten'
+								? 'Das Video wartet auf die Umwandlung.'
+								: 'Das Video wird umgewandelt, danach werden Untertitel erzeugt.'} Du kannst die Seite
+							schließen; du bekommst eine Benachrichtigung, wenn es fertig ist.
+						</p>
+						<progress
+							max="100"
+							value={v.status === 'umwandeln' ? v.progress : undefined}
+							aria-label="Fortschritt der Umwandlung"
+						>
+							{v.progress} %
+						</progress>
+					{/if}
+				</section>
+			{:else if v.status === 'fehler'}
+				<p class="meldung fehler" role="alert">
+					Die Umwandlung ist fehlgeschlagen: {v.errorMessage || 'unbekannter Fehler'}. Lösche das
+					Video und lade es bitte neu hoch.
+				</p>
+			{/if}
+
+			<section class="karte stapel ueberblick" aria-labelledby="h-ueberblick">
+				<h2 id="h-ueberblick">Überblick</h2>
+				<p class="sichtbar" class:offen={v.status !== 'veroeffentlicht'}>{sichtbarText}</p>
+				<ul class="punkte">
+					{#each punkte as pt (pt.text)}
+						<li class={pt.stand}>
+							<span class="zeichen" aria-hidden="true">
+								{pt.stand === 'ok' ? '✓' : pt.stand === 'offen' ? '!' : '○'}
+							</span>
+							{#if pt.ziel && fertig}<a href="#{pt.ziel}">{pt.text}</a>{:else}{pt.text}{/if}
+							<span class="sr-only">
+								{pt.stand === 'ok'
+									? '(erledigt)'
+									: pt.stand === 'offen'
+										? '(fehlt)'
+										: '(freiwillig)'}
+							</span>
+						</li>
+					{/each}
+				</ul>
+				{#if bereitZumVeroeffentlichen}
+					<a class="knopf" href="#schritt-5">Zum Veröffentlichen</a>
 				{/if}
-				<form method="POST" action="?/kapitel" use:enhance>
-					<input type="hidden" name="kapitel" value={JSON.stringify(kapitelOk ? liste : [])} />
-					<button class="knopf" type="submit" disabled={!kapitelOk}>Kapitel speichern</button>
-				</form>
 			</section>
 		</div>
-	{/if}
 
-	<section class="karte stapel" aria-labelledby="h-meta">
-		<h2 id="h-meta">Angaben</h2>
-		<form
-			method="POST"
-			action="?/meta"
-			class="stapel"
-			use:enhance={() =>
-				async ({ update }) =>
-					update({ reset: false })}
-		>
-			<label class="feld">
-				<span>Titel</span>
-				<input name="title" required maxlength={MAX_TITEL} value={v.title} />
-			</label>
-			<label class="feld">
-				<span>Beschreibung</span>
-				<textarea name="description" rows="4" maxlength={MAX_BESCHREIBUNG}>{v.description}</textarea
+		<!-- Rechts: Schritte -->
+		<div class="schritte">
+			<section id="schritt-1" class="karte stapel" aria-labelledby="h-meta">
+				<h2 id="h-meta"><span class="nr" aria-hidden="true">1</span>Angaben</h2>
+				<form
+					method="POST"
+					action="?/meta"
+					class="stapel"
+					use:enhance={() =>
+						async ({ update }) =>
+							update({ reset: false })}
 				>
-			</label>
-			<fieldset class="feld">
-				<legend>Themen</legend>
-				{#if data.themen.length}
-					<div class="auswahl">
-						{#each data.themen as t (t.id)}
-							<label class="haken">
-								<input
-									type="checkbox"
-									name="thema"
-									value={t.id}
-									checked={v.themenIds.includes(t.id)}
-								/>
-								{t.name}
-							</label>
-						{/each}
-					</div>
-				{:else}
-					<p class="hinweis">Noch keine Themen angelegt.</p>
-				{/if}
-			</fieldset>
-			{#if v.unit.isCentral && v.mandanten.length > 1}
-				<fieldset class="feld">
-					<legend>Nur für bestimmte Mandanten (leer = alle)</legend>
-					<div class="auswahl">
-						{#each v.mandanten as m (m.id)}
-							<label class="haken">
-								<input
-									type="checkbox"
-									name="mandant"
-									value={m.id}
-									checked={v.tenantIds?.includes(m.id) ?? false}
-								/>
-								{m.name}
-							</label>
-						{/each}
-					</div>
-				</fieldset>
-			{/if}
-			<div><button class="knopf" type="submit">Speichern</button></div>
-		</form>
-		<ThemaVorschlag />
-	</section>
+					<label class="feld">
+						<span>Titel</span>
+						<input name="title" required maxlength={MAX_TITEL} value={v.title} />
+					</label>
+					<label class="feld">
+						<span>Beschreibung</span>
+						<textarea name="description" rows="3" maxlength={MAX_BESCHREIBUNG}
+							>{v.description}</textarea
+						>
+					</label>
+					<fieldset class="feld">
+						<legend>Themen</legend>
+						{#if data.themen.length}
+							<div class="auswahl">
+								{#each data.themen as t (t.id)}
+									<label class="haken">
+										<input
+											type="checkbox"
+											name="thema"
+											value={t.id}
+											checked={v.themenIds.includes(t.id)}
+										/>
+										{t.name}
+									</label>
+								{/each}
+							</div>
+						{:else}
+							<p class="hinweis">Noch keine Themen angelegt.</p>
+						{/if}
+					</fieldset>
+					{#if v.unit.isCentral && v.mandanten.length > 1}
+						<fieldset class="feld">
+							<legend>Nur für bestimmte Mandanten (leer = alle)</legend>
+							<div class="auswahl">
+								{#each v.mandanten as m (m.id)}
+									<label class="haken">
+										<input
+											type="checkbox"
+											name="mandant"
+											value={m.id}
+											checked={v.tenantIds?.includes(m.id) ?? false}
+										/>
+										{m.name}
+									</label>
+								{/each}
+							</div>
+						</fieldset>
+					{/if}
+					<div><button class="knopf" type="submit">Angaben speichern</button></div>
+				</form>
+				<ThemaVorschlag />
+			</section>
 
-	{#if fertig}
-		<section class="karte stapel" aria-labelledby="h-ut">
-			<h2 id="h-ut">Untertitel</h2>
-			<p class="hinweis">
-				WebVTT-Datei (.vtt, höchstens 2 MB). Formatierungen werden entfernt; der Text ist in der
-				Suche auffindbar.
-			</p>
-			{#if v.hatUntertitel}
-				{#if v.captionsSource === 'automatisch'}
-					<p>
-						<strong>Automatisch erzeugt.</strong>
-						{v.captionsCheckedAt
-							? 'Als geprüft markiert.'
-							: 'Lies sie bitte einmal durch und korrigiere Namen und Fachbegriffe.'}
+			{#if fertig}
+				<section id="schritt-2" class="karte stapel" aria-labelledby="h-ut">
+					<h2 id="h-ut"><span class="nr" aria-hidden="true">2</span>Untertitel</h2>
+					{#if v.noCaptionsReason}
+						<p>
+							<strong>Ohne Untertitel.</strong>
+							{OHNE_UNTERTITEL[v.noCaptionsReason as keyof typeof OHNE_UNTERTITEL]}.
+						</p>
+						<form method="POST" action="?/ohneUntertitel" use:enhance>
+							<input type="hidden" name="aus" value="1" />
+							<button class="knopf zweit" type="submit">Doch Untertitel verwenden</button>
+						</form>
+					{:else if v.hatUntertitel}
+						{#if v.captionsSource === 'automatisch'}
+							<p>
+								<strong>Automatisch erzeugt.</strong>
+								{v.captionsCheckedAt
+									? 'Als geprüft markiert.'
+									: 'Lies sie bitte einmal durch und korrigiere Namen und Fachbegriffe. Danach als geprüft markieren.'}
+							</p>
+						{:else}
+							<p><strong>Hochgeladen.</strong> Die Untertitel stammen aus einer eigenen Datei.</p>
+						{/if}
+						<div class="reihe">
+							<button
+								class="knopf zweit"
+								type="button"
+								aria-expanded={utOffen}
+								onclick={() => (utOffen = !utOffen)}
+							>
+								{utOffen ? 'Bearbeiten schließen' : `Untertitel bearbeiten (${data.cues.length})`}
+							</button>
+							{#if v.captionsSource === 'automatisch'}
+								<form method="POST" action="?/geprueft" use:enhance>
+									<input type="hidden" name="wert" value={v.captionsCheckedAt ? 'aus' : 'an'} />
+									<button class="knopf {v.captionsCheckedAt ? 'zweit' : ''}" type="submit">
+										{v.captionsCheckedAt
+											? 'Markierung „geprüft“ zurücknehmen'
+											: 'Untertitel sind geprüft'}
+									</button>
+								</form>
+							{/if}
+						</div>
+						{#if utOffen}
+							<form
+								method="POST"
+								action="?/untertitelText"
+								class="stapel"
+								use:enhance={() =>
+									async ({ update }) =>
+										update({ reset: false })}
+							>
+								<input type="hidden" name="texte" value={JSON.stringify(utTexte)} />
+								<ol class="cues">
+									{#each data.cues as c, i (i)}
+										<li>
+											<button
+												class="linkknopf zeit"
+												type="button"
+												onclick={() => player?.springen(sekAus(c.a))}
+												aria-label="Ab {c.a} abspielen"
+											>
+												{c.a.replace(/\.\d+$/, '')}
+											</button>
+											<textarea rows="2" aria-label="Untertitel ab {c.a}" bind:value={utTexte[i]}
+											></textarea>
+										</li>
+									{/each}
+								</ol>
+								<p class="hinweis">Leere Zeilen werden entfernt. Die Zeiten bleiben unverändert.</p>
+								<div><button class="knopf" type="submit">Untertitel speichern</button></div>
+							</form>
+						{/if}
+					{:else}
+						<p class="hinweis">
+							Es gibt noch keine Untertitel. Lade eine WebVTT-Datei hoch oder gib an, warum das
+							Video keine braucht.
+						</p>
+					{/if}
+
+					<details class="mehr">
+						<summary>
+							{v.hatUntertitel
+								? 'Eigene Datei statt dieser Untertitel'
+								: 'Eigene Untertitel-Datei hochladen'}
+						</summary>
+						<p class="hinweis">
+							WebVTT-Datei (.vtt, höchstens 2 MB), etwa aus Teams. Formatierungen werden entfernt;
+							der Text ist in der Suche auffindbar.
+						</p>
+						<form
+							method="POST"
+							action="?/untertitel"
+							enctype="multipart/form-data"
+							class="reihe unten"
+							use:enhance
+						>
+							<label class="feld">
+								<span>Datei</span>
+								<input type="file" name="datei" accept=".vtt,text/vtt" required />
+							</label>
+							<button class="knopf" type="submit">Hochladen</button>
+						</form>
+					</details>
+
+					{#if !v.noCaptionsReason}
+						<details class="mehr">
+							<summary>Dieses Video braucht keine Untertitel</summary>
+							<form method="POST" action="?/ohneUntertitel" class="stapel" use:enhance>
+								<fieldset class="feld">
+									<legend>Grund</legend>
+									{#each Object.entries(OHNE_UNTERTITEL) as [k, t] (k)}
+										<label class="haken">
+											<input type="radio" name="grund" value={k} bind:group={grund} />
+											{t}
+										</label>
+									{/each}
+								</fieldset>
+								{#if v.hatUntertitel}
+									<p class="hinweis">Die vorhandenen Untertitel werden dabei entfernt.</p>
+								{/if}
+								<div>
+									<button class="knopf zweit" type="submit">Ohne Untertitel speichern</button>
+								</div>
+							</form>
+						</details>
+					{/if}
+
+					{#if v.hatUntertitel}
+						<div>
+							<MitFrage
+								action="?/untertitelWeg"
+								enhance
+								knopf="Untertitel entfernen"
+								knopfKlasse="linkknopf"
+								frage={{
+									titel: 'Untertitel entfernen?',
+									text:
+										v.status === 'veroeffentlicht'
+											? 'Ohne Untertitel wird das Video zurückgezogen und ist wieder ein Entwurf.'
+											: 'Du kannst danach neue Untertitel hochladen.',
+									ja: 'Entfernen',
+									gefahr: true
+								}}
+							/>
+						</div>
+					{/if}
+				</section>
+
+				<section id="schritt-3" class="karte stapel" aria-labelledby="h-kap">
+					<h2 id="h-kap">
+						<span class="nr" aria-hidden="true">3</span>Kapitel <span class="frei">freiwillig</span>
+					</h2>
+					<p class="hinweis">
+						Spiel das Video ab und setze an der passenden Stelle ein Kapitel, oder füge eine Liste
+						ein („0:00 Einleitung“ je Zeile).
 					</p>
-					<form method="POST" action="?/geprueft" use:enhance>
-						<input type="hidden" name="wert" value={v.captionsCheckedAt ? 'aus' : 'an'} />
-						<button class="knopf {v.captionsCheckedAt ? 'zweit' : ''}" type="submit">
-							{v.captionsCheckedAt
-								? 'Markierung „geprüft“ zurücknehmen'
-								: 'Untertitel sind geprüft'}
+					<div class="reihe">
+						<button
+							class="knopf zweit"
+							type="button"
+							onclick={hierBeginnen}
+							disabled={zeilen.length >= MAX_KAPITEL}
+						>
+							Kapitel hier beginnen ({zeitText(zeit)})
 						</button>
+						<button
+							class="knopf zweit"
+							type="button"
+							onclick={() => (einfuegen = !einfuegen)}
+							aria-expanded={einfuegen}
+						>
+							Als Text einfügen
+						</button>
+					</div>
+					{#if einfuegen}
+						<label class="feld">
+							<span>Liste (ersetzt die Kapitel unten)</span>
+							<textarea rows="6" bind:value={textEin} placeholder={beispielKapitel}></textarea>
+						</label>
+						<div>
+							<button class="knopf" type="button" onclick={uebernehmen}>Übernehmen</button>
+						</div>
+					{/if}
+					{#if zeilen.length}
+						<ol class="kapitel">
+							{#each zeilen as z, i (i)}
+								<li class="stapel null">
+									<div class="kzeile">
+										<input
+											class="zeit"
+											aria-label="Beginn von Kapitel {i + 1}"
+											bind:value={z.zeit}
+											inputmode="numeric"
+										/>
+										<input
+											aria-label="Titel von Kapitel {i + 1}"
+											bind:value={z.t}
+											maxlength="120"
+										/>
+										<button
+											class="knopf zweit klein"
+											type="button"
+											aria-label="Zu Kapitel {i + 1} springen"
+											onclick={() => player?.springen(zeitLesen(z.zeit) || 0)}
+										>
+											▶
+										</button>
+										<button
+											class="knopf zweit klein"
+											type="button"
+											aria-label="Kapitel {i + 1} entfernen"
+											onclick={() => (zeilen = zeilen.filter((_, j) => j !== i))}
+										>
+											✕
+										</button>
+									</div>
+									{#if fehler[i]}<span class="feldfehler">{fehler[i]}</span>{/if}
+								</li>
+							{/each}
+						</ol>
+					{:else}
+						<p class="hinweis">Noch keine Kapitel.</p>
+					{/if}
+					<form method="POST" action="?/kapitel" use:enhance>
+						<input type="hidden" name="kapitel" value={JSON.stringify(kapitelOk ? liste : [])} />
+						<button class="knopf" type="submit" disabled={!kapitelOk}>Kapitel speichern</button>
 					</form>
-				{:else}
-					<p>Untertitel sind hinterlegt.</p>
-				{/if}
-				<div>
-					<button
-						class="knopf zweit"
-						type="button"
-						aria-expanded={utOffen}
-						onclick={() => (utOffen = !utOffen)}
-					>
-						Untertitel bearbeiten ({data.cues.length})
-					</button>
-				</div>
-				{#if utOffen}
+				</section>
+
+				<section id="schritt-4" class="karte stapel" aria-labelledby="h-text">
+					<h2 id="h-text">
+						<span class="nr" aria-hidden="true">4</span>Textfassung und Anhänge
+						<span class="frei">freiwillig</span>
+					</h2>
+					<p class="hinweis">
+						Der Inhalt zum Nachlesen, etwa für Menschen, die nicht hören können, und Unterlagen zum
+						Video (PDF, Office, Bilder).
+					</p>
+					{#if data.cues.length}
+						<div>
+							<button class="knopf zweit" type="button" onclick={ausUntertiteln}>
+								Aus den Untertiteln übernehmen
+							</button>
+						</div>
+					{/if}
 					<form
 						method="POST"
-						action="?/untertitelText"
+						action="?/textfassung"
 						class="stapel"
 						use:enhance={() =>
 							async ({ update }) =>
 								update({ reset: false })}
 					>
-						<input type="hidden" name="texte" value={JSON.stringify(utTexte)} />
-						<ol class="cues">
-							{#each data.cues as c, i (i)}
-								<li>
-									<button
-										class="linkknopf zeit"
-										type="button"
-										onclick={() => player?.springen(sekAus(c.a))}
-										aria-label="Ab {c.a} abspielen"
-									>
-										{c.a.replace(/\.\d+$/, '')}
+						{#key textVersion}
+							<Editor name="text" value={textStart} label="Textfassung" bilder={false} />
+						{/key}
+						<Anhaenge start={data.anhaenge} legende="Anhänge zum Video" />
+						<div>
+							<button class="knopf" type="submit">Textfassung und Anhänge speichern</button>
+						</div>
+					</form>
+				</section>
+
+				<section id="schritt-5" class="karte stapel" aria-labelledby="h-pub">
+					<h2 id="h-pub"><span class="nr" aria-hidden="true">5</span>Veröffentlichen</h2>
+					<p class="sichtbar" class:offen={v.status !== 'veroeffentlicht'}>{sichtbarText}</p>
+					{#if v.status === 'veroeffentlicht'}
+						<form method="POST" action="?/zurueckziehen" use:enhance>
+							<button class="knopf zweit" type="submit">Zurückziehen</button>
+						</form>
+					{:else if !v.bereit}
+						<p class="hinweis">
+							{v.hatUntertitel
+								? 'Prüfe zuerst die automatisch erzeugten Untertitel (Schritt 2).'
+								: 'Zuerst Untertitel hinzufügen oder angeben, warum das Video keine braucht (Schritt 2).'}
+						</p>
+						<div><button class="knopf" type="button" disabled>Veröffentlichen</button></div>
+					{:else}
+						<form method="POST" action="?/veroeffentlichen" use:enhance>
+							<button class="knopf" type="submit">Veröffentlichen</button>
+						</form>
+					{/if}
+				</section>
+			{/if}
+
+			<section class="karte stapel weitere" aria-labelledby="h-weitere">
+				<h2 id="h-weitere">Weitere Aktionen</h2>
+				{#if fertig}
+					<details class="mehr" open={Boolean(ersatz)}>
+						<summary>Videodatei ersetzen</summary>
+						{#if ersatz && ersatz.status === 'hochladen'}
+							<p>
+								Eine neue Fassung wird hochgeladen ({mb(ersatz.uploadReceived)} von {mb(
+									ersatz.uploadSize
+								)} MB).
+							</p>
+							{#if ersatz.eigener}
+								<form class="reihe unten" onsubmit={(e) => hochladen(e, 'ersatzFortsetzen')}>
+									<label class="feld">
+										<span>Dieselbe Datei noch einmal wählen</span>
+										<input
+											type="file"
+											accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm"
+											required
+											disabled={laeuft}
+										/>
+									</label>
+									<button class="knopf" type="submit" disabled={laeuft}>
+										Hochladen fortsetzen
 									</button>
-									<textarea rows="2" aria-label="Untertitel ab {c.a}" bind:value={utTexte[i]}
-									></textarea>
-								</li>
-							{/each}
-						</ol>
-						<p class="hinweis">Leere Zeilen werden entfernt. Die Zeiten bleiben unverändert.</p>
-						<div><button class="knopf" type="submit">Untertitel speichern</button></div>
-					</form>
-				{/if}
-			{/if}
-			<form
-				method="POST"
-				action="?/untertitel"
-				enctype="multipart/form-data"
-				class="reihe unten"
-				use:enhance
-			>
-				<label class="feld">
-					<span>{v.hatUntertitel ? 'Untertitel ersetzen' : 'Untertitel hochladen'}</span>
-					<input type="file" name="datei" accept=".vtt,text/vtt" required />
-				</label>
-				<button class="knopf" type="submit">Hochladen</button>
-			</form>
-			{#if v.hatUntertitel}
-				<MitFrage
-					action="?/untertitelWeg"
-					enhance
-					knopf="Untertitel entfernen"
-					knopfKlasse="knopf zweit"
-					frage={{
-						titel: 'Untertitel entfernen?',
-						text:
-							v.status === 'veroeffentlicht'
-								? 'Ohne Untertitel wird das Video zurückgezogen und ist wieder ein Entwurf.'
-								: 'Du kannst danach neue Untertitel hochladen.',
-						ja: 'Entfernen',
-						gefahr: true
-					}}
-				/>
-			{/if}
-		</section>
-	{/if}
-
-	{#if fertig}
-		<section class="karte stapel" aria-labelledby="h-text">
-			<h2 id="h-text">Textfassung und Anhänge</h2>
-			<p class="hinweis">
-				Freiwillig: der Inhalt zum Nachlesen, etwa für Menschen, die nicht hören können, und
-				Unterlagen zum Video (PDF, Office, Bilder).
-			</p>
-			{#if data.cues.length}
-				<div>
-					<button class="knopf zweit" type="button" onclick={ausUntertiteln}>
-						Aus den Untertiteln übernehmen
-					</button>
-				</div>
-			{/if}
-			<form
-				method="POST"
-				action="?/textfassung"
-				class="stapel"
-				use:enhance={() =>
-					async ({ update }) =>
-						update({ reset: false })}
-			>
-				{#key textVersion}
-					<Editor name="text" value={textStart} label="Textfassung" bilder={false} />
-				{/key}
-				<Anhaenge start={data.anhaenge} legende="Anhänge zum Video" />
-				<div><button class="knopf" type="submit">Speichern</button></div>
-			</form>
-		</section>
-
-		<section class="karte stapel" aria-labelledby="h-neu">
-			<h2 id="h-neu">Videodatei ersetzen</h2>
-			{#if ersatz && ersatz.status === 'hochladen'}
-				<p>
-					Eine neue Fassung wird hochgeladen ({mb(ersatz.uploadReceived)} von {mb(
-						ersatz.uploadSize
-					)} MB).
-				</p>
-				{#if ersatz.eigener}
-					<form class="reihe unten" onsubmit={(e) => hochladen(e, 'ersatzFortsetzen')}>
-						<label class="feld">
-							<span>Dieselbe Datei noch einmal wählen</span>
-							<input
-								type="file"
-								accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm"
-								required
-								disabled={laeuft}
+								</form>
+							{/if}
+						{:else if ersatzLaeuft}
+							<p>
+								Die neue Fassung wird umgewandelt. Bis sie fertig ist, bleibt das bisherige Video
+								online.
+							</p>
+							<progress
+								max="100"
+								value={ersatz?.status === 'umwandeln' ? ersatz.progress : undefined}
+								aria-label="Fortschritt der neuen Fassung"
+							>
+								{ersatz?.progress} %
+							</progress>
+						{:else}
+							{#if ersatz?.status === 'fehler'}
+								<p class="meldung fehler">
+									Die neue Fassung ließ sich nicht umwandeln: {ersatz.errorMessage ||
+										'unbekannter Fehler'}.
+								</p>
+							{/if}
+							<p class="hinweis">
+								Das bisherige Video bleibt online, bis die neue Fassung umgewandelt ist. Kapitel
+								bleiben (soweit sie in die neue Länge passen), hochgeladene Untertitel auch;
+								automatisch erzeugte werden neu erzeugt und müssen wieder geprüft werden.
+							</p>
+							<form class="reihe unten" onsubmit={(e) => hochladen(e, 'ersatz')}>
+								<label class="feld">
+									<span>Neue Videodatei</span>
+									<input
+										type="file"
+										accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm"
+										required
+										disabled={laeuft}
+									/>
+								</label>
+								<button class="knopf" type="submit" disabled={laeuft}>
+									Neue Fassung hochladen
+								</button>
+							</form>
+						{/if}
+						{#if ersatz && ersatz.status !== 'fehler' && !laeuft}
+							<MitFrage
+								action="?/ersatzAbbrechen"
+								enhance
+								knopf="Neue Fassung verwerfen"
+								knopfKlasse="knopf zweit"
+								frage={{
+									titel: 'Neue Fassung verwerfen?',
+									text: 'Das bisherige Video bleibt unverändert.',
+									ja: 'Verwerfen'
+								}}
 							/>
-						</label>
-						<button class="knopf" type="submit" disabled={laeuft}>Hochladen fortsetzen</button>
-					</form>
+						{/if}
+					</details>
 				{/if}
-			{:else if ersatzLaeuft}
-				<p>
-					Die neue Fassung wird umgewandelt. Bis sie fertig ist, bleibt das bisherige Video online.
-				</p>
-				<progress
-					max="100"
-					value={ersatz?.status === 'umwandeln' ? ersatz.progress : undefined}
-					aria-label="Fortschritt der neuen Fassung"
-				>
-					{ersatz?.progress} %
-				</progress>
-			{:else}
-				{#if ersatz?.status === 'fehler'}
-					<p class="meldung fehler" role="alert">
-						Die neue Fassung ließ sich nicht umwandeln: {ersatz.errorMessage ||
-							'unbekannter Fehler'}.
-					</p>
+				{#if laeuft}
+					<div class="stapel eng" role="status">
+						<span>
+							Wird hochgeladen: {prozent} % ({mb(gesendet)} von {mb(groesse)} MB). Lass die Seite bitte
+							offen.
+						</span>
+						<progress max="100" value={prozent} aria-label="Fortschritt beim Hochladen"></progress>
+					</div>
 				{/if}
-				<p class="hinweis">
-					Das bisherige Video bleibt online, bis die neue Fassung umgewandelt ist. Kapitel bleiben
-					(soweit sie in die neue Länge passen). Hochgeladene Untertitel bleiben; automatisch
-					erzeugte werden neu erzeugt und müssen wieder geprüft werden. Prüfe danach, ob alles noch
-					passt.
-				</p>
-				<form class="reihe unten" onsubmit={(e) => hochladen(e, 'ersatz')}>
-					<label class="feld">
-						<span>Neue Videodatei</span>
-						<input
-							type="file"
-							accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm"
-							required
-							disabled={laeuft}
+				{#if hochFehler}<p class="meldung fehler" role="alert">{hochFehler}</p>{/if}
+				<details class="mehr">
+					<summary>Video löschen</summary>
+					<p class="hinweis">Das Video und alle umgewandelten Dateien werden endgültig gelöscht.</p>
+					<div>
+						<MitFrage
+							action="?/loeschen"
+							knopf="Video löschen"
+							knopfKlasse="knopf rot"
+							frage={{
+								titel: 'Video löschen?',
+								text: `„${v.title}“ wird endgültig gelöscht.`,
+								ja: 'Löschen',
+								gefahr: true
+							}}
 						/>
-					</label>
-					<button class="knopf" type="submit" disabled={laeuft}>Neue Fassung hochladen</button>
-				</form>
-			{/if}
-			{#if ersatz && ersatz.status !== 'fehler' && !laeuft}
-				<MitFrage
-					action="?/ersatzAbbrechen"
-					enhance
-					knopf="Neue Fassung verwerfen"
-					knopfKlasse="knopf zweit"
-					frage={{
-						titel: 'Neue Fassung verwerfen?',
-						text: 'Das bisherige Video bleibt unverändert.',
-						ja: 'Verwerfen'
-					}}
-				/>
-			{/if}
-		</section>
-	{/if}
-
-	{#if laeuft}
-		<div class="karte stapel eng" role="status">
-			<span>
-				Wird hochgeladen: {prozent} % ({mb(gesendet)} von {mb(groesse)} MB). Lass die Seite bitte offen.
-			</span>
-			<progress max="100" value={prozent} aria-label="Fortschritt beim Hochladen"></progress>
+					</div>
+				</details>
+			</section>
 		</div>
-	{/if}
-	{#if hochFehler}<p class="meldung fehler" role="alert">{hochFehler}</p>{/if}
-
-	<section class="karte stapel" aria-labelledby="h-weg">
-		<h2 id="h-weg">Löschen</h2>
-		<p class="hinweis">Das Video und alle umgewandelten Dateien werden endgültig gelöscht.</p>
-		<div>
-			<MitFrage
-				action="?/loeschen"
-				knopf="Video löschen"
-				knopfKlasse="knopf rot"
-				frage={{
-					titel: 'Video löschen?',
-					text: `„${v.title}“ wird endgültig gelöscht.`,
-					ja: 'Löschen',
-					gefahr: true
-				}}
-			/>
-		</div>
-	</section>
+	</div>
 </div>
 
 <style>
 	.seite {
-		max-width: 76rem;
+		max-width: 80rem;
 	}
 	h1,
 	h2 {
@@ -622,6 +766,10 @@
 	}
 	h2 {
 		font-size: 1.1rem;
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 8px;
 	}
 	p {
 		margin: 0;
@@ -634,6 +782,9 @@
 	}
 	.null {
 		gap: 2px;
+	}
+	.eng {
+		gap: 4px;
 	}
 	.titelzeile {
 		display: flex;
@@ -649,31 +800,136 @@
 		background: var(--tint);
 	}
 	.s-fehler {
-		color: var(--err, #b00020);
+		color: var(--err-tx);
 	}
-	.zweispaltig {
+	.aufbau {
 		display: grid;
-		grid-template-columns: minmax(0, 1fr) 380px;
+		grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
 		gap: 24px;
 		align-items: start;
 	}
+	.seitenleiste {
+		position: sticky;
+		top: 76px;
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+	.schritte {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
 	@media (max-width: 1099px) {
-		.zweispaltig {
+		.aufbau {
 			grid-template-columns: minmax(0, 1fr);
 		}
+		.seitenleiste {
+			position: static;
+		}
+	}
+	.schritte > section {
+		scroll-margin-top: 80px;
+	}
+	.nr {
+		display: inline-grid;
+		place-items: center;
+		width: 26px;
+		height: 26px;
+		border-radius: 50%;
+		background: var(--ac);
+		color: var(--ac-tx, #fff);
+		font-size: 14px;
+		font-weight: 700;
+	}
+	.frei {
+		font-size: 12px;
+		font-weight: 600;
+		color: var(--mu);
+	}
+	.sichtbar {
+		padding: 8px 12px;
+		border-radius: 8px;
+		background: var(--ok-bg);
+		border: 1px solid var(--bd);
+	}
+	.sichtbar.offen {
+		background: var(--warn-bg);
+		border-color: var(--warn-bd);
+		color: var(--warn-tx);
+	}
+	.punkte {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	.punkte li {
+		display: flex;
+		gap: 8px;
+		align-items: baseline;
+	}
+	.zeichen {
+		display: inline-grid;
+		place-items: center;
+		flex: 0 0 20px;
+		height: 20px;
+		border-radius: 50%;
+		font-size: 12px;
+		font-weight: 700;
+		background: var(--tint);
+	}
+	.punkte .ok .zeichen {
+		background: var(--ok-bg);
+		color: var(--ok-tx, inherit);
+		border: 1px solid var(--bd);
+	}
+	.punkte .offen .zeichen {
+		background: var(--warn-bg);
+		color: var(--warn-tx);
+		border: 1px solid var(--warn-bd);
+	}
+	.punkte .optional {
+		color: var(--mu);
+	}
+	.mehr summary {
+		cursor: pointer;
+		font-weight: 600;
+		min-height: 36px;
+		display: flex;
+		align-items: center;
+	}
+	.mehr[open] > :not(summary) {
+		margin-top: 8px;
+	}
+	.mehr {
+		border-top: 1px solid var(--bd);
+		padding-top: 8px;
 	}
 	progress {
 		width: 100%;
 	}
-	.eng {
-		gap: 4px;
+	.reihe {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		align-items: center;
 	}
+	.reihe.unten {
+		align-items: flex-end;
+	}
+	.kapitel,
 	.cues {
 		list-style: none;
 		margin: 0;
 		padding: 0;
 		display: flex;
 		flex-direction: column;
+		gap: 8px;
+	}
+	.cues {
 		gap: 6px;
 		max-height: 60vh;
 		overflow: auto;
@@ -691,23 +947,6 @@
 	.cues textarea {
 		width: 100%;
 		resize: vertical;
-	}
-	.reihe {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8px;
-		align-items: center;
-	}
-	.reihe.unten {
-		align-items: flex-end;
-	}
-	.kapitel {
-		list-style: none;
-		margin: 0;
-		padding: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
 	}
 	.kzeile {
 		display: flex;
@@ -729,7 +968,7 @@
 	}
 	.feldfehler {
 		font-size: 13px;
-		color: var(--err, #b00020);
+		color: var(--err-tx);
 	}
 	fieldset {
 		border: 0;

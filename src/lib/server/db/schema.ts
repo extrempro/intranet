@@ -1725,6 +1725,10 @@ export const videos = pgTable(
 		captionsCheckedBy: uuid('captions_checked_by').references(() => persons.id, {
 			onDelete: 'set null'
 		}),
+		/** Bewusst ohne Untertitel (Grund); dann darf ohne Untertitel veröffentlicht werden */
+		noCaptionsReason: text('no_captions_reason', {
+			enum: ['keine_sprache', 'nur_musik', 'text_im_bild']
+		}),
 		/** Textfassung (Editor, bereinigtes HTML, ohne Bilder) */
 		transcriptHtml: text('transcript_html').notNull().default(''),
 		/** Präfix der Medien am Speicherort (videos/<mediaId>/…); null = eigene ID */

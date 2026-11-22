@@ -302,6 +302,13 @@
       "when": 1795345201751,
       "tag": "0042_mediathek_mehr",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1795348632938,
+      "tag": "0043_ohne_untertitel",
+      "breakpoints": true
     }
   ]
 }

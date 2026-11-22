@@ -22,6 +22,7 @@ Ohne Untertitel lässt sich ein Video nicht veröffentlichen, damit es alle nutz
 
 - **Automatisch:** Beim Umwandeln erzeugt das Intranet deutsche Untertitel, auf dem eigenen Server ohne Cloud-Dienst. Das dauert etwa noch einmal so lange wie das Video.
 - **Prüfen:** Automatische Untertitel enthalten oft Fehler bei Namen und Fachbegriffen. Unter „Untertitel bearbeiten“ korrigierst du sie Zeile für Zeile; mit der Zeit links springst du im Video an die Stelle. Danach „Untertitel sind geprüft“ wählen, erst dann lässt sich das Video veröffentlichen.
+- **Keine Untertitel nötig:** Wird im Video nicht gesprochen (etwa nur Musik), wähle „Dieses Video braucht keine Untertitel“ und den Grund. Dann lässt es sich ohne Untertitel veröffentlichen.
 - **Eigene Datei:** Hast du schon eine WebVTT-Datei (.vtt), etwa aus Teams (Transkript als .vtt herunterladen), lade sie hoch. Sie ersetzt die automatischen Untertitel. Formatierungen werden entfernt.
 
 ## Textfassung und Anhänge
@@ -39,6 +40,10 @@ Kapitel sind freiwillig, helfen aber bei langen Videos:
 ## Videodatei ersetzen
 
 Gibt es eine bessere Fassung, lädst du sie unter „Videodatei ersetzen“ hoch. Das bisherige Video bleibt online, bis die neue Fassung umgewandelt ist; dann wird getauscht. Kapitel bleiben (soweit sie in die neue Länge passen), hochgeladene Untertitel auch. Automatisch erzeugte Untertitel werden neu erzeugt; bis du sie geprüft hast, ist das Video wieder ein Entwurf. Prüfe danach, ob Kapitel und Untertitel noch passen.
+
+## Aufbau der Seite
+
+Links stehen das Video und der Überblick: wer das Video gerade sehen kann und was zum Veröffentlichen noch fehlt. Rechts arbeitest du die Schritte von 1 bis 5 ab. Videodatei ersetzen und Löschen findest du unten unter „Weitere Aktionen“. In der Mediathek stehen deine noch nicht veröffentlichten Videos oben unter „In Arbeit und Entwürfe“.
 
 ## Veröffentlichen
 
