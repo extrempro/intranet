@@ -11,7 +11,7 @@ Die Verwaltung erreichst du über das Konto-Menü. Mandanten-Admins verwalten ih
 - **Mandanten**: Angaben und Farben, E-Mail-Domains, Mandanten-Admins, Startseite für neue Personen (Karten und Standard-Favoriten).
 - **Abteilungen und Hubs**: anlegen, Typ, Zuständigkeit, Ausblenden, Rechte (Dringend, Termine), Pflicht-Abo, Team und Pflege-Rolle.
 - **Standorte**: Kantinen und Betreiber-Konten.
-- **Benutzer und Rollen**: Rollen mit Geltungsbereich vergeben, Konten sperren; lokale Konten einladen.
+- **Benutzer und Rollen**: Rollen mit Geltungsbereich vergeben, Konten sperren; lokale Konten einladen. Test- oder Funktionskonten blendest du unter „Sichtbarkeit“ für andere aus: Sie erscheinen dann nicht mehr in Personen, Suche, Teams und Zuständigkeiten, die Profilseite ist für andere nicht erreichbar. Anmelden und Rechte bleiben.
 - **Nur System-Admins**: Anmeldung, Rollen aus Entra-Gruppen, Kategorien des Schwarzen Bretts, Hinweis „Hinter den Kulissen“ und **System**.
 
 Gesperrte Konten werden nach der Löschfrist (Standard 90 Tage) gelöscht; Inhalte der Einheiten bleiben.

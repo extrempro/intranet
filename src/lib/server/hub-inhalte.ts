@@ -30,7 +30,8 @@ const id = (x: string, was = 'Eintrag') => {
 	if (!GUID.test(x)) throw new HubError(`${was} nicht gefunden.`);
 	return x;
 };
-const aktiv = sql`${persons.status} <> 'disabled'`;
+/** Aktiv und nicht von der Verwaltung ausgeblendet */
+const aktiv = sql`${persons.status} <> 'disabled' and ${persons.hidden} = false`;
 
 // ---------------------------------------------------------------------------
 // Laden für die Hub-Seite
