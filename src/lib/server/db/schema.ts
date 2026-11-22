@@ -564,6 +564,30 @@ export const urgentDismissals = pgTable(
  * Datei unlesbar. Ohne Verknüpfung (z. B. news_attachments) wird eine Datei
  * nach 24 Stunden gelöscht.
  */
+/**
+ * Speicherorte außer „Lokal“ (Kap. 18): S3-kompatible Objektspeicher. Nur System-Admins,
+ * nur über die Eigentümer-Verbindung (keine Rechte für intranet_app).
+ */
+export const storageTargets = pgTable('storage_targets', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	name: text('name').notNull(),
+	endpoint: text('endpoint').notNull(),
+	region: text('region').notNull(),
+	bucket: text('bucket').notNull(),
+	accessKey: text('access_key').notNull(),
+	/** Secret Key, mit ENCRYPTION_KEY verschlüsselt */
+	secretEnc: text('secret_enc').notNull(),
+	/** Pfad-Stil (endpoint/bucket/key) statt Bucket als Subdomain */
+	pathStyle: boolean('path_style').notNull().default(true),
+	/** Ergebnis der letzten Verbindungsprüfung */
+	checkedAt: timestamp('checked_at', { withTimezone: true }),
+	checkOk: boolean('check_ok'),
+	checkVersioning: boolean('check_versioning'),
+	checkMessage: text('check_message'),
+	createdAt: createdAt(),
+	updatedAt: updatedAt()
+});
+
 export const files = pgTable('files', {
 	id: uuid('id').primaryKey().defaultRandom(),
 	name: text('name').notNull(),
@@ -573,8 +597,31 @@ export const files = pgTable('files', {
 	keyEnc: text('key_enc').notNull(),
 	/** Bildbeschreibung (Alternativtext) für Bilder; leer = allgemeiner Text */
 	description: text('description'),
+	/** Inhaltsart für die Zuordnung zum Speicherort (siehe files/kategorien.ts) */
+	category: text('category').notNull().default('inhalte'),
+	/** Speicherort; leer = lokal */
+	storageTargetId: uuid('storage_target_id').references(() => storageTargets.id, {
+		onDelete: 'restrict'
+	}),
 	createdBy: uuid('created_by').references(() => persons.id, { onDelete: 'set null' }),
 	createdAt: createdAt()
+});
+
+/** Umzug vorhandener Dateien einer Inhaltsart zu einem anderen Speicherort. */
+export const storageMoves = pgTable('storage_moves', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	category: text('category').notNull(),
+	/** Ziel; leer = lokal */
+	targetId: uuid('target_id').references(() => storageTargets.id, { onDelete: 'cascade' }),
+	/** laufend, fertig, abgebrochen, fehler */
+	status: text('status').notNull().default('laufend'),
+	total: integer('total').notNull().default(0),
+	done: integer('done').notNull().default(0),
+	failed: integer('failed').notNull().default(0),
+	message: text('message'),
+	startedBy: uuid('started_by').references(() => persons.id, { onDelete: 'set null' }),
+	startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+	finishedAt: timestamp('finished_at', { withTimezone: true })
 });
 
 export const newsAttachments = pgTable(

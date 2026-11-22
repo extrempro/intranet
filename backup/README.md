@@ -11,6 +11,8 @@ Der Dienst `backup` in der `docker-compose.yml` sichert Datenbank und Dateien de
 
 Unveränderte Dateien belegen in weiteren Schnappschüssen keinen Platz (feste Verknüpfungen). Die Datenbank-Sicherung ist jeden Tag vollständig.
 
+Liegen Dateien in einem **S3-Speicher** (Verwaltung → Speicher), sichert dieser Dienst davon nur die Verweise und Schlüssel in der Datenbank. Die Dateien selbst sichert die Versionierung im Bucket; schalte sie dort ein und lege mit einer Lifecycle-Regel fest, wie lange alte Versionen bleiben.
+
 Für eine Wiederherstellung brauchst du drei Dinge:
 
 1. eine Sicherung aus dem Volume `backup-data`,

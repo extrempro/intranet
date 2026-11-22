@@ -548,7 +548,7 @@ export async function hubBildSetzen(
 		throw new HubError('Das Titelbild muss im Format 4:1 sein (800 bis 2400 Pixel breit).');
 	if (art === 'symbol' && (w !== h || w < 128 || w > 512))
 		throw new HubError('Das Symbol muss quadratisch sein (128 bis 512 Pixel).');
-	const neu = await storeBytes(sauber.data, `${art}.jpg`, 'jpeg', p.personId);
+	const neu = await storeBytes(sauber.data, `${art}.jpg`, 'jpeg', p.personId, 'bilder');
 	const spalte = art === 'titelbild' ? 'coverFileId' : 'iconFileId';
 	const alt = u[spalte];
 	await db

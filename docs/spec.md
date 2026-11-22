@@ -160,7 +160,7 @@ Eine eigene Rolle „Autor“ gibt es nicht. Schreibrechte werden je Person dele
 
 ### 5.2 Delegierte Schreibrechte
 
-- Abteilungsverwaltung bzw. Hub-Team vergibt je Person einzeln: **Neuigkeiten**, **FAQs**, **Termine**, **Hinter den Kulissen** (Hubs: Neuigkeiten, FAQs, Termine).
+- Abteilungsverwaltung bzw. Hub-Team vergibt je Person einzeln: **Neuigkeiten**, **FAQs**, **Termine**, **Hinter den Kulissen**, **Mediathek** (Hubs: Neuigkeiten, FAQs, Termine, Dokumente, Mediathek).
 - Höchstens **10 Personen** mit mindestens einem Schreibrecht je Einheit (einstellbar). Abteilungsverwaltung und Hub-Team zählen nicht mit.
 - Als Absender erscheint immer die Einheit, nie die Person.
 
@@ -296,7 +296,7 @@ Jede Rückfrage vor einer Aktion („… löschen?“, „Konto sperren?“) ers
 
 ### 8.9 FAQs
 
-Je Einheit; Schreibrecht „FAQs“. Frage, Antwort im Editor mit Links, Anhängen und Bildern im Text (wie 8.1).
+Je Einheit; Schreibrecht „FAQs“. Frage, Antwort im Editor mit Links, Anhängen und Bildern im Text (wie 8.1). Jede FAQ kann ein oder mehrere **Themen** aus der gemeinsamen Themenliste haben (8.15); die FAQ-Übersicht lässt sich danach filtern.
 
 ### 8.10 Rechtliches
 
@@ -335,6 +335,24 @@ Je Einheit; Schreibrecht „FAQs“. Frage, Antwort im Editor mit Links, Anhäng
 Globale Suche über Personen, Einheiten, Beiträge, FAQs, Vereinbarungen und Seiten; Ergebnisse nur im Rahmen der Rechte und Mandantengrenzen.
 
 ---
+
+### 8.15 Mediathek
+
+Videos wie Schulungen und Anleitungen, für alle Beschäftigten abrufbar, auch mit lokalem Konto. Die Videos liegen im Intranet selbst, nicht in einem externen Videodienst.
+
+- **Zuordnung:** Videos gehören zu einer Abteilung oder einem Hub, wie Neuigkeiten und FAQs. Auf der Seite der Einheit steht ein Abschnitt „Mediathek“; unter „Wissen“ zeigt die Übersicht alle Videos, die du sehen darfst (Suche in Titel, Beschreibung und Untertiteln; Filter nach Einheit und Thema).
+- **Recht:** Schreibrecht „Mediathek“ je Person und Einheit (Kap. 5): hochladen, bearbeiten, veröffentlichen, löschen. In Abteilungen vergibt es die Verwaltung, in Hubs das Hub-Team.
+- **Sichtbarkeit** wie bei Neuigkeiten: Videos zentraler Einheiten sehen alle Mandanten (einschränkbar auf einzelne), die übrigen nur der eigene.
+- **Themen:** eine gemeinsame Liste für Mediathek und FAQs, gepflegt von System-Admins unter Verwaltung → Regeln für Inhalte. Beim Hochladen ein oder mehrere Themen wählen; „Thema vorschlagen“ geht an die System-Admins, die aufnehmen oder ablehnen (mit Benachrichtigung). Umbenennen gilt überall; gelöschte Themen verschwinden aus Videos und FAQs (Filter „Ohne Thema“).
+- **Hochladen:** MP4, MOV oder WebM, bis 4 GB und 3 Stunden. Das Original liegt nur kurz in einem lokalen Arbeitsordner.
+- **Umwandeln:** eigener Container mit ffmpeg (ohne Netz, schreibgeschützt, Grenzen für CPU und Speicher, immer nur eine Umwandlung gleichzeitig) in HLS mit H.264/AAC in 360p, 720p und 1080p, dazu ein Vorschaubild. Danach wird das Original gelöscht (mit ihm eingebettete Angaben wie Ort oder Gerät). Fortschritt sichtbar, Benachrichtigung, wenn fertig.
+- **Veröffentlichen** nur mit Untertiteln (WebVTT). Bis dahin ist das Video ein Entwurf, sichtbar nur für Personen mit dem Recht.
+- **Kapitel** (optional), festgelegt nach dem Umwandeln: beim Ansehen „Kapitel hier beginnen“, Liste bearbeiten (Zeit, Titel, löschen, ab hier abspielen) oder als Text einfügen. Geprüft wird: erstes Kapitel bei 0:00, Zeiten aufsteigend und innerhalb der Videolänge, jeder Titel ausgefüllt. Ausgeliefert als WebVTT-Kapitelspur.
+- **Ansehen:** eigener Player (hls.js, selbst ausgeliefert) mit Untertiteln, Kapiteln, Geschwindigkeit, ±10 Sekunden, Vollbild und Tastaturbedienung; Textfassung und Anhänge optional.
+- **Auslieferung:** jedes Stück einzeln verschlüsselt (wie alle Dateien) und nur nach Rechteprüfung, nie über öffentliche oder vorab signierte Adressen.
+- **Kein Nachweis:** Es wird nicht ausgewertet, wer was gesehen hat.
+- **„Weiter, wo du warst“** (Fortschritt am Konto): je Person und Video nur die Position in Sekunden und das Datum der letzten Änderung; kein Verlauf, nichts im Protokoll. Lesbar nur für die Person selbst (Row-Level Security), keine Ansicht für Admins, Leitungen oder Hub-Teams, kein Export, keine Zahlen. Eintrag wird gelöscht, sobald das Video zu Ende gesehen ist, sonst nach 90 Tagen. Im Konto: Schalter „Fortschritt auf meinem Konto speichern“ (Standard an) und „Meinen Fortschritt löschen“; ist der Schalter aus, bleibt der Fortschritt nur im Browser. Mitbestimmung nach § 87 Abs. 1 Nr. 6 BetrVG: gehört in die Unterlage für den Betriebsrat.
+- **Obergrenze** für den Speicher der Mediathek in der Verwaltung (Kap. 14); ist sie erreicht, sind keine neuen Uploads möglich; ab 90 % werden System-Admins benachrichtigt.
 
 ## 9. Nachrichten
 
@@ -427,6 +445,7 @@ Nur Mandanten-Admins (eigener Mandant) und System-Admins.
 | Regeln für Inhalte   | Anheften, Dringende Meldungen, Schreibrechte, Kalender, Zuständigkeiten, Hinter den Kulissen, Schwarzes Brett, Hub-Anträge, Reaktionen                        |
 | Benachrichtigungen   | Web Push, E-Mail (SMTP), Teams (Meldungen, App-Paket, Aussehen); Status und Testnachricht                                                                     |
 | Rückmeldungen        | Eingegangene Fehler und Ideen bearbeiten, beantworten                                                                                                         |
+| Speicher             | Speicherorte (lokal, S3-kompatibel), Zuordnung je Inhaltsart, Umzug vorhandener Dateien, Obergrenze der Mediathek (nur System-Admins, siehe 18)               |
 | Löschfristen         | Kap. 15                                                                                                                                                       |
 | Protokoll            | Änderungen in der Verwaltung                                                                                                                                  |
 | System               | Startklar, Version, Zustand, Sicherungen                                                                                                                      |
@@ -504,7 +523,13 @@ Weitere Regeln:
 
 - Docker Compose: Anwendung, PostgreSQL und Dienst `backup`. Die Images baut GitHub Actions je Release (`ghcr.io/extrempro/intranet`, `…/intranet-backup`); die Version wird über `INTRANET_VERSION` gewählt.
 - Erreichbar über einen Reverse Proxy; Bereitstellung mit fertigen Images aus der GitHub Container Registry. Konfiguration über Umgebungsvariablen (keine Secrets im Repo).
-- Dateien verschlüsselt in einem eigenen Volume.
+- Dateien vom Intranet verschlüsselt, lokal in einem eigenen Volume oder in einem S3-kompatiblen Objektspeicher.
+- **Speicher** (Verwaltung → Speicher, nur System-Admins, nach erneuter Anmeldung, protokolliert):
+  - Speicherort „Lokal“ ist immer vorhanden. S3-Speicher mit Name, Endpoint, Region, Bucket und Zugangsdaten; der Secret Key wird verschlüsselt gespeichert und nie angezeigt. Endpoint nur per HTTPS und nicht auf interne Adressen (auch nicht nach der Namensauflösung).
+  - „Verbindung prüfen“ testet Schreiben, Lesen und Löschen und zeigt, ob die Versionierung im Bucket an ist.
+  - Zuordnung je Inhaltsart: Dateien in Inhalten (Anhänge, Bilder, Dokumente), Pläne und Speiseplan, Profilfotos und Bilder der Einheiten, Bildschirmfotos aus Rückmeldungen, Videos der Mediathek. Neue Dateien landen sofort am gewählten Ort.
+  - Umzug vorhandener Dateien als Hintergrundauftrag: verschlüsselten Inhalt kopieren, mit Prüfsumme vergleichen, erst dann am alten Ort löschen; Fortschritt sichtbar, Abbruch jederzeit, setzt nach einem Neustart fort.
+  - Bucket privat; die Zugangsdaten sollten nur auf diesen Bucket zugreifen. Sicherung im Bucket über Versionierung und Lifecycle-Regel; die Datenbanksicherung enthält nur die Verweise. Für einen externen Speicher ist ein AV-Vertrag nötig.
 - **Sicherung** von Datenbank und Dateien: täglich, mit age verschlüsselt, 30 Tage Aufbewahrung, wöchentlicher Wiederherstellungstest; Zustand unter Verwaltung → System.
 - **Startklar** (Verwaltung → System) zeigt, ob alles für den Betrieb eingerichtet ist. Schritt für Schritt: `docs/inbetriebnahme.md`.
 - Firewall-Freigaben ausgehend siehe Kap. 16.

@@ -99,16 +99,28 @@ Tenant-ID und Client-ID stehen auf der Übersichtsseite der Registrierung.
    - **Sicherung**: Beim ersten Start sichert der Dienst sofort und testet die Wiederherstellung. Nach ein paar Minuten muss der Punkt grün sein.
 6. Weitere Mandanten, Abteilungen, Hubs und Standorte anlegen (Handbuch „Verwaltung im Überblick“).
 
-## 7. Teams-App
+## 7. Speicher (optional: S3)
+
+Ohne weitere Einstellung liegen alle Dateien lokal im Volume `files-data`. Für große Mengen, etwa Videos, lässt sich ein S3-kompatibler Objektspeicher anbinden:
+
+1. Beim Anbieter einen **privaten Bucket** anlegen und die **Versionierung** einschalten. Eine **Lifecycle-Regel** löscht alte Versionen nach einer Frist (z. B. 30 Tage).
+2. Zugangsdaten anlegen, die **nur auf diesen Bucket** zugreifen können. Einen AV-Vertrag mit dem Anbieter abschließen.
+3. **Verwaltung → Speicher → S3-Speicher hinzufügen**: Name, Endpoint (nur `https://`), Region, Bucket, Access Key, Secret Key. Das Intranet prüft die Verbindung (Schreiben, Lesen, Löschen, Versionierung) vor dem Speichern.
+4. Unter **Was wo liegt** je Inhaltsart den Speicherort wählen. Mit „Vorhandene Dateien umziehen“ zieht ein Hintergrundauftrag die bisherigen Dateien um: kopieren, prüfen, erst dann am alten Ort löschen.
+
+Die Dateien im Bucket sind vom Intranet verschlüsselt; der Anbieter sieht keine Inhalte. Die Sicherung des Intranets (Dienst `backup`) enthält für diese Dateien nur die Verweise in der Datenbank; gesichert werden sie über die Versionierung im Bucket.
+
+## 8. Teams-App
 
 1. Verwaltung → Benachrichtigungen → Teams: **Aussehen** festlegen, Teams-Meldungen einschalten, **App-Paket** herunterladen.
 2. Im **Teams Admin Center** unter „Apps verwalten“ hochladen und per **Setup-Richtlinie** für die Intranet-Gruppe installieren.
 3. Die **App-ID** (steht unter „Aussehen der Teams-App“) als `TEAMS_APP_ID` in die `.env` eintragen. So bleibt sie auch nach einer Neuinstallation mit neuer Datenbank gleich (eine Wiederherstellung aus der Sicherung behält sie ohnehin); sonst meldet Teams „App nicht gefunden“ und die App muss neu verteilt werden. Nach einer neuen Datenbank beginnt die Paketversion wieder bei 1.0.1: vor dem Aktualisieren im Teams Admin Center so oft „Neue Version erzeugen“, bis sie über der hochgeladenen liegt.
 4. „Testmeldung an mich“ senden und in Teams auf Desktop, im Browser, auf iPhone und Android prüfen: Die Meldung erscheint unter „Aktivität“, ein Klick öffnet das Intranet.
 
-## 8. Vor dem Start
+## 9. Vor dem Start
 
 - [ ] Startklar ohne Fehler und Hinweise
+- [ ] Falls S3 genutzt wird: Verbindung geprüft, Versionierung an, AV-Vertrag abgeschlossen
 - [ ] Wiederherstellen einmal geprobt ([backup/README.md](../backup/README.md)), privater age-Schlüssel und `ENCRYPTION_KEY` im Passwortmanager
 - [ ] Lokalen Admin ausprobiert (lokal anmelden, Verwaltung öffnen), Zugang und Wiederherstellungscodes im Passwortmanager
 - [ ] Clientgeheimnis-Ablauf im Kalender
@@ -116,7 +128,7 @@ Tenant-ID und Client-ID stehen auf der Übersichtsseite der Registrierung.
 - [ ] Externer Penetrationstest ([docs/sicherheit.md](sicherheit.md), offene Punkte)
 - [ ] Inhalte: Startseite, erste Neuigkeiten, Rechtliches, FAQs
 
-## 9. Updates
+## 10. Updates
 
 1. In den [Releases](https://github.com/extrempro/intranet/releases) nachsehen, was sich geändert hat.
 2. Vor größeren Updates von Hand sichern: `docker compose exec backup sicherung.sh`.
@@ -125,7 +137,7 @@ Tenant-ID und Client-ID stehen auf der Übersichtsseite der Registrierung.
 
 Zurück auf die vorige Version geht nur, wenn das Update keine Migration enthielt. Sonst die Sicherung von vor dem Update wiederherstellen.
 
-## 10. Störungen
+## 11. Störungen
 
 - **Logs**: `docker compose logs app`. Docker behält je Container 3 × 10 MB.
 - **Anmeldung mit Microsoft geht nicht**: mit dem lokalen Admin anmelden, unter Anmeldung „Verbindung prüfen“. Häufig: Clientgeheimnis abgelaufen, Administratorzustimmung fehlt, `ORIGIN` passt nicht zur Umleitungs-URI.

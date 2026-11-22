@@ -28,6 +28,8 @@ export const init: ServerInit = async () => {
 	startNotifier();
 	const { startEntraSync } = await import('#lib/server/auth/entra-sync.ts');
 	startEntraSync();
+	const { startUmzuege } = await import('#lib/server/files/umzug.ts');
+	startUmzuege();
 };
 
 /**

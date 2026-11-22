@@ -48,7 +48,8 @@ test('Verwaltung für System-Admins', async ({ page }) => {
 		'/verwaltung',
 		'/verwaltung/abteilungen',
 		'/verwaltung/benutzer',
-		'/verwaltung/regeln'
+		'/verwaltung/regeln',
+		'/verwaltung/speicher'
 	]) {
 		const antwort = await page.goto(pfad);
 		expect(antwort?.status(), pfad).toBe(200);
