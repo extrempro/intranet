@@ -58,7 +58,7 @@ describe.skipIf(!url)('Fehlermeldungen mit Bildschirmfoto', () => {
 		await migrateWithRetry(() => runMigrations());
 		fb = await import('./feedback.ts');
 		await db.execute(sql`
-			insert into tenants (id, name, short_name, is_main) values (${T}, 'Oper', 'HSO', true)`);
+			insert into tenants (id, name, short_name, is_main) values (${T}, 'Oper', 'BH', true)`);
 		await db.execute(sql`
 			insert into persons (id, tenant_id, email, display_name, auth_source) values
 				(${ICH}, ${T}, 'ich@oper.de', 'Ich', 'local'),

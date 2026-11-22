@@ -2,8 +2,8 @@
 -- Zwei Mandanten, eine Abteilung, zwei Hubs und vier Personen mit festen
 -- Sitzungen. Das Cookie enthält das Token, die Datenbank nur dessen SHA-256.
 insert into tenants (id, name, short_name, is_main) values
-	('00000000-0000-4000-8000-000000000001', 'Staatsoper Hamburg', 'HSO', true),
-	('00000000-0000-4000-8000-000000000002', 'Hamburg Ballett', 'HB', false);
+	('00000000-0000-4000-8000-000000000001', 'Beispielhaus', 'BH', true),
+	('00000000-0000-4000-8000-000000000002', 'Zweithaus', 'ZH', false);
 
 insert into units (id, tenant_id, type, name, slug, is_central, about) values
 	('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-000000000001', 'abteilung', 'IT', 'it', true, null),
@@ -14,7 +14,7 @@ insert into persons (id, tenant_id, email, display_name, auth_source, position) 
 	('00000000-0000-4000-8000-0000000000c1', '00000000-0000-4000-8000-000000000001', 'ada@oper.test', 'Ada Admin', 'local', 'IT-Leitung'),
 	('00000000-0000-4000-8000-0000000000c2', '00000000-0000-4000-8000-000000000001', 'nils@oper.test', 'Nils Normal', 'local', 'Bühnentechnik'),
 	('00000000-0000-4000-8000-0000000000c3', '00000000-0000-4000-8000-000000000001', 'hanna@oper.test', 'Hanna Hub', 'local', 'Kostüm'),
-	('00000000-0000-4000-8000-0000000000c4', '00000000-0000-4000-8000-000000000002', 'bea@ballett.test', 'Bea Bauer', 'local', 'Tanz');
+	('00000000-0000-4000-8000-0000000000c4', '00000000-0000-4000-8000-000000000002', 'bea@zweithaus.test', 'Bea Bauer', 'local', 'Tanz');
 
 insert into role_assignments (person_id, role, scope) values
 	('00000000-0000-4000-8000-0000000000c1', 'system_admin', 'all');

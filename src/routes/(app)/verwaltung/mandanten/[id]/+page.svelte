@@ -106,12 +106,7 @@
 			<form method="POST" action="?/domainHinzu" class="zeile" use:enhance>
 				<label class="feld">
 					<span>Domain hinzufügen</span>
-					<input
-						name="domain"
-						required
-						placeholder="z. B. staatsoper-hamburg.de"
-						autocomplete="off"
-					/>
+					<input name="domain" required placeholder="z. B. example.org" autocomplete="off" />
 				</label>
 				<button class="knopf zweit" type="submit">Hinzufügen</button>
 			</form>

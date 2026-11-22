@@ -40,7 +40,7 @@ describe.skipIf(!url)('Passwort vergessen', () => {
 		verify = pw.verifyPassword;
 		const altHash = await pw.hashPassword('altes passwort 123');
 		await db.execute(
-			sql`insert into tenants (id, name, short_name, is_main) values (${T}, 'Oper', 'HSO', true)`
+			sql`insert into tenants (id, name, short_name, is_main) values (${T}, 'Oper', 'BH', true)`
 		);
 		await db.execute(sql`
 			insert into persons (id, tenant_id, email, display_name, auth_source, entra_oid, status, disabled_at, disabled_by) values

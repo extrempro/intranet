@@ -57,12 +57,12 @@ describe.skipIf(!url)('Hub-Inhalte', () => {
 		hi = await import('./hub-inhalte.ts');
 		units = await import('./units.ts');
 		await db.execute(sql`insert into tenants (id, name, short_name, is_main) values
-			(${T1}, 'Oper', 'HSO', true), (${T2}, 'Ballett', 'HB', false)`);
+			(${T1}, 'Oper', 'BH', true), (${T2}, 'Zweithaus', 'ZH', false)`);
 		await db.execute(sql`insert into units (id, tenant_id, type, name, slug, is_central) values
 			(${ZENTRAL}, ${T1}, 'hub', 'Chor', 'chor', true), (${EIGEN}, ${T1}, 'hub', 'Laufen', 'laufen', false)`);
 		await db.execute(sql`insert into persons (id, tenant_id, email, display_name, auth_source) values
 			(${TEAM}, ${T1}, 'team@oper.de', 'Team', 'local'),
-			(${FREMD}, ${T2}, 'fremd@ballett.de', 'Fremd', 'local'),
+			(${FREMD}, ${T2}, 'fremd@zweithaus.de', 'Fremd', 'local'),
 			(${DOKS}, ${T1}, 'doks@oper.de', 'Doks', 'local')`);
 		await db.execute(sql`insert into unit_members (unit_id, person_id, may_write_documents) values
 			(${ZENTRAL}, ${TEAM}, false), (${EIGEN}, ${TEAM}, false), (${ZENTRAL}, ${DOKS}, true)`);
@@ -108,8 +108,8 @@ describe.skipIf(!url)('Hub-Inhalte', () => {
 	});
 
 	it('Ansprechpersonen: zentrale Hubs aus allen Mandanten, sonst nur der eigene', async () => {
-		await hi.kontaktHinzufuegen(team, ZENTRAL, 'fremd@ballett.de', 'Kostüme');
-		await expect(hi.kontaktHinzufuegen(team, EIGEN, 'fremd@ballett.de', '')).rejects.toThrow();
+		await hi.kontaktHinzufuegen(team, ZENTRAL, 'fremd@zweithaus.de', 'Kostüme');
+		await expect(hi.kontaktHinzufuegen(team, EIGEN, 'fremd@zweithaus.de', '')).rejects.toThrow();
 		expect((await hi.hubInhalte(ZENTRAL)).kontakte[0]).toMatchObject({
 			name: 'Fremd',
 			task: 'Kostüme'
@@ -154,7 +154,7 @@ describe.skipIf(!url)('Hub-Inhalte', () => {
 	});
 
 	it('das Hub-Team holt weitere Personen ins Hub-Team, auch aus anderen Mandanten (zentral)', async () => {
-		await units.addMember(team, ZENTRAL, 'fremd@ballett.de', '127.0.0.1');
+		await units.addMember(team, ZENTRAL, 'fremd@zweithaus.de', '127.0.0.1');
 		await units.setMemberRights(
 			team,
 			ZENTRAL,
@@ -173,7 +173,7 @@ describe.skipIf(!url)('Hub-Inhalte', () => {
 			sql`select 1 from role_assignments where person_id = ${FREMD} and role = 'hub_team' and scope_unit_id = ${ZENTRAL}`
 		);
 		expect(r.length).toBe(1);
-		await expect(units.addMember(team, EIGEN, 'fremd@ballett.de', '127.0.0.1')).rejects.toThrow();
+		await expect(units.addMember(team, EIGEN, 'fremd@zweithaus.de', '127.0.0.1')).rejects.toThrow();
 	});
 
 	it('alles auf einmal speichern: Team, Links, Ansprechpersonen, Seite', async () => {

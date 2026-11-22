@@ -10,6 +10,10 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.19.2 · 22.11.2026 · Allgemeine Beispiele
+
+- Die Beispiele in Eingabefeldern, etwa bei Domains und Gruppennamen, sind jetzt allgemein gehalten.
+
 ## 0.19.1 · 21.11.2026 · Besser zugänglich
 
 - Bildschirmleser lesen beim Logo und beim Kontomenü jetzt denselben Namen vor, den du siehst.

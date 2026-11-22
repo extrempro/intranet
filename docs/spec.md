@@ -42,7 +42,7 @@ Ein gemeinsames Intranet für mehrere Mandanten (Häuser) mit Neuigkeiten, Organ
 ### 1.4 Technik und Betrieb (entschieden)
 
 - SvelteKit mit TypeScript, PostgreSQL mit Drizzle ORM.
-- Betrieb in Docker, erreichbar über den NetBird Reverse Proxy, Bereitstellung per Arcane Git-Sync.
+- Betrieb in Docker hinter einem Reverse Proxy, fertige Images aus der GitHub Container Registry.
 - Repo `extrempro/intranet`, öffentlich, Lizenz MIT.
 - Alle Dateien (Anhänge, PDFs, Profilfotos) werden **verschlüsselt** gespeichert und nur nach Anmeldung ausgeliefert.
 
@@ -67,7 +67,7 @@ Ein gemeinsames Intranet für mehrere Mandanten (Häuser) mit Neuigkeiten, Organ
 - Name, Kürzel, Mandanten-Admins, Branding (Logos für hell und dunkel, Akzent- und Hintergrundfarbe, App-Symbol und Favicon).
 - **E-Mail-Domains**: Der Mandant einer Person wird immer aus der Domain ihrer E-Mail-Adresse abgeleitet.
 - **Leitung je Mandant** (Auswahl aus Einheiten vom Typ Geschäftsführung):
-  - Künstlerische Leitung, z. B. Intendanz (Hauptmandant, Mandant B) oder Generalmusikdirektor (Mandant C).
+  - Künstlerische Leitung, z. B. Intendanz oder Generalmusikdirektion.
   - Kaufmännische Geschäftsführung. Ist bei allen Mandanten dieselbe Einheit eingetragen, gilt sie als zentral.
 - **Zuordnungen**: KBB des Mandanten, Interessenvertretung (Verweis auf eine Seite im Intranet).
 - **Startseite für neue Personen**: Reihenfolge und Sichtbarkeit der Startseiten-Karten (Kap. 7).
@@ -81,7 +81,7 @@ Ein gemeinsames Intranet für mehrere Mandanten (Häuser) mit Neuigkeiten, Organ
 | Abteilung        | Gehört zu einem Mandanten oder ist zentral. |
 | Hub              | Themengruppe, eigene Regeln (Kap. 8.12).    |
 
-- **Titel (Freitext, optional)** für Geschäftsführung und Stabsstelle, z. B. „Intendanz“, „Kaufmännischer Direktor“, „GMD“, „Datenschutzbeauftragte“. Erscheint statt der Typbezeichnung auf der Seite, in Listen und in der Suche. Rechte, Gruppierung und Auswahl hängen weiter am Typ.
+- **Titel (Freitext, optional)** für Geschäftsführung und Stabsstelle, z. B. „Intendanz“, „Kaufmännischer Direktor“, „Datenschutzbeauftragte“. Erscheint statt der Typbezeichnung auf der Seite, in Listen und in der Suche. Rechte, Gruppierung und Auswahl hängen weiter am Typ.
 - **Ausgeblendet**: erscheint nicht in Listen und Suche.
 - Den **Typ** legt die Verwaltung beim Anlegen fest.
 - **Leitung, Stellvertretung und zweite Leitung** (gleichrangig, für Doppelspitzen) pflegt jede Einheit selbst auf ihrer Seite, jeweils als Auswahl aus dem eigenen Team.
@@ -104,7 +104,7 @@ Ein gemeinsames Intranet für mehrere Mandanten (Häuser) mit Neuigkeiten, Organ
 - Anmeldung per OpenID Connect; Zugang über eine Entra-Gruppe.
 - MFA und bedingter Zugriff werden in Entra geregelt.
 - **Abgleich** von Profil, Gruppen und Mandant bei jeder Anmeldung und nächtlich (Standard 02:30 Uhr). In Entra deaktivierte Konten werden gesperrt.
-- **Rollen aus Entra-Gruppen**: Zuordnung Gruppe → Rolle (+ Geltungsbereich), z. B. `IT-GRP-HSO-INTRANET-REDAKTION` → Redaktion · alle Mandanten.
+- **Rollen aus Entra-Gruppen**: Zuordnung Gruppe → Rolle (+ Geltungsbereich), z. B. `GRP-INTRANET-REDAKTION` → Redaktion · alle Mandanten.
 - Microsoft Graph wird mit den nötigsten Berechtigungen genutzt (Profile, Gruppen, Teams-Nachrichten).
 - **In der Teams-App** per Single Sign-on: Teams gibt der App ein Token (Scope `access_as_user`), der Server tauscht es gegen ein Graph-Token (On-Behalf-Of) und gleicht ab wie bei der normalen Anmeldung. Lokale Konten nutzen das Intranet im Browser.
 
@@ -503,7 +503,7 @@ Weitere Regeln:
 ## 18. Betrieb
 
 - Docker Compose: Anwendung, PostgreSQL und Dienst `backup`. Die Images baut GitHub Actions je Release (`ghcr.io/extrempro/intranet`, `…/intranet-backup`); die Version wird über `INTRANET_VERSION` gewählt.
-- Erreichbar über den NetBird Reverse Proxy; Bereitstellung per Arcane Git-Sync aus dem Repo. Konfiguration über Umgebungsvariablen (keine Secrets im Repo).
+- Erreichbar über einen Reverse Proxy; Bereitstellung mit fertigen Images aus der GitHub Container Registry. Konfiguration über Umgebungsvariablen (keine Secrets im Repo).
 - Dateien verschlüsselt in einem eigenen Volume.
 - **Sicherung** von Datenbank und Dateien: täglich, mit age verschlüsselt, 30 Tage Aufbewahrung, wöchentlicher Wiederherstellungstest; Zustand unter Verwaltung → System.
 - **Startklar** (Verwaltung → System) zeigt, ob alles für den Betrieb eingerichtet ist. Schritt für Schritt: `docs/inbetriebnahme.md`.
@@ -527,7 +527,7 @@ Weitere Regeln:
 - Urlaubsbeantragung
 - Organigramm als eigene Darstellung im Intranet, Strukturpflege („Gehört zu“, „Nur im Organigramm“, Beziehungen) und Rolle „Organisation pflegen“
 - Notfall-Upload des Speiseplans durch die Verwaltung
-- Gemeinsame Einheit „Geschäftsführung“ (ersetzt durch Intendanz, kaufmännische Geschäftsführung, GMD)
+- Gemeinsame Einheit „Geschäftsführung“ (ersetzt durch künstlerische Leitung und kaufmännische Geschäftsführung)
 
 ---
 

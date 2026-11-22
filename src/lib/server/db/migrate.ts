@@ -5,7 +5,7 @@ import { APP_ROLE, db } from './index.ts';
 /**
  * Spielt ausstehende Migrationen aus ./drizzle ein und setzt danach das
  * Passwort der App-Rolle aus APP_DATABASE_PASSWORD. Läuft beim Start der
- * Anwendung (hooks.server.ts → init), damit Arcane nach einem Git-Sync
+ * Anwendung (hooks.server.ts → init), damit nach einem Update
  * nichts weiter ausführen muss.
  */
 export async function runMigrations(folder = process.env.MIGRATIONS_DIR ?? 'drizzle') {

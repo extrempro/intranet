@@ -10,11 +10,11 @@ import {
 	type Principal
 } from './access';
 
-const HSO = 'm-hso';
+const HAUPT = 'm-haupt';
 const B = 'm-b';
-const it_ = { id: 'u-it', tenantId: HSO, isCentral: true };
+const it_ = { id: 'u-it', tenantId: HAUPT, isCentral: true };
 const kbbB = { id: 'u-kbb-b', tenantId: B, isCentral: false };
-const kbbHso = { id: 'u-kbb-hso', tenantId: HSO, isCentral: false };
+const kbbHaupt = { id: 'u-kbb-haupt', tenantId: HAUPT, isCentral: false };
 
 function person(overrides: Partial<Principal> = {}): Principal {
 	return { personId: 'p', tenantId: B, roles: [], memberships: [], ...overrides };
@@ -25,14 +25,14 @@ describe('Mandantentrennung', () => {
 		const p = person();
 		expect(canSeeUnit(p, kbbB)).toBe(true);
 		expect(canSeeUnit(p, it_)).toBe(true);
-		expect(canSeeUnit(p, kbbHso)).toBe(false);
+		expect(canSeeUnit(p, kbbHaupt)).toBe(false);
 	});
 
 	it('schützt fremde Einheiten auch bei passender Mitgliedschaft (fehlerhafte Daten)', () => {
 		const p = person({
 			memberships: [
 				{
-					unitId: kbbHso.id,
+					unitId: kbbHaupt.id,
 					isPrimary: false,
 					mayWriteNews: true,
 					mayWriteFaqs: false,
@@ -41,7 +41,7 @@ describe('Mandantentrennung', () => {
 				}
 			]
 		});
-		expect(canWriteNews(p, kbbHso)).toBe(false);
+		expect(canWriteNews(p, kbbHaupt)).toBe(false);
 	});
 });
 
@@ -51,7 +51,7 @@ describe('Verwaltung', () => {
 			roles: [{ role: 'mandanten_admin', scope: 'tenant', scopeTenantId: B, scopeUnitId: null }]
 		});
 		expect(canAdministerTenant(p, B)).toBe(true);
-		expect(canAdministerTenant(p, HSO)).toBe(false);
+		expect(canAdministerTenant(p, HAUPT)).toBe(false);
 		expect(canSeeAdministration(p)).toBe(true);
 	});
 
@@ -59,7 +59,7 @@ describe('Verwaltung', () => {
 		const p = person({
 			roles: [{ role: 'system_admin', scope: 'all', scopeTenantId: null, scopeUnitId: null }]
 		});
-		expect(canAdministerTenant(p, HSO)).toBe(true);
+		expect(canAdministerTenant(p, HAUPT)).toBe(true);
 	});
 
 	it('ohne Rolle keine Verwaltung', () => {
@@ -85,7 +85,7 @@ describe('Einheiten pflegen', () => {
 	it('Redaktion pflegt nur Einheiten ohne eigene Pflege im eigenen Geltungsbereich', () => {
 		expect(canManageUnit(redaktionB, kbbB, false)).toBe(true);
 		expect(canManageUnit(redaktionB, kbbB, true)).toBe(false);
-		expect(isEditorial(redaktionB, HSO)).toBe(false);
+		expect(isEditorial(redaktionB, HAUPT)).toBe(false);
 	});
 });
 

@@ -7,9 +7,9 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 const url = process.env.TEST_DATABASE_URL;
 const MANDANT = {
-	name: 'Staatsoper Hamburg',
-	kurz: 'HSO',
-	domains: 'oper.test, ballett.test',
+	name: 'Beispielhaus',
+	kurz: 'BH',
+	domains: 'oper.test, zweithaus.test',
 	akzent: '#0F6E56',
 	akzentDunkel: '#5DCAA5'
 };

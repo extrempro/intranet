@@ -50,7 +50,7 @@ describe.skipIf(!url)('Erneute Anmeldung', () => {
 		await migrateWithRetry(() => runMigrations());
 		b = await import('./bestaetigung.ts');
 		await db.execute(
-			sql`insert into tenants (id, name, short_name, is_main) values (${T}, 'Oper', 'HSO', true)`
+			sql`insert into tenants (id, name, short_name, is_main) values (${T}, 'Oper', 'BH', true)`
 		);
 		await db.execute(sql`
 			insert into persons (id, tenant_id, email, display_name, auth_source, entra_oid) values

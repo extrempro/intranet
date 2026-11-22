@@ -10,7 +10,7 @@ import type { GraphUser } from './entra-sync-plan.ts';
 const url = process.env.TEST_DATABASE_URL;
 const T = {
 	oper: '00000000-0000-0000-0000-000000000001',
-	ballett: '00000000-0000-0000-0000-000000000002'
+	zweithaus: '00000000-0000-0000-0000-000000000002'
 };
 const G = {
 	zugang: '10000000-0000-0000-0000-000000000001',
@@ -70,9 +70,9 @@ describe.skipIf(!url)('Entra-Abgleich', () => {
 
 		await db.execute(sql`
 			insert into tenants (id, name, short_name, is_main) values
-				(${T.oper}, 'Oper', 'HSO', true), (${T.ballett}, 'Ballett', 'HB', false)`);
+				(${T.oper}, 'Oper', 'BH', true), (${T.zweithaus}, 'Zweithaus', 'ZH', false)`);
 		await db.execute(sql`
-			insert into tenant_domains (domain, tenant_id) values ('oper.test', ${T.oper}), ('ballett.test', ${T.ballett})`);
+			insert into tenant_domains (domain, tenant_id) values ('oper.test', ${T.oper}), ('zweithaus.test', ${T.zweithaus})`);
 		await db.execute(sql`
 			insert into entra_group_roles (group_id, role, scope, scope_tenant_id) values
 				(${G.redaktion}, 'redaktion', 'tenant', ${T.oper})`);
@@ -97,7 +97,7 @@ describe.skipIf(!url)('Entra-Abgleich', () => {
 
 	const alle = {
 		[oid(1)]: { user: { displayName: 'Anna', mail: 'a@oper.test' }, groups: [G.zugang] },
-		[oid(2)]: { user: { displayName: 'Ben B.', mail: 'b@ballett.test' }, groups: [G.zugang] },
+		[oid(2)]: { user: { displayName: 'Ben B.', mail: 'b@zweithaus.test' }, groups: [G.zugang] },
 		[oid(4)]: { user: { displayName: 'Dora', mail: 'd@oper.test' }, groups: [] },
 		[oid(5)]: { user: { displayName: 'Eli', mail: 'e@oper.test' }, groups: [G.zugang] },
 		[oid(6)]: { user: { displayName: 'Fiete', mail: 'f@oper.test' }, groups: [G.zugang] }
@@ -133,7 +133,7 @@ describe.skipIf(!url)('Entra-Abgleich', () => {
 		}>(sql`select id, status, disabled_by, tenant_id, display_name from persons`);
 		const by = Object.fromEntries(rows.map((r) => [r.id, r]));
 		expect(by[P.bleibt].status).toBe('active');
-		expect(by[P.wechselt]).toMatchObject({ tenant_id: T.ballett, display_name: 'Ben B.' });
+		expect(by[P.wechselt]).toMatchObject({ tenant_id: T.zweithaus, display_name: 'Ben B.' });
 		expect(by[P.geloescht]).toMatchObject({ status: 'disabled', disabled_by: 'entra' });
 		expect(by[P.ohneZugang]).toMatchObject({ status: 'disabled', disabled_by: 'entra' });
 		expect(by[P.vonEntraGesperrt]).toMatchObject({ status: 'active', disabled_by: null });

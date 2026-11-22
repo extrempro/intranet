@@ -5,8 +5,8 @@ import { readInitialTenant } from './einrichtung-vorbelegung';
 
 describe('Domains', () => {
 	it('vereinheitlicht', () => {
-		expect(normalizeDomain(' @Staatsoper-Hamburg.DE. ')).toBe('staatsoper-hamburg.de');
-		expect(normalizeDomain('staatsoper.onmicrosoft.com')).toBe('staatsoper.onmicrosoft.com');
+		expect(normalizeDomain(' @Example.ORG. ')).toBe('example.org');
+		expect(normalizeDomain('example.onmicrosoft.com')).toBe('example.onmicrosoft.com');
 	});
 	it('lehnt Ungültiges ab', () => {
 		for (const d of ['', 'localhost', 'a b.de', 'x@y.de', '-a.de', 'a..de'])
@@ -42,14 +42,14 @@ describe('readInitialTenant', () => {
 	it('liest vollständige Angaben', () => {
 		expect(
 			readInitialTenant({
-				INITIAL_TENANT_NAME: 'Staatsoper Hamburg',
-				INITIAL_TENANT_SHORT: 'HSO',
-				INITIAL_TENANT_DOMAINS: 'staatsoper-hamburg.de, staatsoper.onmicrosoft.com'
+				INITIAL_TENANT_NAME: 'Beispielhaus',
+				INITIAL_TENANT_SHORT: 'BH',
+				INITIAL_TENANT_DOMAINS: 'example.org, example.onmicrosoft.com'
 			})
 		).toEqual({
-			name: 'Staatsoper Hamburg',
-			shortName: 'HSO',
-			domains: ['staatsoper-hamburg.de', 'staatsoper.onmicrosoft.com'],
+			name: 'Beispielhaus',
+			shortName: 'BH',
+			domains: ['example.org', 'example.onmicrosoft.com'],
 			accent: null,
 			accentDark: null
 		});

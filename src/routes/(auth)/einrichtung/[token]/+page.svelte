@@ -51,7 +51,7 @@
 				<input
 					name="domains"
 					required
-					placeholder="staatsoper-hamburg.de"
+					placeholder="example.org"
 					value={v?.domains ?? ''}
 					aria-describedby="domains-hinweis"
 				/>

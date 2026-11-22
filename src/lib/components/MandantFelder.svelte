@@ -98,7 +98,7 @@
 <label class="feld">
 	<span>Kürzel</span>
 	<input name="kuerzel" required maxlength="10" value={werte.shortName} />
-	<span class="hinweis">Erscheint oben links, solange kein Logo hochgeladen ist, z. B. HSO.</span>
+	<span class="hinweis">Erscheint oben links, solange kein Logo hochgeladen ist, z. B. BH.</span>
 </label>
 
 <label class="feld">

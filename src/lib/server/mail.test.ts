@@ -55,7 +55,7 @@ describe('E-Mail per SMTP', () => {
 			user: 'intranet',
 			passwordEnc: encryptSecret(new TextEncoder().encode('geheim ü 123')),
 			from: 'intranet@oper.test',
-			fromName: 'Intranet Staatsoper',
+			fromName: 'Intranet Beispielhaus',
 			replyTo: 'it@oper.test'
 		};
 		const { sendMail, mailConfigured } = await import('./mail.ts');
@@ -64,7 +64,7 @@ describe('E-Mail per SMTP', () => {
 		expect(empfangen).toHaveLength(1);
 		expect(empfangen[0]).toMatchObject({ from: 'intranet@oper.test', to: ['kai@oper.test'] });
 		expect(empfangen[0].data).toContain('Reply-To: it@oper.test');
-		expect(empfangen[0].data).toMatch(/From: "?Intranet Staatsoper"? <intranet@oper.test>/);
+		expect(empfangen[0].data).toMatch(/From: "?Intranet Beispielhaus"? <intranet@oper.test>/);
 	});
 
 	it('meldet falsches Passwort verständlich', async () => {

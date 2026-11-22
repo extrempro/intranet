@@ -391,7 +391,7 @@ export const roleAssignments = pgTable(
 
 /**
  * Zuordnung Entra-Gruppe → Rolle mit Geltungsbereich (Kap. 4.1), z. B.
- * IT-GRP-HSO-INTRANET-REDAKTION → Redaktion · alle Mandanten.
+ * GRP-INTRANET-REDAKTION → Redaktion · alle Mandanten.
  * Wird bei jeder Anmeldung angewendet; die daraus entstandenen Rollen
  * (source = 'entra') werden dabei vollständig ersetzt.
  */
