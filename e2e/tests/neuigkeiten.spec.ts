@@ -36,3 +36,22 @@ test('Beitrag schreiben: Entwurf, Rückfrage beim Verlassen, Veröffentlichen', 
 	await page.goto('/entwuerfe');
 	await expect(page.locator(`a[href*="entwurf=${entwurf}"]`)).toHaveCount(0);
 });
+
+test('Lange Liste: Zähler, Monate und Ansicht kompakt bleiben gespeichert', async ({ page }) => {
+	await anmelden(page, 'nils');
+	await page.goto('/neuigkeiten');
+	await expect(page.getByText(/^\d+ von \d+ Beiträgen$/)).toBeVisible();
+	await expect(page.locator('.monat h2').first()).toContainText(/\d{4}/);
+	const kompakt = page.getByRole('button', { name: 'Ansicht: kompakt' });
+	await kompakt.click();
+	await expect(kompakt).toHaveAttribute('aria-pressed', 'true');
+	await expect(page.locator('article.beitrag.kompakt').first()).toBeVisible();
+	await page.reload();
+	await expect(page.getByRole('button', { name: 'Ansicht: kompakt' })).toHaveAttribute(
+		'aria-pressed',
+		'true'
+	);
+	await keineA11yFehler(page);
+	await page.getByRole('button', { name: 'Ansicht: ausführlich' }).click();
+	await expect(page.locator('article.beitrag.kompakt')).toHaveCount(0);
+});

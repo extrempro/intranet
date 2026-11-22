@@ -208,6 +208,26 @@ Rückmeldungen nach einer Aktion („Gespeichert.“, Fehler, Hinweise) müssen 
 - Escape oder ein Klick daneben bricht ab; danach steht der Fokus wieder auf dem Knopf, der gefragt hat.
 - Einzelne, leicht rückgängig zu machende Aktionen (z. B. ein Abo beenden, Favorit entfernen) brauchen keine Rückfrage; alles, was Daten löscht, Rechte entzieht oder andere abmeldet, schon.
 
+### 6.7 Lange Listen (Design-Regel)
+
+Listen, die mit der Zeit wachsen (Neuigkeiten, Pläne, Mitglieder, Mediathek …), werden **nie still abgeschnitten**. Wer nicht alles sieht, erfährt, wie viel es gibt, und kommt weiter.
+
+- **Zähler** über der Liste: „20 von 67 Beiträgen“.
+- **Weiter** unter der Liste: Knopf „20 ältere laden · noch 47“ (bei Personen „24 weitere anzeigen“, dazu „Alle n anzeigen“). Kein Endlos-Scrollen, keine Seitenzahlen. Am Ende steht „Das waren alle 67 Beiträge.“ und „Nach oben“.
+- Der Stand steht in der Adresse (`?anzahl=40`), „Zurück“ führt an dieselbe Stelle; ohne JavaScript ist der Knopf ein normaler Link.
+- Nach dem Laden steht der Fokus auf dem ersten neuen Eintrag; Screenreader hören „20 weitere geladen“.
+- **Gliedern**: zeitliche Listen nach Monat („November 2026 · 12 Beiträge“), Personen nach Anfangsbuchstaben des Nachnamens. Zeiträume (Pläne, Termine): Aktuell und Demnächst als Kacheln oben, darunter das Archiv mit Jahr-Chips („2025 · 325“).
+- Personenlisten: Leitung und Redaktion oben, dann Suche, dann alle Mitglieder.
+- **Ansicht**: Listen mit großen Karten haben neben der Suche einen Umschalter mit zwei Symbolen, **Ausführlich** und **Kompakt** (Tooltip und `aria-label` „Ansicht: …“). Kompakt: kleinerer Titel, eine Zeile Auszug, kleine Vorschau, ohne „Weiterlesen“ und Zielgruppen-Schild; auf dem Handy ohne Vorschau. Die Wahl gilt je Person auf allen Geräten.
+
+|                   | PC (ab 1024 px)                     | Tablet (600–1023 px)      | Handy (unter 600 px)                          |
+| ----------------- | ----------------------------------- | ------------------------- | --------------------------------------------- |
+| Suche, Ansicht    | eine Zeile, Umschalter rechts       | wie PC                    | Suche schmaler, Umschalter in derselben Zeile |
+| Filter, Zähler    | Chips in einer Zeile, Zähler rechts | wie PC                    | Chips umbrechen, Zähler darunter              |
+| Karten            | Vorschau rechts                     | Vorschau rechts, schmaler | Vorschau oben, eine Spalte                    |
+| Kacheln, Personen | 3 bzw. 4 Spalten                    | 2 Spalten                 | 1 Spalte                                      |
+| Weiter-Knopf      | mittig, mind. 260 px breit          | wie PC                    | volle Breite, mind. 44 px hoch                |
+
 ---
 
 ## 7. Startseite

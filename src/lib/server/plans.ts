@@ -87,6 +87,58 @@ export async function listPlans(unitId: string) {
 		.orderBy(desc(plans.validFrom), asc(plans.title));
 }
 
+function titelFilter(q?: string | null) {
+	const t = q?.trim().slice(0, 100);
+	if (!t) return undefined;
+	return sql`${plans.title} ilike ${`%${t.replace(/[\\%_]/g, (c) => `\\${c}`)}%`}`;
+}
+
+/** Aktuelle und kommende Pläne (gültig bis heute oder später), älteste zuerst. */
+export async function currentPlans(unitId: string, heute: string, q?: string | null) {
+	return db
+		.select(planColumns)
+		.from(plans)
+		.innerJoin(files, eq(files.id, plans.fileId))
+		.where(and(eq(plans.unitId, unitId), gte(plans.validUntil, heute), titelFilter(q)))
+		.orderBy(asc(plans.validFrom), asc(plans.title));
+}
+
+/** Archiv: Jahre (nach Beginn) mit Anzahl abgelaufener Pläne, neueste zuerst. */
+export async function archiveYears(unitId: string, heute: string, q?: string | null) {
+	const jahr = sql<number>`extract(year from ${plans.validFrom})::int`;
+	return db
+		.select({ jahr, n: sql<number>`count(*)::int` })
+		.from(plans)
+		.where(and(eq(plans.unitId, unitId), lt(plans.validUntil, heute), titelFilter(q)))
+		.groupBy(jahr)
+		.orderBy(desc(jahr));
+}
+
+/** Abgelaufene Pläne eines Jahres, neueste zuerst (lange Liste, Kap. 6.7). */
+export async function archivePlans(
+	unitId: string,
+	heute: string,
+	jahr: number,
+	limit: number,
+	q?: string | null
+) {
+	return db
+		.select(planColumns)
+		.from(plans)
+		.innerJoin(files, eq(files.id, plans.fileId))
+		.where(
+			and(
+				eq(plans.unitId, unitId),
+				lt(plans.validUntil, heute),
+				gte(plans.validFrom, `${jahr}-01-01`),
+				lt(plans.validFrom, `${jahr + 1}-01-01`),
+				titelFilter(q)
+			)
+		)
+		.orderBy(desc(plans.validFrom), asc(plans.title))
+		.limit(limit);
+}
+
 export async function getPlan(p: Principal, id: string) {
 	if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
 	const [plan] = await db

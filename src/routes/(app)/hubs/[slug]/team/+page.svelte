@@ -6,10 +6,28 @@
 	import Icon from '#lib/components/Icon.svelte';
 	import HubLeer from '#lib/components/hub/HubLeer.svelte';
 	import { reiterVon } from '#lib/hub-seite.ts';
+	import { matchesSearch } from '#lib/departments.ts';
+	import { tick } from 'svelte';
 
 	let { data } = $props();
 	const h = $derived(data.hub);
 	const r = $derived(reiterVon(data, 'team'));
+
+	// Großes Hub-Team: Suche und erst 12 Personen (Kap. 6.7)
+	const ERSTE = 12;
+	let suche = $state('');
+	let alle = $state(false);
+	const gross = $derived(h.team.length > ERSTE);
+	const treffer = $derived(
+		h.team.filter((m) => matchesSearch(suche, [m.name, m.task ?? '', m.abteilung ?? '']))
+	);
+	const sichtbar = $derived(alle || suche ? treffer : treffer.slice(0, ERSTE));
+	let liste = $state<HTMLUListElement>();
+	async function alleZeigen() {
+		alle = true;
+		await tick();
+		liste?.querySelectorAll<HTMLElement>('li')[ERSTE]?.querySelector<HTMLElement>('a')?.focus();
+	}
 	const BRIEF =
 		'M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2zM3 7l9 6l9 -6';
 	const CHAT =
@@ -46,8 +64,23 @@
 					<p class="unter">
 						Personen aus verschiedenen Abteilungen, die diesen Hub gemeinsam pflegen.
 					</p>
-					<ul class="zeilen">
-						{#each h.team as m (m.id)}
+					{#if gross}
+						<label class="sr-only" for="team-suche">Im Hub-Team suchen</label>
+						<input
+							id="team-suche"
+							class="teamsuche"
+							type="search"
+							bind:value={suche}
+							placeholder="Name, Aufgabe oder Abteilung"
+							autocomplete="off"
+							maxlength="100"
+						/>
+						<p class="unter" role="status">
+							{sichtbar.length} von {suche ? treffer.length : h.team.length} Personen
+						</p>
+					{/if}
+					<ul class="zeilen" bind:this={liste}>
+						{#each sichtbar as m (m.id)}
 							<li>
 								<Avatar name={m.name} foto={m.foto} groesse={44} />
 								<span class="spalte">
@@ -81,6 +114,11 @@
 							</li>
 						{/each}
 					</ul>
+					{#if gross && !alle && !suche && treffer.length > ERSTE}
+						<button type="button" class="knopf zweit mehr" onclick={alleZeigen}>
+							Alle {h.team.length} anzeigen
+						</button>
+					{/if}
 				</section>
 			{/if}
 			{#if h.kontakte.length}
@@ -156,6 +194,14 @@
 	}
 	.name {
 		font-weight: 600;
+	}
+	.teamsuche {
+		width: 100%;
+		margin: 6px 0 4px;
+	}
+	.mehr {
+		width: 100%;
+		margin-top: 8px;
 	}
 	.rund {
 		width: 44px;

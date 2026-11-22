@@ -320,6 +320,10 @@ export const personPreferences = pgTable('person_preferences', {
 	hubDefaults: jsonb('hub_defaults').$type<{ bell: boolean; push: boolean; email: boolean }>(),
 	/** Zuletzt Neuigkeiten angesehen: Zähler „neu“ in der Navigation */
 	newsSeenAt: timestamp('news_seen_at', { withTimezone: true }),
+	/** Ansicht langer Listen mit Karten (Kap. 6.7) */
+	listView: text('list_view', { enum: ['ausfuehrlich', 'kompakt'] })
+		.notNull()
+		.default('ausfuehrlich'),
 	/** Hinweis „Neu in Version …“ nach einem Update zeigen */
 	versionHint: boolean('version_hint').notNull().default(true),
 	/** Zuletzt gesehene Version des Intranets (für den Hinweis) */

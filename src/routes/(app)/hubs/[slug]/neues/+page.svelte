@@ -3,11 +3,19 @@
 	import { resolve } from '$app/paths';
 	import HubBeitraege from '#lib/components/hub/HubBeitraege.svelte';
 	import HubLeer from '#lib/components/hub/HubLeer.svelte';
+	import MehrLaden from '#lib/components/MehrLaden.svelte';
+	import { page } from '$app/state';
+	import { mitZahl } from '#lib/lange-liste.ts';
 	import { reiterVon } from '#lib/hub-seite.ts';
 
 	let { data } = $props();
 	const h = $derived(data.hub);
 	const r = $derived(reiterVon(data, 'neues'));
+	const mehrHref = $derived.by(() => {
+		const u = new URL(page.url.href);
+		u.searchParams.set('anzahl', String(data.anzahl + data.schritt));
+		return u.search;
+	});
 	const schreiben = $derived(`${resolve('/(app)/neuigkeiten/neu')}?absender=${h.id}`);
 </script>
 
@@ -22,8 +30,17 @@
 			</a>{/if}
 	</div>
 	{#if data.beitraege.length}
+		<p class="hinweis zaehler">
+			{data.beitraege.length} von {mitZahl(data.gesamt, 'Beitrag', 'Beiträgen')}
+		</p>
 		<HubBeitraege beitraege={data.beitraege} />
-		{#if data.weitere}<p class="hinweis">Hier stehen die 50 neuesten Beiträge.</p>{/if}
+		<MehrLaden
+			geladen={data.beitraege.length}
+			gesamt={data.gesamt}
+			schritt={data.schritt}
+			href={mehrHref}
+			einheit={['Beitrag', 'Beiträge']}
+		/>
 	{:else}
 		<HubLeer
 			titel="Noch keine Beiträge"

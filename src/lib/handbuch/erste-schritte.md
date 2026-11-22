@@ -17,6 +17,12 @@ Das Intranet bündelt Neuigkeiten, Organisation, Wissen und Service für alle H�
 
 Am PC stehen die Bereiche links, am Handy unten.
 
+## Lange Listen
+
+Neuigkeiten, Aus den Hubs und das Archiv der Pläne zeigen zuerst die neuesten Einträge. Über der Liste steht, wie viele es insgesamt gibt („20 von 67 Beiträgen“), unten holst du mit **„ältere laden“** die nächsten dazu. Die Liste ist nach Monaten gegliedert.
+
+Neben der Suche schaltest du mit zwei Symbolen zwischen **ausführlich** und **kompakt** um. Kompakt zeigt mehr Beiträge auf einmal: kleinere Vorschau, eine Zeile Text. Die Wahl gilt für dein Konto, also auf allen Geräten.
+
 ## Oben rechts
 
 - **Suche**: Suchfeld bzw. Lupe, Tastenkürzel `/`.

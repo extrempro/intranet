@@ -2,18 +2,29 @@
 	import { livesuche } from '#lib/livesuche.ts';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import Beitragskarte from '#lib/components/Beitragskarte.svelte';
+	import AnsichtUmschalter from '#lib/components/AnsichtUmschalter.svelte';
+	import MehrLaden from '#lib/components/MehrLaden.svelte';
+	import { mitZahl, nachMonat } from '#lib/lange-liste.ts';
 	import Icon from '#lib/components/Icon.svelte';
 	const PIN = 'M15 4.5l-4 4l-4 1.5l-1.5 1.5l7 7l1.5 -1.5l1.5 -4l4 -4M9 15l-4.5 4.5M14.5 4l5.5 5.5';
 
 	let { data, form } = $props();
 
 	let alleAngehefteten = $state(false);
-	const angeheftet = $derived(data.items.filter((i) => i.pinned && !i.planned));
+	const angeheftet = $derived(data.angeheftet);
 	const sichtbarAngeheftet = $derived(
 		alleAngehefteten ? angeheftet : angeheftet.slice(0, data.angeheftetSichtbar)
 	);
-	const rest = $derived(data.items.filter((i) => !(i.pinned && !i.planned)));
+	const gruppen = $derived(nachMonat(data.items, (i) => i.publishAt, data.monate));
+	let ansicht = $derived(data.ansicht);
+	const mehrHref = $derived.by(() => {
+		const u = new URL(page.url.href);
+		u.searchParams.set('anzahl', String(data.anzahl + data.schritt));
+		return u.search;
+	});
+	const leer = $derived(data.items.length === 0 && angeheftet.length === 0);
 	const filter = $derived([
 		{ k: 'alle', l: 'Alle' },
 		{ k: 'meine', l: 'Meine' },
@@ -60,27 +71,30 @@
 	</div>
 	{#if form?.fehler}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
 
-	<form
-		method="GET"
-		class="suche"
-		role="search"
-		data-sveltekit-reset="false"
-		data-sveltekit-replacestate
-	>
-		{#if data.filter !== 'alle'}<input type="hidden" name="filter" value={data.filter} />{/if}
-		{#if data.von}<input type="hidden" name="von" value={data.von} />{/if}
-		<label class="feld">
-			<span class="sr-only">In Neuigkeiten suchen</span>
-			<input
-				use:livesuche
-				type="search"
-				name="q"
-				value={data.q}
-				maxlength="100"
-				placeholder="In Neuigkeiten suchen …"
-			/>
-		</label>
-	</form>
+	<div class="suchzeile">
+		<form
+			method="GET"
+			class="suche"
+			role="search"
+			data-sveltekit-reset="false"
+			data-sveltekit-replacestate
+		>
+			{#if data.filter !== 'alle'}<input type="hidden" name="filter" value={data.filter} />{/if}
+			{#if data.von}<input type="hidden" name="von" value={data.von} />{/if}
+			<label class="feld">
+				<span class="sr-only">In Neuigkeiten suchen</span>
+				<input
+					use:livesuche
+					type="search"
+					name="q"
+					value={data.q}
+					maxlength="100"
+					placeholder="In Neuigkeiten suchen …"
+				/>
+			</label>
+		</form>
+		<AnsichtUmschalter bind:ansicht />
+	</div>
 
 	<form method="GET" class="filter" data-tour="filter" data-sveltekit-reset="false">
 		<nav class="pillen" aria-label="Filter">
@@ -108,9 +122,12 @@
 			</select>
 		</label>
 		<noscript><button class="knopf zweit" type="submit">Anwenden</button></noscript>
+		{#if data.gesamt}<p class="zaehler">
+				{data.items.length} von {mitZahl(data.gesamt, 'Beitrag', 'Beiträgen')}
+			</p>{/if}
 	</form>
 
-	{#if data.items.length === 0}
+	{#if leer}
 		<p class="karte leer" role="status">
 			{data.q ? `Keine Beiträge zu „${data.q}“ gefunden.` : 'Keine Beiträge gefunden.'}
 			{#if data.q}
@@ -156,9 +173,25 @@
 		</section>
 	{/if}
 
-	<section aria-label="Beiträge" class="liste" data-tour="beitraege">
-		{#each rest as item (item.id)}<Beitragskarte {item} />{/each}
-	</section>
+	<div class="liste" data-tour="beitraege">
+		{#each gruppen as g (g.monat)}
+			<section class="monat" aria-labelledby="monat-{g.monat}">
+				<h2 id="monat-{g.monat}">
+					{g.titel}<span class="anzahl">{mitZahl(g.anzahl, 'Beitrag', 'Beiträge')}</span>
+				</h2>
+				{#each g.eintraege as item (item.id)}
+					<Beitragskarte {item} ebene={3} kompakt={ansicht === 'kompakt'} />
+				{/each}
+			</section>
+		{/each}
+	</div>
+	<MehrLaden
+		geladen={data.items.length}
+		gesamt={data.gesamt}
+		schritt={data.schritt}
+		href={mehrHref}
+		einheit={['Beitrag', 'Beiträge']}
+	/>
 </div>
 
 <style>
@@ -184,8 +217,31 @@
 		cursor: pointer;
 		border-radius: 10px;
 	}
+	.suchzeile {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
 	.suche {
-		max-width: 560px;
+		flex: 0 1 560px;
+		min-width: 0;
+	}
+	.suchzeile :global(.ansicht) {
+		margin-left: auto;
+	}
+	.zaehler {
+		margin: 0 0 0 auto;
+		font-size: 14px;
+		color: var(--mu);
+	}
+	@media (max-width: 599px) {
+		.suche {
+			flex: 1 1 0;
+		}
+		.zaehler {
+			flex: 1 1 100%;
+			margin: 0;
+		}
 	}
 	.filter {
 		display: flex;
@@ -271,8 +327,30 @@
 		min-height: 36px;
 		padding: 0;
 	}
-	.liste {
+	.liste,
+	.monat {
 		display: grid;
 		gap: 16px;
+	}
+	.liste {
+		gap: 20px;
+	}
+	.monat h2 {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		margin: 4px 0 -4px;
+		font-size: 15px;
+		color: var(--mu2, var(--tx));
+	}
+	.monat h2::after {
+		content: '';
+		flex: 1;
+		height: 1px;
+		background: var(--bd);
+	}
+	.anzahl {
+		font-weight: 500;
+		color: var(--mu);
 	}
 </style>

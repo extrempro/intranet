@@ -14,7 +14,7 @@
 
 <ul class="beitraege">
 	{#each beitraege as b (b.id)}
-		<li>
+		<li data-eintrag>
 			<a class="karte beitrag" href={resolve('/(app)/neuigkeiten/[id]', { id: b.id })}>
 				{#if b.bild}
 					<img class="vorschau" src={b.bild} alt="" loading="lazy" />

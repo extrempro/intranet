@@ -330,6 +330,13 @@
       "when": 1795365423606,
       "tag": "0046_vorschlag_beim_hochladen",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1795377390144,
+      "tag": "0047_listenansicht",
+      "breakpoints": true
     }
   ]
 }

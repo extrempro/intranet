@@ -1,0 +1,1 @@
+ALTER TABLE "person_preferences" ADD COLUMN "list_view" text DEFAULT 'ausfuehrlich' NOT NULL;

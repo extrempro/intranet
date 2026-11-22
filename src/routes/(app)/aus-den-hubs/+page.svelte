@@ -4,11 +4,21 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import Beitragskarte from '#lib/components/Beitragskarte.svelte';
+	import AnsichtUmschalter from '#lib/components/AnsichtUmschalter.svelte';
+	import MehrLaden from '#lib/components/MehrLaden.svelte';
+	import { mitZahl, nachMonat } from '#lib/lange-liste.ts';
 	import { actionUrl } from '#lib/action-url.ts';
 
 	import { livesuche } from '#lib/livesuche.ts';
 
 	let { data, form } = $props();
+	let ansicht = $derived(data.ansicht);
+	const gruppen = $derived(nachMonat(data.items, (i) => i.publishAt, data.monate));
+	const mehrHref = $derived.by(() => {
+		const u = new URL(page.url.href);
+		u.searchParams.set('anzahl', String(data.anzahl + data.schritt));
+		return u.search;
+	});
 	function href(o: { alle?: boolean; angeheftet?: boolean }) {
 		const alle = o.alle ?? data.alle;
 		const angeheftet = o.angeheftet ?? data.angeheftet;
@@ -42,28 +52,31 @@
 	</div>
 	{#if form?.fehler}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
 
-	<form
-		method="GET"
-		class="suche"
-		role="search"
-		data-sveltekit-reset="false"
-		data-sveltekit-replacestate
-	>
-		{#if data.alle}<input type="hidden" name="ansicht" value="alle" />{/if}
-		{#if data.angeheftet}<input type="hidden" name="filter" value="angeheftet" />{/if}
-		{#if data.hub}<input type="hidden" name="hub" value={data.hub} />{/if}
-		<label class="feld">
-			<span class="sr-only">In den Hubs suchen</span>
-			<input
-				use:livesuche
-				type="search"
-				name="q"
-				value={data.q}
-				maxlength="100"
-				placeholder="In den Hubs suchen …"
-			/>
-		</label>
-	</form>
+	<div class="suchzeile">
+		<form
+			method="GET"
+			class="suche"
+			role="search"
+			data-sveltekit-reset="false"
+			data-sveltekit-replacestate
+		>
+			{#if data.alle}<input type="hidden" name="ansicht" value="alle" />{/if}
+			{#if data.angeheftet}<input type="hidden" name="filter" value="angeheftet" />{/if}
+			{#if data.hub}<input type="hidden" name="hub" value={data.hub} />{/if}
+			<label class="feld">
+				<span class="sr-only">In den Hubs suchen</span>
+				<input
+					use:livesuche
+					type="search"
+					name="q"
+					value={data.q}
+					maxlength="100"
+					placeholder="In den Hubs suchen …"
+				/>
+			</label>
+		</form>
+		<AnsichtUmschalter bind:ansicht />
+	</div>
 
 	<form method="GET" class="filter" data-sveltekit-reset="false">
 		<nav class="pillen" aria-label="Ansicht">
@@ -101,6 +114,9 @@
 		{/if}
 		<noscript><button class="knopf zweit" type="submit">Anwenden</button></noscript>
 		<a class="aktionslink meine" href={resolve('/(app)/konto/hubs')}>Meine Hubs ›</a>
+		{#if data.gesamt}<p class="zaehler">
+				{data.items.length} von {mitZahl(data.gesamt, 'Beitrag', 'Beiträgen')}
+			</p>{/if}
 	</form>
 
 	{#if !data.alle && data.keineAbos}
@@ -118,7 +134,25 @@
 				: 'Noch keine Beiträge.'}
 		</p>
 	{:else}
-		{#each data.items as item (item.id)}<Beitragskarte {item} mitReaktionen={false} />{/each}
+		<div class="liste">
+			{#each gruppen as g (g.monat)}
+				<section class="monat" aria-labelledby="monat-{g.monat}">
+					<h2 id="monat-{g.monat}">
+						{g.titel}<span class="anzahl">{mitZahl(g.anzahl, 'Beitrag', 'Beiträge')}</span>
+					</h2>
+					{#each g.eintraege as item (item.id)}
+						<Beitragskarte {item} mitReaktionen={false} ebene={3} kompakt={ansicht === 'kompakt'} />
+					{/each}
+				</section>
+			{/each}
+		</div>
+		<MehrLaden
+			geladen={data.items.length}
+			gesamt={data.gesamt}
+			schritt={data.schritt}
+			href={mehrHref}
+			einheit={['Beitrag', 'Beiträge']}
+		/>
 	{/if}
 </div>
 
@@ -147,8 +181,53 @@
 		font-size: 24px;
 		cursor: pointer;
 	}
+	.suchzeile {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
 	.suche {
-		max-width: 560px;
+		flex: 0 1 560px;
+		min-width: 0;
+	}
+	.suchzeile :global(.ansicht) {
+		margin-left: auto;
+	}
+	.zaehler {
+		flex: 1 1 100%;
+		margin: 0;
+		font-size: 14px;
+		color: var(--mu);
+	}
+	.liste,
+	.monat {
+		display: grid;
+		gap: 16px;
+	}
+	.liste {
+		gap: 20px;
+	}
+	.monat h2 {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		margin: 4px 0 -4px;
+		font-size: 15px;
+	}
+	.monat h2::after {
+		content: '';
+		flex: 1;
+		height: 1px;
+		background: var(--bd);
+	}
+	.anzahl {
+		font-weight: 500;
+		color: var(--mu);
+	}
+	@media (max-width: 599px) {
+		.suche {
+			flex: 1 1 0;
+		}
 	}
 	.filter,
 	.pillen {

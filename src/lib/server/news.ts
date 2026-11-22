@@ -23,6 +23,7 @@ import {
 import {
 	effectiveTargets,
 	newsState,
+	ZONE,
 	validateNews,
 	type NewsDraft,
 	type NewsErrors
@@ -108,7 +109,16 @@ export interface ListOptions {
 	/** Neuigkeiten ohne Hubs (Standard), nur Hubs oder bestimmte Einheiten */
 	hubs?: 'exclude' | 'only';
 	unitIds?: string[];
+	/** Angeheftete (veröffentlichte) nur oder ohne sie; Standard: alle */
+	angeheftet?: 'nur' | 'ohne';
+	/** Nur nach Datum sortieren (Angeheftete nicht zuerst), z. B. für Monatsgruppen */
+	nachDatum?: boolean;
+	/** Überspringen (Liste „ältere laden“) */
+	offset?: number;
 }
+
+/** Höchstzahl je Abruf; lange Listen laden in Schritten nach (Kap. 6.7). */
+export const NEWS_MAX = 500;
 
 /** Sichtbar für Lesende: Zielgruppe passt, freigegeben, nicht abgelaufen. */
 function readerVisible(p: Principal, writable: string[], editorial: boolean, now: Date): SQL {
@@ -279,8 +289,8 @@ function vorschauVon(
 
 export type NewsItem = Awaited<ReturnType<typeof decorate>>[number];
 
-export async function listNews(p: Principal, opts: ListOptions = {}) {
-	const now = new Date();
+/** Bedingungen für Listen von Beiträgen (gemeinsam für Liste, Zähler und Monate). */
+function listConds(p: Principal, opts: ListOptions, now: Date): SQL[] {
 	const writable = [...newsUnitIds(p)];
 	const editorial = isEditorial(p);
 	const conds: SQL[] = [readerVisible(p, writable, editorial, now)];
@@ -304,17 +314,55 @@ export async function listNews(p: Principal, opts: ListOptions = {}) {
 		const like = `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 		conds.push(or(ilike(news.title, like), ilike(news.bodyText, like))!);
 	}
+	const jetzt = now.toISOString();
+	const angeheftet = sql`(${news.pinnedUntil} > ${jetzt}::timestamptz and ${news.publishAt} <= ${jetzt}::timestamptz)`;
+	if (opts.angeheftet === 'nur') conds.push(angeheftet);
+	if (opts.angeheftet === 'ohne') conds.push(sql`not coalesce(${angeheftet}, false)`);
+	return conds;
+}
 
+export async function listNews(p: Principal, opts: ListOptions = {}) {
+	const now = new Date();
+	const conds = listConds(p, opts, now);
 	const rows = await scoped(p, (tx) =>
 		tx
 			.select(columns)
 			.from(news)
 			.innerJoin(units, eq(units.id, news.unitId))
 			.where(and(...conds))
-			.orderBy(desc(sql`(${news.pinnedUntil} > now())`), desc(news.publishAt))
-			.limit(Math.min(opts.limit ?? 50, 100))
+			.orderBy(
+				...(opts.nachDatum ? [] : [desc(sql`(${news.pinnedUntil} > now())`)]),
+				desc(news.publishAt),
+				desc(news.id)
+			)
+			.limit(Math.min(opts.limit ?? 50, NEWS_MAX))
+			.offset(Math.max(0, opts.offset ?? 0))
 	);
 	return decorate(p, rows, now);
+}
+
+/**
+ * Anzahl je Monat (Europe/Berlin) für Zähler und Monatsüberschriften
+ * langer Listen, neueste zuerst; „gesamt“ ist die Summe.
+ */
+export async function newsMonths(
+	p: Principal,
+	opts: ListOptions = {}
+): Promise<{ gesamt: number; monate: { monat: string; n: number }[] }> {
+	const now = new Date();
+	const conds = listConds(p, opts, now);
+	// Zeitzone als fester Text, sonst zählt GROUP BY sie als anderen Parameter
+	const monat = sql<string>`to_char(${news.publishAt} at time zone ${sql.raw(`'${ZONE}'`)}, 'YYYY-MM')`;
+	const rows = await scoped(p, (tx) =>
+		tx
+			.select({ monat, n: sql<number>`count(*)::int` })
+			.from(news)
+			.innerJoin(units, eq(units.id, news.unitId))
+			.where(and(...conds))
+			.groupBy(monat)
+			.orderBy(desc(monat))
+	);
+	return { gesamt: rows.reduce((s, r) => s + r.n, 0), monate: rows };
 }
 
 /**
@@ -366,10 +414,17 @@ export async function getNews(p: Principal, id: string) {
 }
 
 /** Absender, die in der sichtbaren Liste vorkommen (Filter „Von: …“). */
-export async function senders(p: Principal) {
-	const items = await listNews(p, { limit: 100 });
-	const map = new Map(items.map((i) => [i.sender.id, i.sender]));
-	return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, 'de'));
+export async function senders(p: Principal, opts: ListOptions = {}) {
+	const now = new Date();
+	const conds = listConds(p, { ...opts, q: null, from: null, angeheftet: undefined }, now);
+	const rows = await scoped(p, (tx) =>
+		tx
+			.selectDistinct({ id: units.id, name: units.name })
+			.from(news)
+			.innerJoin(units, eq(units.id, news.unitId))
+			.where(and(...conds))
+	);
+	return rows.sort((a, b) => a.name.localeCompare(b.name, 'de'));
 }
 
 /** Aktive dringende Meldungen für das Banner, ohne zugeklappte. */

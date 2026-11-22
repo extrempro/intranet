@@ -37,8 +37,15 @@
 	let {
 		item,
 		mitReaktionen = true,
-		ebene = 2
-	}: { item: Item; mitReaktionen?: boolean; ebene?: 2 | 3 } = $props();
+		ebene = 2,
+		kompakt = false
+	}: {
+		item: Item;
+		mitReaktionen?: boolean;
+		ebene?: 2 | 3;
+		/** Ansicht „Kompakt“ langer Listen (Kap. 6.7) */
+		kompakt?: boolean;
+	} = $props();
 
 	const kuerzel = $derived(
 		item.sender.name.length <= 3 ? item.sender.name : item.sender.name.charAt(0)
@@ -83,7 +90,7 @@
 		'M9 15l6 -6M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463';
 </script>
 
-<article class="karte beitrag">
+<article class="karte beitrag" class:kompakt data-eintrag>
 	<div class="zeile" class:mit-vorschau={mitVorschau}>
 		<div class="text">
 			<div class="schilder">
@@ -97,7 +104,7 @@
 						Dringend bis {formatWhen(item.urgentUntil)}
 					</span>{/if}
 				{#if item.wasUrgent}<span class="schild rand">War dringend</span>{/if}
-				{#if item.audience}<span class="schild">{item.audience}</span>{/if}
+				{#if item.audience && !kompakt}<span class="schild">{item.audience}</span>{/if}
 			</div>
 			<svelte:element this={`h${ebene}`} class="titel">
 				<a class="dehnen titellink" {href}>{item.title}</a>
@@ -115,9 +122,11 @@
 				<span>{item.sender.label} · {formatDay(item.publishAt)}</span>
 			</div>
 			{#if item.excerpt}<p class="auszug">{item.excerpt}</p>{/if}
-			<span class="weiter" aria-hidden="true">
-				Weiterlesen <Icon d={PFEIL} size={16} stroke={2.2} />
-			</span>
+			{#if !kompakt}
+				<span class="weiter" aria-hidden="true">
+					Weiterlesen <Icon d={PFEIL} size={16} stroke={2.2} />
+				</span>
+			{/if}
 		</div>
 		{#if v && mitVorschau}
 			<div class="vorschau" aria-hidden="true">
@@ -387,6 +396,47 @@
 	.auszug {
 		margin: 0;
 		color: var(--mu);
+	}
+	/* Kompakt: kleiner, eine Zeile Auszug, kleine Vorschau; auf dem Handy ohne */
+	.kompakt {
+		gap: 4px;
+		padding-block: 14px;
+	}
+	.kompakt .text {
+		gap: 4px;
+	}
+	.kompakt .titel {
+		font-size: 16px;
+	}
+	.kompakt .auszug {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 1;
+		line-clamp: 1;
+		overflow: hidden;
+	}
+	.kompakt .vorschau,
+	.kompakt.beitrag .mit-vorschau .vorschau {
+		flex: 0 0 120px;
+		max-width: 120px;
+	}
+	.kompakt .bilder,
+	.kompakt .tabelle {
+		height: 76px;
+	}
+	.kompakt .tabelle {
+		padding: 6px;
+	}
+	.kompakt .tabschild {
+		display: none;
+	}
+	.kompakt .zeile {
+		flex-wrap: nowrap;
+	}
+	@media (max-width: 599px) {
+		.kompakt .vorschau {
+			display: none;
+		}
 	}
 	.weiter {
 		display: inline-flex;
