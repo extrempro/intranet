@@ -21,6 +21,7 @@ import { db } from './db/index.ts';
 import { auditLog, invitations, pendingLogins } from './db/schema.ts';
 import { allRetention } from './retention.ts';
 import { track } from './jobs.ts';
+import { alterFortschrittLoeschen } from './fortschritt.ts';
 import { checkBackups } from './system.ts';
 
 export async function cleanup(): Promise<void> {
@@ -38,6 +39,7 @@ export async function cleanup(): Promise<void> {
 	await deletePhotosOfDisabled();
 	await remindResponsibilityReviews();
 	await deleteClosedConversations();
+	await alterFortschrittLoeschen();
 	await db.delete(pendingLogins).where(lt(pendingLogins.expiresAt, new Date()));
 	// Abgelaufene oder benutzte Einladungslinks nach 30 Tagen entfernen
 	await db

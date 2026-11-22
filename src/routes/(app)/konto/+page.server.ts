@@ -5,6 +5,11 @@ import { persons, units } from '#lib/server/db/schema.ts';
 import { myHubs } from '#lib/server/hubs.ts';
 import { benachrichtigungsDaten, standortDaten } from '#lib/server/konto.ts';
 import { getOwnProfile } from '#lib/server/people.ts';
+import {
+	fortschrittAn,
+	fortschrittLoeschen,
+	fortschrittSchalten
+} from '#lib/server/fortschritt.ts';
 import { getVersionHint, resetHelpSeen, setVersionHint } from '#lib/server/preferences.ts';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -27,6 +32,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 				: Promise.resolve([]),
 			getVersionHint(p.personId)
 		]);
+	const fortschritt = await fortschrittAn(p.personId);
 	return {
 		profil,
 		standorte,
@@ -43,7 +49,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.slice(0, 2),
 		theme: locals.theme,
 		/** Hinweis „Neu in Version …“ nach einem Update */
-		neuerungen: neuerungen.an
+		neuerungen: neuerungen.an,
+		/** Mediathek: Stand am Konto speichern */
+		fortschritt
 	};
 };
 
@@ -51,6 +59,17 @@ export const actions: Actions = {
 	einfuehrungen: async ({ locals }) => {
 		await resetHelpSeen(requirePrincipal(locals).personId);
 		return { bereich: 'hilfe', zurueckgesetzt: true };
+	},
+
+	fortschritt: async ({ request, locals }) => {
+		const an = String((await request.formData()).get('wert') ?? '') === 'an';
+		await fortschrittSchalten(requirePrincipal(locals), an);
+		return { bereich: 'fortschritt', gespeichert: true };
+	},
+
+	fortschrittLoeschen: async ({ locals }) => {
+		const n = await fortschrittLoeschen(requirePrincipal(locals));
+		return { bereich: 'fortschritt', geloescht: n };
 	},
 
 	neuerungen: async ({ request, locals }) => {

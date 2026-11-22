@@ -10,6 +10,13 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.22.0 · 22.11.2026 · Weiter, wo du warst
+
+- Videos starten dort, wo du aufgehört hast, auch auf einem anderen Gerät. Mit „Von vorn beginnen“ geht es wieder am Anfang los.
+- Angefangene Videos stehen oben in der Mediathek unter „Weiter ansehen“.
+- Gespeichert wird nur die Stelle im Video. Niemand sonst sieht sie, und am Ende des Videos oder nach 90 Tagen wird sie gelöscht.
+- Unter Konto → Mediathek kannst du das ausschalten oder deinen Fortschritt löschen.
+
 ## 0.21.0 · 22.11.2026 · Mediathek
 
 - Neu unter Wissen: die Mediathek mit Videos aus den Abteilungen und Hubs, etwa Schulungen und Anleitungen. Durchsuchbar nach Titel, Beschreibung und dem, was in den Untertiteln gesagt wird.

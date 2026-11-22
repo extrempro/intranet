@@ -322,6 +322,8 @@ export const personPreferences = pgTable('person_preferences', {
 	versionHint: boolean('version_hint').notNull().default(true),
 	/** Zuletzt gesehene Version des Intranets (für den Hinweis) */
 	versionSeen: text('version_seen'),
+	/** Mediathek: Stand der Videos am Konto speichern (Kap. 8.15) */
+	videoProgress: boolean('video_progress').notNull().default(true),
 	updatedAt: updatedAt()
 });
 
@@ -1740,4 +1742,24 @@ export const videoTopics = pgTable(
 			.references(() => topics.id, { onDelete: 'cascade' })
 	},
 	(t) => [primaryKey({ columns: [t.videoId, t.topicId] })]
+);
+
+/**
+ * „Weiter, wo du warst“ (Kap. 8.15): je Person und Video nur die Position und
+ * das Datum der letzten Änderung. Lesbar und schreibbar nur für die Person
+ * selbst (Row-Level Security); gelöscht am Ende des Videos, sonst nach 90 Tagen.
+ */
+export const videoProgress = pgTable(
+	'video_progress',
+	{
+		personId: uuid('person_id')
+			.notNull()
+			.references(() => persons.id, { onDelete: 'cascade' }),
+		videoId: uuid('video_id')
+			.notNull()
+			.references(() => videos.id, { onDelete: 'cascade' }),
+		positionSec: integer('position_sec').notNull(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+	},
+	(t) => [primaryKey({ columns: [t.personId, t.videoId] })]
 );
