@@ -9,10 +9,12 @@ import { track } from './jobs.ts';
 import { and, asc, desc, eq, gt, inArray, isNull, lt, lte, or, sql } from 'drizzle-orm';
 import { berlinNow } from '../canteen.ts';
 import {
+	deliverAfter,
 	digestModesDue,
-	quietUntil,
+	isAbsent,
 	resolveNotify,
 	TOPICS,
+	type Absence,
 	type NotifySettings,
 	type QuietHours
 } from '../notify.ts';
@@ -61,11 +63,15 @@ export interface NotifyContent {
 	link: string;
 }
 
-/** Push-Zeitpunkt nach den Ruhezeiten der Person (null = sofort). */
-function pushTiming(topic: string, quiet: QuietHours, now: Date, cache: Map<string, Date | null>) {
-	if (topic === 'dringend' && quiet.urgent) return null;
-	const key = JSON.stringify(quiet);
-	if (!cache.has(key)) cache.set(key, quietUntil(now, quiet));
+/** Push-Zeitpunkt nach Abwesenheit und Ruhezeiten der Person (null = sofort). */
+function pushTiming(
+	topic: string,
+	s: { quiet: QuietHours; absence: Absence | null },
+	now: Date,
+	cache: Map<string, Date | null>
+) {
+	const key = JSON.stringify([topic, s.quiet, s.absence]);
+	if (!cache.has(key)) cache.set(key, deliverAfter(topic, now, s));
 	return cache.get(key) ?? null;
 }
 
@@ -77,6 +83,7 @@ interface Row {
 	/** Nur Microsoft-Konten und Themen mit Teams */
 	teams?: boolean;
 	quiet: QuietHours;
+	absence: Absence | null;
 }
 
 async function insertRows(topic: string, rows: Row[], content: NotifyContent) {
@@ -94,7 +101,7 @@ async function insertRows(topic: string, rows: Row[], content: NotifyContent) {
 			email: r.email ? ('pending' as const) : null,
 			push: r.push ? ('pending' as const) : null,
 			teams: r.teams ? ('pending' as const) : null,
-			pushAfter: r.push || r.teams ? pushTiming(topic, r.quiet, now, cache) : null
+			pushAfter: r.push || r.teams ? pushTiming(topic, r, now, cache) : null
 		}));
 	if (values.length) await db.insert(notifications).values(values);
 	// Push nicht auf den minütlichen Lauf warten lassen
@@ -130,7 +137,8 @@ export async function notify(topic: string, personIds: string[], content: Notify
 					personId: r.id,
 					...c,
 					teams: teamsOn && c.teams && Boolean(r.oid),
-					quiet: s.quiet
+					quiet: s.quiet,
+					absence: s.absence
 				};
 			}),
 			content
@@ -139,7 +147,7 @@ export async function notify(topic: string, personIds: string[], content: Notify
 	return count;
 }
 
-/** Mit festen Kanälen je Person (Hub-Abos aus „Meine Hubs“); Ruhezeiten gelten trotzdem. */
+/** Mit festen Kanälen je Person (Hub-Abos aus „Meine Hubs“); Ruhezeiten und Abwesenheit gelten trotzdem. */
 export async function notifyWithChannels(
 	topic: string,
 	list: { personId: string; bell: boolean; push: boolean; email: boolean }[],
@@ -161,12 +169,16 @@ export async function notifyWithChannels(
 					regularPerson
 				)
 			);
-		const quiet = new Map(rows.map((r) => [r.id, resolveNotify(r.n).quiet]));
+		const einst = new Map(rows.map((r) => [r.id, resolveNotify(r.n)]));
 		await insertRows(
 			topic,
 			chunk
-				.filter((c) => quiet.has(c.personId))
-				.map((c) => ({ ...c, quiet: quiet.get(c.personId)! })),
+				.filter((c) => einst.has(c.personId))
+				.map((c) => ({
+					...c,
+					quiet: einst.get(c.personId)!.quiet,
+					absence: einst.get(c.personId)!.absence
+				})),
 			content
 		);
 	}
@@ -375,8 +387,13 @@ async function sendBatch(modes: string[], digest: boolean, before?: Date) {
 		.orderBy(asc(notifications.createdAt))
 		.limit(5000);
 	const byPerson = new Map<string, { email: string; name: string; items: Pending[] }>();
+	const heute = berlinNow().date;
 	for (const r of rows) {
-		if (!modes.includes(resolveNotify(r.pref).emailMode)) continue;
+		const einst = resolveNotify(r.pref);
+		if (!modes.includes(einst.emailMode)) continue;
+		// Abwesend: E-Mails warten und kommen danach gesammelt (Dringendes nach Wahl)
+		if (isAbsent(heute, einst.absence) && !(r.topic === 'dringend' && einst.absence?.urgent))
+			continue;
 		const entry = byPerson.get(r.personId) ?? { email: r.email, name: r.name, items: [] };
 		entry.items.push({ id: r.nid, topic: r.topic, title: r.title, detail: r.detail, link: r.link });
 		byPerson.set(r.personId, entry);

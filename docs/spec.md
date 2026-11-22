@@ -414,7 +414,8 @@ Teams ist für alle Themen wählbar und wie Push voreingestellt; Hubs nur mit Gl
 ### 11.3 Weitere Einstellungen
 
 - **E-Mail-Zusammenfassung** (Standard täglich): enthält alle Themen mit E-Mail.
-- **Ruhezeiten** (Standard an): keine Push- und Teams-Nachrichten, danach gesammelt zugestellt; Glocke und E-Mail nicht betroffen. Ausnahme dringende Meldungen (8.2).
+- **Ruhezeiten** (Standard an): keine Push- und Teams-Nachrichten, danach gesammelt zugestellt; Glocke und E-Mail nicht betroffen. Je Wochentag einzeln: Zeitraum (auch über Mitternacht), ganztägig oder keine Ruhe; Standard Mo–Fr 20–7 Uhr, Sa+So ganztägig. Ausnahme dringende Meldungen (8.2), Standard an. Ein Satz fasst die Einstellung zusammen.
+- **Abwesenheit** (z. B. Urlaub): Zeitraum von–bis (Tage einschließlich, höchstens ein Jahr); keine Push- und Teams-Nachrichten und keine E-Mails, danach gesammelt (Push/Teams ab dem Tag nach der Abwesenheit unter Beachtung der Ruhezeiten, E-Mails mit dem nächsten Versand); Glocke unverändert. Dringende Meldungen nach Wahl (Standard aus). Nur für die Person selbst, für niemanden sonst sichtbar; vorzeitig beendbar.
 
 ---
 

@@ -10,6 +10,12 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.25.0 · 22.11.2026 · Ruhezeiten je Tag und Abwesenheit
+
+- Ruhezeiten stellst du jetzt für jeden Wochentag einzeln ein: Zeitraum, ganztägig oder keine Ruhe. Ein Satz darunter sagt, was gerade gilt.
+- Neu: Abwesenheit, etwa für den Urlaub. In dieser Zeit kommen keine Push- und Teams-Nachrichten und keine E-Mails, danach alles gesammelt. Ob dringende Meldungen trotzdem kommen, entscheidest du selbst.
+- Die Abwesenheit sieht niemand außer dir.
+
 ## 0.24.0 · 22.11.2026 · Mediathek übersichtlicher
 
 - Im Player gibt es einen Knopf, um die Untertitel ein- und auszuschalten. Der Browser merkt sich die Wahl.

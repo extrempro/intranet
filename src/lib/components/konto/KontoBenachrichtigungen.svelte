@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { untrack } from 'svelte';
 	import { hierBleiben } from '#lib/formular.ts';
 	/**
 	 * Benachrichtigungen je Thema (Kap. 11) als Schalter-Pillen wie im Entwurf,
@@ -11,13 +12,24 @@
 	import Info from '#lib/components/Info.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import PushGeraet from '#lib/components/PushGeraet.svelte';
-	import { EMAIL_MODES, TOPICS, type EmailMode } from '#lib/notify.ts';
+	import { berlinNow } from '#lib/canteen.ts';
+	import {
+		EMAIL_MODES,
+		ruheText,
+		TOPICS,
+		WOCHENTAGE,
+		type Absence,
+		type EmailMode,
+		type QuietHours,
+		type QuietDay
+	} from '#lib/notify.ts';
 
 	interface Daten {
 		einstellung: {
 			topics: Record<string, { bell: boolean; push: boolean; email: boolean; teams?: boolean }>;
 			emailMode: EmailMode;
-			quiet: { on: boolean; start: string; end: string; weekend: boolean; urgent: boolean };
+			quiet: QuietHours;
+			absence: Absence | null;
 		};
 		mailBereit: boolean;
 		geraete: { id: string; label: string | null; createdAt: Date; lastSuccessAt: Date | null }[];
@@ -40,6 +52,28 @@
 	const SCHLOSS =
 		'M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2zM11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0M8 11v-4a4 4 0 1 1 8 0v4';
 	const HAKEN = 'M5 12l5 5l10 -10';
+	// Ruhezeiten je Wochentag; der Satz unten fasst sie zusammen
+	let ruheAn = $state(untrack(() => daten.einstellung.quiet.on));
+	let ruheDringend = $state(untrack(() => daten.einstellung.quiet.urgent));
+	let tage = $state<QuietDay[]>(untrack(() => daten.einstellung.quiet.days.map((d) => ({ ...d }))));
+	const zusammenfassung = $derived(ruheText({ on: ruheAn, urgent: ruheDringend, days: tage }));
+	function montagUebernehmen() {
+		tage = tage.map((d, i) => (i >= 1 && i <= 4 ? { ...tage[0] } : d));
+	}
+
+	// Abwesenheit
+	const abw = $derived(daten.einstellung.absence);
+	const heute = berlinNow().date;
+	const abwJetzt = $derived(Boolean(abw && abw.from <= heute && heute <= abw.to));
+	const abwForm = $derived(
+		page.form && (page.form as { bereich?: string }).bereich === 'abwesenheit'
+			? (page.form as { ergebnis?: string; fehler?: string })
+			: null
+	);
+	const tagDatum = (d: string) =>
+		new Intl.DateTimeFormat('de-DE', { dateStyle: 'long', timeZone: 'UTC' }).format(
+			new Date(`${d}T12:00:00Z`)
+		);
 	const ZUSATZ: Record<string, string> = {
 		dringend: 'z. B. von Intendanz, Geschäftsführung, Betriebsrat oder KBB',
 		angeheftet: 'Oben in Neuigkeiten und auf der Startseite',
@@ -89,6 +123,63 @@
 					{/each}
 				</ul>
 			</details>
+		{/if}
+	</section>
+
+	<section class="karte block" aria-labelledby="h-abw">
+		<h3 id="h-abw">
+			Abwesenheit
+			<Info
+				thema="Abwesenheit"
+				text="Zum Beispiel Urlaub: In dieser Zeit kommen keine Push- und Teams-Nachrichten und keine E-Mails. Was in der Zeit passiert, bekommst du danach gesammelt. Die Glocke zeigt alles wie gewohnt. Niemand sonst sieht, dass du abwesend bist."
+			/>
+		</h3>
+		<p class="hinweis klein">
+			Kein Push, keine Teams-Nachricht und keine E-Mail, danach alles gesammelt. Nur für dich,
+			andere sehen das nicht.
+		</p>
+		{#if abwForm?.ergebnis}<p class="meldung" role="status">{abwForm.ergebnis}</p>{/if}
+		{#if abwForm?.fehler}<p class="meldung fehler" role="alert">{abwForm.fehler}</p>{/if}
+		{#if abw}
+			<p class="zusammenfassung" class:aktiv={abwJetzt}>
+				{abwJetzt ? 'Du bist abwesend' : 'Geplant'}: {tagDatum(abw.from)} bis {tagDatum(abw.to)}.
+				{abw.urgent ? 'Dringende Meldungen kommen trotzdem.' : 'Auch dringende Meldungen warten.'}
+			</p>
+		{/if}
+		<form method="POST" action="{basis}?/abwesenheit" class="stapel" use:enhance={hierBleiben}>
+			<div class="zeiten">
+				<label class="feld">
+					<span>Von</span>
+					<input type="date" name="abw_von" value={abw?.from ?? ''} min={heute} required />
+				</label>
+				<label class="feld">
+					<span>Bis einschließlich</span>
+					<input type="date" name="abw_bis" value={abw?.to ?? ''} min={heute} required />
+				</label>
+			</div>
+			<label class="option-schalter">
+				<span>Dringende Meldungen trotzdem</span>
+				<input
+					type="checkbox"
+					role="switch"
+					class="schalter"
+					name="abw_dringend"
+					checked={abw?.urgent ?? false}
+				/>
+			</label>
+			<div class="reihe">
+				<button class="knopf" type="submit">
+					{abw ? 'Abwesenheit ändern' : 'Abwesenheit eintragen'}
+				</button>
+			</div>
+		</form>
+		{#if abw}
+			<form method="POST" action="{basis}?/abwesenheit" use:enhance={hierBleiben}>
+				<input type="hidden" name="beenden" value="1" />
+				<button class="knopf zweit" type="submit">
+					{abwJetzt ? 'Abwesenheit jetzt beenden' : 'Abwesenheit löschen'}
+				</button>
+			</form>
 		{/if}
 	</section>
 
@@ -157,43 +248,107 @@
 		</section>
 
 		<div class="zwei">
-			<fieldset class="karte block">
+			<fieldset class="karte block ruhe" aria-describedby="ruhe-zusammenfassung">
 				<legend>
 					Ruhezeiten
 					<Info
 						thema="Ruhezeiten"
-						text="Die Zeiten gelten in deutscher Zeit, auch wenn dein Gerät anders eingestellt ist. Über Mitternacht geht, zum Beispiel 20 bis 7 Uhr. Dringende Meldungen kommen trotzdem sofort, wenn du das unten nicht ausschaltest."
+						text="In der Ruhezeit kommen keine Push- und Teams-Nachrichten. Was in der Zeit passiert, bekommst du danach gesammelt als eine Nachricht. Glocke und E-Mail sind nicht betroffen. Die Zeiten gelten in deutscher Zeit, auch wenn dein Gerät anders eingestellt ist."
 					/>
 				</legend>
+				<p class="hinweis klein">
+					Keine Push- und Teams-Nachrichten zu bestimmten Zeiten. Was dazwischen passiert, kommt
+					danach gesammelt als eine Nachricht. Glocke und E-Mail sind nicht betroffen.
+				</p>
 				<label class="option-schalter">
 					<span>Ruhezeiten einhalten</span>
-					<input type="checkbox" role="switch" class="schalter" name="ruhe" checked={e.quiet.on} />
+					<input type="checkbox" role="switch" class="schalter" name="ruhe" bind:checked={ruheAn} />
 				</label>
-				<p class="hinweis klein">Kein Push und keine Teams-Nachricht in dieser Zeit.</p>
-				<div class="zeiten">
-					<label class="feld">
-						<span>Von</span>
-						<input type="time" name="ruhe_von" value={e.quiet.start} required />
-					</label>
-					<label class="feld">
-						<span>Bis</span>
-						<input type="time" name="ruhe_bis" value={e.quiet.end} required />
-					</label>
+
+				<div class="ruhe-teile" class:aus={!ruheAn}>
+					<div class="tage" role="group" aria-label="Ruhe je Wochentag">
+						{#each WOCHENTAGE as tag, i (tag)}
+							<div class="tag">
+								<span class="tagname" id="tag{i}">{tag}</span>
+								<select
+									name="tag{i}_art"
+									aria-labelledby="tag{i}"
+									bind:value={tage[i].art}
+									disabled={!ruheAn}
+								>
+									<option value="zeit">Ruhe von … bis</option>
+									<option value="ganztags">Ganztägig Ruhe</option>
+									<option value="keine">Keine Ruhe</option>
+								</select>
+								{#if tage[i].art === 'zeit'}
+									<span class="von-bis">
+										<input
+											type="time"
+											name="tag{i}_von"
+											aria-label="{tag}: Ruhe ab"
+											bind:value={tage[i].start}
+											required
+											disabled={!ruheAn}
+										/>
+										<span aria-hidden="true">bis</span>
+										<input
+											type="time"
+											name="tag{i}_bis"
+											aria-label="{tag}: Ruhe bis"
+											bind:value={tage[i].end}
+											required
+											disabled={!ruheAn}
+										/>
+									</span>
+								{:else}
+									<!-- Zeiten bleiben gespeichert, falls du wieder „von … bis“ wählst -->
+									<input type="hidden" name="tag{i}_von" value={tage[i].start} />
+									<input type="hidden" name="tag{i}_bis" value={tage[i].end} />
+								{/if}
+							</div>
+						{/each}
+					</div>
+					<p class="hinweis klein">
+						Über Mitternacht geht: 20:00 bis 07:00 heißt an diesem Tag morgens bis 7 Uhr und abends
+						ab 20 Uhr Ruhe.
+					</p>
+					<div>
+						<button class="linkknopf" type="button" onclick={montagUebernehmen} disabled={!ruheAn}>
+							Montag für Dienstag bis Freitag übernehmen
+						</button>
+					</div>
+
+					<fieldset class="teil">
+						<legend class="teil-titel">Ausnahme</legend>
+						<label class="option-schalter">
+							<span>Dringende Meldungen trotzdem sofort</span>
+							<input
+								type="checkbox"
+								role="switch"
+								class="schalter"
+								name="ruhe_dringend"
+								bind:checked={ruheDringend}
+								disabled={!ruheAn}
+							/>
+						</label>
+						<p class="hinweis klein">
+							Dringend sind nur Meldungen, die alle sofort wissen müssen, etwa ein Ausfall oder eine
+							kurzfristige Absage. Sie kommen auch als rotes Banner auf der Startseite.
+						</p>
+					</fieldset>
 				</div>
-				<label class="option">
-					<input type="checkbox" name="ruhe_wochenende" checked={e.quiet.weekend} />
-					<span>Am Wochenende auch</span>
-				</label>
-				<label class="option-schalter trenner">
-					<span>Dringende Meldungen trotzdem sofort</span>
-					<input
-						type="checkbox"
-						role="switch"
-						class="schalter"
-						name="ruhe_dringend"
-						checked={e.quiet.urgent}
-					/>
-				</label>
+				<!-- Ausgeschaltet: Werte bleiben erhalten, auch wenn die Felder gesperrt sind -->
+				{#if !ruheAn}
+					{#each tage as t, i (i)}
+						<input type="hidden" name="tag{i}_art" value={t.art} />
+						{#if t.art === 'zeit'}
+							<input type="hidden" name="tag{i}_von" value={t.start} />
+							<input type="hidden" name="tag{i}_bis" value={t.end} />
+						{/if}
+					{/each}
+					{#if ruheDringend}<input type="hidden" name="ruhe_dringend" value="on" />{/if}
+				{/if}
+				<p id="ruhe-zusammenfassung" class="zusammenfassung">{zusammenfassung}</p>
 			</fieldset>
 
 			<fieldset class="karte block">
@@ -241,11 +396,6 @@
 		gap: 12px;
 		min-height: 44px;
 		font-weight: 600;
-	}
-	.option-schalter.trenner {
-		margin-top: 6px;
-		padding-top: 8px;
-		border-top: 1px solid var(--bd);
 	}
 	.benachrichtigungen {
 		display: flex;
@@ -361,16 +511,79 @@
 		gap: 16px;
 		align-items: start;
 	}
-	.option {
+	.ruhe {
+		grid-column: 1 / -1;
+	}
+	.ruhe-teile {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+	.ruhe-teile.aus {
+		opacity: 0.55;
+	}
+	.teil {
+		border: 0;
+		margin: 0;
+		padding: 10px 0 0;
+		border-top: 1px solid var(--bd);
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	fieldset legend.teil-titel {
+		font-size: 15px;
+		font-weight: 700;
+		float: none;
+		margin-bottom: 2px;
+	}
+	.tage {
+		display: flex;
+		flex-direction: column;
+	}
+	.tag {
+		display: grid;
+		grid-template-columns: 110px minmax(0, 200px) minmax(0, 1fr);
+		gap: 8px 12px;
+		align-items: center;
+		padding: 6px 0;
+		border-top: 1px solid var(--bd);
+	}
+	.tagname {
+		font-weight: 600;
+	}
+	.von-bis {
 		display: flex;
 		align-items: center;
-		gap: 10px;
-		min-height: 44px;
+		gap: 8px;
 	}
-	.option input {
-		width: 20px;
-		height: 20px;
-		accent-color: var(--fill);
+	.von-bis input {
+		min-width: 0;
+		flex: 1 1 110px;
+		max-width: 150px;
+	}
+	@media (max-width: 599px) {
+		.tag {
+			grid-template-columns: 1fr;
+			gap: 6px;
+		}
+	}
+	.reihe {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+	.zusammenfassung.aktiv {
+		background: var(--warn-bg);
+		border: 1px solid var(--warn-bd);
+		color: var(--warn-tx);
+	}
+	.zusammenfassung {
+		margin: 4px 0 0;
+		padding: 10px 12px;
+		border-radius: 8px;
+		background: var(--tint);
+		font-size: 14px;
 	}
 	.zeiten {
 		display: grid;
