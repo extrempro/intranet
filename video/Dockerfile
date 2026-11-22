@@ -40,14 +40,15 @@ RUN cmake -S /src -B /build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF \
 	&& strip /build/bin/llama-completion
 
 # --- Sprachmodell für Vorschläge: Gemma 4 E4B (QAT, Q4_0) von Google, Apache 2.0 ---
-# Fester Stand (Commit des Repos) und SHA-256 der Datei
+# Festgelegt über die SHA-256 der Datei: Ersetzt Google sie, bricht der Build ab,
+# statt ungeprüft eine andere Fassung zu übernehmen. LLM_REVISION kann auf einen
+# Commit des Repos gesetzt werden.
 FROM alpine:3.24 AS sprachmodell
 ARG LLM_REPO=google/gemma-4-E4B-it-qat-q4_0-gguf
-ARG LLM_REVISION
-ARG LLM_DATEI
-ARG LLM_SHA256
-RUN test -n "$LLM_REVISION" && test -n "$LLM_DATEI" && test -n "$LLM_SHA256" \
-	&& mkdir /modelle \
+ARG LLM_REVISION=main
+ARG LLM_DATEI=gemma-4-E4B_q4_0-it.gguf
+ARG LLM_SHA256=676c35070db6dbe52f93e9c864ee0fba4eddea94b9c875d9cb10daff453fbaee
+RUN mkdir /modelle \
 	&& wget -q -O /modelle/sprachmodell.gguf \
 		"https://huggingface.co/$LLM_REPO/resolve/$LLM_REVISION/$LLM_DATEI" \
 	&& echo "$LLM_SHA256  /modelle/sprachmodell.gguf" | sha256sum -c -
