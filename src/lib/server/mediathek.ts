@@ -278,7 +278,7 @@ export async function videoDetail(p: Principal, id: string) {
 
 export async function videoAnlegen(
 	p: Principal,
-	input: { unitId: string; title: string; size: number }
+	input: { unitId: string; title: string; size: number; vorschlag?: boolean }
 ) {
 	const u = await einheit(input.unitId);
 	if (!canWriteMedia(p, u)) throw new MediathekFehler('Dafür fehlt dir das Recht.', 403);
@@ -312,7 +312,8 @@ export async function videoAnlegen(
 			keyEnc,
 			uploadSize: input.size,
 			createdBy: p.personId,
-			status: 'hochladen'
+			status: 'hochladen',
+			suggestOnUpload: input.vorschlag === true
 		})
 		.returning({ id: videos.id });
 	await mkdir(ordnerVon(v.id), { recursive: true, mode: 0o700 });
@@ -465,11 +466,22 @@ export async function einlagern(id: string) {
 			.update(videos)
 			.set({ status: 'entwurf', progress: 100, ...medien, ...autoFelder, updatedAt: new Date() })
 			.where(eq(videos.id, id));
+		// Beim Hochladen gewählt: Vorschlag gleich aus den (noch ungeprüften) Untertiteln
+		const mitVorschlag =
+			auto && v.suggestOnUpload
+				? await import('./video-vorschlag.ts').then((vs) =>
+						vs.vorschlagStarten(id, v.createdBy, auto.vtt, true)
+					)
+				: false;
 		if (v.createdBy)
 			await notify('nachrichten', [v.createdBy], {
 				title: `Dein Video „${v.title}“ ist fertig umgewandelt.`,
 				detail: auto
-					? 'Die Untertitel wurden automatisch erzeugt. Prüfe sie, dann kannst du es veröffentlichen.'
+					? `Die Untertitel wurden automatisch erzeugt. Prüfe sie, dann kannst du es veröffentlichen.${
+							mitVorschlag
+								? ' Ein Vorschlag für Zusammenfassung und Kapitel wird gerade erstellt.'
+								: ''
+						}`
 					: 'Füge Untertitel hinzu, dann kannst du es veröffentlichen.',
 				link: `/mediathek/${id}/bearbeiten`
 			});

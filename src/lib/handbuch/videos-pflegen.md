@@ -12,6 +12,8 @@ Dafür brauchst du in der Abteilung oder im Hub das Recht „Mediathek“. Es ve
 
 Wissen → Mediathek → „Video hochladen“ oder im Abschnitt „Videos“ der Einheit. Erlaubt sind MP4, MOV und WebM bis 4 GB und 3 Stunden. Lass die Seite offen, bis das Hochladen fertig ist; bricht die Verbindung ab, versucht das Intranet es mehrmals erneut.
 
+Mit „Zusammenfassung und Kapitel gleich vorschlagen“ (voreingestellt) erstellt das Intranet nach den automatischen Untertiteln auch gleich einen Vorschlag, siehe unten. Das Video ist dann ein paar Minuten später fertig.
+
 Danach wandelt das Intranet das Video um. Das dauert ungefähr so lange wie das Video selbst. Du kannst die Seite schließen und bekommst eine Benachrichtigung, wenn es fertig ist. Angaben aus der Originaldatei, etwa Ort oder Gerät, werden dabei entfernt.
 
 Bricht das Hochladen ab (Verbindung weg, Seite geschlossen), steht das Video in der Mediathek als „Wird hochgeladen“. Öffne es und wähle dieselbe Datei noch einmal: Es geht an der Stelle weiter, an der es aufgehört hat. Nach 24 Stunden ohne Fortschritt wird es gelöscht.
@@ -28,6 +30,8 @@ Ohne Untertitel lässt sich ein Video nicht veröffentlichen, damit es alle nutz
 ## Zusammenfassung und Kapitel vorschlagen
 
 Sind die Untertitel geprüft, kann das Intranet daraus eine kurze Zusammenfassung und Kapitel vorschlagen. Wähle dazu unter „Zusammenfassung und Kapitel vorschlagen“ den Knopf „Vorschlag erstellen“. Ein Sprachmodell auf dem eigenen Server liest die Untertitel, der Text verlässt das Intranet nicht. Das dauert einige Minuten; du bekommst eine Nachricht, wenn der Vorschlag fertig ist.
+
+Hast du den Vorschlag schon beim Hochladen gewählt, liegt er bereit, sobald das Video umgewandelt ist. Er beruht dann auf den noch ungeprüften Untertiteln; hast du dort Namen oder Begriffe korrigiert, hol dir nach dem Prüfen mit „Neu vorschlagen“ einen frischen.
 
 Lies den Vorschlag gegen, denn das Modell kann Dinge falsch zusammenfassen. Mit „Als Beschreibung übernehmen“ und „Kapitel übernehmen“ übernimmst du die Teile, die passen; Vorhandenes wird nur nach Nachfrage ersetzt. Danach kannst du alles wie gewohnt ändern.
 

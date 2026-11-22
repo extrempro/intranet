@@ -1,0 +1,1 @@
+ALTER TABLE "videos" ADD COLUMN "suggest_on_upload" boolean DEFAULT false NOT NULL;

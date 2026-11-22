@@ -10,6 +10,11 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.29.0 · 22.11.2026 · Vorschlag gleich beim Hochladen
+
+- Beim Hochladen eines Videos ist „Zusammenfassung und Kapitel gleich vorschlagen“ voreingestellt. Der Vorschlag liegt dann bereit, sobald das Video umgewandelt ist.
+- Ein solcher Vorschlag beruht auf den noch ungeprüften Untertiteln und ist so gekennzeichnet. Nach dem Korrigieren holst du dir mit „Neu vorschlagen“ einen frischen.
+
 ## 0.28.0 · 22.11.2026 · Vorschläge für Zusammenfassung und Kapitel
 
 - Beim Bearbeiten eines Videos kannst du dir aus den geprüften Untertiteln eine kurze Zusammenfassung und Kapitel vorschlagen lassen.

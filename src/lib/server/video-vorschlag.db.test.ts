@@ -213,4 +213,37 @@ describe.skipIf(!url)('Vorschlag für Zusammenfassung und Kapitel', () => {
 		await vs.vorschlaegeAbholen();
 		expect((await daten(id)).suggestionStatus).toBeNull();
 	});
+
+	it('Vorschlag beim Hochladen: gewählt gespeichert, Ergebnis als „ungeprüft“ gekennzeichnet', async () => {
+		const id = await m.videoAnlegen(pflege, {
+			unitId: EINHEIT,
+			title: 'Upload',
+			size: 100,
+			vorschlag: true
+		});
+		const [r] = (await db.execute(
+			sql`select suggest_on_upload from videos where id = ${id}`
+		)) as unknown as { suggest_on_upload: boolean }[];
+		expect(r.suggest_on_upload).toBe(true);
+		await db.execute(sql`update videos set status = 'entwurf', duration_sec = 300,
+			captions_vtt = ${VTT}, captions_source = 'automatisch' where id = ${id}`);
+		expect(await vs.vorschlagStarten(id, PFLEGE, VTT, true)).toBe(true);
+		expect(
+			await vs.vorschlagStarten(id, PFLEGE, 'WEBVTT\n\n00:00.000 --> 00:01.000\nKurz\n', true)
+		).toBe(false);
+		await writeFile(
+			join(vs.vorschlagOrdner(id), 'ergebnis.json'),
+			'{"zusammenfassung": "Du lernst die Zeiterfassung.", "kapitel": []}'
+		);
+		await vs.vorschlaegeAbholen();
+		const d = await daten(id);
+		expect(d.suggestionStatus).toBe('fertig');
+		expect(d.suggestion).toEqual({
+			zusammenfassung: 'Du lernst die Zeiterfassung.',
+			kapitel: [],
+			ungeprueft: true
+		});
+		// Neu anfordern geht erst mit geprüften Untertiteln
+		await expect(vs.vorschlagAnfordern(pflege, id)).rejects.toThrow(/Prüfe zuerst/);
+	});
 });
