@@ -7,7 +7,7 @@
  */
 import { mkdir, open, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
-import { and, asc, desc, eq, ilike, inArray, isNull, lt, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, inArray, isNull, lt, ne, or, sql } from 'drizzle-orm';
 import { canSeeUnit, canWriteMedia, mediaUnitIds, type Principal } from './auth/access.ts';
 import { doc, headline, matches, rank } from './fts.ts';
 import { db, scoped } from './db/index.ts';
@@ -170,12 +170,21 @@ export interface VideoKarte {
 	createdAt: Date;
 	topics: { id: string; name: string }[];
 	darf: boolean;
+	/** Anzahl aller Treffer ohne Grenze (lange Liste, Kap. 6.7) */
+	gesamt: number;
 }
 
 /** Liste für die Übersicht und die Seiten der Einheiten */
 export async function videosListe(
 	p: Principal,
-	opt: { q?: string | null; unitId?: string | null; thema?: string | null; limit?: number } = {}
+	opt: {
+		q?: string | null;
+		unitId?: string | null;
+		thema?: string | null;
+		limit?: number;
+		/** nur veröffentlichte oder nur die in Arbeit (für Bearbeitende) */
+		nur?: 'veroeffentlicht' | 'inArbeit';
+	} = {}
 ): Promise<VideoKarte[]> {
 	const q = opt.q?.trim().slice(0, 100) ?? '';
 	const unitId = opt.unitId && GUID.test(opt.unitId) ? opt.unitId : null;
@@ -195,13 +204,23 @@ export async function videosListe(
 				progress: videos.progress,
 				durationSec: videos.durationSec,
 				publishedAt: videos.publishedAt,
-				createdAt: videos.createdAt
+				createdAt: videos.createdAt,
+				gesamt: sql<number>`(count(*) over ())::int`
 			})
 			.from(videos)
 			.innerJoin(units, eq(units.id, videos.unitId))
 			.where(
 				and(
 					isNull(videos.replacesId),
+					// Sichtbar: veröffentlicht oder aus einer Einheit, die man pflegt
+					opt.nur === 'inArbeit' ? ne(videos.status, 'veroeffentlicht') : undefined,
+					opt.nur === 'veroeffentlicht'
+						? eq(videos.status, 'veroeffentlicht')
+						: or(
+								eq(videos.status, 'veroeffentlicht'),
+								schreibbar.size ? inArray(videos.unitId, [...schreibbar]) : sql`false`
+							),
+					opt.nur === 'inArbeit' && !schreibbar.size ? sql`false` : undefined,
 					unitId ? eq(videos.unitId, unitId) : undefined,
 					q
 						? or(
@@ -220,7 +239,7 @@ export async function videosListe(
 			.orderBy(desc(sql`coalesce(${videos.publishedAt}, ${videos.createdAt})`))
 			.limit(opt.limit ?? 300)
 	);
-	const sichtbar = rows.filter((r) => r.status === 'veroeffentlicht' || schreibbar.has(r.unitId));
+	const sichtbar = rows;
 	const ids = sichtbar.map((r) => r.id);
 	const zuordnung = ids.length
 		? await scoped(p, (tx) =>
@@ -237,6 +256,27 @@ export async function videosListe(
 		topics: zuordnung.filter((z) => z.videoId === r.id).map(({ id, name }) => ({ id, name })),
 		darf: schreibbar.has(r.unitId)
 	}));
+}
+
+/** Abteilungen und Hubs mit sichtbaren Videos (Filter „Von“), nach Name. */
+export async function videoEinheiten(p: Principal): Promise<{ id: string; name: string }[]> {
+	const schreibbar = (await schreibbareEinheiten(p)).map((u) => u.id);
+	const rows = await scoped(p, (tx) =>
+		tx
+			.selectDistinct({ id: units.id, name: units.name })
+			.from(videos)
+			.innerJoin(units, eq(units.id, videos.unitId))
+			.where(
+				and(
+					isNull(videos.replacesId),
+					or(
+						eq(videos.status, 'veroeffentlicht'),
+						schreibbar.length ? inArray(videos.unitId, schreibbar) : sql`false`
+					)
+				)
+			)
+	);
+	return rows.sort((a, b) => a.name.localeCompare(b.name, 'de'));
 }
 
 /** Detail zum Ansehen */

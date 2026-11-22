@@ -1,8 +1,16 @@
 <script lang="ts">
 	/* eslint-disable svelte/no-navigation-without-resolve -- nur Suchparameter der eigenen Seite */
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import MehrLaden from '#lib/components/MehrLaden.svelte';
+	import { mitZahl } from '#lib/lange-liste.ts';
 
 	let { data } = $props();
+	const mehrHref = $derived.by(() => {
+		const u = new URL(page.url.href);
+		u.searchParams.set('anzahl', String(data.anzahl + data.schritt));
+		return u.search;
+	});
 	const datum = new Intl.DateTimeFormat('de-DE', {
 		dateStyle: 'medium',
 		timeZone: 'Europe/Berlin'
@@ -48,9 +56,12 @@
 	{#if data.liste.length === 0}
 		<p class="karte hinweis">Keine Rückmeldungen.</p>
 	{:else}
-		<ul class="karte liste">
+		<p class="hinweis zaehler">
+			{data.liste.length} von {mitZahl(data.gesamt, 'Rückmeldung', 'Rückmeldungen')}
+		</p>
+		<ul class="karte liste" id="rueckmeldeliste">
 			{#each data.liste as r (r.id)}
-				<li>
+				<li data-eintrag>
 					<a class="eintrag" href={resolve('/(app)/verwaltung/rueckmeldungen/[id]', { id: r.id })}>
 						<span class="zeile">
 							<span class="schild rand">{r.kind === 'fehler' ? 'Fehler' : 'Idee'}</span>
@@ -64,6 +75,14 @@
 				</li>
 			{/each}
 		</ul>
+		<MehrLaden
+			geladen={data.liste.length}
+			gesamt={data.gesamt}
+			schritt={data.schritt}
+			href={mehrHref}
+			einheit={['Rückmeldung', 'Rückmeldungen']}
+			bereich="rueckmeldeliste"
+		/>
 	{/if}
 </div>
 

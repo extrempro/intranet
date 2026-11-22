@@ -149,7 +149,11 @@ async function administrableTenantIds(p: Principal): Promise<string[] | null> {
 	return all.map((t) => t.id).filter((id) => canAdministerTenant(p, id));
 }
 
-export async function listFeedback(p: Principal, filter: { status?: string; kind?: string }) {
+export async function listFeedback(
+	p: Principal,
+	filter: { status?: string; kind?: string },
+	limit = 200
+) {
 	const ids = await administrableTenantIds(p);
 	const status = filter.status && isFeedbackStatus(filter.status) ? filter.status : null;
 	const offen = filter.status === 'offen';
@@ -163,7 +167,8 @@ export async function listFeedback(p: Principal, filter: { status?: string; kind
 			status: feedback.status,
 			createdAt: feedback.createdAt,
 			author: persons.displayName,
-			tenant: tenants.shortName
+			tenant: tenants.shortName,
+			gesamt: sql<number>`(count(*) over ())::int`
 		})
 		.from(feedback)
 		.leftJoin(persons, eq(persons.id, feedback.personId))
@@ -178,8 +183,8 @@ export async function listFeedback(p: Principal, filter: { status?: string; kind
 				kind ? eq(feedback.kind, kind) : undefined
 			)
 		)
-		.orderBy(desc(feedback.createdAt))
-		.limit(200);
+		.orderBy(desc(feedback.createdAt), desc(feedback.id))
+		.limit(Math.min(limit, 10000));
 	return rows.map((r) => ({ ...r, statusLabel: FEEDBACK_STATUS[r.status] }));
 }
 

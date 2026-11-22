@@ -1,6 +1,8 @@
 <script lang="ts">
 	/* eslint-disable svelte/no-navigation-without-resolve -- nur Suchparameter der eigenen Seite */
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import MehrLaden from '#lib/components/MehrLaden.svelte';
 
 	let { data } = $props();
 	const zeit = new Intl.DateTimeFormat('de-DE', {
@@ -9,6 +11,11 @@
 		hour: '2-digit',
 		minute: '2-digit',
 		timeZone: 'Europe/Berlin'
+	});
+	const mehrHref = $derived.by(() => {
+		const u = new URL(page.url.href);
+		u.searchParams.set('anzahl', String(data.geladenBis + data.schritt));
+		return u.search;
 	});
 	const q = (box: string, erledigt: boolean) =>
 		`?postfach=${box}${erledigt ? '&status=erledigt' : ''}`;
@@ -58,9 +65,9 @@
 	{#if data.liste.length === 0}
 		<p class="karte hinweis" data-tour="liste">Keine Gespräche.</p>
 	{:else}
-		<ul class="liste karte" data-tour="liste">
+		<ul class="liste karte" data-tour="liste" id="gespraechsliste">
 			{#each data.liste as g (g.id)}
-				<li class:neu={g.unread}>
+				<li class:neu={g.unread} data-eintrag>
 					<a href={resolve('/(app)/nachrichten/[id]', { id: g.id })}>
 						<span class="zeile">
 							<span class="schild rand">{g.kindLabel}</span>
@@ -74,6 +81,14 @@
 				</li>
 			{/each}
 		</ul>
+		<MehrLaden
+			geladen={data.liste.length}
+			gesamt={data.gesamt}
+			schritt={data.schritt}
+			href={mehrHref}
+			einheit={['Gespräch', 'Gespräche']}
+			bereich="gespraechsliste"
+		/>
 	{/if}
 </div>
 

@@ -295,11 +295,14 @@ export async function listNotifications(personId: string, limit = 100) {
 			title: notifications.title,
 			detail: notifications.detail,
 			createdAt: notifications.createdAt,
-			readAt: notifications.readAt
+			readAt: notifications.readAt,
+			/** alle bzw. ungelesene ohne Grenze (lange Liste, Kap. 6.7) */
+			gesamt: sql<number>`(count(*) over ())::int`,
+			ungelesen: sql<number>`(count(*) filter (where ${notifications.readAt} is null) over ())::int`
 		})
 		.from(notifications)
 		.where(and(eq(notifications.personId, personId), eq(notifications.bell, true)))
-		.orderBy(desc(notifications.createdAt))
+		.orderBy(desc(notifications.createdAt), desc(notifications.id))
 		.limit(limit);
 }
 

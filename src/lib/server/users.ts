@@ -36,7 +36,7 @@ const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // Personen
 // ---------------------------------------------------------------------------
 
-export async function listPersons(p: Principal, q: string) {
+export async function listPersons(p: Principal, q: string, limit = 200) {
 	const tenantIds = (await administrableTenants(p)).map((t) => t.id);
 	if (tenantIds.length === 0) return [];
 	const term = q.trim().slice(0, 100);
@@ -50,7 +50,8 @@ export async function listPersons(p: Principal, q: string) {
 			hidden: persons.hidden,
 			authSource: persons.authSource,
 			tenantName: tenants.name,
-			roles: sql<number>`(select count(*)::int from role_assignments r where r.person_id = ${persons.id})`
+			roles: sql<number>`(select count(*)::int from role_assignments r where r.person_id = ${persons.id})`,
+			gesamt: sql<number>`(count(*) over ())::int`
 		})
 		.from(persons)
 		.innerJoin(tenants, eq(tenants.id, persons.tenantId))
@@ -62,8 +63,8 @@ export async function listPersons(p: Principal, q: string) {
 				term ? or(ilike(persons.displayName, like), ilike(persons.email, like)) : undefined
 			)
 		)
-		.orderBy(asc(persons.displayName))
-		.limit(200);
+		.orderBy(asc(persons.displayName), asc(persons.id))
+		.limit(Math.min(limit, 10000));
 }
 
 async function loadPerson(p: Principal, id: string) {

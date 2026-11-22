@@ -9,8 +9,15 @@
 	import Karussell from '#lib/components/Karussell.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import { actionUrl } from '#lib/action-url.ts';
+	import MehrLaden from '#lib/components/MehrLaden.svelte';
+	import { mitZahl } from '#lib/lange-liste.ts';
 
 	let { data, form } = $props();
+	const mehrHref = $derived.by(() => {
+		const u = new URL(page.url.href);
+		u.searchParams.set('anzahl', String(data.anzahl + data.schritt));
+		return u.search;
+	});
 	const datum = new Intl.DateTimeFormat('de-DE', {
 		dateStyle: 'medium',
 		timeZone: 'Europe/Berlin'
@@ -117,11 +124,14 @@
 			{data.q ? `Nichts zu „${data.q}“ gefunden.` : 'Noch keine Beiträge.'}
 		</p>
 	{:else}
-		<div class="raster">
+		<p class="hinweis zaehler">
+			{data.beitraege.length} von {mitZahl(data.gesamt, 'Beitrag', 'Beiträgen')}
+		</p>
+		<div class="raster" id="kulissenraster">
 			{#each data.beitraege as b (b.id)}
 				{@const r = reaktionen(b.reactions)}
 				{@const href = resolve('/(app)/hinter-den-kulissen/[id]', { id: b.id })}
-				<article class="karte beitrag" aria-labelledby="k-{b.id}">
+				<article class="karte beitrag" aria-labelledby="k-{b.id}" data-eintrag>
 					{#if b.images.length}
 						<Karussell bilder={b.images} titel={b.title} kompakt angehalten={diashowsAus} />
 					{/if}
@@ -150,6 +160,15 @@
 				</article>
 			{/each}
 		</div>
+		<MehrLaden
+			geladen={data.beitraege.length}
+			gesamt={data.gesamt}
+			schritt={data.schritt}
+			href={mehrHref}
+			einheit={['Beitrag', 'Beiträge']}
+			verb="weitere anzeigen"
+			bereich="kulissenraster"
+		/>
 	{/if}
 
 	<details class="karte sogehts" id="sogehts" bind:open={sogehtsOffen}>

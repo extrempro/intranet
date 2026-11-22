@@ -49,7 +49,9 @@
 			await tick();
 			const wurzel = (bereich && document.getElementById(bereich)) || document;
 			const neu = wurzel.querySelectorAll<HTMLElement>('[data-eintrag]')[vorher];
-			neu?.querySelector<HTMLElement>('a[href]')?.focus();
+			(
+				neu?.querySelector<HTMLElement>('.titellink') ?? neu?.querySelector<HTMLElement>('a[href]')
+			)?.focus();
 			const dazu = geladen - vorher;
 			ansage = `${mitZahl(dazu, einheit[0], einheit[1])} geladen.`;
 		} finally {

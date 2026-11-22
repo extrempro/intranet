@@ -1,8 +1,16 @@
 <script lang="ts">
 	import { livesuche } from '#lib/livesuche.ts';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
+	import MehrLaden from '#lib/components/MehrLaden.svelte';
+	import { mitZahl } from '#lib/lange-liste.ts';
 
 	let { data } = $props();
+	const mehrHref = $derived.by(() => {
+		const u = new URL(page.url.href);
+		u.searchParams.set('anzahl', String(data.anzahl + data.schritt));
+		return u.search;
+	});
 	const STATUS = { active: '', invited: 'eingeladen', disabled: 'gesperrt' } as const;
 </script>
 
@@ -26,9 +34,12 @@
 	{#if data.personen.length === 0}
 		<p class="hinweis" role="status">Niemand gefunden.</p>
 	{:else}
-		<ul class="liste karte">
+		<p class="hinweis zaehler">
+			{data.personen.length} von {mitZahl(data.gesamt, 'Person', 'Personen')}
+		</p>
+		<ul class="liste karte" id="benutzerliste">
 			{#each data.personen as x (x.id)}
-				<li>
+				<li data-eintrag>
 					<a href={resolve('/(app)/verwaltung/benutzer/[id]', { id: x.id })}>
 						<strong>{x.name}</strong>
 						<span class="hinweis">
@@ -44,9 +55,15 @@
 				</li>
 			{/each}
 		</ul>
-		{#if data.personen.length === 200}<p class="hinweis">
-				Nur die ersten 200 – grenz die Suche ein.
-			</p>{/if}
+		<MehrLaden
+			geladen={data.personen.length}
+			gesamt={data.gesamt}
+			schritt={data.schritt}
+			href={mehrHref}
+			einheit={['Person', 'Personen']}
+			verb="weitere anzeigen"
+			bereich="benutzerliste"
+		/>
 	{/if}
 </div>
 

@@ -23,7 +23,11 @@ import {
 } from '#lib/server/board.ts';
 import { listFavorites, toggleFavorite } from '#lib/server/preferences.ts';
 import { messageLimit } from '#lib/server/rate-limit.ts';
+import { anzahlAus } from '#lib/lange-liste.ts';
 import type { Actions, PageServerLoad } from './$types';
+
+/** Anzeigen je Schritt „weitere anzeigen“ (Kap. 6.7) */
+const SCHRITT = 24;
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const p = requirePrincipal(locals);
@@ -40,6 +44,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		allTenantsList(),
 		listFavorites(p.personId)
 	]);
+	const anzahl = anzahlAus(url, SCHRITT, 2000);
+	const anzeigen =
+		ansicht === 'alle' ? await listAds(p, { categoryId: kategorie, q, limit: anzahl }) : [];
 	return {
 		ansicht,
 		moderator: mod,
@@ -51,7 +58,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			eigener: m.id === p.tenantId,
 			an: m.id === p.tenantId || extra.includes(m.id)
 		})),
-		anzeigen: ansicht === 'alle' ? await listAds(p, { categoryId: kategorie, q }) : [],
+		anzeigen,
+		gesamt: anzeigen[0]?.gesamt ?? 0,
+		anzahl,
+		schritt: SCHRITT,
 		meine: ansicht === 'meine' ? await myAds(p) : [],
 		pruefen: ansicht === 'moderation' ? await moderationQueue(p) : [],
 		// Zähler am Reiter „Prüfen“ (nur Moderation)
