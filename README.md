@@ -9,7 +9,7 @@ Was das Intranet können soll, steht in der **[Spezifikation](docs/spec.md)**.
 
 - [SvelteKit](https://svelte.dev/docs/kit) mit TypeScript
 - PostgreSQL mit [Drizzle ORM](https://orm.drizzle.team)
-- Betrieb in Docker hinter dem NetBird Reverse Proxy, Bereitstellung per Arcane Git-Sync
+- Betrieb in Docker hinter einem Reverse Proxy, fertige Images aus der GitHub Container Registry
 
 ## Entwicklung
 

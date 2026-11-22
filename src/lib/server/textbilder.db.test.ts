@@ -35,7 +35,7 @@ describe.skipIf(!url)('Bilder im Text', () => {
 		await migrateWithRetry(() => runMigrations());
 		tb = await import('./textbilder.ts');
 		await db.execute(
-			sql`insert into tenants (id, name, short_name, is_main) values (${T}, 'Oper', 'HSO', true)`
+			sql`insert into tenants (id, name, short_name, is_main) values (${T}, 'Oper', 'BH', true)`
 		);
 		await db.execute(sql`
 			insert into units (id, tenant_id, type, name, slug, is_central) values (${U}, ${T}, 'abteilung', 'IT', 'it', true)`);

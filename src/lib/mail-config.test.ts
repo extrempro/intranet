@@ -34,14 +34,14 @@ describe('E-Mail-Einstellungen', () => {
 			security: 'starttls',
 			user: 'intranet@oper.test',
 			from: 'intranet@oper.test',
-			fromName: 'Intranet Staatsoper',
+			fromName: 'Intranet Beispielhaus',
 			replyTo: ''
 		});
 		expect(ok.fehler).toEqual({});
 		expect(ok.werte).toMatchObject({
 			host: 'smtp.office365.com',
 			port: 587,
-			fromName: 'Intranet Staatsoper'
+			fromName: 'Intranet Beispielhaus'
 		});
 		expect(ok.werte.replyTo).toBeUndefined();
 

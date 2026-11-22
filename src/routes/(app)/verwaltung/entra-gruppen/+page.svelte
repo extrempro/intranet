@@ -64,11 +64,7 @@
 			</label>
 			<label class="feld">
 				<span>Name der Gruppe (zur Orientierung)</span>
-				<input
-					name="gruppenname"
-					maxlength="120"
-					placeholder="z. B. IT-GRP-HSO-INTRANET-REDAKTION"
-				/>
+				<input name="gruppenname" maxlength="120" placeholder="z. B. GRP-INTRANET-REDAKTION" />
 			</label>
 			<RolleWaehlen rollen={data.rollen} mandanten={data.mandanten} einheiten={data.einheiten} />
 			<button class="knopf" type="submit">Hinzufügen</button>

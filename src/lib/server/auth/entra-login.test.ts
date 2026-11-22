@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { resolveEntraLogin, type EntraLoginInput } from './entra-login';
 
 const base: EntraLoginInput = {
-	email: 'Max.Muster@Staatsoper.de',
+	email: 'Max.Muster@Beispielhaus.de',
 	groupIds: ['zugang'],
 	accountEnabled: true,
 	accessGroupId: 'zugang',
-	domains: { 'staatsoper.de': 'm-hso', 'ballett.de': 'm-b' },
+	domains: { 'beispielhaus.de': 'm-haupt', 'zweithaus.de': 'm-b' },
 	mappings: [
 		{
 			groupId: 'redaktion',
@@ -30,8 +30,8 @@ describe('resolveEntraLogin', () => {
 		const r = resolveEntraLogin(base);
 		expect(r).toEqual({
 			ok: true,
-			tenantId: 'm-hso',
-			email: 'Max.Muster@Staatsoper.de',
+			tenantId: 'm-haupt',
+			email: 'Max.Muster@Beispielhaus.de',
 			roles: []
 		});
 	});

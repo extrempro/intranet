@@ -15,7 +15,7 @@ const T2 = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 
 const ctx: SyncContext = {
 	accessGroupId: ZUGANG,
-	domains: { 'oper.test': T1, 'ballett.test': T2 },
+	domains: { 'oper.test': T1, 'zweithaus.test': T2 },
 	mappings: [
 		{ groupId: REDAKTION, role: 'redaktion', scope: 'tenant', scopeTenantId: T1, scopeUnitId: null }
 	]
@@ -50,7 +50,7 @@ describe('Entra-Abgleich je Person', () => {
 		const a = planPerson(
 			person(),
 			{
-				user: user({ displayName: 'Kai K.', mail: 'kai@ballett.test' }),
+				user: user({ displayName: 'Kai K.', mail: 'kai@zweithaus.test' }),
 				groupIds: [ZUGANG, REDAKTION]
 			},
 			ctx

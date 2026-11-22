@@ -8,18 +8,18 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const url = process.env.TEST_DATABASE_URL;
 const T = {
-	hso: '00000000-0000-0000-0000-000000000001',
+	haupt: '00000000-0000-0000-0000-000000000001',
 	b: '00000000-0000-0000-0000-000000000002'
 };
 const U = {
 	it: '00000000-0000-0000-0000-0000000000a1',
-	kbbHso: '00000000-0000-0000-0000-0000000000a2',
+	kbbHaupt: '00000000-0000-0000-0000-0000000000a2',
 	kbbB: '00000000-0000-0000-0000-0000000000a3'
 };
 const P = {
 	itPerson: '00000000-0000-0000-0000-0000000000b1',
 	b: '00000000-0000-0000-0000-0000000000b2',
-	hso: '00000000-0000-0000-0000-0000000000b3'
+	haupt: '00000000-0000-0000-0000-0000000000b3'
 };
 
 const N = {
@@ -45,38 +45,38 @@ describe.skipIf(!url)('Row-Level Security', () => {
 
 		await db.execute(sql`
 			insert into tenants (id, name, short_name, is_main) values
-				(${T.hso}, 'Staatsoper', 'HSO', true), (${T.b}, 'Ballett', 'B', false)`);
+				(${T.haupt}, 'Beispielhaus', 'BH', true), (${T.b}, 'Zweithaus', 'B', false)`);
 		await db.execute(sql`
 			insert into units (id, tenant_id, type, name, slug, is_central) values
-				(${U.it}, ${T.hso}, 'abteilung', 'IT', 'it', true),
-				(${U.kbbHso}, ${T.hso}, 'abteilung', 'KBB Oper', 'kbb-oper', false),
-				(${U.kbbB}, ${T.b}, 'abteilung', 'KBB Ballett', 'kbb-ballett', false)`);
+				(${U.it}, ${T.haupt}, 'abteilung', 'IT', 'it', true),
+				(${U.kbbHaupt}, ${T.haupt}, 'abteilung', 'KBB Oper', 'kbb-oper', false),
+				(${U.kbbB}, ${T.b}, 'abteilung', 'KBB Zweithaus', 'kbb-zweithaus', false)`);
 		await db.execute(sql`
 			insert into persons (id, tenant_id, email, display_name, auth_source) values
-				(${P.itPerson}, ${T.hso}, 'it@oper.de', 'IT-Person', 'local'),
-				(${P.b}, ${T.b}, 'b@ballett.de', 'Ballett-Person', 'local'),
-				(${P.hso}, ${T.hso}, 'oper@oper.de', 'Opern-Person', 'local')`);
+				(${P.itPerson}, ${T.haupt}, 'it@oper.de', 'IT-Person', 'local'),
+				(${P.b}, ${T.b}, 'b@zweithaus.de', 'Zweithaus-Person', 'local'),
+				(${P.haupt}, ${T.haupt}, 'oper@oper.de', 'Opern-Person', 'local')`);
 		await db.execute(sql`
 			insert into unit_members (unit_id, person_id) values
-				(${U.it}, ${P.itPerson}), (${U.kbbHso}, ${P.hso}), (${U.kbbB}, ${P.b})`);
+				(${U.it}, ${P.itPerson}), (${U.kbbHaupt}, ${P.haupt}), (${U.kbbB}, ${P.b})`);
 		await db.execute(
 			sql`insert into local_credentials (person_id, password_hash) values (${P.b}, 'geheim')`
 		);
 		await db.execute(sql`
 			insert into news (id, unit_id, tenant_id, title, body_html, body_text, publish_at, all_tenants) values
-				(${N.oper}, ${U.kbbHso}, ${T.hso}, 'Nur Oper', '<p>x</p>', 'x', now(), false),
-				(${N.zentralB}, ${U.it}, ${T.hso}, 'Zentral für B', '<p>x</p>', 'x', now(), false),
-				(${N.zentralAlle}, ${U.it}, ${T.hso}, 'Zentral für alle', '<p>x</p>', 'x', now(), true)`);
+				(${N.oper}, ${U.kbbHaupt}, ${T.haupt}, 'Nur Oper', '<p>x</p>', 'x', now(), false),
+				(${N.zentralB}, ${U.it}, ${T.haupt}, 'Zentral für B', '<p>x</p>', 'x', now(), false),
+				(${N.zentralAlle}, ${U.it}, ${T.haupt}, 'Zentral für alle', '<p>x</p>', 'x', now(), true)`);
 		await db.execute(sql`
 			insert into news_tenants (news_id, tenant_id) values
-				(${N.oper}, ${T.hso}), (${N.zentralB}, ${T.b})`);
+				(${N.oper}, ${T.haupt}), (${N.zentralB}, ${T.b})`);
 		await db.execute(sql`
 			insert into urgent_dismissals (news_id, person_id) values (${N.zentralAlle}, ${P.itPerson})`);
 		await db.execute(sql`
 			insert into faqs (unit_id, question, answer_html, answer_text) values
 				(${U.it}, 'Zentrale Frage?', '<p>a</p>', 'a'),
-				(${U.kbbHso}, 'Frage der Oper?', '<p>a</p>', 'a'),
-				(${U.kbbB}, 'Frage des Balletts?', '<p>a</p>', 'a')`);
+				(${U.kbbHaupt}, 'Frage der Oper?', '<p>a</p>', 'a'),
+				(${U.kbbB}, 'Frage aus dem Zweithaus?', '<p>a</p>', 'a')`);
 	});
 
 	afterAll(async () => {
@@ -90,7 +90,7 @@ describe.skipIf(!url)('Row-Level Security', () => {
 		const rows = await mod.scoped(asB, (tx) =>
 			tx.execute<{ slug: string }>(sql`select slug from units order by slug`)
 		);
-		expect(rows.map((r) => r.slug)).toEqual(['it', 'kbb-ballett']);
+		expect(rows.map((r) => r.slug)).toEqual(['it', 'kbb-zweithaus']);
 	});
 
 	it('zeigt Personen des eigenen Mandanten und aus zentralen Einheiten', async () => {
@@ -109,13 +109,13 @@ describe.skipIf(!url)('Row-Level Security', () => {
 
 	it('verhindert Änderungen an fremden und zentralen Einheiten', async () => {
 		const n = await mod.scoped(asB, (tx) =>
-			tx.execute(sql`update units set name = 'X' where id in (${U.kbbHso}, ${U.it})`)
+			tx.execute(sql`update units set name = 'X' where id in (${U.kbbHaupt}, ${U.it})`)
 		);
 		expect(n.count).toBe(0);
 		await expect(
 			mod.scoped(asB, (tx) =>
 				tx.execute(
-					sql`insert into units (tenant_id, type, name, slug) values (${T.hso}, 'abteilung', 'Fremd', 'fremd')`
+					sql`insert into units (tenant_id, type, name, slug) values (${T.haupt}, 'abteilung', 'Fremd', 'fremd')`
 				)
 			)
 		).rejects.toThrow();
@@ -141,7 +141,7 @@ describe.skipIf(!url)('Row-Level Security', () => {
 		const rows = await mod.scoped(asB, (tx) =>
 			tx.execute<{ question: string }>(sql`select question from faqs order by question`)
 		);
-		expect(rows.map((r) => r.question)).toEqual(['Frage des Balletts?', 'Zentrale Frage?']);
+		expect(rows.map((r) => r.question)).toEqual(['Frage aus dem Zweithaus?', 'Zentrale Frage?']);
 		await expect(mod.scoped(asB, (tx) => tx.execute(sql`delete from faqs`))).rejects.toMatchObject({
 			cause: { code: '42501' }
 		});

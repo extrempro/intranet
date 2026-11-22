@@ -19,7 +19,7 @@ describe('Web Push mit web-push', () => {
 			{
 				TTL: 60,
 				urgency: 'high',
-				vapidDetails: { subject: 'mailto:it@staatsoper-hamburg.de', ...keys }
+				vapidDetails: { subject: 'mailto:it@example.org', ...keys }
 			}
 		);
 		expect(details.method).toBe('POST');

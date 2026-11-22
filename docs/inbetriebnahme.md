@@ -2,12 +2,12 @@
 
 Schritt für Schritt vom leeren Server zum laufenden Intranet, danach Updates und Störungen. Was eingerichtet ist, zeigt **Verwaltung → System → Startklar**. Vor dem Start sollte dort nichts mehr rot sein.
 
-Für den Betrieb wird nichts im Repo geändert: Alle Werte stehen in den Umgebungsvariablen des Arcane-Projekts, die Images kommen fertig aus der GitHub Container Registry.
+Für den Betrieb wird nichts im Repo geändert: Alle Werte stehen in den Umgebungsvariablen (`.env` oder die Variablen deiner Docker-Verwaltung), die Images kommen fertig aus der GitHub Container Registry.
 
 ## 1. Voraussetzungen
 
-- **Docker-Host mit Arcane**, Docker Compose v2. Etwa 2 CPU, 4 GB RAM, Platz für Datenbank, Dateien und Sicherungen (Sicherungen am besten auf einem eigenen Datenträger, siehe [backup/README.md](../backup/README.md)).
-- **NetBird Reverse Proxy** mit eigener Adresse, z. B. `intranet.staatsoper-hamburg.de`, und gültigem Zertifikat.
+- **Docker-Host** mit Docker Compose v2 (direkt oder über eine Docker-Verwaltung). Etwa 2 CPU, 4 GB RAM, Platz für Datenbank, Dateien und Sicherungen (Sicherungen am besten auf einem eigenen Datenträger, siehe [backup/README.md](../backup/README.md)).
+- **Reverse Proxy** mit eigener Adresse, z. B. `intranet.example.org`, und gültigem Zertifikat.
 - **Microsoft Entra ID**: Recht, eine App-Registrierung anzulegen und Administratorzustimmung zu erteilen; zwei Gruppen (Zugang, System-Admins).
 - **SMTP-Server** oder interner Relay.
 - **Ausgehende Verbindungen** vom Docker-Host:
@@ -39,7 +39,7 @@ age-keygen -o intranet-sicherung.key   # Schlüssel für die Sicherungen
 Unter **App-Registrierungen → Neue Registrierung**, „Nur Konten in diesem Organisationsverzeichnis“.
 
 1. **Authentifizierung**: Plattform „Web“, Umleitungs-URI `https://<Adresse>/anmelden/entra/callback`.
-2. **Zertifikate & Geheimnisse**: Clientgeheimnis anlegen → `ENTRA_CLIENT_SECRET`. Ablaufdatum im Kalender eintragen; vor Ablauf ein neues anlegen und in Arcane tauschen.
+2. **Zertifikate & Geheimnisse**: Clientgeheimnis anlegen → `ENTRA_CLIENT_SECRET`. Ablaufdatum im Kalender eintragen; vor Ablauf ein neues anlegen und in den Umgebungsvariablen tauschen.
 3. **API-Berechtigungen** (Microsoft Graph), danach **Administratorzustimmung erteilen**:
    - Delegiert: `openid`, `profile`, `email`, `User.Read`, `GroupMember.Read.All`
    - Anwendung: `User.Read.All`, `GroupMember.Read.All` (nächtlicher Abgleich), `TeamsActivity.Send` (Teams-Meldungen)
@@ -52,16 +52,16 @@ Unter **App-Registrierungen → Neue Registrierung**, „Nur Konten in diesem Or
 
 Tenant-ID und Client-ID stehen auf der Übersichtsseite der Registrierung.
 
-## 4. Arcane-Projekt
+## 4. Compose-Projekt
 
-1. Projekt aus dem Git-Repository anlegen (Git-Sync), Zweig `main`, Compose-Datei `docker-compose.yml`.
-2. **Umgebungsvariablen** im Projekt hinterlegen. Vorlage mit Erklärungen: [.env.example](../.env.example). Mindestens:
+1. Compose-Projekt mit der `docker-compose.yml` aus dem Repo anlegen (von Hand oder über deine Docker-Verwaltung).
+2. **Umgebungsvariablen** hinterlegen (`.env` neben der Compose-Datei oder in der Docker-Verwaltung). Vorlage mit Erklärungen: [.env.example](../.env.example). Mindestens:
 
 | Variable                                                                | Wert                                                                                      |
 | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | `INTRANET_VERSION`                                                      | Version aus den [Releases](https://github.com/extrempro/intranet/releases), z. B. `0.7.0` |
 | `ORIGIN`                                                                | `https://<Adresse>`, genau wie im Browser                                                 |
-| `APP_PORT`, `APP_BIND`                                                  | Port und NetBird-IP des Docker-Hosts (nur der Proxy erreicht die Anwendung)               |
+| `APP_PORT`, `APP_BIND`                                                  | Port und interne Adresse des Docker-Hosts (nur der Proxy erreicht die Anwendung)          |
 | `ADDRESS_HEADER`, `XFF_DEPTH`                                           | `X-Forwarded-For` und `1` (siehe 5.)                                                      |
 | `POSTGRES_USER`, `POSTGRES_DB`                                          | `intranet`                                                                                |
 | `POSTGRES_PASSWORD`, `APP_DATABASE_PASSWORD`                            | aus 2.                                                                                    |
@@ -71,22 +71,22 @@ Tenant-ID und Client-ID stehen auf der Übersichtsseite der Registrierung.
 | `TEAMS_APP_ID`                                                          | erst nach dem Verteilen der Teams-App (siehe 7.)                                          |
 | `ENTRA_ACCESS_GROUP_ID`                                                 | aus 3.                                                                                    |
 | `SMTP_HOST`, `SMTP_SECURITY`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM` | SMTP (auch später in der Verwaltung pflegbar)                                             |
-| `PUSH_CONTACT`                                                          | `mailto:it@staatsoper-hamburg.de`                                                         |
+| `PUSH_CONTACT`                                                          | z. B. `mailto:it@example.org` (ohne Angabe: `ORIGIN`)                                     |
 
 3. **Images**: Das Paket `ghcr.io/extrempro/intranet` (und `intranet-backup`) muss öffentlich sein (GitHub → Packages → Package settings → Change visibility). Sonst auf dem Host `docker login ghcr.io` mit einem Token mit `read:packages`.
 
-## 5. NetBird Reverse Proxy
+## 5. Reverse Proxy
 
-- Ziel: `http://<NetBird-IP des Docker-Hosts>:<APP_PORT>`, öffentlich nur per HTTPS.
+- Ziel: `http://<interne Adresse des Docker-Hosts>:<APP_PORT>`, öffentlich nur per HTTPS. Läuft der Proxy auf einem anderen Server, die Verbindung über ein internes Netz oder VPN führen.
 - Header **`X-Forwarded-For`** an die Anwendung weitergeben. Mit `ADDRESS_HEADER=X-Forwarded-For` und `XFF_DEPTH=1` sieht das Intranet dann die echte Adresse (Begrenzungen je IP, Anmeldeprotokoll). Reihenfolge: zuerst im Proxy aktivieren, dann die Variable setzen; fehlt der Header, antwortet die Anwendung mit einem Fehler.
 - Anfragen bis **21 MB** zulassen (Hochladen von Dateien), Zeitlimit mindestens 60 Sekunden.
 - Nichts zwischenspeichern; die Anwendung setzt eigene `Cache-Control`-Header.
 
 ## 6. Erster Start
 
-1. In Arcane das Projekt starten. Die Anwendung spielt die Migrationen ein.
+1. Das Projekt starten (`docker compose up -d`). Die Anwendung spielt die Migrationen ein.
 2. `https://<Adresse>/health` muss `ok` zeigen.
-3. **Einrichtungslink** aus dem Log holen (`docker compose logs app` bzw. Logs in Arcane):
+3. **Einrichtungslink** aus dem Log holen (`docker compose logs app`):
    `https://<Adresse>/einrichtung/…`. Er gilt 24 Stunden und nur einmal; ein Neustart der Anwendung erzeugt einen neuen, solange die Einrichtung nicht abgeschlossen ist. Den Link sieht nur, wer die Logs lesen darf.
 4. Im Browser öffnen und einrichten:
    - **Hauptmandant**: Name, Kürzel, E-Mail-Domains, Akzentfarben
@@ -120,14 +120,14 @@ Tenant-ID und Client-ID stehen auf der Übersichtsseite der Registrierung.
 
 1. In den [Releases](https://github.com/extrempro/intranet/releases) nachsehen, was sich geändert hat.
 2. Vor größeren Updates von Hand sichern: `docker compose exec backup sicherung.sh`.
-3. In Arcane `INTRANET_VERSION` auf die neue Version setzen und das Projekt neu bereitstellen (Images neu laden). Die Anwendung spielt neue Migrationen beim Start selbst ein.
+3. `INTRANET_VERSION` auf die neue Version setzen und das Projekt neu bereitstellen (`docker compose pull && docker compose up -d`). Die Anwendung spielt neue Migrationen beim Start selbst ein.
 4. Verwaltung → System: Version, Migrationen und Startklar prüfen.
 
 Zurück auf die vorige Version geht nur, wenn das Update keine Migration enthielt. Sonst die Sicherung von vor dem Update wiederherstellen.
 
 ## 10. Störungen
 
-- **Logs**: `docker compose logs app` (bzw. in Arcane). Docker behält je Container 3 × 10 MB.
+- **Logs**: `docker compose logs app`. Docker behält je Container 3 × 10 MB.
 - **Anmeldung mit Microsoft geht nicht**: mit dem lokalen Admin anmelden, unter Anmeldung „Verbindung prüfen“. Häufig: Clientgeheimnis abgelaufen, Administratorzustimmung fehlt, `ORIGIN` passt nicht zur Umleitungs-URI.
 - **Alle Anfragen mit Fehler 400/500 nach einer Änderung am Proxy**: `ADDRESS_HEADER` gesetzt, aber der Proxy schickt den Header nicht.
 - **Sicherung rot**: Verwaltung → System zeigt den Grund; System-Admins bekommen zusätzlich eine Benachrichtigung.
