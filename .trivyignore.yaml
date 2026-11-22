@@ -1,0 +1,9 @@
+# Begründete Ausnahmen für Trivy (Workflow „Sicherheit“). Jede Ausnahme mit Pfad und Grund.
+misconfigurations:
+  - id: DS-0002
+    paths:
+      - backup/Dockerfile
+    statement: >-
+      Der Dienst backup läuft bewusst als root: Er liest die Volumes der Anwendung
+      (Benutzer node) und der Datenbank (postgres) und startet den
+      Wiederherstellungstest per su-exec als postgres. Er hat keinen offenen Port.

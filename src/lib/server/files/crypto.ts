@@ -32,7 +32,7 @@ export function decryptFile(data: Buffer, key: Buffer, fileId: string): Buffer {
 	if (!data.subarray(0, 3).equals(MAGIC)) throw new Error('Unbekanntes Dateiformat');
 	const iv = data.subarray(3, 15);
 	const tag = data.subarray(15, 31);
-	const decipher = createDecipheriv('aes-256-gcm', key, iv);
+	const decipher = createDecipheriv('aes-256-gcm', key, iv, { authTagLength: 16 });
 	decipher.setAAD(Buffer.from(fileId));
 	decipher.setAuthTag(tag);
 	return Buffer.concat([decipher.update(data.subarray(31)), decipher.final()]);

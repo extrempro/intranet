@@ -378,34 +378,36 @@
 			<p class="notiz">Das Hub-Team darf immer alles schreiben und zählt nicht mit.</p>
 			<ul class="zeilen">
 				{#each schreibende as m (m.personId)}
-					<li class="schreibrecht" role="group" aria-label="Schreibrechte von {m.name}">
-						<span class="wer">
-							<strong>{m.name}</strong>{#if hub.isCentral}<span class="unter">
-									{m.mandant}
-								</span>{/if}
-						</span>
-						<span class="chips">
-							{#each RECHTE as [k, text] (k)}
-								<button
-									type="button"
-									class="chip"
-									aria-pressed={m[k]}
-									aria-label="{text} für {m.name}"
-									disabled={!m[k] && voll && !(m.news || m.faqs || m.termine || m.dokumente)}
-									onclick={() => (m[k] = !m[k])}
-								>
-									{#if m[k]}<Icon d="M5 12l5 5l10 -10" size={14} stroke={2.4} />{/if}{text}
-								</button>
-							{/each}
-						</span>
-						<button
-							type="button"
-							class="knopf zweit klein"
-							aria-label="{m.name} entfernen"
-							onclick={() => entfernen(m)}
-						>
-							Entfernen
-						</button>
+					<li>
+						<div class="schreibrecht" role="group" aria-label="Schreibrechte von {m.name}">
+							<span class="wer">
+								<strong>{m.name}</strong>{#if hub.isCentral}<span class="unter">
+										{m.mandant}
+									</span>{/if}
+							</span>
+							<span class="chips">
+								{#each RECHTE as [k, text] (k)}
+									<button
+										type="button"
+										class="chip"
+										aria-pressed={m[k]}
+										aria-label="{text} für {m.name}"
+										disabled={!m[k] && voll && !(m.news || m.faqs || m.termine || m.dokumente)}
+										onclick={() => (m[k] = !m[k])}
+									>
+										{#if m[k]}<Icon d="M5 12l5 5l10 -10" size={14} stroke={2.4} />{/if}{text}
+									</button>
+								{/each}
+							</span>
+							<button
+								type="button"
+								class="knopf zweit klein"
+								aria-label="{m.name} entfernen"
+								onclick={() => entfernen(m)}
+							>
+								Entfernen
+							</button>
+						</div>
 					</li>
 				{/each}
 			</ul>
@@ -884,6 +886,13 @@
 		flex: 1 1 160px;
 		min-width: 0;
 		overflow-wrap: anywhere;
+	}
+	.schreibrecht {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px 10px;
+		width: 100%;
 	}
 	.schreibrecht .wer {
 		flex: 1 1 140px;

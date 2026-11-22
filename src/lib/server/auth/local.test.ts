@@ -39,6 +39,12 @@ describe('Verschlüsselung', () => {
 		expect(() => decryptSecret(enc.join('.'), KEY)).toThrow();
 	});
 
+	it('lehnt einen gekürzten Tag ab', () => {
+		const enc = encryptSecret(new Uint8Array([1, 2, 3]), KEY).split('.');
+		enc[2] = Buffer.from(enc[2], 'base64url').subarray(0, 4).toString('base64url');
+		expect(() => decryptSecret(enc.join('.'), KEY)).toThrow();
+	});
+
 	it('lehnt falsche Schlüssellänge ab', () => {
 		expect(() => encryptSecret(new Uint8Array([1]), Buffer.alloc(16).toString('base64'))).toThrow();
 	});

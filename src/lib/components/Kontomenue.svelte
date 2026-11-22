@@ -54,7 +54,7 @@
 		class="avatar"
 		aria-expanded={offen}
 		aria-controls="kontomenue"
-		aria-label="Kontomenü von {name}"
+		aria-label="{foto ? '' : `${kuerzel}: `}Kontomenü von {name}"
 		onclick={() => (offen = !offen)}
 	>
 		{#if foto}<img src={foto} alt="" />{:else}{kuerzel}{/if}

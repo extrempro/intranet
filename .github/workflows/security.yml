@@ -1,0 +1,81 @@
+# Sicherheitsprüfungen bei jedem Pull Request, auf main und wöchentlich (Montag 05:07 UTC):
+# statische Analyse mit Semgrep (OWASP Top 10, XSS, TypeScript, Dockerfile),
+# Secrets im ganzen Git-Verlauf (gitleaks), Abhängigkeiten, Konfiguration und
+# Secrets im Repo (Trivy). Die gebauten Images prüft Trivy im CI-Workflow.
+#
+# Werkzeuge sind auf Versionen festgelegt (gitleaks zusätzlich per Prüfsumme):
+# Im März 2026 wurden unter bekannten Tags manipulierte Trivy-Versionen verteilt
+# (CVE-2026-33634). Update nur nach Prüfung des neuen Releases.
+name: Sicherheit
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '7 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  semgrep:
+    name: Semgrep (statische Analyse, XSS)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.14'
+      - name: Semgrep installieren
+        run: pip install semgrep==1.186.0
+      - name: Semgrep
+        run: >
+          semgrep scan
+          --config p/owasp-top-ten
+          --config p/xss
+          --config p/typescript
+          --config p/dockerfile
+          --exclude e2e
+          --metrics=off
+          --error
+
+  gitleaks:
+    name: gitleaks (Secrets im Git-Verlauf)
+    runs-on: ubuntu-latest
+    env:
+      # Release 8.30.1 vom 21.03.2026, Prüfsumme aus gitleaks_8.30.1_checksums.txt
+      GITLEAKS_VERSION: 8.30.1
+      GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: gitleaks installieren
+        run: |
+          curl -fsSL -o gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf gitleaks.tar.gz -C "$RUNNER_TEMP" gitleaks
+          rm gitleaks.tar.gz
+      - name: gitleaks
+        run: '"$RUNNER_TEMP/gitleaks" git --redact --verbose .'
+
+  trivy:
+    name: Trivy (Abhängigkeiten, Konfiguration, Secrets)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # Action per Commit festgelegt (siehe Kopf), Trivy auf geprüfte Version
+      - name: Trivy Dateisystem-Scan
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.76.2
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,misconfig,secret
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          trivyignores: .trivyignore.yaml
+          exit-code: '1'

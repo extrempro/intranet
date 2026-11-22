@@ -275,7 +275,7 @@
 			class="marke"
 			class:ohne-handy={zurueck}
 			href={resolve('/(app)')}
-			aria-label="Intranet, zur Startseite"
+			aria-label="{data.logo.hell ? '' : `${data.ich.mandantKurz} `}Intranet, zur Startseite"
 		>
 			{#if data.logo.hell}
 				<img class="logobild logo-hell" src={data.logo.hell} alt="" />

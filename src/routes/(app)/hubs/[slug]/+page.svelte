@@ -524,7 +524,8 @@
 		font-weight: 600;
 		padding: 4px 12px;
 		border-radius: 999px;
-		background: rgb(255 255 255 / 0.18);
+		/* dunkler statt heller: Kontrast für weiße Schrift auf jeder Akzentfarbe */
+		background: rgb(0 0 0 / 0.25);
 	}
 	h1 {
 		margin: 0;
