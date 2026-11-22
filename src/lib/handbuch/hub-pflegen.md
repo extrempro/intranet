@@ -13,7 +13,7 @@ Auf der Hub-Seite → „Bearbeiten“. Das Hub-Team, die Verwaltung und (wenn e
 - **Kurzinfo**: die Aufgaben in einer Zeile. Sie stehen oben auf der Hub-Seite und auf der Karte in der Hub-Liste. Dazu wählst du die **Koordination**, eine Person aus dem Hub-Team.
 - **Vorstellung**: erscheint als „Über uns“, im Editor mit Links, Bildern und Tabellen.
 - **Hinweis oben**: ein kurzer Hinweis über allen Inhalten (höchstens 200 Zeichen), optional mit „Anzeigen bis“. Danach verschwindet er von selbst.
-- **Aufbau der Seite**: Abschnitte je Hauptbereich und Seitenleiste mit ↑ ↓ sortieren und ein- oder ausschalten. Am Handy steht der Hauptbereich vor der Seitenleiste.
+- **Aufbau der Seite**: Die Hub-Seite hat Reiter (Überblick, Neues, Termine, Dokumente, Videos, Fragen, Über uns & Team), jeder mit eigener Adresse zum Verlinken. Mit ↑ ↓ legst du die Reihenfolge der Reiter fest und welche Blöcke der Überblick in welcher Reihenfolge zeigt. Leere Reiter sehen Leser nicht; du siehst sie mit „leer“ markiert und kannst sie direkt füllen.
 
 ## Titelbild und Symbol
 

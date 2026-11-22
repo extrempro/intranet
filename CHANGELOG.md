@@ -10,6 +10,13 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.27.0 · 22.11.2026 · Hub-Seite mit Reitern
+
+- Jeder Hub hat jetzt Reiter: Überblick, Neues, Termine, Dokumente, Videos, Fragen sowie Über uns & Team. Jeder Reiter hat eine eigene Adresse, die du teilen kannst.
+- Der Überblick zeigt Schnellzugriff, die nächsten Termine, häufige Fragen und die neuesten Beiträge. Daneben findest du, wen du ansprechen kannst.
+- Leere Bereiche werden ausgeblendet. Kommst du über einen Link auf eine leere Seite, siehst du einen Hinweis.
+- Fürs Hub-Team: Leere Reiter sind mit „leer“ markiert und lassen sich direkt füllen. Unter „Aufbau der Seite“ legst du die Reihenfolge der Reiter und die Blöcke im Überblick fest.
+
 ## 0.26.1 · 22.11.2026 · Schnellzugriff im Hub
 
 - Lange Titel und Beschreibungen im Schnellzugriff bleiben jetzt in ihren Kästen. Längere Beschreibungen werden nach drei Zeilen gekürzt, der ganze Text erscheint beim Darüberfahren.

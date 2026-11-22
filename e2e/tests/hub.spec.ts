@@ -58,3 +58,26 @@ test('Hub-Liste: Suche filtert', async ({ page }) => {
 	await expect(page.getByRole('link', { name: 'Laufgruppe' })).toBeVisible();
 	await expect(page.getByRole('link', { name: 'Chor' })).toHaveCount(0);
 });
+
+test('Hub-Seite: Reiter sind eigene Unterseiten, leere zeigen einen Platzhalter', async ({
+	page
+}) => {
+	await anmelden(page, 'hanna');
+	await page.goto('/hubs/chor');
+	const reiter = page.getByRole('navigation', { name: 'Bereiche von Chor' });
+	await expect(reiter.getByRole('link', { name: 'Überblick' })).toHaveAttribute(
+		'aria-current',
+		'page'
+	);
+	await reiter.getByRole('link', { name: /Über uns & Team/ }).click();
+	await expect(page).toHaveURL(/\/hubs\/chor\/team$/);
+	await expect(page.getByRole('heading', { name: 'Hub-Team' })).toBeVisible();
+	await keineA11yFehler(page);
+
+	// Leerer Bereich: Platzhalter, für das Hub-Team mit Knopf
+	await page.goto('/hubs/chor/dokumente');
+	await expect(page.getByText('Noch keine Dokumente')).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Erstes Dokument anlegen' })).toBeVisible();
+	await keineA11yFehler(page);
+	await nichtZuBreit(page);
+});
