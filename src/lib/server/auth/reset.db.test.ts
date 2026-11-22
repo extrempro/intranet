@@ -40,13 +40,13 @@ describe.skipIf(!url)('Passwort vergessen', () => {
 		verify = pw.verifyPassword;
 		const altHash = await pw.hashPassword('altes passwort 123');
 		await db.execute(
-			sql`insert into tenants (id, name, short_name, is_main) values (${T}, 'Oper', 'BH', true)`
+			sql`insert into tenants (id, name, short_name, is_main) values (${T}, 'Haus A', 'BH', true)`
 		);
 		await db.execute(sql`
 			insert into persons (id, tenant_id, email, display_name, auth_source, entra_oid, status, disabled_at, disabled_by) values
-				(${P.lokal}, ${T}, 'Lena@Oper.test', 'Lena', 'local', null, 'active', null, null),
-				(${P.entra}, ${T}, 'max@oper.test', 'Max', 'entra', 'o-1', 'active', null, null),
-				(${P.gesperrt}, ${T}, 'gesa@oper.test', 'Gesa', 'local', null, 'disabled', now(), 'verwaltung')`);
+				(${P.lokal}, ${T}, 'Lena@Haus-A.test', 'Lena', 'local', null, 'active', null, null),
+				(${P.entra}, ${T}, 'max@haus-a.test', 'Max', 'entra', 'o-1', 'active', null, null),
+				(${P.gesperrt}, ${T}, 'gesa@haus-a.test', 'Gesa', 'local', null, 'disabled', now(), 'verwaltung')`);
 		await db.execute(sql`
 			insert into local_credentials (person_id, password_hash, failed_attempts, last_failed_at) values
 				(${P.lokal}, ${altHash}, 7, now()), (${P.gesperrt}, ${altHash}, 0, null)`);
@@ -56,11 +56,11 @@ describe.skipIf(!url)('Passwort vergessen', () => {
 	});
 
 	it('schickt nur lokalen, aktiven Konten einen Link', async () => {
-		await reset.requestPasswordReset('lena@oper.test', 'https://intranet.test', '203.0.113.1');
-		await reset.requestPasswordReset('max@oper.test', 'https://intranet.test', '203.0.113.1');
-		await reset.requestPasswordReset('gesa@oper.test', 'https://intranet.test', '203.0.113.1');
-		await reset.requestPasswordReset('niemand@oper.test', 'https://intranet.test', '203.0.113.1');
-		expect(mails.map((m) => m.to)).toEqual(['Lena@Oper.test']);
+		await reset.requestPasswordReset('lena@haus-a.test', 'https://intranet.test', '203.0.113.1');
+		await reset.requestPasswordReset('max@haus-a.test', 'https://intranet.test', '203.0.113.1');
+		await reset.requestPasswordReset('gesa@haus-a.test', 'https://intranet.test', '203.0.113.1');
+		await reset.requestPasswordReset('niemand@haus-a.test', 'https://intranet.test', '203.0.113.1');
+		expect(mails.map((m) => m.to)).toEqual(['Lena@Haus-A.test']);
 		expect(mails[0].text).toContain('https://intranet.test/anmelden/passwort-neu/');
 		expect(mails[0].text).toContain('30 Minuten');
 		const [{ n }] = await db.execute<{ n: number }>(
@@ -75,8 +75,8 @@ describe.skipIf(!url)('Passwort vergessen', () => {
 
 	it('höchstens 3 Links je Stunde', async () => {
 		for (let i = 0; i < 4; i++)
-			await reset.requestPasswordReset('lena@oper.test', 'https://intranet.test', '203.0.113.1');
-		expect(mails.filter((m) => m.to === 'Lena@Oper.test')).toHaveLength(3);
+			await reset.requestPasswordReset('lena@haus-a.test', 'https://intranet.test', '203.0.113.1');
+		expect(mails.filter((m) => m.to === 'Lena@Haus-A.test')).toHaveLength(3);
 	});
 
 	it('setzt das Passwort, beendet Sitzungen und verbraucht alle Links', async () => {
@@ -119,7 +119,7 @@ describe.skipIf(!url)('Passwort vergessen', () => {
 		const { sha256Hex } = await import('../crypto.ts');
 		await db.execute(sql`
 			insert into persons (id, tenant_id, email, display_name, auth_source) values
-				(${ohne}, ${T}, 'ohne@oper.test', 'Ohne', 'local')`);
+				(${ohne}, ${T}, 'ohne@haus-a.test', 'Ohne', 'local')`);
 		await db.execute(sql`
 			insert into password_resets (token_hash, person_id, expires_at) values
 				(${sha256Hex(token)}, ${ohne}, now() + interval '10 minutes')`);

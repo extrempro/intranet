@@ -43,9 +43,9 @@ describe('Aussehen der Teams-App', () => {
 	});
 
 	it('speichert eigene Angaben; leere Felder fallen auf den Standard zurück', async () => {
-		await saveTeamsMarke({ kurzname: '  Oper  ', herausgeber: '', farbe: '#a1b2c3' }, 'p');
+		await saveTeamsMarke({ kurzname: '  Haus A  ', herausgeber: '', farbe: '#a1b2c3' }, 'p');
 		const m = await getTeamsMarke();
-		expect(m).toMatchObject({ kurzname: 'Oper', herausgeber: 'IT', farbe: '#A1B2C3' });
+		expect(m).toMatchObject({ kurzname: 'Haus A', herausgeber: 'IT', farbe: '#A1B2C3' });
 		expect((await teamsAppAussehen()).marke.farbe).toBe('#A1B2C3');
 	});
 

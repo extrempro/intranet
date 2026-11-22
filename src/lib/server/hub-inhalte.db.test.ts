@@ -57,13 +57,13 @@ describe.skipIf(!url)('Hub-Inhalte', () => {
 		hi = await import('./hub-inhalte.ts');
 		units = await import('./units.ts');
 		await db.execute(sql`insert into tenants (id, name, short_name, is_main) values
-			(${T1}, 'Oper', 'BH', true), (${T2}, 'Zweithaus', 'ZH', false)`);
+			(${T1}, 'Haus A', 'BH', true), (${T2}, 'Zweithaus', 'ZH', false)`);
 		await db.execute(sql`insert into units (id, tenant_id, type, name, slug, is_central) values
 			(${ZENTRAL}, ${T1}, 'hub', 'Chor', 'chor', true), (${EIGEN}, ${T1}, 'hub', 'Laufen', 'laufen', false)`);
 		await db.execute(sql`insert into persons (id, tenant_id, email, display_name, auth_source) values
-			(${TEAM}, ${T1}, 'team@oper.de', 'Team', 'local'),
+			(${TEAM}, ${T1}, 'team@haus-a.example', 'Team', 'local'),
 			(${FREMD}, ${T2}, 'fremd@zweithaus.de', 'Fremd', 'local'),
-			(${DOKS}, ${T1}, 'doks@oper.de', 'Doks', 'local')`);
+			(${DOKS}, ${T1}, 'doks@haus-a.example', 'Doks', 'local')`);
 		await db.execute(sql`insert into unit_members (unit_id, person_id, may_write_documents) values
 			(${ZENTRAL}, ${TEAM}, false), (${EIGEN}, ${TEAM}, false), (${ZENTRAL}, ${DOKS}, true)`);
 		await db.execute(sql`insert into role_assignments (person_id, role, scope, scope_unit_id) values

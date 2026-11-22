@@ -34,11 +34,11 @@ describe.skipIf(!url)('Entwürfe', () => {
 		ew = await import('./entwuerfe.ts');
 		store = await import('./files/store.ts');
 		await db.execute(
-			sql`insert into tenants (id, name, short_name, is_main) values (${T}, 'Oper', 'BH', true)`
+			sql`insert into tenants (id, name, short_name, is_main) values (${T}, 'Haus A', 'BH', true)`
 		);
 		await db.execute(sql`
 			insert into persons (id, tenant_id, email, display_name, auth_source) values
-				(${ICH}, ${T}, 'ich@oper.de', 'Ich', 'local'), (${ANDERE}, ${T}, 'du@oper.de', 'Du', 'local')`);
+				(${ICH}, ${T}, 'ich@haus-a.example', 'Ich', 'local'), (${ANDERE}, ${T}, 'du@haus-a.example', 'Du', 'local')`);
 		await db.execute(sql`
 			insert into files (id, name, mime, kind, size, key_enc, created_by, created_at) values
 				(${BILD}, 'a.webp', 'image/webp', 'webp', 1000, 'x', ${ICH}, now() - interval '2 days'),

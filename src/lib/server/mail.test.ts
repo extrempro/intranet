@@ -54,17 +54,17 @@ describe('E-Mail per SMTP', () => {
 			security: 'none',
 			user: 'intranet',
 			passwordEnc: encryptSecret(new TextEncoder().encode('geheim ü 123')),
-			from: 'intranet@oper.test',
+			from: 'intranet@haus-a.test',
 			fromName: 'Intranet Beispielhaus',
-			replyTo: 'it@oper.test'
+			replyTo: 'it@haus-a.test'
 		};
 		const { sendMail, mailConfigured } = await import('./mail.ts');
 		expect(await mailConfigured()).toBe(true);
-		await sendMail({ to: 'kai@oper.test', subject: 'Hallo', text: 'Text', html: '<p>Text</p>' });
+		await sendMail({ to: 'kai@haus-a.test', subject: 'Hallo', text: 'Text', html: '<p>Text</p>' });
 		expect(empfangen).toHaveLength(1);
-		expect(empfangen[0]).toMatchObject({ from: 'intranet@oper.test', to: ['kai@oper.test'] });
-		expect(empfangen[0].data).toContain('Reply-To: it@oper.test');
-		expect(empfangen[0].data).toMatch(/From: "?Intranet Beispielhaus"? <intranet@oper.test>/);
+		expect(empfangen[0]).toMatchObject({ from: 'intranet@haus-a.test', to: ['kai@haus-a.test'] });
+		expect(empfangen[0].data).toContain('Reply-To: it@haus-a.test');
+		expect(empfangen[0].data).toMatch(/From: "?Intranet Beispielhaus"? <intranet@haus-a.test>/);
 	});
 
 	it('meldet falsches Passwort verständlich', async () => {
@@ -72,7 +72,7 @@ describe('E-Mail per SMTP', () => {
 		stored = { ...stored, passwordEnc: encryptSecret(new TextEncoder().encode('falsch')) };
 		const { sendMail } = await import('./mail.ts');
 		const { smtpFehlertext } = await import('../mail-config.ts');
-		const err = await sendMail({ to: 'kai@oper.test', subject: 'x', text: 'x', html: 'x' }).catch(
+		const err = await sendMail({ to: 'kai@haus-a.test', subject: 'x', text: 'x', html: 'x' }).catch(
 			(e) => e
 		);
 		expect(smtpFehlertext(err)).toContain('Anmeldung am SMTP-Server abgelehnt');
@@ -82,7 +82,7 @@ describe('E-Mail per SMTP', () => {
 		stored = { ...stored, security: 'starttls' };
 		const { sendMail } = await import('./mail.ts');
 		await expect(
-			sendMail({ to: 'kai@oper.test', subject: 'x', text: 'x', html: 'x' })
+			sendMail({ to: 'kai@haus-a.test', subject: 'x', text: 'x', html: 'x' })
 		).rejects.toBeTruthy();
 		expect(empfangen).toHaveLength(1);
 	});

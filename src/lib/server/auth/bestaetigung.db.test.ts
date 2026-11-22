@@ -22,7 +22,7 @@ function locals(
 	teams = false
 ): App.Locals {
 	return {
-		person: { id: personId, tenantId: T, email: 'x@oper.test', displayName: 'X' },
+		person: { id: personId, tenantId: T, email: 'x@haus-a.test', displayName: 'X' },
 		session: { id: sessionId, authMethod, confirmedAt },
 		principal: null,
 		theme: 'auto',
@@ -50,12 +50,12 @@ describe.skipIf(!url)('Erneute Anmeldung', () => {
 		await migrateWithRetry(() => runMigrations());
 		b = await import('./bestaetigung.ts');
 		await db.execute(
-			sql`insert into tenants (id, name, short_name, is_main) values (${T}, 'Oper', 'BH', true)`
+			sql`insert into tenants (id, name, short_name, is_main) values (${T}, 'Haus A', 'BH', true)`
 		);
 		await db.execute(sql`
 			insert into persons (id, tenant_id, email, display_name, auth_source, entra_oid) values
-				(${P.lokal}, ${T}, 'lena@oper.test', 'Lena', 'local', null),
-				(${P.entra}, ${T}, 'max@oper.test', 'Max', 'entra', 'oid-max')`);
+				(${P.lokal}, ${T}, 'lena@haus-a.test', 'Lena', 'local', null),
+				(${P.entra}, ${T}, 'max@haus-a.test', 'Max', 'entra', 'oid-max')`);
 		await db.execute(
 			sql`insert into local_credentials (person_id, password_hash) values (${P.lokal}, 'x')`
 		);

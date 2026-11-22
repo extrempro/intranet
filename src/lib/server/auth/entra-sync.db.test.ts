@@ -9,7 +9,7 @@ import type { GraphUser } from './entra-sync-plan.ts';
 
 const url = process.env.TEST_DATABASE_URL;
 const T = {
-	oper: '00000000-0000-0000-0000-000000000001',
+	hausA: '00000000-0000-0000-0000-000000000001',
 	zweithaus: '00000000-0000-0000-0000-000000000002'
 };
 const G = {
@@ -70,37 +70,37 @@ describe.skipIf(!url)('Entra-Abgleich', () => {
 
 		await db.execute(sql`
 			insert into tenants (id, name, short_name, is_main) values
-				(${T.oper}, 'Oper', 'BH', true), (${T.zweithaus}, 'Zweithaus', 'ZH', false)`);
+				(${T.hausA}, 'Haus A', 'BH', true), (${T.zweithaus}, 'Zweithaus', 'ZH', false)`);
 		await db.execute(sql`
-			insert into tenant_domains (domain, tenant_id) values ('oper.test', ${T.oper}), ('zweithaus.test', ${T.zweithaus})`);
+			insert into tenant_domains (domain, tenant_id) values ('haus-a.test', ${T.hausA}), ('zweithaus.test', ${T.zweithaus})`);
 		await db.execute(sql`
 			insert into entra_group_roles (group_id, role, scope, scope_tenant_id) values
-				(${G.redaktion}, 'redaktion', 'tenant', ${T.oper})`);
+				(${G.redaktion}, 'redaktion', 'tenant', ${T.hausA})`);
 		await db.execute(sql`
 			insert into persons (id, tenant_id, email, display_name, auth_source, entra_oid, status, disabled_at, disabled_by) values
-				(${P.bleibt}, ${T.oper}, 'a@oper.test', 'Anna', 'entra', ${oid(1)}, 'active', null, null),
-				(${P.wechselt}, ${T.oper}, 'b@oper.test', 'Ben', 'entra', ${oid(2)}, 'active', null, null),
-				(${P.geloescht}, ${T.oper}, 'c@oper.test', 'Cem', 'entra', ${oid(3)}, 'active', null, null),
-				(${P.ohneZugang}, ${T.oper}, 'd@oper.test', 'Dora', 'entra', ${oid(4)}, 'active', null, null),
-				(${P.vonEntraGesperrt}, ${T.oper}, 'e@oper.test', 'Eli', 'entra', ${oid(5)}, 'disabled', now(), 'entra'),
-				(${P.vonVerwaltungGesperrt}, ${T.oper}, 'f@oper.test', 'Fiete', 'entra', ${oid(6)}, 'disabled', now(), 'verwaltung'),
-				(${P.lokal}, ${T.oper}, 'g@oper.test', 'Gesa', 'local', null, 'active', null, null)`);
+				(${P.bleibt}, ${T.hausA}, 'a@haus-a.test', 'Anna', 'entra', ${oid(1)}, 'active', null, null),
+				(${P.wechselt}, ${T.hausA}, 'b@haus-a.test', 'Ben', 'entra', ${oid(2)}, 'active', null, null),
+				(${P.geloescht}, ${T.hausA}, 'c@haus-a.test', 'Cem', 'entra', ${oid(3)}, 'active', null, null),
+				(${P.ohneZugang}, ${T.hausA}, 'd@haus-a.test', 'Dora', 'entra', ${oid(4)}, 'active', null, null),
+				(${P.vonEntraGesperrt}, ${T.hausA}, 'e@haus-a.test', 'Eli', 'entra', ${oid(5)}, 'disabled', now(), 'entra'),
+				(${P.vonVerwaltungGesperrt}, ${T.hausA}, 'f@haus-a.test', 'Fiete', 'entra', ${oid(6)}, 'disabled', now(), 'verwaltung'),
+				(${P.lokal}, ${T.hausA}, 'g@haus-a.test', 'Gesa', 'local', null, 'active', null, null)`);
 		// Ben hat eine Rolle aus Entra und eine von Hand
 		await db.execute(sql`
 			insert into role_assignments (person_id, role, scope, scope_tenant_id, source, entra_group_id) values
-				(${P.wechselt}, 'redaktion', 'tenant', ${T.oper}, 'entra', ${G.redaktion}),
-				(${P.wechselt}, 'moderation_schwarzes_brett', 'tenant', ${T.oper}, 'manual', null)`);
+				(${P.wechselt}, 'redaktion', 'tenant', ${T.hausA}, 'entra', ${G.redaktion}),
+				(${P.wechselt}, 'moderation_schwarzes_brett', 'tenant', ${T.hausA}, 'manual', null)`);
 		await db.execute(sql`
 			insert into sessions (id, person_id, auth_method, expires_at) values
 				('sitzung-dora', ${P.ohneZugang}, 'entra', now() + interval '1 day')`);
 	});
 
 	const alle = {
-		[oid(1)]: { user: { displayName: 'Anna', mail: 'a@oper.test' }, groups: [G.zugang] },
+		[oid(1)]: { user: { displayName: 'Anna', mail: 'a@haus-a.test' }, groups: [G.zugang] },
 		[oid(2)]: { user: { displayName: 'Ben B.', mail: 'b@zweithaus.test' }, groups: [G.zugang] },
-		[oid(4)]: { user: { displayName: 'Dora', mail: 'd@oper.test' }, groups: [] },
-		[oid(5)]: { user: { displayName: 'Eli', mail: 'e@oper.test' }, groups: [G.zugang] },
-		[oid(6)]: { user: { displayName: 'Fiete', mail: 'f@oper.test' }, groups: [G.zugang] }
+		[oid(4)]: { user: { displayName: 'Dora', mail: 'd@haus-a.test' }, groups: [] },
+		[oid(5)]: { user: { displayName: 'Eli', mail: 'e@haus-a.test' }, groups: [G.zugang] },
+		[oid(6)]: { user: { displayName: 'Fiete', mail: 'f@haus-a.test' }, groups: [G.zugang] }
 	};
 
 	it('hält bei Rechtefehlern an und ändert nichts', async () => {
@@ -168,7 +168,7 @@ describe.skipIf(!url)('Entra-Abgleich', () => {
 		for (const [i, o] of viele.entries())
 			await db.execute(sql`
 				insert into persons (tenant_id, email, display_name, auth_source, entra_oid)
-				values (${T.oper}, ${`x${i}@oper.test`}, ${`X${i}`}, 'entra', ${o})`);
+				values (${T.hausA}, ${`x${i}@haus-a.test`}, ${`X${i}`}, 'entra', ${o})`);
 		const s = await sync.runEntraSync({ graph: fakeGraph(alle) });
 		expect(s?.ok).toBe(false);
 		expect(s?.angehalten).toEqual({ sperren: 12, aktiv: 15 });

@@ -4,8 +4,8 @@ import { effectiveMail, parseMailForm, smtpFehlertext } from './mail-config.ts';
 describe('E-Mail-Einstellungen', () => {
 	it('gespeichert vor .env, leer nimmt die .env', () => {
 		const m = effectiveMail(
-			{ host: 'smtp.intern.test', from: 'intranet@oper.test' },
-			{ SMTP_HOST: 'alt.test', SMTP_USER: 'u', SMTP_PASSWORD: 'p', MAIL_REPLY_TO: 'it@oper.test' }
+			{ host: 'smtp.intern.test', from: 'intranet@haus-a.test' },
+			{ SMTP_HOST: 'alt.test', SMTP_USER: 'u', SMTP_PASSWORD: 'p', MAIL_REPLY_TO: 'it@haus-a.test' }
 		);
 		expect(m).toMatchObject({
 			host: 'smtp.intern.test',
@@ -13,8 +13,8 @@ describe('E-Mail-Einstellungen', () => {
 			security: 'starttls',
 			user: 'u',
 			password: 'env',
-			from: 'intranet@oper.test',
-			replyTo: 'it@oper.test',
+			from: 'intranet@haus-a.test',
+			replyTo: 'it@haus-a.test',
 			insecure: false
 		});
 		expect(effectiveMail({ security: 'tls' }, {}).port).toBe(465);
@@ -32,8 +32,8 @@ describe('E-Mail-Einstellungen', () => {
 			host: 'SMTP.Office365.com',
 			port: '587',
 			security: 'starttls',
-			user: 'intranet@oper.test',
-			from: 'intranet@oper.test',
+			user: 'intranet@haus-a.test',
+			from: 'intranet@haus-a.test',
 			fromName: 'Intranet Beispielhaus',
 			replyTo: ''
 		});

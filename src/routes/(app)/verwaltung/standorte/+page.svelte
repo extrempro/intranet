@@ -40,7 +40,7 @@
 					required
 					maxlength="80"
 					value={form?.name ?? ''}
-					placeholder="z. B. Kantine Oper"
+					placeholder="z. B. Kantine Haus A"
 				/>
 			</label>
 			<label class="feld">

@@ -11,9 +11,9 @@ insert into units (id, tenant_id, type, name, slug, is_central, about) values
 	('00000000-0000-4000-8000-0000000000b2', '00000000-0000-4000-8000-000000000001', 'hub', 'Laufgruppe', 'laufgruppe', false, 'Gemeinsam laufen nach Feierabend');
 
 insert into persons (id, tenant_id, email, display_name, auth_source, position) values
-	('00000000-0000-4000-8000-0000000000c1', '00000000-0000-4000-8000-000000000001', 'ada@oper.test', 'Ada Admin', 'local', 'IT-Leitung'),
-	('00000000-0000-4000-8000-0000000000c2', '00000000-0000-4000-8000-000000000001', 'nils@oper.test', 'Nils Normal', 'local', 'Bühnentechnik'),
-	('00000000-0000-4000-8000-0000000000c3', '00000000-0000-4000-8000-000000000001', 'hanna@oper.test', 'Hanna Hub', 'local', 'Kostüm'),
+	('00000000-0000-4000-8000-0000000000c1', '00000000-0000-4000-8000-000000000001', 'ada@haus-a.test', 'Ada Admin', 'local', 'IT-Leitung'),
+	('00000000-0000-4000-8000-0000000000c2', '00000000-0000-4000-8000-000000000001', 'nils@haus-a.test', 'Nils Normal', 'local', 'Bühnentechnik'),
+	('00000000-0000-4000-8000-0000000000c3', '00000000-0000-4000-8000-000000000001', 'hanna@haus-a.test', 'Hanna Hub', 'local', 'Kostüm'),
 	('00000000-0000-4000-8000-0000000000c4', '00000000-0000-4000-8000-000000000002', 'bea@zweithaus.test', 'Bea Bauer', 'local', 'Tanz');
 
 insert into role_assignments (person_id, role, scope) values

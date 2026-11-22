@@ -58,12 +58,12 @@ describe.skipIf(!url)('Fehlermeldungen mit Bildschirmfoto', () => {
 		await migrateWithRetry(() => runMigrations());
 		fb = await import('./feedback.ts');
 		await db.execute(sql`
-			insert into tenants (id, name, short_name, is_main) values (${T}, 'Oper', 'BH', true)`);
+			insert into tenants (id, name, short_name, is_main) values (${T}, 'Haus A', 'BH', true)`);
 		await db.execute(sql`
 			insert into persons (id, tenant_id, email, display_name, auth_source) values
-				(${ICH}, ${T}, 'ich@oper.de', 'Ich', 'local'),
-				(${ADMIN}, ${T}, 'admin@oper.de', 'Admin', 'local'),
-				(${SYS}, ${T}, 'sys@oper.de', 'Sys', 'local')`);
+				(${ICH}, ${T}, 'ich@haus-a.example', 'Ich', 'local'),
+				(${ADMIN}, ${T}, 'admin@haus-a.example', 'Admin', 'local'),
+				(${SYS}, ${T}, 'sys@haus-a.example', 'Sys', 'local')`);
 		await db.execute(sql`
 			insert into role_assignments (person_id, role, scope, scope_tenant_id) values
 				(${ADMIN}, 'mandanten_admin', 'tenant', ${T}),
