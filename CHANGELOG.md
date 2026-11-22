@@ -10,6 +10,12 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.35.0 · 22.11.2026 · Hubs-Übersicht neu
+
+- Oben stehen jetzt **deine Hubs** mit dem letzten Beitrag und der Zahl neuer Beiträge seit deinem letzten Besuch.
+- Darunter entdeckst du alle Hubs: sortiert nach **Aktiv**, **Beliebt** oder **A–Z**, gefiltert nach Mandant, mit Abos und Beiträgen im Monat auf jeder Karte.
+- Abonnieren geht mit einem Knopf direkt auf der Karte; ruhende Hubs stehen eingeklappt am Ende.
+
 ## 0.34.0 · 22.11.2026 · Lange Listen überall
 
 - Mediathek, Schwarzes Brett, Hinter den Kulissen, Benachrichtigungen und Nachrichten zeigen, wie viele Einträge es gibt, und laden mit „weitere anzeigen“ bzw. „ältere laden“ nach. Bisher fehlten ältere Einträge ohne Hinweis.

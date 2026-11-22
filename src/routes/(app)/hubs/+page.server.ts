@@ -5,17 +5,15 @@ import { listHubs, mayReviewApplications, myApplications } from '#lib/server/hub
 import { listFavorites, toggleFavorite } from '#lib/server/preferences.ts';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, url }) => {
+export const load: PageServerLoad = async ({ locals }) => {
 	const p = requirePrincipal(locals);
-	const meine = url.searchParams.get('ansicht') === 'meine';
 	const [hubs, favs, antraege] = await Promise.all([
-		listHubs(p, meine),
+		listHubs(p),
 		listFavorites(p.personId),
 		myApplications(p)
 	]);
 	return {
 		hubs,
-		meine,
 		antraegePruefen: mayReviewApplications(p),
 		offeneAntraege: antraege.filter((a) => a.status === 'neu' || a.status === 'bei_verwaltung')
 			.length,
