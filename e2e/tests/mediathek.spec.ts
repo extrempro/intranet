@@ -104,3 +104,26 @@ test('Rückmeldungen bleiben sichtbar, auch auf langen Seiten', async ({ page })
 	await page.getByRole('button', { name: 'Untertitel entfernen' }).click();
 	await page.getByRole('alertdialog').getByRole('button', { name: 'Entfernen' }).click();
 });
+
+test('Mediathek auf Handy und Tablet: Video bleibt oben, darunter Reiter', async ({ page }) => {
+	await anmelden(page, 'nils');
+	await page.goto(`/mediathek/${VIDEO}`);
+	const reiter = page.getByRole('tablist', { name: 'Mehr zum Video' });
+	if ((page.viewportSize()?.width ?? 1400) >= 1100) {
+		// PC: alles nebeneinander, keine Reiter
+		await expect(reiter).toBeHidden();
+		return;
+	}
+	await expect(reiter.getByRole('tab', { name: 'Kapitel' })).toHaveAttribute(
+		'aria-selected',
+		'true'
+	);
+	await expect(page.getByText('Kapitel 1/2')).toBeVisible();
+	await reiter.getByRole('tab', { name: 'Info' }).click();
+	await expect(page.getByText('So richtest du den Drucker ein.')).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Kapitel', level: 2 })).toBeHidden();
+	await keineA11yFehler(page);
+	// Das Video bleibt beim Scrollen sichtbar
+	await page.mouse.wheel(0, 800);
+	await expect(page.locator('video')).toBeInViewport();
+});
