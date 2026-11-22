@@ -10,6 +10,14 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.32.0 · 22.11.2026 · Startseite neu aufgebaut
+
+- Favoriten sind jetzt Symbol-Kacheln, auf dem Handy vier je Reihe. Die Beschreibung siehst du, wenn du mit der Maus darauf zeigst.
+- Die aktuellen Pläne haben eine eigene Leiste unter den Favoriten, auf dem Handy stehen sie ganz oben.
+- Am PC stehen die Neuigkeiten links mit dem wichtigsten Beitrag groß und drei weiteren mit Vorschau. Termine, Hubs und Speiseplan stehen rechts, leere Karten werden ausgeblendet.
+- Neue Beiträge seit deinem letzten Besuch der Neuigkeiten erkennst du am grünen Punkt.
+- Auf dem Handy schaltest du in „Für dich“ zwischen Neues, Termine, Hubs und Kantine um.
+
 ## 0.31.0 · 22.11.2026 · Vorschau in den Neuigkeiten
 
 - In den Neuigkeiten und unter „Aus den Hubs“ zeigt jeder Beitrag eine Vorschau: bis zu drei Bilder, sonst die ersten Zeilen einer Tabelle. Auf dem Handy steht die Vorschau über dem Text.
