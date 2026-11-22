@@ -131,7 +131,7 @@ export async function schreibbareEinheiten(p: Principal) {
 }
 
 /** Video zum Bearbeiten: nur mit Recht in der Einheit */
-async function zumBearbeiten(p: Principal, id: string) {
+export async function zumBearbeiten(p: Principal, id: string) {
 	if (!GUID.test(id)) throw new MediathekFehler('Video nicht gefunden', 404);
 	const [v] = await db.select().from(videos).where(eq(videos.id, id));
 	if (!v) throw new MediathekFehler('Video nicht gefunden', 404);
@@ -616,6 +616,9 @@ export function startMediathek() {
 	if (timer) return;
 	timer = setInterval(() => {
 		void umwandlungAbholen().catch((err) => console.error('Mediathek:', err?.message));
+		void import('./video-vorschlag.ts')
+			.then((m) => m.vorschlaegeAbholen())
+			.catch((err) => console.error('Mediathek, Vorschläge:', err?.message));
 	}, 5000);
 	timer.unref?.();
 }
@@ -944,6 +947,7 @@ export async function videoLoeschen(p: Principal, id: string) {
 	await db.delete(videos).where(eq(videos.id, id));
 	for (const e of [id, ...ersatz.map((x) => x.id)])
 		await rm(ordnerVon(e), { recursive: true, force: true });
+	await rm(join(arbeitsOrdner(), `vorschlag-${id}`), { recursive: true, force: true });
 	await deleteStored(dateien);
 	if (['entwurf', 'veroeffentlicht'].includes(v.status))
 		await medienLoeschen(v.storageTargetId, v.mediaId ?? id).catch((err) =>

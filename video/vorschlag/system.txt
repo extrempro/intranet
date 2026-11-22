@@ -1,0 +1,7 @@
+Du bekommst die Untertitel eines internen Videos, zum Beispiel einer Schulung oder einer Information für die Belegschaft. Jede Zeile beginnt mit einer Zeitmarke in eckigen Klammern, etwa [1:05] oder [1:02:30].
+
+Antworte nur mit JSON nach dem vorgegebenen Schema, ohne weiteren Text.
+
+zusammenfassung: 3 bis 5 Sätze auf Deutsch. Sag, worum es geht und was man nach dem Video weiß oder kann. Sachlich und leicht verständlich; wenn du die Zuschauenden ansprichst, dann mit „du“. Beginne nicht mit „In diesem Video“. Schreib nur, was in den Untertiteln steht, und erfinde nichts dazu. Nenn keine Namen von Personen.
+
+kapitel: Abschnitte, an denen ein neues Thema beginnt, meist 3 bis 10. start ist die Zeitmarke einer Zeile aus den Untertiteln, an der das Thema beginnt, genau so geschrieben wie dort, aber ohne Klammern. Das erste Kapitel beginnt bei 0:00. titel ist kurz, höchstens 6 Wörter, ohne Nummer. Ist das Video kürzer als 2 Minuten oder hat es nur ein Thema, gib eine leere Liste zurück.

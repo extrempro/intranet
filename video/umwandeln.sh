@@ -11,11 +11,22 @@
 #   <ARBEIT>/<id>/fertig        dauer=<Sekunden>, hoehen=<360,720,…>, untertitel=<ja|nein|fehler>
 #   <ARBEIT>/<id>/fehler        kurze Meldung
 # Das Original wird danach immer gelöscht. Immer nur eine Umwandlung gleichzeitig.
+#
+# Vorschlag für Zusammenfassung und Kapitel (Sprachmodell, lokal mit llama.cpp):
+#   <ARBEIT>/vorschlag-<id>/eingabe.txt    Untertitel mit Zeitmarken (schreibt die Anwendung)
+#   <ARBEIT>/vorschlag-<id>/auftrag        Auftrag liegt vor (schreibt die Anwendung)
+#   <ARBEIT>/vorschlag-<id>/laeuft         wird gerade erstellt
+#   <ARBEIT>/vorschlag-<id>/ergebnis.json  Antwort des Modells (prüft die Anwendung)
+#   <ARBEIT>/vorschlag-<id>/fehler         kurze Meldung
+# Umwandlungen haben Vorrang, Vorschläge laufen danach.
 set -u
 ARBEIT="${ARBEIT:-/arbeit}"
 MAX_SEKUNDEN="${MAX_SEKUNDEN:-10800}"
 PAUSE="${PAUSE:-5}"
 MODELL="${MODELL:-/modelle/ggml-large-v3-turbo-q5_0.bin}"
+SPRACHMODELL="${SPRACHMODELL:-/modelle/sprachmodell.gguf}"
+VORLAGE="${VORLAGE:-/usr/local/share/vorschlag}"
+KONTEXT="${KONTEXT:-32768}"
 THREADS=$(printf "%s" "${THREADS:-2}" | cut -d. -f1)
 case "$THREADS" in "" | *[!0-9]* | 0) THREADS=1 ;; esac
 
@@ -131,14 +142,54 @@ untertitel() {
 	[ "$ok" -eq 0 ] && [ -s "$d/aus/untertitel.vtt" ] || { rm -f "$d/aus/untertitel.vtt"; return 1; }
 }
 
+# Vorschlag für Zusammenfassung und Kapitel aus den Untertiteln (llama.cpp, ohne Netz)
+vfehler() {
+	printf '%s\n' "$2" >"$1/fehler"
+	rm -f "$1/laeuft" "$1/ausgabe.txt" "$1/llama.log" "$1/eingabe.txt"
+}
+
+vorschlag() {
+	d="$1"
+	: >"$d/laeuft"
+	[ -s "$d/eingabe.txt" ] || { vfehler "$d" 'Es gibt keinen Text für den Vorschlag.'; return; }
+	if [ ! -f "$SPRACHMODELL" ] || ! command -v llama-completion >/dev/null; then
+		vfehler "$d" 'Das Sprachmodell fehlt im Dienst video.'
+		return
+	fi
+	llama-completion -m "$SPRACHMODELL" --jinja -rea off -st --no-display-prompt --no-warmup \
+		-c "$KONTEXT" -n 1500 -t "$THREADS" --temp 0.3 --top-p 0.9 \
+		-sysf "$VORLAGE/system.txt" --json-schema-file "$VORLAGE/schema.json" \
+		-f "$d/eingabe.txt" </dev/null >"$d/ausgabe.txt" 2>"$d/llama.log"
+	ok=$?
+	if [ "$ok" -ne 0 ] || ! grep -q '{' "$d/ausgabe.txt" 2>/dev/null; then
+		vfehler "$d" 'Das Sprachmodell hat keinen Vorschlag geliefert.'
+		return
+	fi
+	# Nur das JSON-Objekt behalten; die Anwendung prüft den Inhalt
+	tr '\n' ' ' <"$d/ausgabe.txt" | sed -e 's/^[^{]*//' -e 's/}[^}]*$/}/' >"$d/ergebnis.tmp"
+	mv "$d/ergebnis.tmp" "$d/ergebnis.json"
+	rm -f "$d/ausgabe.txt" "$d/llama.log" "$d/eingabe.txt" "$d/laeuft"
+}
+
 echo "Umwandlung bereit, Arbeitsordner $ARBEIT"
 while :; do
 	for d in "$ARBEIT"/*/; do
 		d=${d%/}
 		[ -f "$d/auftrag" ] || continue
 		[ -e "$d/fertig" ] || [ -e "$d/fehler" ] && continue
+		case "${d##*/}" in
+			vorschlag-*) continue ;;
+		esac
 		# Abgebrochener Lauf (Neustart): neu beginnen, sofern das Original noch da ist
 		umwandeln "$d"
+	done
+	# Danach ein Vorschlag je Runde, damit neue Umwandlungen nicht lange warten
+	for d in "$ARBEIT"/vorschlag-*/; do
+		d=${d%/}
+		[ -f "$d/auftrag" ] || continue
+		[ -e "$d/ergebnis.json" ] || [ -e "$d/fehler" ] && continue
+		vorschlag "$d"
+		break
 	done
 	[ "${EINMAL:-}" = 1 ] && exit 0
 	sleep "$PAUSE"

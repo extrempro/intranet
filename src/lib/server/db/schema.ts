@@ -1743,6 +1743,15 @@ export const videos = pgTable(
 		uploadHead: text('upload_head'),
 		/** Kapitel: [{ s: Sekunde, t: Titel }] */
 		chapters: jsonb('chapters').$type<{ s: number; t: string }[]>().notNull().default([]),
+		/** Vorschlag für Zusammenfassung und Kapitel (Sprachmodell im Dienst video, lokal) */
+		suggestionStatus: text('suggestion_status', { enum: ['warten', 'fertig', 'fehler'] }),
+		suggestion: jsonb('suggestion').$type<{
+			zusammenfassung: string;
+			kapitel: { s: number; t: string }[];
+		}>(),
+		suggestionError: text('suggestion_error'),
+		suggestionBy: uuid('suggestion_by').references(() => persons.id, { onDelete: 'set null' }),
+		suggestionAt: timestamp('suggestion_at', { withTimezone: true }),
 		/** Hochladen in Teilen: erwartete Größe und bisher erhaltene Bytes */
 		uploadSize: bigint('upload_size', { mode: 'number' }).notNull().default(0),
 		uploadReceived: bigint('upload_received', { mode: 'number' }).notNull().default(0),

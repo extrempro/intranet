@@ -2,7 +2,8 @@
 # Prüft das Image der Umwandlung (Kap. 8.15) im CI: ohne Netz, schreibgeschützt,
 # als Benutzer 1000. Erzeugt ein kurzes Testvideo mit Metadaten, wandelt es mit
 # EINMAL=1 um und prüft Ergebnis, Untertitel (Whisper ohne Netz), entfernte Metadaten
-# und gelöschtes Original.
+# und gelöschtes Original; danach einen Vorschlag für Zusammenfassung und Kapitel
+# (Sprachmodell ohne Netz).
 #   bash video/ci-test.sh   (baut ghcr.io/extrempro/intranet-video:latest)
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -28,7 +29,7 @@ docker run --rm -v "$ARBEIT:/arbeit" --entrypoint sh "$IMAGE" -c ": > /arbeit/$I
 
 echo "== Umwandeln (ohne Netz, schreibgeschützt, ohne Rechte)"
 docker run --rm --network none --read-only --tmpfs /tmp --cap-drop ALL \
-	--security-opt no-new-privileges --memory 3g -e EINMAL=1 -e THREADS=2 -v "$ARBEIT:/arbeit" "$IMAGE"
+	--security-opt no-new-privileges --memory 8g -e EINMAL=1 -e THREADS=2 -v "$ARBEIT:/arbeit" "$IMAGE"
 
 [ -f "$ARBEIT/$ID/fehler" ] && fehler "Umwandlung: $(cat "$ARBEIT/$ID/fehler")"
 [ -f "$ARBEIT/$ID/fertig" ] || fehler "keine Datei fertig"
@@ -43,3 +44,24 @@ if grep -rqa Geheimtitel "$ARBEIT/$ID/aus"; then fehler "Metadaten nicht entfern
 grep -q 'untertitel=ja' "$ARBEIT/$ID/fertig" || fehler "Untertitel nicht erzeugt: $(cat "$ARBEIT/$ID/fertig")"
 head -n1 "$ARBEIT/$ID/aus/untertitel.vtt" | grep -q '^WEBVTT' || fehler "untertitel.vtt ist kein WebVTT"
 echo "OK: Umwandlung und Untertitel im Container"
+
+echo "== Vorschlag für Zusammenfassung und Kapitel (Sprachmodell ohne Netz)"
+VORSCHLAG="vorschlag-$ID"
+mkdir -m 777 "$ARBEIT/$VORSCHLAG"
+cat >"$ARBEIT/$VORSCHLAG/eingabe.txt" <<'TEXT'
+[0:00] Hallo und willkommen zur Einführung in die neue Zeiterfassung.
+[0:20] Zuerst zeige ich dir, wie du dich am Terminal anmeldest.
+[1:10] Halte dazu deinen Ausweis an das Lesegerät, bis es piept.
+[2:30] Danach geht es um Pausen: Du buchst sie über die Taste Pause.
+[3:45] Zum Schluss siehst du, wo du deine Stunden im Intranet nachschaust.
+[4:30] Bei Fragen wende dich an die Personalabteilung.
+TEXT
+docker run --rm -v "$ARBEIT:/arbeit" --entrypoint sh "$IMAGE" -c ": > /arbeit/$VORSCHLAG/auftrag"
+docker run --rm --network none --read-only --tmpfs /tmp --cap-drop ALL \
+	--security-opt no-new-privileges --memory 8g -e EINMAL=1 -e THREADS=2 -v "$ARBEIT:/arbeit" "$IMAGE"
+[ -f "$ARBEIT/$VORSCHLAG/fehler" ] && fehler "Vorschlag: $(cat "$ARBEIT/$VORSCHLAG/fehler")"
+[ -s "$ARBEIT/$VORSCHLAG/ergebnis.json" ] || fehler "kein Vorschlag erstellt"
+grep -q '"zusammenfassung"' "$ARBEIT/$VORSCHLAG/ergebnis.json" || fehler "Vorschlag ohne Zusammenfassung: $(cat "$ARBEIT/$VORSCHLAG/ergebnis.json")"
+grep -q '"kapitel"' "$ARBEIT/$VORSCHLAG/ergebnis.json" || fehler "Vorschlag ohne Kapitel"
+echo "OK: Vorschlag im Container"
+cat "$ARBEIT/$VORSCHLAG/ergebnis.json"

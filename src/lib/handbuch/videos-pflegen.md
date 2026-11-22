@@ -3,7 +3,7 @@ titel: Videos hochladen
 kapitel: erstellen
 rollen: schreiben
 reihenfolge: 5
-kurz: Videos hochladen, mit Untertiteln und Kapiteln versehen und veröffentlichen.
+kurz: Videos hochladen, mit Untertiteln und Kapiteln versehen (auch per Vorschlag) und veröffentlichen.
 ---
 
 Dafür brauchst du in der Abteilung oder im Hub das Recht „Mediathek“. Es vergibt die Abteilungsverwaltung bzw. das Hub-Team.
@@ -24,6 +24,12 @@ Ohne Untertitel lässt sich ein Video nicht veröffentlichen, damit es alle nutz
 - **Prüfen:** Automatische Untertitel enthalten oft Fehler bei Namen und Fachbegriffen. Unter „Untertitel bearbeiten“ korrigierst du sie Zeile für Zeile; mit der Zeit links springst du im Video an die Stelle. Danach „Untertitel sind geprüft“ wählen, erst dann lässt sich das Video veröffentlichen.
 - **Keine Untertitel nötig:** Wird im Video nicht gesprochen (etwa nur Musik), wähle „Dieses Video braucht keine Untertitel“ und den Grund. Dann lässt es sich ohne Untertitel veröffentlichen.
 - **Eigene Datei:** Hast du schon eine WebVTT-Datei (.vtt), etwa aus Teams (Transkript als .vtt herunterladen), lade sie hoch. Sie ersetzt die automatischen Untertitel. Formatierungen werden entfernt.
+
+## Zusammenfassung und Kapitel vorschlagen
+
+Sind die Untertitel geprüft, kann das Intranet daraus eine kurze Zusammenfassung und Kapitel vorschlagen. Wähle dazu unter „Zusammenfassung und Kapitel vorschlagen“ den Knopf „Vorschlag erstellen“. Ein Sprachmodell auf dem eigenen Server liest die Untertitel, der Text verlässt das Intranet nicht. Das dauert einige Minuten; du bekommst eine Nachricht, wenn der Vorschlag fertig ist.
+
+Lies den Vorschlag gegen, denn das Modell kann Dinge falsch zusammenfassen. Mit „Als Beschreibung übernehmen“ und „Kapitel übernehmen“ übernimmst du die Teile, die passen; Vorhandenes wird nur nach Nachfrage ersetzt. Danach kannst du alles wie gewohnt ändern.
 
 ## Textfassung und Anhänge
 

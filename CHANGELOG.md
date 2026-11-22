@@ -10,6 +10,12 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.28.0 · 22.11.2026 · Vorschläge für Zusammenfassung und Kapitel
+
+- Beim Bearbeiten eines Videos kannst du dir aus den geprüften Untertiteln eine kurze Zusammenfassung und Kapitel vorschlagen lassen.
+- Das Sprachmodell läuft auf dem eigenen Server, der Text verlässt das Intranet nicht. Wenn der Vorschlag fertig ist, bekommst du eine Nachricht.
+- Übernommen wird nur, was du bestätigst: „Als Beschreibung übernehmen“ und „Kapitel übernehmen“. Vorhandenes wird erst nach Nachfrage ersetzt.
+
 ## 0.27.0 · 22.11.2026 · Hub-Seite mit Reitern
 
 - Jeder Hub hat jetzt Reiter: Überblick, Neues, Termine, Dokumente, Videos, Fragen sowie Über uns & Team. Jeder Reiter hat eine eigene Adresse, die du teilen kannst.

@@ -36,7 +36,9 @@
 
 	// Stand der Umwandlung regelmäßig neu laden (nicht beim Hochladen)
 	$effect(() => {
-		if (!(['warten', 'umwandeln'].includes(v.status) || ersatzLaeuft) || laeuft) return;
+		const vorschlagLaeuft = v.suggestionStatus === 'warten';
+		if (!(['warten', 'umwandeln'].includes(v.status) || ersatzLaeuft || vorschlagLaeuft) || laeuft)
+			return;
 		const t = setInterval(() => void invalidateAll(), 4000);
 		return () => clearInterval(t);
 	});
@@ -49,6 +51,14 @@
 	const ausDaten = () =>
 		(data.v.chapters as { s: number; t: string }[]).map((k) => ({ zeit: zeitText(k.s), t: k.t }));
 	let zeilen = $state<Zeile[]>(untrack(ausDaten));
+	// Gespeicherte Kapitel geändert (z. B. Vorschlag übernommen): Editor neu füllen
+	let kapitelStand = untrack(() => JSON.stringify(data.v.chapters));
+	$effect(() => {
+		const neu = JSON.stringify(data.v.chapters);
+		if (neu === kapitelStand) return;
+		kapitelStand = neu;
+		zeilen = untrack(ausDaten);
+	});
 	let einfuegen = $state(false);
 	let textEin = $state('');
 	const beispielKapitel = ['0:00 Einleitung', '1:30 Anmelden', '4:05 Fragen'].join('\n');
@@ -503,6 +513,109 @@
 					{/if}
 				</section>
 
+				<section class="karte stapel vorschlag" aria-labelledby="h-vorschlag">
+					<h2 id="h-vorschlag">Zusammenfassung und Kapitel vorschlagen</h2>
+					{#if !v.hatUntertitel || !v.bereit}
+						<p class="hinweis">
+							Sobald das Video geprüfte Untertitel hat, kann das Intranet daraus eine
+							Zusammenfassung und Kapitel vorschlagen.
+						</p>
+					{:else if v.suggestionStatus === 'warten'}
+						<p class="laeuft" role="status">
+							<span class="kreisel" aria-hidden="true"></span>
+							Der Vorschlag wird erstellt. Das dauert einige Minuten; du bekommst eine Nachricht, wenn
+							er fertig ist.
+						</p>
+						<form method="POST" action="?/vorschlagVerwerfen" use:enhance>
+							<button class="linkknopf" type="submit">Abbrechen</button>
+						</form>
+					{:else if v.suggestionStatus === 'fertig' && v.suggestion}
+						{@const s = v.suggestion}
+						<p class="hinweis">
+							Ein Vorschlag aus den Untertiteln, erstellt von einem Sprachmodell auf unserem Server.
+							Lies ihn bitte gegen, bevor du ihn übernimmst.
+						</p>
+						{#if s.zusammenfassung}
+							<div class="vorschlagteil stapel eng">
+								<h3>Zusammenfassung</h3>
+								<p class="vorschlagtext">{s.zusammenfassung}</p>
+								<div>
+									{#if v.description.trim()}
+										<MitFrage
+											action="?/vorschlagZusammenfassung"
+											enhance
+											knopf="Als Beschreibung übernehmen"
+											knopfKlasse="knopf zweit"
+											frage={{
+												titel: 'Beschreibung ersetzen?',
+												text: 'Die bisherige Beschreibung wird durch die Zusammenfassung ersetzt.',
+												ja: 'Ersetzen'
+											}}
+										/>
+									{:else}
+										<form method="POST" action="?/vorschlagZusammenfassung" use:enhance>
+											<button class="knopf zweit" type="submit">Als Beschreibung übernehmen</button>
+										</form>
+									{/if}
+								</div>
+							</div>
+						{/if}
+						{#if s.kapitel.length}
+							<div class="vorschlagteil stapel eng">
+								<h3>Kapitel</h3>
+								<ol class="vorschlagkapitel">
+									{#each s.kapitel as k (k.s)}
+										<li><span class="zeit">{zeitText(k.s)}</span> {k.t}</li>
+									{/each}
+								</ol>
+								<div>
+									{#if v.chapters.length}
+										<MitFrage
+											action="?/vorschlagKapitel"
+											enhance
+											knopf="Kapitel übernehmen"
+											knopfKlasse="knopf zweit"
+											frage={{
+												titel: 'Kapitel ersetzen?',
+												text: `Die ${v.chapters.length} bisherigen Kapitel werden durch den Vorschlag ersetzt.`,
+												ja: 'Ersetzen'
+											}}
+										/>
+									{:else}
+										<form method="POST" action="?/vorschlagKapitel" use:enhance>
+											<button class="knopf zweit" type="submit">Kapitel übernehmen</button>
+										</form>
+									{/if}
+								</div>
+							</div>
+						{/if}
+						<div class="knoepfe">
+							<form method="POST" action="?/vorschlag" use:enhance>
+								<button class="linkknopf" type="submit">Neu vorschlagen</button>
+							</form>
+							<form method="POST" action="?/vorschlagVerwerfen" use:enhance>
+								<button class="linkknopf" type="submit">Vorschlag verwerfen</button>
+							</form>
+						</div>
+					{:else}
+						{#if v.suggestionStatus === 'fehler'}
+							<p class="meldung fehler" role="alert">
+								{v.suggestionError ?? 'Der Vorschlag hat nicht geklappt.'}
+							</p>
+						{/if}
+						<p class="hinweis">
+							Ein Sprachmodell liest die Untertitel und schlägt eine kurze Zusammenfassung und
+							Kapitel vor. Es läuft auf unserem Server, der Text verlässt das Intranet nicht.
+							Übernommen wird nur, was du bestätigst.
+						</p>
+						<form method="POST" action="?/vorschlag" use:enhance>
+							<button class="knopf zweit" type="submit">
+								{v.suggestionStatus === 'fehler' ? 'Noch einmal versuchen' : 'Vorschlag erstellen'}
+							</button>
+						</form>
+					{/if}
+				</section>
+
 				<section id="schritt-3" class="karte stapel" aria-labelledby="h-kap">
 					<h2 id="h-kap">
 						<span class="nr" aria-hidden="true">3</span>Kapitel <span class="frei">freiwillig</span>
@@ -756,6 +869,63 @@
 <style>
 	.seite {
 		max-width: 80rem;
+	}
+	.vorschlag .knoepfe {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px 18px;
+	}
+	.vorschlag h3 {
+		margin: 0;
+		font-size: 1rem;
+	}
+	.vorschlagteil {
+		padding: 12px 14px;
+		border-radius: 14px;
+		border: 1px dashed var(--bd);
+	}
+	.vorschlagtext {
+		margin: 0;
+		white-space: pre-line;
+	}
+	.vorschlagkapitel {
+		margin: 0;
+		padding-left: 0;
+		list-style: none;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+	.vorschlagkapitel .zeit {
+		display: inline-block;
+		min-width: 3.5em;
+		font-variant-numeric: tabular-nums;
+		color: var(--mu);
+	}
+	.laeuft {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		margin: 0;
+	}
+	.kreisel {
+		flex: none;
+		width: 18px;
+		height: 18px;
+		border-radius: 999px;
+		border: 2px solid var(--bd);
+		border-top-color: var(--ac);
+		animation: drehen 1s linear infinite;
+	}
+	@keyframes drehen {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.kreisel {
+			animation: none;
+		}
 	}
 	h1,
 	h2 {
