@@ -40,7 +40,7 @@ test('Beitrag schreiben: Entwurf, Rückfrage beim Verlassen, Veröffentlichen', 
 test('Lange Liste: Zähler, Monate und Ansicht kompakt bleiben gespeichert', async ({ page }) => {
 	await anmelden(page, 'nils');
 	await page.goto('/neuigkeiten');
-	await expect(page.getByText(/^\d+ von \d+ Beiträgen$/)).toBeVisible();
+	await expect(page.getByText(/^\d+ von \d+ (Beitrag|Beiträgen)$/)).toBeVisible();
 	await expect(page.locator('.monat h2').first()).toContainText(/\d{4}/);
 	const kompakt = page.getByRole('button', { name: 'Ansicht: kompakt' });
 	await kompakt.click();
