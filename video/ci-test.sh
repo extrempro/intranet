@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Prüft das Image der Umwandlung (Kap. 8.15) im CI: ohne Netz, schreibgeschützt,
 # als Benutzer 1000. Erzeugt ein kurzes Testvideo mit Metadaten, wandelt es mit
-# EINMAL=1 um und prüft Ergebnis, entfernte Metadaten und gelöschtes Original.
+# EINMAL=1 um und prüft Ergebnis, Untertitel (Whisper ohne Netz), entfernte Metadaten
+# und gelöschtes Original.
 #   bash video/ci-test.sh   (baut ghcr.io/extrempro/intranet-video:latest)
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -23,11 +24,11 @@ docker run --rm --network none -v "$ARBEIT:/arbeit" --entrypoint ffmpeg "$IMAGE"
 	-f lavfi -i testsrc=size=1280x720:rate=25 -f lavfi -i sine=frequency=440 -t 3 \
 	-metadata title=Geheimtitel -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest \
 	-f mp4 "/arbeit/$ID/eingang.bin"
-docker run --rm -v "$ARBEIT:/arbeit" --entrypoint sh "$IMAGE" -c ": > /arbeit/$ID/auftrag"
+docker run --rm -v "$ARBEIT:/arbeit" --entrypoint sh "$IMAGE" -c ": > /arbeit/$ID/untertitel; : > /arbeit/$ID/auftrag"
 
 echo "== Umwandeln (ohne Netz, schreibgeschützt, ohne Rechte)"
 docker run --rm --network none --read-only --tmpfs /tmp --cap-drop ALL \
-	--security-opt no-new-privileges -e EINMAL=1 -v "$ARBEIT:/arbeit" "$IMAGE"
+	--security-opt no-new-privileges --memory 3g -e EINMAL=1 -e THREADS=2 -v "$ARBEIT:/arbeit" "$IMAGE"
 
 [ -f "$ARBEIT/$ID/fehler" ] && fehler "Umwandlung: $(cat "$ARBEIT/$ID/fehler")"
 [ -f "$ARBEIT/$ID/fertig" ] || fehler "keine Datei fertig"
@@ -39,4 +40,6 @@ done
 ls "$ARBEIT/$ID"/aus/720/init*.mp4 >/dev/null 2>&1 || fehler "Init-Segment fehlt"
 [ -e "$ARBEIT/$ID/eingang.bin" ] && fehler "Original nicht gelöscht"
 if grep -rqa Geheimtitel "$ARBEIT/$ID/aus"; then fehler "Metadaten nicht entfernt"; fi
-echo "OK: Umwandlung im Container"
+grep -q 'untertitel=ja' "$ARBEIT/$ID/fertig" || fehler "Untertitel nicht erzeugt: $(cat "$ARBEIT/$ID/fertig")"
+head -n1 "$ARBEIT/$ID/aus/untertitel.vtt" | grep -q '^WEBVTT' || fehler "untertitel.vtt ist kein WebVTT"
+echo "OK: Umwandlung und Untertitel im Container"

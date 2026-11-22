@@ -1718,6 +1718,23 @@ export const videos = pgTable(
 		captionsVtt: text('captions_vtt'),
 		/** Reiner Text der Untertitel für die Suche */
 		captionsText: text('captions_text').notNull().default(''),
+		/** Herkunft der Untertitel: hochgeladen oder automatisch (Whisper) */
+		captionsSource: text('captions_source', { enum: ['hochgeladen', 'automatisch'] }),
+		/** Automatische Untertitel: geprüft am / von (Voraussetzung zum Veröffentlichen) */
+		captionsCheckedAt: timestamp('captions_checked_at', { withTimezone: true }),
+		captionsCheckedBy: uuid('captions_checked_by').references(() => persons.id, {
+			onDelete: 'set null'
+		}),
+		/** Textfassung (Editor, bereinigtes HTML, ohne Bilder) */
+		transcriptHtml: text('transcript_html').notNull().default(''),
+		/** Präfix der Medien am Speicherort (videos/<mediaId>/…); null = eigene ID */
+		mediaId: uuid('media_id'),
+		/** Ersatz für ein vorhandenes Video: bis zum Tausch unsichtbar (Kap. 8.15) */
+		replacesId: uuid('replaces_id').references((): AnyPgColumn => videos.id, {
+			onDelete: 'cascade'
+		}),
+		/** Fortsetzen nach Abbruch: SHA-256 des ersten Teils */
+		uploadHead: text('upload_head'),
 		/** Kapitel: [{ s: Sekunde, t: Titel }] */
 		chapters: jsonb('chapters').$type<{ s: number; t: string }[]>().notNull().default([]),
 		/** Hochladen in Teilen: erwartete Größe und bisher erhaltene Bytes */
@@ -1728,7 +1745,27 @@ export const videos = pgTable(
 		updatedAt: updatedAt(),
 		publishedAt: timestamp('published_at', { withTimezone: true })
 	},
-	(t) => [index('videos_unit').on(t.unitId), index('videos_status').on(t.status)]
+	(t) => [
+		index('videos_unit').on(t.unitId),
+		index('videos_status').on(t.status),
+		index('videos_replaces').on(t.replacesId)
+	]
+);
+
+/** Anhänge zu einem Video (wie bei FAQs) */
+export const videoAttachments = pgTable(
+	'video_attachments',
+	{
+		videoId: uuid('video_id')
+			.notNull()
+			.references(() => videos.id, { onDelete: 'cascade' }),
+		fileId: uuid('file_id')
+			.notNull()
+			.unique()
+			.references(() => files.id, { onDelete: 'cascade' }),
+		position: integer('position').notNull()
+	},
+	(t) => [primaryKey({ columns: [t.videoId, t.fileId] })]
 );
 
 export const videoTopics = pgTable(

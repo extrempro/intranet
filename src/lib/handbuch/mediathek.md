@@ -11,6 +11,7 @@ Unter Wissen → Mediathek findest du alle Videos, die du sehen darfst. Auf den 
 - **Suchen:** Die Suche findet Titel, Beschreibung und das, was in den Untertiteln gesagt wird. Filtern kannst du nach Einheit und Thema.
 - **Abspielen:** Mit ±10 Sekunden springst du kurz zurück oder vor, die Geschwindigkeit stellst du von 0,75- bis 2-fach ein. Untertitel schaltest du im Player ein.
 - **Kapitel:** Hat ein Video Kapitel, stehen sie neben dem Video. Ein Klick springt an die Stelle.
+- **Textfassung und Anhänge:** Gibt es sie, stehen sie unter dem Video („Textfassung lesen“).
 - **Qualität** passt sich deiner Verbindung an. Im Mobilfunk lohnt WLAN.
 
 ## Weiter, wo du warst

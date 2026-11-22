@@ -10,6 +10,14 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.23.0 · 22.11.2026 · Untertitel automatisch
+
+- Videos bekommen beim Hochladen automatisch deutsche Untertitel. Die Spracherkennung läuft auf dem eigenen Server, nichts geht an einen Cloud-Dienst.
+- Automatische Untertitel lassen sich Zeile für Zeile korrigieren. Veröffentlicht wird erst, wenn jemand sie als geprüft markiert hat.
+- Zu jedem Video kann es eine Textfassung zum Nachlesen und Anhänge geben, etwa Unterlagen zur Schulung.
+- Bricht das Hochladen ab, geht es mit derselben Datei an der gleichen Stelle weiter.
+- Ein Video lässt sich durch eine neue Fassung ersetzen. Bis sie fertig ist, bleibt das bisherige online.
+
 ## 0.22.0 · 22.11.2026 · Weiter, wo du warst
 
 - Videos starten dort, wo du aufgehört hast, auch auf einem anderen Gerät. Mit „Von vorn beginnen“ geht es wieder am Anfang los.

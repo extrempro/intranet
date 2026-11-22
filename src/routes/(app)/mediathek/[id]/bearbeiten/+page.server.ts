@@ -2,10 +2,17 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import { audit } from '#lib/server/audit.ts';
 import {
+	anhaengeVon,
 	bearbeitenDaten,
+	cuesAus,
+	ersatzVon,
 	kapitelSetzen,
 	MediathekFehler,
 	metaSpeichern,
+	textSpeichern,
+	untertitelBereit,
+	untertitelKorrigieren,
+	untertitelPruefen,
 	untertitelSetzen,
 	veroeffentlichen,
 	videoLoeschen
@@ -18,9 +25,28 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	const p = requirePrincipal(locals);
 	try {
 		const v = await bearbeitenDaten(p, params.id);
-		const { captionsVtt, captionsText: _t, ...rest } = v;
+		// Neue Fassung in Arbeit: zum Video selbst
+		if (v.replacesId) redirect(303, `/mediathek/${v.replacesId}/bearbeiten`);
+		const { captionsVtt, captionsText: _t, uploadHead: _h, ...rest } = v;
 		void _t;
-		return { v: { ...rest, hatUntertitel: Boolean(captionsVtt) }, themen: await alleThemen() };
+		void _h;
+		const ersatz = await ersatzVon(v.id);
+		return {
+			v: {
+				...rest,
+				hatUntertitel: Boolean(captionsVtt),
+				bereit: untertitelBereit(v),
+				/** Abgebrochenes Hochladen nur von der Person fortsetzbar, die es begonnen hat */
+				eigenerUpload: v.createdBy === p.personId
+			},
+			cues: cuesAus(captionsVtt),
+			anhaenge: await anhaengeVon(v.id),
+			ersatz: ersatz && {
+				...ersatz,
+				eigener: ersatz.createdBy === p.personId
+			},
+			themen: await alleThemen()
+		};
 	} catch (err) {
 		if (err instanceof MediathekFehler) error(err.status === 400 ? 404 : err.status, err.message);
 		throw err;
@@ -95,6 +121,44 @@ export const actions: Actions = {
 		mit(locals, async (p) => {
 			await veroeffentlichen(p, params.id, false);
 			return 'Zurückgezogen. Das Video ist wieder ein Entwurf.';
+		}),
+	untertitelText: async ({ request, locals, params }) => {
+		const fd = await request.formData();
+		let texte: unknown;
+		try {
+			texte = JSON.parse(String(fd.get('texte') ?? '[]'));
+		} catch {
+			return fail(400, { fehler: 'Die Untertitel konnten nicht gelesen werden.' });
+		}
+		return mit(locals, async (p) => {
+			await untertitelKorrigieren(p, params.id, texte);
+			return 'Untertitel gespeichert.';
+		});
+	},
+	geprueft: async ({ request, locals, params }) => {
+		const an = (await request.formData()).get('wert') === 'an';
+		return mit(locals, async (p) => {
+			await untertitelPruefen(p, params.id, an);
+			return an
+				? 'Untertitel als geprüft markiert. Du kannst das Video jetzt veröffentlichen.'
+				: 'Markierung „geprüft“ zurückgenommen.';
+		});
+	},
+	textfassung: async ({ request, locals, params }) => {
+		const fd = await request.formData();
+		return mit(locals, async (p) => {
+			await textSpeichern(p, params.id, {
+				html: String(fd.get('text') ?? ''),
+				anhaenge: fd.getAll('anhaenge').map(String).slice(0, 50)
+			});
+			return 'Textfassung und Anhänge gespeichert.';
+		});
+	},
+	ersatzAbbrechen: async ({ locals, params }) =>
+		mit(locals, async (p) => {
+			const e = await ersatzVon(params.id);
+			if (e) await videoLoeschen(p, e.id);
+			return 'Die neue Fassung wurde verworfen. Das bisherige Video bleibt.';
 		}),
 	loeschen: async ({ locals, params, getClientAddress }) => {
 		const p = requirePrincipal(locals);

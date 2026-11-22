@@ -4,7 +4,8 @@
  * Untertitel, Kapitel, Veröffentlichen, Löschen. Läuft nur mit TEST_DATABASE_URL.
  */
 import { execFileSync, spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { mkdtemp, readdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -288,6 +289,186 @@ describe.skipIf(!url)('Mediathek', () => {
 		},
 		60_000
 	);
+
+	/** Testvideo erzeugen (3 s, mit Ton) */
+	function testvideo(name: string, sek = 3): Buffer {
+		const quelle = join(arbeit, name);
+		execFileSync('ffmpeg', [
+			'-v',
+			'error',
+			'-y',
+			'-f',
+			'lavfi',
+			'-i',
+			'testsrc=size=640x360:rate=25',
+			'-f',
+			'lavfi',
+			'-i',
+			'sine=frequency=440',
+			'-t',
+			String(sek),
+			'-c:v',
+			'libx264',
+			'-pix_fmt',
+			'yuv420p',
+			'-c:a',
+			'aac',
+			'-shortest',
+			quelle
+		]);
+		return readFileSync(quelle);
+	}
+
+	/** Umwandlung wie im Container, mit einem Ersatz für whisper-cli (kein Modell im Test) */
+	async function umwandeln() {
+		const bin = join(arbeit, 'bin');
+		mkdirSync(bin, { recursive: true });
+		writeFileSync(
+			join(bin, 'whisper-cli'),
+			'#!/bin/sh\nwhile [ $# -gt 0 ]; do case "$1" in -of) of="$2"; shift ;; esac; shift; done\n' +
+				'printf \'WEBVTT\\n\\n00:00:00.000 --> 00:00:01.000\\nHallo <b>Welt</b>\\n\\n00:00:01.000 --> 00:00:02.500\\nZweiter Satz\\n\' > "$of.vtt"\n',
+			{ mode: 0o755 }
+		);
+		writeFileSync(join(arbeit, 'modell.bin'), 'x');
+		const r = spawnSync('sh', [resolve('video/umwandeln.sh')], {
+			env: {
+				...process.env,
+				PATH: `${bin}:${process.env.PATH}`,
+				MODELL: join(arbeit, 'modell.bin'),
+				ARBEIT: arbeit,
+				EINMAL: '1'
+			},
+			encoding: 'utf8'
+		});
+		expect(r.status, r.stderr).toBe(0);
+		await m.umwandlungAbholen();
+	}
+
+	async function hochladen(id: string, inhalt: Buffer, p = pflege) {
+		for (let o = 0; o < inhalt.length; o += 1024 * 1024)
+			await m.teilAnhaengen(p, id, o, inhalt.subarray(o, o + 1024 * 1024));
+	}
+
+	it.skipIf(!ffmpeg)(
+		'automatische Untertitel: erst nach „geprüft“ veröffentlichen, korrigierbar',
+		async () => {
+			const inhalt = testvideo('auto.mp4');
+			const id = await m.videoAnlegen(pflege, {
+				unitId: EIGEN,
+				title: 'Auto',
+				size: inhalt.length
+			});
+			await hochladen(id, inhalt);
+			await umwandeln();
+			const [v] = (await db.execute(
+				sql`select status, captions_source, captions_vtt from videos where id = ${id}`
+			)) as unknown as { status: string; captions_source: string; captions_vtt: string }[];
+			expect(v.status).toBe('entwurf');
+			expect(v.captions_source).toBe('automatisch');
+			expect(v.captions_vtt).toContain('Hallo Welt');
+			await expect(m.veroeffentlichen(pflege, id, true)).rejects.toThrow(/prüfe/i);
+			// Korrigieren: nur Texte, Zeiten bleiben; leere Zeilen fallen weg
+			await m.untertitelKorrigieren(pflege, id, ['Hallo Intranet', '']);
+			const d = await m.bearbeitenDaten(pflege, id);
+			expect(m.cuesAus(d.captionsVtt)).toEqual([
+				{ a: '00:00:00.000', b: '00:00:01.000', t: 'Hallo Intranet' }
+			]);
+			await expect(m.untertitelKorrigieren(pflege, id, ['a', 'b'])).rejects.toThrow(/geändert/);
+			await expect(m.untertitelPruefen(leser, id, true)).rejects.toThrow(/Recht/);
+			await m.untertitelPruefen(pflege, id, true);
+			await m.veroeffentlichen(pflege, id, true);
+			// Zurücknehmen zieht automatische Untertitel zurück
+			await m.untertitelPruefen(pflege, id, false);
+			expect((await m.bearbeitenDaten(pflege, id)).status).toBe('entwurf');
+			await m.videoLoeschen(pflege, id);
+		},
+		60_000
+	);
+
+	it.skipIf(!ffmpeg)(
+		'neue Fassung: bisheriges Video bleibt online, dann Tausch der Medien',
+		async () => {
+			const erst = testvideo('erst.mp4', 4);
+			const id = await m.videoAnlegen(pflege, {
+				unitId: ZENTRAL,
+				title: 'Fassung',
+				size: erst.length
+			});
+			await hochladen(id, erst);
+			await umwandeln();
+			await m.untertitelSetzen(pflege, id, VTT);
+			await m.kapitelSetzen(pflege, id, [
+				{ s: 0, t: 'A' },
+				{ s: 3, t: 'Später' }
+			]);
+			await m.veroeffentlichen(pflege, id, true);
+			const altesInit = await m.medium(leser, id, '360/init.mp4');
+			expect(altesInit).not.toBeNull();
+
+			// Ersatz anlegen: unsichtbar, nur einer gleichzeitig
+			const zweit = testvideo('zweit.mp4', 2);
+			const e = await m.ersatzAnlegen(pflege, id, zweit.length);
+			await expect(m.ersatzAnlegen(pflege, id, zweit.length)).rejects.toThrow(/schon/);
+			expect((await m.videosListe(pflege, {})).some((x) => x.id === e)).toBe(false);
+			expect(await m.videoDetail(pflege, e)).toBeNull();
+			// Abbruch und Fortsetzen: Stand und Prüfsumme des ersten Teils
+			await m.teilAnhaengen(pflege, e, 0, zweit.subarray(0, 20_000));
+			const stand = await m.uploadStand(pflege, e);
+			expect(stand.erhalten).toBe(20_000);
+			expect(stand.kopf).toBe(createHash('sha256').update(zweit.subarray(0, 20_000)).digest('hex'));
+			await expect(m.uploadStand(leser, e)).rejects.toThrow();
+			for (let o = stand.erhalten; o < zweit.length; o += 1024 * 1024)
+				await m.teilAnhaengen(pflege, e, o, zweit.subarray(o, o + 1024 * 1024));
+			// Hochgeladene Untertitel: keine neuen erzeugen
+			expect(existsSync(join(arbeit, e, 'untertitel'))).toBe(false);
+			await umwandeln();
+
+			const v = await m.videoDetail(leser, id);
+			expect(v?.status).toBe('veroeffentlicht');
+			expect(v?.durationSec).toBe(2);
+			expect(v?.mediaId).toBe(e);
+			expect(v?.chapters).toEqual([{ s: 0, t: 'A' }]);
+			expect(v?.hatUntertitel).toBe(true);
+			expect(await m.medium(leser, id, 'master.m3u8')).not.toBeNull();
+			// Alte Medien gelöscht, Ersatz-Zeile weg
+			await expect(readdir(join(process.env.FILES_DIR as string, 'videos', id))).rejects.toThrow();
+			const [{ n }] = (await db.execute(
+				sql`select count(*)::int as n from videos where id = ${e}`
+			)) as unknown as { n: number }[];
+			expect(n).toBe(0);
+			await m.videoLoeschen(pflege, id);
+			await expect(readdir(join(process.env.FILES_DIR as string, 'videos', e))).rejects.toThrow();
+		},
+		90_000
+	);
+
+	it('Textfassung wird bereinigt, Anhänge nur für Berechtigte', async () => {
+		const id = await entwurf(ZENTRAL);
+		const { storeBytes } = await import('./files/store.ts');
+		const pdf = Buffer.from('%PDF-1.4\n%test\n');
+		const f = await storeBytes(pdf, 'unterlage.pdf', 'pdf', PFLEGE, 'inhalte');
+		const fremd2 = await storeBytes(pdf, 'fremd.pdf', 'pdf', LESER, 'inhalte');
+		await expect(
+			m.textSpeichern(pflege, id, { html: '<p>x</p>', anhaenge: [fremd2.id] })
+		).rejects.toThrow(/nicht mehr verfügbar/);
+		await m.textSpeichern(pflege, id, {
+			html: '<p>Hallo<script>alert(1)</script><img src=x onerror=alert(1)></p>',
+			anhaenge: [f.id]
+		});
+		const d = await m.bearbeitenDaten(pflege, id);
+		expect(d.transcriptHtml).toContain('Hallo');
+		expect(d.transcriptHtml).not.toMatch(/script|onerror|<img/);
+		// Entwurf: Anhang nur mit Recht
+		expect(await m.videoDateiErlaubt(pflege, f.id)).toBe(true);
+		expect(await m.videoDateiErlaubt(leser, f.id)).toBe(false);
+		await m.untertitelSetzen(pflege, id, VTT);
+		await m.veroeffentlichen(pflege, id, true);
+		expect(await m.videoDateiErlaubt(leser, f.id)).toBe(true);
+		expect(await m.videoDateiErlaubt(fremd, f.id)).toBe(true);
+		// Entfernen löscht die Datei
+		await m.textSpeichern(pflege, id, { html: '', anhaenge: [] });
+		expect(await m.videoDateiErlaubt(pflege, f.id)).toBe(false);
+	});
 
 	it('Fehler der Umwandlung landen am Video', async () => {
 		const id = await m.videoAnlegen(pflege, { unitId: EIGEN, title: 'Kaputt', size: 10 });
