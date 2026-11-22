@@ -2,14 +2,22 @@
 	/** Mediathek (Kap. 8.15): Übersicht mit Suche und Filtern. */
 	import { untrack } from 'svelte';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import VideoKarte from '#lib/components/VideoKarte.svelte';
+	import MehrLaden from '#lib/components/MehrLaden.svelte';
+	import { mitZahl } from '#lib/lange-liste.ts';
 	import { STATUS_TEXT, zeitText } from '#lib/mediathek.ts';
 
 	let { data } = $props();
 	let q = $state(untrack(() => data.filter.q));
 	/** Für Bearbeiter getrennt: was noch nicht veröffentlicht ist */
-	const inArbeit = $derived(data.videos.filter((v) => v.status !== 'veroeffentlicht'));
-	const veroeffentlicht = $derived(data.videos.filter((v) => v.status === 'veroeffentlicht'));
+	const inArbeit = $derived(data.inArbeit);
+	const veroeffentlicht = $derived(data.videos);
+	const mehrHref = $derived.by(() => {
+		const u = new URL(page.url.href);
+		u.searchParams.set('anzahl', String(data.anzahl + data.schritt));
+		return u.search;
+	});
 </script>
 
 <svelte:head><title>Mediathek · Intranet</title></svelte:head>
@@ -106,12 +114,23 @@
 	</form>
 
 	<p class="hinweis" role="status">
-		{veroeffentlicht.length === 1 ? '1 Video' : `${veroeffentlicht.length} Videos`}
+		{veroeffentlicht.length < data.gesamt
+			? `${veroeffentlicht.length} von ${mitZahl(data.gesamt, 'Video', 'Videos')}`
+			: mitZahl(data.gesamt, 'Video', 'Videos')}
 	</p>
 	{#if veroeffentlicht.length}
-		<ul class="raster">
-			{#each veroeffentlicht as v (v.id)}<li><VideoKarte {v} /></li>{/each}
+		<ul class="raster" id="videoraster">
+			{#each veroeffentlicht as v (v.id)}<li data-eintrag><VideoKarte {v} /></li>{/each}
 		</ul>
+		<MehrLaden
+			geladen={veroeffentlicht.length}
+			gesamt={data.gesamt}
+			schritt={data.schritt}
+			href={mehrHref}
+			einheit={['Video', 'Videos']}
+			verb="weitere anzeigen"
+			bereich="videoraster"
+		/>
 	{:else}
 		<p class="karte leer">Keine Videos gefunden.</p>
 	{/if}

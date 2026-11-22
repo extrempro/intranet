@@ -135,12 +135,15 @@ async function photosOf(adIds: string[]) {
 	return map;
 }
 
-export async function listAds(p: Principal, o: { categoryId?: string | null; q?: string | null }) {
+export async function listAds(
+	p: Principal,
+	o: { categoryId?: string | null; q?: string | null; limit?: number }
+) {
 	const extra = await getBoardTenants(p);
 	const q = o.q?.trim().slice(0, 100);
 	const like = q ? `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%` : null;
 	const rows = await db
-		.select(adColumns)
+		.select({ ...adColumns, gesamt: sql<number>`(count(*) over ())::int` })
 		.from(boardAds)
 		.innerJoin(boardCategories, eq(boardCategories.id, boardAds.categoryId))
 		.innerJoin(persons, eq(persons.id, boardAds.personId))
@@ -155,8 +158,8 @@ export async function listAds(p: Principal, o: { categoryId?: string | null; q?:
 					: undefined
 			)
 		)
-		.orderBy(desc(boardAds.createdAt))
-		.limit(300);
+		.orderBy(desc(boardAds.createdAt), desc(boardAds.id))
+		.limit(Math.min(o.limit ?? 300, 2000));
 	const photos = await photosOf(rows.map((r) => r.id));
 	return rows.map((r) => ({
 		...r,

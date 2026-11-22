@@ -10,6 +10,12 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.34.0 · 22.11.2026 · Lange Listen überall
+
+- Mediathek, Schwarzes Brett, Hinter den Kulissen, Benachrichtigungen und Nachrichten zeigen, wie viele Einträge es gibt, und laden mit „weitere anzeigen“ bzw. „ältere laden“ nach. Bisher fehlten ältere Einträge ohne Hinweis.
+- Mediathek: Entwürfe anderer Einheiten zählen nicht mehr mit, und die Auswahl „Von“ enthält alle Abteilungen und Hubs mit Videos.
+- Verwaltung: Benutzer und Rückmeldungen laden ebenfalls nach, statt nach 200 Einträgen aufzuhören.
+
 ## 0.33.0 · 22.11.2026 · Lange Listen
 
 - Neuigkeiten und „Aus den Hubs“ zeigen über der Liste, wie viele Beiträge es gibt, und gliedern sie nach Monaten. Mit „ältere laden“ kommst du an alle Beiträge, nicht mehr nur an die neuesten 50.

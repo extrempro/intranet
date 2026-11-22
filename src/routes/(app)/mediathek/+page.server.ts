@@ -1,8 +1,12 @@
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
-import { schreibbareEinheiten, videosListe } from '#lib/server/mediathek.ts';
+import { anzahlAus } from '#lib/lange-liste.ts';
+import { schreibbareEinheiten, videoEinheiten, videosListe } from '#lib/server/mediathek.ts';
 import { weiterAnsehen } from '#lib/server/fortschritt.ts';
 import { alleThemen } from '#lib/server/themen.ts';
 import type { PageServerLoad } from './$types';
+
+/** Videos je Schritt „weitere anzeigen“ (Kap. 6.7) */
+const SCHRITT = 24;
 
 /** Mediathek: alle Videos, die die Person sehen darf (Kap. 8.15). */
 export const load: PageServerLoad = async ({ locals, url }) => {
@@ -10,18 +14,22 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const q = url.searchParams.get('q') ?? '';
 	const einheit = url.searchParams.get('einheit') ?? '';
 	const thema = url.searchParams.get('thema') ?? '';
-	const [videos, alle, themen, schreibbar, weiter] = await Promise.all([
-		videosListe(p, { q, unitId: einheit || null, thema: thema || null }),
-		videosListe(p, {}),
+	const anzahl = anzahlAus(url, SCHRITT, 2000);
+	const filter = { q, unitId: einheit || null, thema: thema || null };
+	const [videos, inArbeit, einheiten, themen, schreibbar, weiter] = await Promise.all([
+		videosListe(p, { ...filter, nur: 'veroeffentlicht', limit: anzahl }),
+		videosListe(p, { ...filter, nur: 'inArbeit', limit: 200 }),
+		videoEinheiten(p),
 		alleThemen(),
 		schreibbareEinheiten(p),
 		q || einheit || thema ? [] : weiterAnsehen(p)
 	]);
-	const einheiten = [
-		...new Map(alle.map((v) => [v.unitId, { id: v.unitId, name: v.unitName }])).values()
-	].sort((a, b) => a.name.localeCompare(b.name, 'de'));
 	return {
 		videos,
+		inArbeit,
+		gesamt: videos[0]?.gesamt ?? 0,
+		anzahl,
+		schritt: SCHRITT,
 		weiter,
 		einheiten,
 		themen,

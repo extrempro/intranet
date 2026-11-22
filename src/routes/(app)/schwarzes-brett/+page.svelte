@@ -7,8 +7,15 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { actionUrl } from '#lib/action-url.ts';
+	import MehrLaden from '#lib/components/MehrLaden.svelte';
+	import { mitZahl } from '#lib/lange-liste.ts';
 
 	let { data, form } = $props();
+	const mehrHref = $derived.by(() => {
+		const u = new URL(page.url.href);
+		u.searchParams.set('anzahl', String(data.anzahl + data.schritt));
+		return u.search;
+	});
 	const datum = new Intl.DateTimeFormat('de-DE', {
 		dateStyle: 'medium',
 		timeZone: 'Europe/Berlin'
@@ -190,9 +197,17 @@
 		{#if data.anzeigen.length === 0}
 			<p class="karte hinweis" role="status">Keine Anzeigen für diese Auswahl.</p>
 		{:else}
-			<div class="raster">
+			<p class="hinweis zaehler">
+				{data.anzeigen.length} von {mitZahl(data.gesamt, 'Anzeige', 'Anzeigen')}
+			</p>
+			<div class="raster" id="anzeigenraster">
 				{#each data.anzeigen as a (a.id)}
-					<article class="karte anzeige" id="anzeige-{a.id}" aria-labelledby="a-{a.id}">
+					<article
+						data-eintrag
+						class="karte anzeige"
+						id="anzeige-{a.id}"
+						aria-labelledby="a-{a.id}"
+					>
 						{#if a.photos.length}
 							<div class="bilder">
 								{#each a.photos as f (f.id)}
@@ -273,6 +288,15 @@
 					</article>
 				{/each}
 			</div>
+			<MehrLaden
+				geladen={data.anzeigen.length}
+				gesamt={data.gesamt}
+				schritt={data.schritt}
+				href={mehrHref}
+				einheit={['Anzeige', 'Anzeigen']}
+				verb="weitere anzeigen"
+				bereich="anzeigenraster"
+			/>
 		{/if}
 	{:else if data.ansicht === 'meine'}
 		<p class="hinweis">

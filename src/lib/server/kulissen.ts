@@ -210,12 +210,12 @@ async function imagesOf(ids: string[]) {
 		.orderBy(asc(newsAttachments.position));
 }
 
-export async function listPosts(p: Principal, q?: string | null) {
+export async function listPosts(p: Principal, q?: string | null, limit = 60) {
 	const extra = await getExtraTenants(p);
 	const term = q?.trim().slice(0, 100);
 	const like = term ? `%${term.replace(/[\\%_]/g, (c) => `\\${c}`)}%` : null;
 	const rows = await db
-		.select(columns)
+		.select({ ...columns, gesamt: sql<number>`(count(*) over ())::int` })
 		.from(news)
 		.innerJoin(units, eq(units.id, news.unitId))
 		.innerJoin(tenants, eq(tenants.id, news.tenantId))
@@ -225,8 +225,8 @@ export async function listPosts(p: Principal, q?: string | null) {
 				like ? or(sql`${news.title} ilike ${like}`, sql`${news.bodyText} ilike ${like}`) : undefined
 			)
 		)
-		.orderBy(desc(news.publishAt))
-		.limit(60);
+		.orderBy(desc(news.publishAt), desc(news.id))
+		.limit(Math.min(limit, 2000));
 	const ids = rows.map((r) => r.id);
 	const [att, reactions, writable] = await Promise.all([
 		imagesOf(ids),
@@ -249,7 +249,8 @@ export async function listPosts(p: Principal, q?: string | null) {
 			.filter((a) => a.newsId === r.id && IMAGE.includes(a.kind))
 			.map((a) => ({ id: a.id, description: a.description })),
 		reactions: reactions.get(r.id) ?? [],
-		canEdit: writable.some((u) => u.id === r.unitId)
+		canEdit: writable.some((u) => u.id === r.unitId),
+		gesamt: r.gesamt
 	}));
 }
 

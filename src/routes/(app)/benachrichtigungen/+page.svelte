@@ -2,6 +2,9 @@
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import { TOPICS } from '#lib/notify.ts';
+	import { page } from '$app/state';
+	import MehrLaden from '#lib/components/MehrLaden.svelte';
+	import { mitZahl } from '#lib/lange-liste.ts';
 
 	let { data } = $props();
 	const THEMA = Object.fromEntries(TOPICS.map((t) => [t.key, t.label]));
@@ -10,7 +13,12 @@
 		timeStyle: 'short',
 		timeZone: 'Europe/Berlin'
 	});
-	const ungelesen = $derived(data.liste.filter((n) => !n.readAt).length);
+	const ungelesen = $derived(data.ungelesen);
+	const mehrHref = $derived.by(() => {
+		const u = new URL(page.url.href);
+		u.searchParams.set('anzahl', String(data.anzahl + data.schritt));
+		return u.search;
+	});
 </script>
 
 <svelte:head><title>Benachrichtigungen · Intranet</title></svelte:head>
@@ -33,9 +41,12 @@
 			Noch keine Benachrichtigungen. Was hier erscheint, legst du unter Einstellungen fest.
 		</p>
 	{:else}
-		<ul class="liste karte">
+		<p class="hinweis zaehler">
+			{data.liste.length} von {mitZahl(data.gesamt, 'Benachrichtigung', 'Benachrichtigungen')}
+		</p>
+		<ul class="liste karte" id="benachrichtigungsliste">
 			{#each data.liste as n (n.id)}
-				<li class:neu={!n.readAt}>
+				<li class:neu={!n.readAt} data-eintrag>
 					<a href={resolve('/(app)/benachrichtigungen/[id]', { id: n.id })}>
 						<span class="thema" class:dringend={n.topic === 'dringend'}>
 							{THEMA[n.topic] ?? n.topic}{#if !n.readAt}<span class="sr-only">
@@ -50,6 +61,14 @@
 				</li>
 			{/each}
 		</ul>
+		<MehrLaden
+			geladen={data.liste.length}
+			gesamt={data.gesamt}
+			schritt={data.schritt}
+			href={mehrHref}
+			einheit={['Benachrichtigung', 'Benachrichtigungen']}
+			bereich="benachrichtigungsliste"
+		/>
 		<p class="hinweis">Benachrichtigungen werden nach 90 Tagen gelöscht.</p>
 	{/if}
 </div>

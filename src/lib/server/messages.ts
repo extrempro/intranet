@@ -202,7 +202,7 @@ const unreadSql = (personId: string) => sql<boolean>`coalesce((
 	and exists (select 1 from messages mm where mm.conversation_id = ${conversations.id}
 	and (mm.author_id is null or mm.author_id <> ${personId}))`;
 
-export async function listConversations(p: Principal, box: Box, closed: boolean) {
+export async function listConversations(p: Principal, box: Box, closed: boolean, limit = 200) {
 	const where =
 		box.role && box.tenantId
 			? and(eq(conversations.roleBox, box.role), eq(conversations.roleTenantId, box.tenantId))
@@ -215,6 +215,7 @@ export async function listConversations(p: Principal, box: Box, closed: boolean)
 			closedAt: conversations.closedAt,
 			lastMessageAt: conversations.lastMessageAt,
 			roleBox: conversations.roleBox,
+			gesamt: sql<number>`(count(*) over ())::int`,
 			unread: unreadSql(p.personId),
 			preview: sql<
 				string | null
@@ -225,8 +226,8 @@ export async function listConversations(p: Principal, box: Box, closed: boolean)
 		})
 		.from(conversations)
 		.where(and(where, closed ? isNotNull(conversations.closedAt) : isNull(conversations.closedAt)))
-		.orderBy(desc(conversations.lastMessageAt))
-		.limit(200);
+		.orderBy(desc(conversations.lastMessageAt), desc(conversations.id))
+		.limit(Math.min(limit, 5000));
 	return rows.map((r) => ({
 		...r,
 		kindLabel: KIND_LABEL[r.kind],

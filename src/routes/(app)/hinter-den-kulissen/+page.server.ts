@@ -15,13 +15,18 @@ import {
 	writableUnits
 } from '#lib/server/kulissen.ts';
 import { listFavorites, toggleFavorite } from '#lib/server/preferences.ts';
+import { anzahlAus } from '#lib/lange-liste.ts';
 import type { Actions, PageServerLoad } from './$types';
+
+/** Beiträge je Schritt „weitere anzeigen“ (Kap. 6.7) */
+const SCHRITT = 24;
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const p = requirePrincipal(locals);
 	const q = url.searchParams.get('q')?.trim().slice(0, 100) ?? '';
+	const anzahl = anzahlAus(url, SCHRITT, 2000);
 	const [beitraege, schreibbar, freischalten, extra, mandanten, text, favs] = await Promise.all([
-		listPosts(p, q),
+		listPosts(p, q, anzahl),
 		writableUnits(p),
 		enableableUnits(p),
 		getExtraTenants(p),
@@ -34,6 +39,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	]);
 	return {
 		beitraege,
+		gesamt: beitraege[0]?.gesamt ?? 0,
+		anzahl,
+		schritt: SCHRITT,
 		q,
 		darfSchreiben: schreibbar.length > 0,
 		freischalten,
