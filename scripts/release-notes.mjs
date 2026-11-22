@@ -5,15 +5,15 @@
 import { readFileSync } from 'node:fs';
 
 const [version, option] = process.argv.slice(2);
-// Kommentare entfernen, bis keiner mehr übrig ist (wie ohneKommentare in src/lib/changelog.ts)
-let text = readFileSync('CHANGELOG.md', 'utf8');
-for (
-	let weiter = text.replace(/<!--[\s\S]*?-->/g, '');
-	weiter !== text;
-	weiter = text.replace(/<!--[\s\S]*?-->/g, '')
-)
-	text = weiter;
-text = text.replace(/<!--/g, '');
+// Kommentarblöcke zeilenweise entfernen (wie ohneKommentare in src/lib/changelog.ts)
+const behalten = [];
+let imKommentar = false;
+for (const zeile of readFileSync('CHANGELOG.md', 'utf8').split(/\r?\n/)) {
+	if (!imKommentar && zeile.includes('<!--')) imKommentar = true;
+	if (!imKommentar) behalten.push(zeile);
+	else if (zeile.includes('-->')) imKommentar = false;
+}
+const text = behalten.join('\n');
 const kopf = /^## (\d+\.\d+\.\d+) · (\d{2}\.\d{2}\.\d{4}) · (.+)$/;
 let gefunden = null;
 const zeilen = [];

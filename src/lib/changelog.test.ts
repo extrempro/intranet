@@ -39,9 +39,10 @@ describe('Neu im Intranet (CHANGELOG.md)', () => {
 });
 
 describe('ohneKommentare', () => {
-	it('entfernt auch verschachtelte Reste', () => {
-		expect(ohneKommentare('a<!-- x -->b')).toBe('ab');
-		expect(ohneKommentare('a<!<!-- x -->-- y -->b')).toBe('ab');
-		expect(ohneKommentare('a<!-- offen')).toBe('a offen');
+	it('entfernt Kommentarblöcke zeilenweise, auch verschachtelte Reste', () => {
+		expect(ohneKommentare('a\n<!-- x -->\nb')).toBe('a\nb');
+		expect(ohneKommentare('a\n<!--\nText\n-->\nb')).toBe('a\nb');
+		expect(ohneKommentare('a\n<!<!-- x\n-- y -->\nb')).toBe('a\nb');
+		expect(ohneKommentare('a\n<!-- offen\nb')).toBe('a');
 	});
 });

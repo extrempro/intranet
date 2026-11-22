@@ -12,14 +12,20 @@ export interface ChangelogEntry {
 
 const KOPF = /^## (\d+\.\d+\.\d+) · (\d{2}\.\d{2}\.\d{4}) · (.+)$/;
 
-/** HTML-Kommentare entfernen, so lange bis keiner mehr übrig ist (auch verschachtelte Reste). */
+/**
+ * Kommentarblöcke entfernen: Zeilen von einer Zeile mit „<!--“ bis zur Zeile mit
+ * „-->“ fallen ganz weg. Es werden nur ganze Zeilen weggelassen, nie Teile
+ * zusammengesetzt; so kann kein neuer Kommentaranfang entstehen.
+ */
 export function ohneKommentare(raw: string): string {
-	let text = raw;
-	for (;;) {
-		const weiter = text.replace(/<!--[\s\S]*?-->/g, '');
-		if (weiter === text) return text.replace(/<!--/g, '');
-		text = weiter;
+	const behalten: string[] = [];
+	let imKommentar = false;
+	for (const zeile of raw.split(/\r?\n/)) {
+		if (!imKommentar && zeile.includes('<!--')) imKommentar = true;
+		if (!imKommentar) behalten.push(zeile);
+		else if (zeile.includes('-->')) imKommentar = false;
 	}
+	return behalten.join('\n');
 }
 
 export function parseChangelog(raw: string): ChangelogEntry[] {
