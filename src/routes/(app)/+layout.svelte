@@ -13,6 +13,7 @@
 	import Kopfsuche from '#lib/components/Kopfsuche.svelte';
 	import RueckmeldungDialog from '#lib/components/RueckmeldungDialog.svelte';
 	import { browserfehlerMerken } from '#lib/browserfehler.ts';
+	import MeldungImBlick from '#lib/components/MeldungImBlick.svelte';
 	import NeueVersion from '#lib/components/NeueVersion.svelte';
 	import OfflineHinweis from '#lib/components/OfflineHinweis.svelte';
 	import Tour from '#lib/components/Tour.svelte';
@@ -116,6 +117,7 @@
 	// Rückmeldung geben: Daumen hoch und runter (wie im Ausbildungsportal, für etwa 26–30 px)
 	const RUECKMELDUNG =
 		'M1 8.5h2.2V14H1zM3.2 9l2.4-4.6a1.4 1.4 0 0 1 1.5 1.4v2.4h2.6a1.3 1.3 0 0 1 1.3 1.6l-.7 3.2a1.5 1.5 0 0 1-1.5 1.2H3.2M23 15.5h-2.2V10H23zM20.8 15l-2.4 4.6a1.4 1.4 0 0 1-1.5-1.4v-2.4h-2.6a1.3 1.3 0 0 1-1.3-1.6l.7-3.2a1.5 1.5 0 0 1 1.5-1.2h5.6';
+	let hauptbereich = $state<HTMLElement>();
 </script>
 
 <a class="skip" href="#inhalt">Zum Inhalt springen</a>
@@ -343,7 +345,7 @@
 				</div>
 			{/if}
 
-			<main id="inhalt" tabindex="-1">
+			<main id="inhalt" tabindex="-1" bind:this={hauptbereich}>
 				{#if krumen.length}
 					<nav class="krumen" aria-label="Pfad">
 						{#each krumen as k, i (i)}
@@ -392,6 +394,9 @@
 			</main>
 		</div>
 	</div>
+
+	<!-- Rückmeldungen außerhalb des sichtbaren Bereichs zusätzlich unten zeigen (Kap. 6.6) -->
+	<MeldungImBlick bereich={() => hauptbereich} />
 
 	<!-- Handy: Leiste unten -->
 	<nav class="unten" aria-label="Hauptnavigation" data-tour="navigation">

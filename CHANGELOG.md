@@ -10,6 +10,11 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.23.1 · 22.11.2026 · Rückmeldungen immer im Blick
+
+- Meldungen wie „Gespeichert.“ oder Fehler erscheinen zusätzlich unten im Fenster, wenn sie auf einer langen Seite gerade nicht zu sehen sind, auf PC, Tablet und Handy.
+- Ein Klick auf die Meldung springt an die Stelle, zu der sie gehört.
+
 ## 0.23.0 · 22.11.2026 · Untertitel automatisch
 
 - Videos bekommen beim Hochladen automatisch deutsche Untertitel. Die Spracherkennung läuft auf dem eigenen Server, nichts geht an einen Cloud-Dienst.

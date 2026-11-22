@@ -71,3 +71,35 @@ test('Mediathek: Weiter, wo du warst', async ({ page }) => {
 	await page.goto(`/mediathek/${VIDEO}`);
 	await expect(page.getByText(/Weiter bei/)).toHaveCount(0);
 });
+
+test('Rückmeldungen bleiben sichtbar, auch auf langen Seiten', async ({ page }) => {
+	await anmelden(page, 'hanna');
+	await page.goto(`/mediathek/${ENTWURF}/bearbeiten`);
+	const datei = page.locator('input[name="datei"]');
+	await datei.scrollIntoViewIfNeeded();
+	await datei.setInputFiles({
+		name: 'test.vtt',
+		mimeType: 'text/vtt',
+		buffer: Buffer.from('WEBVTT\n\n00:00.000 --> 00:02.000\nHallo\n')
+	});
+	await page.getByRole('button', { name: 'Hochladen', exact: true }).click();
+	// Die Meldung steht oben; unten erscheint sie zusätzlich, ganz im Fenster
+	const leiste = page.locator('.meldungsleiste');
+	await expect(leiste).toContainText('Untertitel gespeichert.');
+	const box = await leiste.boundingBox();
+	const fenster = page.viewportSize();
+	expect(box && fenster && box.y + box.height <= fenster.height).toBeTruthy();
+	const unten = page.locator('nav.unten');
+	if (await unten.isVisible()) {
+		const nav = await unten.boundingBox();
+		expect(box!.y + box!.height).toBeLessThanOrEqual(nav!.y);
+	}
+	// Klick springt zur Meldung
+	await leiste.getByRole('button', { name: /Untertitel gespeichert/ }).click();
+	await expect(leiste).toHaveCount(0);
+	await expect(
+		page.getByRole('status').filter({ hasText: 'Untertitel gespeichert.' })
+	).toBeInViewport();
+	await page.getByRole('button', { name: 'Untertitel entfernen' }).click();
+	await page.getByRole('alertdialog').getByRole('button', { name: 'Entfernen' }).click();
+});
