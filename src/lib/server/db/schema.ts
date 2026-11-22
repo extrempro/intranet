@@ -269,6 +269,8 @@ export const persons = pgTable(
 		disabledAt: timestamp('disabled_at', { withTimezone: true }),
 		/** Wer gesperrt hat: „entra“ (Abgleich) gibt Entra wieder frei, sonst nur die Verwaltung. */
 		disabledBy: text('disabled_by', { enum: ['verwaltung', 'entra'] }),
+		/** Von der Verwaltung ausgeblendet: für andere nicht in Personen, Suche, Teams (Konto bleibt nutzbar) */
+		hidden: boolean('hidden').notNull().default(false),
 		// Selbst gepflegte Kontaktdaten (Kap. 8.13), keine Übernahme aus Entra
 		position: text('position'),
 		phone: text('phone'),

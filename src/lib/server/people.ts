@@ -41,7 +41,14 @@ async function visiblePerson(p: Principal, personId: string) {
 		tx
 			.select({ id: persons.id })
 			.from(persons)
-			.where(and(eq(persons.id, personId), ne(persons.status, 'disabled')))
+			.where(
+				and(
+					eq(persons.id, personId),
+					ne(persons.status, 'disabled'),
+					// Ausgeblendet: nur die Person selbst sieht ihr Profil
+					personId === p.personId ? undefined : eq(persons.hidden, false)
+				)
+			)
 	);
 	if (!row) return null;
 	const [op] = await db
@@ -305,6 +312,7 @@ export async function searchPersons(p: Principal, q: string, tsq: string, limit 
 			.where(
 				and(
 					ne(persons.status, 'disabled'),
+					eq(persons.hidden, false),
 					operators.length ? notInArray(persons.id, operators) : undefined,
 					or(sql`${document} @@ ${query}`, sql`${similar} > 0.55`)
 				)
@@ -390,6 +398,7 @@ export async function listPeople(
 			.where(
 				and(
 					ne(persons.status, 'disabled'),
+					eq(persons.hidden, false),
 					// Betreiber-Konten (die App-Rolle sieht location_operators nicht)
 					betreiber.length ? notInArray(persons.id, betreiber) : undefined,
 					unitId

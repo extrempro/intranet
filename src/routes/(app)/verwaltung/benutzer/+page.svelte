@@ -37,7 +37,8 @@
 								: 'lokal'}{#if x.roles}
 								&nbsp;· {x.roles}
 								{x.roles === 1 ? 'Rolle' : 'Rollen'}{/if}{#if STATUS[x.status]}
-								&nbsp;· <span class="schild rand">{STATUS[x.status]}</span>{/if}
+								&nbsp;· <span class="schild rand">{STATUS[x.status]}</span>{/if}{#if x.hidden}
+								&nbsp;· <span class="schild rand">ausgeblendet</span>{/if}
 						</span>
 					</a>
 				</li>

@@ -1,7 +1,14 @@
 import { error, fail } from '@sveltejs/kit';
 import { bestaetigungFehlt } from '#lib/server/auth/bestaetigung.ts';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
-import { getPerson, grantRole, revokeRole, setPersonActive, UserError } from '#lib/server/users.ts';
+import {
+	getPerson,
+	grantRole,
+	revokeRole,
+	setPersonActive,
+	setPersonHidden,
+	UserError
+} from '#lib/server/users.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
@@ -45,6 +52,12 @@ export const actions: Actions = {
 	sperren: async ({ locals, params, getClientAddress }) =>
 		bestaetigungFehlt(locals) ??
 		guarded(() => setPersonActive(requirePrincipal(locals), params.id, false, getClientAddress())),
+	ausblenden: async ({ request, locals, params, getClientAddress }) => {
+		const an = (await request.formData()).get('wert') === 'an';
+		return guarded(() =>
+			setPersonHidden(requirePrincipal(locals), params.id, an, getClientAddress())
+		);
+	},
 	freigeben: async ({ locals, params, getClientAddress }) =>
 		bestaetigungFehlt(locals) ??
 		guarded(() => setPersonActive(requirePrincipal(locals), params.id, true, getClientAddress()))

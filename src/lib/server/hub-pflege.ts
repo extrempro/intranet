@@ -54,6 +54,7 @@ export async function personenFuerHub(p: Principal, unitId: string, q: string) {
 		.where(
 			and(
 				ne(persons.status, 'disabled'),
+				eq(persons.hidden, false),
 				// Zentrale Hubs: alle Mandanten, sonst nur der Mandant des Hubs
 				u.isCentral ? undefined : eq(persons.tenantId, u.tenantId),
 				notInArray(
@@ -300,6 +301,7 @@ export async function hubSpeichern(
 						and(
 							inArray(persons.id, kontaktIds),
 							ne(persons.status, 'disabled'),
+							eq(persons.hidden, false),
 							u.isCentral ? undefined : eq(persons.tenantId, u.tenantId)
 						)
 					)

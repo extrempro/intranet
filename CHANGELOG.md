@@ -10,6 +10,11 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.26.0 · 22.11.2026 · Konten ausblenden
+
+- In der Verwaltung lassen sich Konten für andere ausblenden, etwa Test- oder Funktionskonten. Sie erscheinen dann nicht mehr in der Personenliste, in der Suche, in Teams und bei Zuständigkeiten.
+- Anmelden und Rechte bleiben unverändert. In der Benutzerliste sind solche Konten als „ausgeblendet“ markiert.
+
 ## 0.25.0 · 22.11.2026 · Ruhezeiten je Tag und Abwesenheit
 
 - Ruhezeiten stellst du jetzt für jeden Wochentag einzeln ein: Zeitraum, ganztägig oder keine Ruhe. Ein Satz darunter sagt, was gerade gilt.

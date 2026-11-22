@@ -47,6 +47,7 @@ export async function listPersons(p: Principal, q: string) {
 			name: persons.displayName,
 			email: persons.email,
 			status: persons.status,
+			hidden: persons.hidden,
 			authSource: persons.authSource,
 			tenantName: tenants.name,
 			roles: sql<number>`(select count(*)::int from role_assignments r where r.person_id = ${persons.id})`
@@ -186,6 +187,7 @@ export async function getPerson(p: Principal, id: string) {
 		name: person.displayName,
 		email: person.email,
 		status: person.status,
+		hidden: person.hidden,
 		authSource: person.authSource,
 		lastLoginAt: person.lastLoginAt,
 		tenantName,
@@ -338,6 +340,24 @@ export async function setPersonActive(p: Principal, personId: string, active: bo
 	await audit({
 		category: 'admin',
 		action: active ? 'person.enable' : 'person.disable',
+		actorId: p.personId,
+		tenantId: person.tenantId,
+		entityType: 'person',
+		entityId: personId,
+		ip
+	});
+}
+
+/**
+ * Für andere ausblenden (Personen, Suche, Profil, Teams, Zuständigkeiten) oder
+ * wieder zeigen. Das Konto bleibt nutzbar; nur Admins des Mandanten sehen es.
+ */
+export async function setPersonHidden(p: Principal, personId: string, hidden: boolean, ip: string) {
+	const { person } = await loadPerson(p, personId);
+	await db.update(persons).set({ hidden }).where(eq(persons.id, personId));
+	await audit({
+		category: 'admin',
+		action: hidden ? 'person.hide' : 'person.show',
 		actorId: p.personId,
 		tenantId: person.tenantId,
 		entityType: 'person',

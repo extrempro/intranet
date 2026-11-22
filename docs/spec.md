@@ -445,20 +445,20 @@ Gruppen:
 
 Nur Mandanten-Admins (eigener Mandant) und System-Admins.
 
-| Bereich              | Inhalt                                                                                                                                                        |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Mandanten            | Name, Kürzel, Admins, Domains, Branding, Leitung, KBB, Interessenvertretung, Startseite für neue Personen                                                     |
-| Abteilungen und Hubs | Liste mit Filtern (u. a. „Nur ohne Pflege“), Anlegen/Bearbeiten: Typ, Titel, Name, Zuständigkeit, Ausblenden, Pflege, Rechte (Dringend, Termine), Pflicht-Abo |
-| Standorte            | Standorte, Betreiber-Konten                                                                                                                                   |
-| Benutzer und Rollen  | Benutzerliste, lokale Konten anlegen/deaktivieren, Rollen mit Geltungsbereich, Rollen aus Entra-Gruppen                                                       |
-| Anmeldung            | Entra-Verbindung, Zugangsgruppe, Abgleich, Graph-Berechtigungen; Passwortrichtlinie (4.2)                                                                     |
-| Regeln für Inhalte   | Anheften, Dringende Meldungen, Schreibrechte, Kalender, Zuständigkeiten, Hinter den Kulissen, Schwarzes Brett, Hub-Anträge, Reaktionen                        |
-| Benachrichtigungen   | Web Push, E-Mail (SMTP), Teams (Meldungen, App-Paket, Aussehen); Status und Testnachricht                                                                     |
-| Rückmeldungen        | Eingegangene Fehler und Ideen bearbeiten, beantworten                                                                                                         |
-| Speicher             | Speicherorte (lokal, S3-kompatibel), Zuordnung je Inhaltsart, Umzug vorhandener Dateien, Obergrenze der Mediathek (nur System-Admins, siehe 18)               |
-| Löschfristen         | Kap. 15                                                                                                                                                       |
-| Protokoll            | Änderungen in der Verwaltung                                                                                                                                  |
-| System               | Startklar, Version, Zustand, Sicherungen                                                                                                                      |
+| Bereich              | Inhalt                                                                                                                                                                                                                                                            |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mandanten            | Name, Kürzel, Admins, Domains, Branding, Leitung, KBB, Interessenvertretung, Startseite für neue Personen                                                                                                                                                         |
+| Abteilungen und Hubs | Liste mit Filtern (u. a. „Nur ohne Pflege“), Anlegen/Bearbeiten: Typ, Titel, Name, Zuständigkeit, Ausblenden, Pflege, Rechte (Dringend, Termine), Pflicht-Abo                                                                                                     |
+| Standorte            | Standorte, Betreiber-Konten                                                                                                                                                                                                                                       |
+| Benutzer und Rollen  | Benutzerliste, lokale Konten anlegen/deaktivieren, Rollen mit Geltungsbereich, Rollen aus Entra-Gruppen, Konten für andere ausblenden (Personen, Suche, Profil, Teams, Zuständigkeiten; Anmelden und Rechte bleiben; System- und Mandanten-Admins, protokolliert) |
+| Anmeldung            | Entra-Verbindung, Zugangsgruppe, Abgleich, Graph-Berechtigungen; Passwortrichtlinie (4.2)                                                                                                                                                                         |
+| Regeln für Inhalte   | Anheften, Dringende Meldungen, Schreibrechte, Kalender, Zuständigkeiten, Hinter den Kulissen, Schwarzes Brett, Hub-Anträge, Reaktionen                                                                                                                            |
+| Benachrichtigungen   | Web Push, E-Mail (SMTP), Teams (Meldungen, App-Paket, Aussehen); Status und Testnachricht                                                                                                                                                                         |
+| Rückmeldungen        | Eingegangene Fehler und Ideen bearbeiten, beantworten                                                                                                                                                                                                             |
+| Speicher             | Speicherorte (lokal, S3-kompatibel), Zuordnung je Inhaltsart, Umzug vorhandener Dateien, Obergrenze der Mediathek (nur System-Admins, siehe 18)                                                                                                                   |
+| Löschfristen         | Kap. 15                                                                                                                                                                                                                                                           |
+| Protokoll            | Änderungen in der Verwaltung                                                                                                                                                                                                                                      |
+| System               | Startklar, Version, Zustand, Sicherungen                                                                                                                                                                                                                          |
 
 Jede Änderung in der Verwaltung wird protokolliert (wer, was, wann; ohne Inhalte von Beiträgen).
 

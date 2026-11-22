@@ -22,6 +22,9 @@
 			&nbsp;· zuletzt angemeldet {formatWhen(x.lastLoginAt)}{/if}
 	</p>
 	{#if x.status === 'disabled'}<p class="meldung fehler">Dieses Konto ist gesperrt.</p>{/if}
+	{#if x.hidden}<p class="meldung warnung">
+			Ausgeblendet: Das Konto erscheint für andere nicht in Personen, Suche und Teams.
+		</p>{/if}
 	{#if x.einladungOffen && x.status !== 'disabled'}<p class="meldung">
 			Die Einladung ist noch nicht angenommen.
 		</p>{/if}
@@ -76,6 +79,22 @@
 			Abteilungsverwaltung, Hub-Team und Schreibrechte vergibst du einfacher im Team der Einheit
 			unter Abteilungen und Hubs. Rollen aus Entra-Gruppen ändern sich bei der nächsten Anmeldung.
 		</p>
+	</section>
+
+	<section class="karte stapel" aria-labelledby="h-sichtbar">
+		<h2 id="h-sichtbar">Sichtbarkeit</h2>
+		<p class="hinweis">
+			Für Konten, die niemand finden soll, etwa Test- oder Funktionskonten. Ausgeblendet erscheint
+			das Konto für andere nicht in der Personenliste, in der Suche, in Teams von Abteilungen und
+			Hubs und bei Zuständigkeiten; die Profilseite ist für andere nicht erreichbar. Anmelden und
+			alle Rechte bleiben, wie sie sind. Hier in der Verwaltung bleibt es sichtbar.
+		</p>
+		<form method="POST" action="?/ausblenden" use:enhance>
+			<input type="hidden" name="wert" value={x.hidden ? 'aus' : 'an'} />
+			<button class="knopf zweit" type="submit">
+				{x.hidden ? 'Wieder anzeigen' : 'Für andere ausblenden'}
+			</button>
+		</form>
 	</section>
 
 	{#if !x.ich}

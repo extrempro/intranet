@@ -54,7 +54,8 @@ function inScope(p: Principal) {
 	)!;
 }
 
-const active = sql`${persons.status} <> 'disabled'`;
+/** Aktiv und nicht von der Verwaltung ausgeblendet */
+const active = sql`${persons.status} <> 'disabled' and ${persons.hidden} = false`;
 
 // ---------------------------------------------------------------------------
 // Übersicht
