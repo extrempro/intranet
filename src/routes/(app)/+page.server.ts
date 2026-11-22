@@ -10,6 +10,7 @@ import { canteenCards } from '#lib/server/canteen.ts';
 import { latestPlans } from '#lib/server/plans.ts';
 import { tenants } from '#lib/server/db/schema.ts';
 import {
+	getNewsSeen,
 	getPreferences,
 	listFavorites,
 	removeFavorite,
@@ -22,21 +23,32 @@ const ZONE = 'Europe/Berlin';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const principal = requirePrincipal(locals);
-	const [prefs, favs, [tenant], dringend, neuigkeiten, plaene, kantinen, termine, hubBeitraege] =
-		await Promise.all([
-			getPreferences(principal.personId),
-			listFavorites(principal.personId),
-			db
-				.select({ homeDefault: tenants.homeDefault })
-				.from(tenants)
-				.where(eq(tenants.id, principal.tenantId)),
-			urgentForBanner(principal),
-			listNews(principal, { limit: 5 }),
-			latestPlans(principal),
-			canteenCards(principal.personId),
-			todayAndTomorrow(principal),
-			subscribedHubIds(principal).then((ids) => listNews(principal, { unitIds: ids, limit: 4 }))
-		]);
+	const [
+		prefs,
+		favs,
+		[tenant],
+		dringend,
+		neuigkeiten,
+		plaene,
+		kantinen,
+		termine,
+		hubBeitraege,
+		neuSeit
+	] = await Promise.all([
+		getPreferences(principal.personId),
+		listFavorites(principal.personId),
+		db
+			.select({ homeDefault: tenants.homeDefault })
+			.from(tenants)
+			.where(eq(tenants.id, principal.tenantId)),
+		urgentForBanner(principal),
+		listNews(principal, { limit: 5 }),
+		latestPlans(principal),
+		canteenCards(principal.personId),
+		todayAndTomorrow(principal),
+		subscribedHubIds(principal).then((ids) => listNews(principal, { unitIds: ids, limit: 4 })),
+		getNewsSeen(principal.personId)
+	]);
 	const now = new Date();
 	const hour = Number(
 		new Intl.DateTimeFormat('de-DE', { hour: 'numeric', hourCycle: 'h23', timeZone: ZONE }).format(
@@ -65,7 +77,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 		plaene,
 		kantinen,
 		termine,
-		hubBeitraege: hubBeitraege.filter((n) => !n.planned)
+		hubBeitraege: hubBeitraege.filter((n) => !n.planned),
+		/** Letzter Besuch der Neuigkeiten (für „neu“) */
+		neuSeit
 	};
 };
 

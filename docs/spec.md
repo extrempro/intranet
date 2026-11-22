@@ -214,8 +214,11 @@ Rückmeldungen nach einer Aktion („Gespeichert.“, Fehler, Hinweise) müssen 
 
 1. Begrüßung mit Mandant und Datum; Knopf **„Startseite anpassen“**.
 2. **Dringende Meldungen** als rotes Banner (Kap. 8.2).
-3. **Favoriten**: Kacheln, höchstens 8. Hinzufügen per Stern ☆ auf der jeweiligen Seite. Neue Personen bekommen die Standard-Favoriten ihres Mandanten (Verwaltung → Mandanten → Startseite für neue Personen).
-4. **Karten**: Neuigkeiten, Heute und morgen, Neu in deinen Hubs, Speiseplan, Neueste Pläne (KBB).
+3. **Favoriten**: Symbol-Kacheln (auf dem Handy vier je Reihe), höchstens 8; die Beschreibung steht im Tooltip. Hinzufügen per Stern ☆ auf der jeweiligen Seite. Neue Personen bekommen die Standard-Favoriten ihres Mandanten (Verwaltung → Mandanten → Startseite für neue Personen).
+4. **Aktuelle Pläne** (KBB) als eigene Leiste unter den Favoriten, auf dem Handy als Liste vor den Favoriten.
+5. **Für dich**: Neuigkeiten, Heute und morgen, Neu in deinen Hubs, Speiseplan.
+   - PC: Neuigkeiten links mit Aufmacher (angeheftet mit Bild, sonst neuester mit Bild, sonst neuester) und drei weiteren Beiträgen mit Mini-Vorschau; ungelesene Beiträge (seit dem letzten Besuch von Neuigkeiten) mit Punkt. Die übrigen Karten rechts; leere Karten werden ausgeblendet, sind alle leer, steht dort „So geht es los“.
+   - Handy: eine Karte „Für dich“ mit vier gleich breiten Bereichen (Neues, Termine, Hubs, Kantine) zum Umschalten; die Zahl am Bereich Neues zeigt ungelesene Beiträge.
 
 **Startseite anpassen**: Karten ein-/ausblenden und mit ↑ ↓ sortieren; im selben Modus Favoriten mit ← → sortieren und mit × entfernen. „Auf Standard zurücksetzen“ führt zum Standard des Mandanten (Verwaltung → Mandanten). Die Einstellung gilt für das Konto, also auf allen Geräten. Dringende Meldungen und Favoriten stehen immer oben.
 

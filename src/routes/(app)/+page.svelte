@@ -24,9 +24,56 @@
 	}
 
 	const sichtbareKarten = $derived(data.karten.filter((k) => k.visible));
-	// Entwurf: Neuigkeiten links, die übrigen Karten rechts untereinander
-	const links = $derived(sichtbareKarten.filter((k) => k.id === 'neuigkeiten'));
-	const rechts = $derived(sichtbareKarten.filter((k) => k.id !== 'neuigkeiten'));
+	const zeigePlaene = $derived(sichtbareKarten.some((k) => k.id === 'plaene'));
+	/** „Für dich“: Neuigkeiten und die übrigen Karten (ohne Pläne) in der eingestellten Reihenfolge */
+	const fuerDich = $derived(sichtbareKarten.filter((k) => k.id !== 'plaene'));
+	const mitNeuigkeiten = $derived(fuerDich.some((k) => k.id === 'neuigkeiten'));
+	const leer: Record<string, boolean> = $derived({
+		neuigkeiten: data.neuigkeiten.length === 0,
+		hubs: data.hubBeitraege.length === 0,
+		termine: data.termine.items.length === 0,
+		speiseplan: data.kantinen.length === 0
+	});
+	/** PC: leere Karten rechts ausblenden; sind alle leer, steht dort „So geht es los“ */
+	const seiteLeer = $derived(
+		fuerDich.filter((k) => k.id !== 'neuigkeiten').every((k) => leer[k.id])
+	);
+	const KURZ: Record<string, string> = {
+		neuigkeiten: 'Neues',
+		hubs: 'Hubs',
+		termine: 'Termine',
+		speiseplan: 'Kantine'
+	};
+	const SYMBOL: Record<string, string> = {
+		neuigkeiten: 'M4 5h12v14h-10a2 2 0 0 1 -2 -2zM16 9h4v8a2 2 0 0 1 -2 2M8 9h4M8 13h4',
+		hubs: 'M12 3l8 4.5v9l-8 4.5l-8 -4.5v-9zM12 12l8 -4.5M12 12v9M12 12l-8 -4.5',
+		termine:
+			'M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2zM16 3v4M8 3v4M4 11h16',
+		speiseplan: 'M4 3v8a2 2 0 0 0 2 2h2a2 2 0 0 0 2 -2v-8M7 3v18M17 3c-2 2 -3 5 -3 8h3v10'
+	};
+	// Handy: ein Bereich zur Zeit
+	let gewaehlt = $state<string | null>(null);
+	const tab = $derived(
+		gewaehlt && fuerDich.some((k) => k.id === gewaehlt) ? gewaehlt : (fuerDich[0]?.id ?? '')
+	);
+	/** Ungelesen: nach dem letzten Besuch der Neuigkeiten erschienen */
+	const ungelesen = (d: Date | string) =>
+		data.neuSeit !== null && new Date(d).getTime() > new Date(data.neuSeit).getTime();
+	const neuZahl = $derived(data.neuigkeiten.filter((n) => ungelesen(n.publishAt)).length);
+	/** Aufmacher: angeheftet oder mit Bild bevorzugt, sonst der neueste */
+	const aufmacher = $derived(
+		data.neuigkeiten.find((n) => n.pinned && n.vorschau.bilder.length) ??
+			data.neuigkeiten.find((n) => n.vorschau.bilder.length) ??
+			data.neuigkeiten[0]
+	);
+	const weitere = $derived(data.neuigkeiten.filter((n) => n !== aufmacher).slice(0, 3));
+	const TABELLE = 'M3 5h18v14h-18zM3 10h18M3 15h18M9 5v14';
+	const TEXT = 'M5 6h14M5 10h14M5 14h10M5 18h6';
+	const monat = new Intl.DateTimeFormat('de-DE', { month: 'short', timeZone: 'UTC' });
+	const tagMonat = (iso: string) => {
+		const d = new Date(`${iso}T12:00:00Z`);
+		return { tag: d.getUTCDate(), monat: monat.format(d).replace('.', '') };
+	};
 	const WARNUNG =
 		'M12 9v4M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0zM12 16h.01';
 	const PIN = 'M15 4.5l-4 4l-4 1.5l-1.5 1.5l7 7l1.5 -1.5l1.5 -4l4 -4M9 15l-4.5 4.5M14.5 4l5.5 5.5';
@@ -97,7 +144,7 @@
 		</section>
 	{/if}
 
-	<section aria-labelledby="fav-h" data-tour="favoriten">
+	<section class="favoritenbereich" aria-labelledby="fav-h" data-tour="favoriten">
 		<h2 id="fav-h" class="mit-info">
 			Favoriten
 			<Info
@@ -146,10 +193,9 @@
 						{:else}
 							<!-- href stammt aus der festen Zielliste auf dem Server -->
 							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-							<a class="fav-inhalt" href={f.href}>
+							<a class="fav-inhalt" href={f.href} title={f.beschreibung || undefined}>
 								<span class="fav-symbol"><Icon d={f.icon} size={20} stroke={1.8} /></span>
 								<strong>{f.label}</strong>
-								<span class="fav-text">{f.beschreibung}</span>
 							</a>
 						{/if}
 					</li>
@@ -162,7 +208,7 @@
 	</section>
 
 	{#if bearbeiten}
-		<section class="karte" aria-labelledby="karten-h">
+		<section class="karte bearbeiten" aria-labelledby="karten-h">
 			<h2 id="karten-h">Karten</h2>
 			{#if karten.length === 0}
 				<p class="hinweis">Weitere Karten kommen dazu, sobald es die Funktionen gibt.</p>
@@ -240,181 +286,273 @@
 		</section>
 	{/if}
 
-	{#if !bearbeiten && sichtbareKarten.length}
-		<div class="karten">
-			{#each [links, rechts] as spalte, si (si)}
-				{#if spalte.length}
-					<div class="spalte">
-						{#each spalte as k (k.id)}
-							{#if k.id === 'neuigkeiten'}
-								<section aria-labelledby="karte-neuigkeiten" class="karte block">
-									<div class="kartenkopf">
-										<h2 id="karte-neuigkeiten">Neuigkeiten</h2>
-										<a class="aktionslink" href={resolve('/(app)/neuigkeiten')}>Alle anzeigen</a>
+	{#if !bearbeiten && zeigePlaene}
+		<section class="plaene" aria-labelledby="plaene-h">
+			<div class="kartenkopf">
+				<h2 id="plaene-h">Aktuelle Pläne</h2>
+				<a class="aktionslink" href={resolve('/(app)/plaene')}>Alle Pläne</a>
+			</div>
+			{#if data.plaene.length === 0}
+				<p class="hinweis leerhinweis">
+					Sobald aktuelle Pläne veröffentlicht sind, stehen sie hier.
+				</p>
+			{:else}
+				<ul class="planliste">
+					{#each data.plaene as pl (pl.id)}
+						{@const d = tagMonat(pl.validFrom)}
+						<li>
+							<a class="karte plankachel" href={resolve('/(app)/plaene/[id]', { id: pl.id })}>
+								<span class="plandatum" aria-hidden="true"><strong>{d.tag}</strong>{d.monat}</span>
+								<span class="was">
+									<strong class="plantitel">{pl.title}</strong>
+									<span class="meta">{formatRange(pl.validFrom, pl.validUntil)}</span>
+								</span>
+							</a>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+		</section>
+	{/if}
+
+	{#if !bearbeiten && fuerDich.length}
+		<section class="fuerdich" class:ohne-neues={!mitNeuigkeiten} aria-labelledby="fuerdich-h">
+			<h2 id="fuerdich-h" class="nur-handy">Für dich</h2>
+			{#if fuerDich.length > 1}
+				<div class="bereiche nur-handy" role="tablist" aria-label="Für dich">
+					{#each fuerDich as k (k.id)}
+						<button
+							type="button"
+							role="tab"
+							id="tab-{k.id}"
+							aria-selected={tab === k.id}
+							aria-controls="bereich-{k.id}"
+							onclick={() => (gewaehlt = k.id)}
+						>
+							<span class="bereichssymbol" aria-hidden="true">
+								<Icon d={SYMBOL[k.id]} size={20} stroke={2} />
+								{#if k.id === 'neuigkeiten' && neuZahl}<span class="zahl">{neuZahl}</span>{/if}
+							</span>
+							<span>{KURZ[k.id]}</span>
+							{#if k.id === 'neuigkeiten' && neuZahl}<span class="sr-only">
+									, {neuZahl} neu
+								</span>{/if}
+						</button>
+					{/each}
+				</div>
+			{/if}
+			{#each fuerDich as k (k.id)}
+				{#if k.id === 'neuigkeiten'}
+					<section
+						id="bereich-neuigkeiten"
+						class="karte block neuigkeiten"
+						class:aus={tab !== k.id}
+						aria-labelledby="karte-neuigkeiten"
+					>
+						<div class="kartenkopf">
+							<h2 id="karte-neuigkeiten">
+								Neuigkeiten{#if neuZahl}&nbsp;<span class="neuschild">{neuZahl} neu</span>{/if}
+							</h2>
+							<a class="aktionslink" href={resolve('/(app)/neuigkeiten')}>Alle Neuigkeiten</a>
+						</div>
+						{#if !aufmacher}
+							<p class="hinweis">
+								Noch keine Neuigkeiten für dich. Sobald etwas veröffentlicht wird, steht es hier.
+							</p>
+						{:else}
+							<article class="aufmacher">
+								{#if aufmacher.vorschau.bilder.length}
+									<img
+										class="aufmacherbild"
+										src={aufmacher.vorschau.bilder[0]}
+										alt=""
+										loading="lazy"
+									/>
+								{/if}
+								<div class="aufmachertext">
+									<div class="schilder">
+										{#if aufmacher.pinned}<span class="schild mit-symbol">
+												<Icon d={PIN} size={12} stroke={2.2} />Angeheftet
+											</span>{/if}
+										{#if aufmacher.urgent && aufmacher.urgentUntil}<span class="schild rot">
+												Dringend bis {formatWhen(aufmacher.urgentUntil)}
+											</span>{/if}
 									</div>
-									{#if data.neuigkeiten.length === 0}
-										<p class="hinweis">Gerade gibt es keine Neuigkeiten für dich.</p>
-									{:else}
-										{#each data.neuigkeiten as n (n.id)}
-											<article class="kurz">
-												<div class="schilder">
-													{#if n.pinned}<span class="schild mit-symbol">
-															<Icon d={PIN} size={12} stroke={2.2} />Angeheftet
-														</span>{/if}
-													{#if n.urgent && n.urgentUntil}<span class="schild rot">
-															Dringend bis {formatWhen(n.urgentUntil)}
-														</span>{/if}
-													{#if n.wasUrgent}<span class="schild rand">War dringend</span>{/if}
-													{#if n.audience}<span class="schild">{n.audience}</span>{/if}
-												</div>
-												<h3>
-													<a
-														class="dehnen titellink"
-														href={resolve('/(app)/neuigkeiten/[id]', { id: n.id })}
-													>
-														{n.title}
-													</a>
-												</h3>
-												<span class="absender">
-													<span class="kuerzel" aria-hidden="true">
-														{n.sender.name.length <= 3 ? n.sender.name : n.sender.name.charAt(0)}
-													</span>
-													<strong>{n.sender.name}</strong>
-													{n.sender.label} · {formatDay(n.publishAt)}
+									<h3>
+										<a
+											class="dehnen titellink"
+											href={resolve('/(app)/neuigkeiten/[id]', { id: aufmacher.id })}
+										>
+											{#if ungelesen(aufmacher.publishAt)}<span class="punkt" aria-hidden="true"
+												></span><span class="sr-only">Neu: </span>{/if}{aufmacher.title}
+										</a>
+									</h3>
+									<span class="meta">
+										{aufmacher.sender.name} · {formatDay(aufmacher.publishAt)}
+									</span>
+									{#if aufmacher.excerpt}<p class="auszug">{aufmacher.excerpt}</p>{/if}
+								</div>
+							</article>
+							{#if weitere.length}
+								<ul class="zeilen">
+									{#each weitere as n (n.id)}
+										<li class="kurz mitvorschau">
+											{#if n.vorschau.bilder.length}
+												<img class="mini" src={n.vorschau.bilder[0]} alt="" loading="lazy" />
+											{:else}
+												<span class="mini ohnebild" aria-hidden="true">
+													<Icon d={n.vorschau.hatTabelle ? TABELLE : TEXT} size={18} stroke={1.8} />
 												</span>
-											</article>
-										{/each}
-									{/if}
-								</section>
-							{:else if k.id === 'hubs'}
-								<section aria-labelledby="karte-hubs" class="karte block">
-									<div class="kartenkopf">
-										<h2 id="karte-hubs">Neu in deinen Hubs</h2>
-										<a class="aktionslink" href={resolve('/(app)/aus-den-hubs')}>Alle anzeigen</a>
-									</div>
-									{#if data.hubBeitraege.length === 0}
-										<p class="hinweis">
-											Keine neuen Beiträge. <a href={resolve('/(app)/hubs')}>Hubs ansehen</a>
-										</p>
-									{:else}
-										<ul class="zeilen">
-											{#each data.hubBeitraege as n (n.id)}
-												<li class="kurz">
-													<a
-														class="dehnen titellink"
-														href={resolve('/(app)/neuigkeiten/[id]', { id: n.id })}
-													>
-														{n.title}
-													</a>
-													<span class="meta">{n.sender.name} · {formatDay(n.publishAt)}</span>
-												</li>
-											{/each}
-										</ul>
-									{/if}
-								</section>
-							{:else if k.id === 'termine'}
-								<section aria-labelledby="karte-termine" class="karte block">
-									<div class="kartenkopf">
-										<h2 id="karte-termine">Heute und morgen</h2>
-										<a class="aktionslink" href={resolve('/(app)/kalender')}>Kalender</a>
-									</div>
-									{#if data.termine.items.length === 0}
-										<p class="hinweis">Heute und morgen stehen keine Termine an.</p>
-									{:else}
-										<ul class="zeilen">
-											{#each data.termine.items as t (t.id)}
-												<li class="termin">
-													<span class="wann">
-														{t.date === data.termine.today ? 'Heute' : 'Morgen'}
-														{timeLabel(t)}
-													</span>
-													<span
-														class="balken"
-														class:quelle-einheit={!t.isHub}
-														class:fremd={!t.own}
-														aria-hidden="true"
-													></span>
-													<span class="was">
-														<a
-															class="dehnen titellink"
-															href={resolve('/(app)/kalender/[id]', { id: t.id })}
-														>
-															{t.title}
-														</a>
-														<span class="meta">
-															{[t.unitName, t.place].filter(Boolean).join(' · ')}
-														</span>
-													</span>
-												</li>
-											{/each}
-										</ul>
-									{/if}
-								</section>
-							{:else if k.id === 'speiseplan'}
-								<section aria-labelledby="karte-speiseplan" class="karte block">
-									<div class="kartenkopf">
-										<h2 id="karte-speiseplan">Speiseplan</h2>
-									</div>
-									{#if data.kantinen.length === 0}
-										<p class="hinweis">
-											Wähl unter <a href={resolve('/(app)/konto/standorte')}>Meine Standorte</a> deine
-											Kantine aus.
-										</p>
-									{:else}
-										{#each data.kantinen as kt (kt.id)}
-											<div class="kantine">
-												<span class="pdf" aria-hidden="true">PDF</span>
-												<span class="was">
-													<strong>{kt.name}</strong>
-													<span class="meta">
-														{kt.current ? kt.current.title : 'Noch kein Speiseplan für diese Woche'}
-													</span>
-												</span>
-												<span
-													class="schild"
-													class:rand={!kt.status.open}
-													class:zu={kt.activeClosure}
+											{/if}
+											<span class="was">
+												<a
+													class="dehnen titellink"
+													href={resolve('/(app)/neuigkeiten/[id]', { id: n.id })}
 												>
-													{kt.activeClosure ? closureTitle(kt.activeClosure) : kt.status.text}
-												</span>
-											</div>
-											{#each kt.announced as c (c.id)}
-												<p class="demnaechst">
-													<strong>Demnächst geschlossen:</strong>
-													{closureRange(c)}
-												</p>
-											{/each}
-										{/each}
-										<a class="knopf zweit" href={resolve('/(app)/speiseplan')}>Speiseplan öffnen</a>
-									{/if}
-								</section>
-							{:else if k.id === 'plaene'}
-								<section aria-labelledby="karte-plaene" class="karte block">
-									<div class="kartenkopf">
-										<h2 id="karte-plaene">Neueste Pläne (KBB)</h2>
-										<a class="aktionslink" href={resolve('/(app)/plaene')}>Alle</a>
-									</div>
-									{#if data.plaene.length === 0}
-										<p class="hinweis">Gerade keine aktuellen Pläne deines KBB.</p>
-									{:else}
-										<ul class="zeilen">
-											{#each data.plaene as pl (pl.id)}
-												<li class="plan">
-													<a class="dehnen" href={resolve('/(app)/plaene/[id]', { id: pl.id })}>
-														{pl.title}
-													</a>
-													<span class="meta">{formatRange(pl.validFrom, pl.validUntil)}</span>
-												</li>
-											{/each}
-										</ul>
-									{/if}
-								</section>
+													{#if ungelesen(n.publishAt)}<span class="punkt" aria-hidden="true"
+														></span><span class="sr-only">Neu: </span>{/if}{n.title}
+												</a>
+												<span class="meta">{n.sender.name} · {formatDay(n.publishAt)}</span>
+											</span>
+										</li>
+									{/each}
+								</ul>
 							{/if}
-						{/each}
-					</div>
+						{/if}
+					</section>
+				{:else if k.id === 'hubs'}
+					<section
+						id="bereich-hubs"
+						class="karte block seite"
+						class:aus={tab !== k.id}
+						class:leer={leer.hubs}
+						aria-labelledby="karte-hubs"
+					>
+						<div class="kartenkopf">
+							<h2 id="karte-hubs">Neu in deinen Hubs</h2>
+							<a class="aktionslink" href={resolve('/(app)/aus-den-hubs')}>Alle</a>
+						</div>
+						{#if data.hubBeitraege.length === 0}
+							<p class="hinweis">
+								Keine neuen Beiträge. <a href={resolve('/(app)/hubs')}>Hubs entdecken</a>
+							</p>
+						{:else}
+							<ul class="zeilen">
+								{#each data.hubBeitraege as n (n.id)}
+									<li class="kurz">
+										<span class="hubname">{n.sender.name}</span>
+										<a
+											class="dehnen titellink"
+											href={resolve('/(app)/neuigkeiten/[id]', { id: n.id })}
+										>
+											{n.title}
+										</a>
+										<span class="meta">{formatDay(n.publishAt)}</span>
+									</li>
+								{/each}
+							</ul>
+						{/if}
+					</section>
+				{:else if k.id === 'termine'}
+					<section
+						id="bereich-termine"
+						class="karte block seite"
+						class:aus={tab !== k.id}
+						class:leer={leer.termine}
+						aria-labelledby="karte-termine"
+					>
+						<div class="kartenkopf">
+							<h2 id="karte-termine">Heute und morgen</h2>
+							<a class="aktionslink" href={resolve('/(app)/kalender')}>Kalender</a>
+						</div>
+						{#if data.termine.items.length === 0}
+							<p class="hinweis">Heute und morgen stehen keine Termine an.</p>
+						{:else}
+							<ul class="zeilen">
+								{#each data.termine.items as t (t.id)}
+									<li class="termin">
+										<span class="wann">
+											{t.date === data.termine.today ? 'Heute' : 'Morgen'}
+											{timeLabel(t)}
+										</span>
+										<span
+											class="balken"
+											class:quelle-einheit={!t.isHub}
+											class:fremd={!t.own}
+											aria-hidden="true"
+										></span>
+										<span class="was">
+											<a
+												class="dehnen titellink"
+												href={resolve('/(app)/kalender/[id]', { id: t.id })}
+											>
+												{t.title}
+											</a>
+											<span class="meta">
+												{[t.unitName, t.place].filter(Boolean).join(' · ')}
+											</span>
+										</span>
+									</li>
+								{/each}
+							</ul>
+						{/if}
+					</section>
+				{:else if k.id === 'speiseplan'}
+					<section
+						id="bereich-speiseplan"
+						class="karte block seite"
+						class:aus={tab !== k.id}
+						class:leer={leer.speiseplan}
+						aria-labelledby="karte-speiseplan"
+					>
+						<div class="kartenkopf">
+							<h2 id="karte-speiseplan">Speiseplan</h2>
+							<a class="aktionslink" href={resolve('/(app)/speiseplan')}>Öffnen</a>
+						</div>
+						{#if data.kantinen.length === 0}
+							<p class="hinweis">
+								Wähl unter <a href={resolve('/(app)/konto/standorte')}>Meine Standorte</a> deine Kantine
+								aus.
+							</p>
+						{:else}
+							{#each data.kantinen as kt (kt.id)}
+								<div class="kantine">
+									<span class="pdf" aria-hidden="true">PDF</span>
+									<span class="was">
+										<strong>{kt.name}</strong>
+										<span class="meta">
+											{kt.current ? kt.current.title : 'Noch kein Speiseplan für diese Woche'}
+										</span>
+									</span>
+									<span class="schild" class:rand={!kt.status.open} class:zu={kt.activeClosure}>
+										{kt.activeClosure ? closureTitle(kt.activeClosure) : kt.status.text}
+									</span>
+								</div>
+								{#each kt.announced as c (c.id)}
+									<p class="demnaechst">
+										<strong>Demnächst geschlossen:</strong>
+										{closureRange(c)}
+									</p>
+								{/each}
+							{/each}
+						{/if}
+					</section>
 				{/if}
 			{/each}
-		</div>
+			{#if seiteLeer && fuerDich.some((k) => k.id !== 'neuigkeiten')}
+				<section class="karte block losgehts nur-pc" aria-labelledby="los-h">
+					<h2 id="los-h">So geht es los</h2>
+					<p class="hinweis">
+						Hier erscheinen Hubs, Termine und die Kantine, sobald es etwas gibt.
+					</p>
+					<ul class="loslinks">
+						<li><a href={resolve('/(app)/hubs')}>Hubs entdecken und abonnieren</a></li>
+						<li><a href={resolve('/(app)/konto/standorte')}>Deine Kantine wählen</a></li>
+						<li><a href={resolve('/(app)/kalender')}>Zum Kalender</a></li>
+					</ul>
+				</section>
+			{/if}
+		</section>
 	{/if}
 </div>
 
@@ -527,17 +665,18 @@
 		align-items: center;
 		gap: 6px;
 	}
+	/* Favoriten als Kacheln: Symbol und Name */
 	.favoriten {
 		list-style: none;
 		margin: 0;
 		padding: 0;
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(min(170px, 100%), 1fr));
-		gap: 12px;
+		grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+		gap: 10px;
 	}
 	.fav {
 		padding: 0;
-		min-height: 96px;
+		min-height: 88px;
 		display: flex;
 		flex-direction: column;
 	}
@@ -545,24 +684,34 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
-		align-items: flex-start;
-		gap: 6px;
-		padding: 16px;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		padding: 12px 8px;
 		color: var(--tx);
+		text-align: center;
 		text-decoration: none;
 		border-radius: var(--radius);
 	}
 	.fav-symbol {
-		display: inline-flex;
+		display: inline-grid;
+		place-items: center;
+		width: 40px;
+		height: 40px;
+		border-radius: 12px;
+		background: var(--tint);
 		color: var(--ac);
-		margin-bottom: 4px;
 	}
 	.fav-inhalt strong {
 		font-weight: 600;
-	}
-	.fav-text {
 		font-size: 13px;
-		color: var(--mu);
+		line-height: 1.25;
+		overflow-wrap: anywhere;
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		overflow: hidden;
 	}
 	a.fav-inhalt:hover {
 		box-shadow: 0 6px 20px rgb(0 0 0 / 0.08);
@@ -625,19 +774,6 @@
 		align-items: center;
 	}
 
-	/* Karten: zwei Spalten wie im Entwurf */
-	.karten {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
-		gap: 16px;
-		align-items: start;
-	}
-	.spalte {
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
-		min-width: 0;
-	}
 	.block {
 		display: flex;
 		flex-direction: column;
@@ -665,10 +801,6 @@
 	.kurz:hover {
 		background: var(--bg);
 	}
-	.kurz h3 {
-		margin: 0;
-		font-size: 16px;
-	}
 	.schilder {
 		display: flex;
 		flex-wrap: wrap;
@@ -685,30 +817,6 @@
 	.schild.rot {
 		background: var(--rot);
 		color: #fff;
-	}
-	.absender {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 4px 8px;
-		font-size: 13px;
-		color: var(--mu);
-	}
-	.absender strong {
-		color: var(--tx);
-	}
-	.kuerzel {
-		flex: none;
-		width: 22px;
-		height: 22px;
-		border-radius: 7px;
-		background: var(--fill);
-		color: #fff;
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		font-weight: 700;
-		font-size: 11px;
 	}
 	.dehnen::after {
 		content: '';
@@ -764,25 +872,6 @@
 	.kurz .titellink {
 		font-weight: 600;
 	}
-	.plan {
-		display: flex;
-		justify-content: space-between;
-		gap: 12px;
-		padding-top: 8px;
-		margin-top: 8px;
-		border-top: 1px solid var(--bd);
-	}
-	.plan a {
-		color: var(--tx);
-		font-weight: 600;
-		text-decoration: none;
-	}
-	.plan a:hover {
-		text-decoration: underline;
-	}
-	.plan .meta {
-		white-space: nowrap;
-	}
 	.kantine {
 		display: flex;
 		align-items: center;
@@ -807,6 +896,303 @@
 	.schild.zu {
 		background: #fcebeb;
 		color: #b42318;
+	}
+	/* Aktuelle Pläne: eigene Leiste */
+	.plaene {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+	.planliste {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
+		gap: 12px;
+	}
+	.plankachel {
+		display: flex;
+		align-items: center;
+		gap: 14px;
+		height: 100%;
+		box-sizing: border-box;
+		padding: 12px 16px;
+		color: var(--tx);
+		text-decoration: none;
+	}
+	.plankachel:hover {
+		border-color: var(--ac);
+	}
+	.plandatum {
+		flex: none;
+		width: 48px;
+		height: 52px;
+		border-radius: 10px;
+		background: var(--tint);
+		color: var(--ac);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		font-size: 11px;
+		font-weight: 700;
+		line-height: 1.1;
+	}
+	.plandatum strong {
+		font-size: 18px;
+	}
+	.plantitel {
+		overflow-wrap: anywhere;
+	}
+	.leerhinweis {
+		margin: 0;
+		padding: 12px 16px;
+		border: 2px dashed var(--bd);
+		border-radius: 14px;
+	}
+
+	/* Für dich: PC Neuigkeiten links, übrige Karten rechts */
+	.fuerdich {
+		display: grid;
+		grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+		gap: 16px;
+		align-items: start;
+	}
+	.fuerdich.ohne-neues {
+		grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+	}
+	.fuerdich .neuigkeiten {
+		grid-column: 1;
+		grid-row: 1 / span 4;
+	}
+	.fuerdich:not(.ohne-neues) .seite,
+	.fuerdich:not(.ohne-neues) .losgehts {
+		grid-column: 2;
+	}
+	.fuerdich .seite.leer {
+		display: none;
+	}
+	.nur-handy {
+		display: none;
+	}
+	.neuschild {
+		font-size: 12px;
+		font-weight: 700;
+		color: #fff;
+		background: var(--fill);
+		border-radius: 999px;
+		padding: 2px 8px;
+		vertical-align: 2px;
+	}
+	.punkt {
+		display: inline-block;
+		width: 8px;
+		height: 8px;
+		margin-right: 6px;
+		border-radius: 50%;
+		background: var(--fill);
+		vertical-align: 2px;
+	}
+	.aufmacher {
+		position: relative;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 12px 16px;
+		padding-bottom: 12px;
+	}
+	.aufmacherbild {
+		flex: 1 1 220px;
+		max-width: 280px;
+		height: 150px;
+		object-fit: cover;
+		border-radius: 12px;
+	}
+	.aufmachertext {
+		flex: 999 1 240px;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	.aufmacher h3 {
+		margin: 0;
+		font-size: 19px;
+		line-height: 1.3;
+	}
+	.auszug {
+		margin: 0;
+		color: var(--mu);
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		overflow: hidden;
+	}
+	.mitvorschau {
+		flex-direction: row;
+		align-items: center;
+		gap: 12px;
+	}
+	.mini {
+		flex: none;
+		width: 64px;
+		height: 46px;
+		border-radius: 8px;
+		object-fit: cover;
+	}
+	.mini.ohnebild {
+		display: inline-grid;
+		place-items: center;
+		background: var(--tint);
+		color: var(--ac);
+	}
+	.hubname {
+		font-size: 12px;
+		font-weight: 600;
+		color: var(--ac);
+	}
+	.loslinks {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	.loslinks a {
+		display: flex;
+		align-items: center;
+		min-height: 44px;
+		padding: 0 12px;
+		border-radius: 10px;
+		background: var(--bg);
+		color: var(--tx);
+		font-weight: 600;
+		text-decoration: none;
+	}
+
+	/* Handy: Pläne zuerst, Favoriten vier je Reihe, „Für dich“ mit Bereichen */
+	@media (max-width: 599px) {
+		.favoritenbereich,
+		.bearbeiten {
+			order: 1;
+		}
+		.fuerdich {
+			order: 2;
+		}
+		.planliste {
+			grid-template-columns: minmax(0, 1fr);
+			gap: 8px;
+		}
+		.plankachel {
+			padding: 8px 12px;
+		}
+		.favoriten {
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+			gap: 8px;
+		}
+		.fav {
+			min-height: 84px;
+		}
+		.fav-inhalt {
+			padding: 10px 4px;
+			gap: 6px;
+		}
+		.fav-symbol {
+			width: 36px;
+			height: 36px;
+		}
+		.fav-inhalt strong {
+			font-size: 12px;
+		}
+		.fuerdich,
+		.fuerdich.ohne-neues {
+			display: flex;
+			flex-direction: column;
+			align-items: stretch;
+			gap: 8px;
+			padding: 14px 12px;
+			border: 1px solid var(--bd);
+			border-radius: var(--radius);
+			background: var(--sf);
+		}
+		.nur-handy {
+			display: block;
+		}
+		.nur-pc {
+			display: none;
+		}
+		.bereiche.nur-handy {
+			display: grid;
+			grid-auto-flow: column;
+			grid-auto-columns: minmax(0, 1fr);
+			gap: 4px;
+			padding: 4px;
+			border-radius: 14px;
+			background: var(--bg);
+		}
+		.bereiche button {
+			position: relative;
+			min-height: 56px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			gap: 4px;
+			border: 0;
+			border-radius: 10px;
+			background: transparent;
+			color: var(--mu);
+			font: inherit;
+			font-size: 12px;
+			font-weight: 600;
+			cursor: pointer;
+		}
+		.bereiche button[aria-selected='true'] {
+			background: var(--sf);
+			color: var(--ac);
+			box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+		}
+		.bereichssymbol {
+			position: relative;
+			display: flex;
+		}
+		.zahl {
+			position: absolute;
+			top: -6px;
+			right: -12px;
+			min-width: 16px;
+			height: 16px;
+			padding: 0 4px;
+			box-sizing: border-box;
+			border-radius: 999px;
+			background: var(--fill);
+			color: #fff;
+			font-size: 10px;
+			font-weight: 700;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		.fuerdich .karte {
+			border: 0;
+			padding: 0;
+			background: none;
+			box-shadow: none;
+		}
+		.fuerdich .seite.leer {
+			display: flex;
+		}
+		.fuerdich .karte.aus {
+			display: none;
+		}
+		.fuerdich .kartenkopf h2 {
+			font-size: 15px;
+		}
+		.aufmacherbild {
+			max-width: none;
+		}
 	}
 	.demnaechst {
 		margin: 0;
