@@ -21,6 +21,8 @@ export default defineConfig({
 					'img-src': ['self', 'data:', 'blob:'],
 					'font-src': ['self'],
 					'connect-src': ['self'],
+					// Mediathek: hls.js spielt über MediaSource (blob:) ab (ohne Web Worker)
+					'media-src': ['self', 'blob:'],
 					// Einbetten nur in die Teams-App (Teams, Outlook, Microsoft 365)
 					'frame-ancestors': [
 						'self',

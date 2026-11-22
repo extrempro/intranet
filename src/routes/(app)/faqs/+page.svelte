@@ -16,6 +16,7 @@
 		const teile = [
 			meine ? 'filter=meine' : '',
 			data.unitId ? `einheit=${data.unitId}` : '',
+			data.thema ? `thema=${data.thema}` : '',
 			data.q ? `q=${encodeURIComponent(data.q)}` : ''
 		].filter(Boolean);
 		return teile.length ? `?${teile.join('&')}` : '?';
@@ -65,6 +66,7 @@
 		</label>
 		{#if data.meine}<input type="hidden" name="filter" value="meine" />{/if}
 		{#if data.unitId}<input type="hidden" name="einheit" value={data.unitId} />{/if}
+		{#if data.thema}<input type="hidden" name="thema" value={data.thema} />{/if}
 	</form>
 
 	<form method="GET" class="filter" data-sveltekit-reset="false">
@@ -91,13 +93,28 @@
 				{#each data.units as u (u.id)}<option value={u.id}>Von: {u.name}</option>{/each}
 			</select>
 		</label>
+		{#if data.themen.length}
+			<label>
+				<span class="sr-only">Thema</span>
+				<select
+					name="thema"
+					class="pille"
+					class:an={!!data.thema}
+					value={data.thema ?? ''}
+					onchange={(e) => e.currentTarget.form?.requestSubmit()}
+				>
+					<option value="">Thema: alle</option>
+					{#each data.themen as t (t.id)}<option value={t.id}>Thema: {t.name}</option>{/each}
+				</select>
+			</label>
+		{/if}
 		<noscript><button class="knopf zweit" type="submit">Anwenden</button></noscript>
 		{#if data.canWrite}<a class="knopf hauptaktion erstellen" href={neuHref}>FAQ erstellen</a>{/if}
 	</form>
 
 	{#if anzahl === 0}
 		<p class="hinweis" role="status">
-			{#if data.q || data.unitId || data.meine}
+			{#if data.q || data.unitId || data.meine || data.thema}
 				Keine FAQs zu dieser Suche gefunden. <a href="?">Alle FAQs zeigen</a>
 			{:else}
 				Es gibt noch keine FAQs.
@@ -136,6 +153,13 @@
 								<summary>{f.question}</summary>
 								<div class="antwort">
 									<div use:animierteBilder class="text">{@html f.answerHtml}</div>
+									{#if f.themen.length}
+										<ul class="themen" aria-label="Themen">
+											{#each f.themen as t (t.id)}
+												<li><a class="thema" href="?thema={t.id}">{t.name}</a></li>
+											{/each}
+										</ul>
+									{/if}
 									{#if f.attachments.length}
 										<ul class="anhaenge" aria-label="Anhänge">
 											{#each f.attachments as a (a.id)}
@@ -361,5 +385,23 @@
 	.klein {
 		min-height: 40px;
 		padding: 6px 12px;
+	}
+	.themen {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+	}
+	.thema {
+		display: inline-block;
+		font-size: 12px;
+		font-weight: 600;
+		border-radius: 999px;
+		padding: 2px 10px;
+		background: var(--tint);
+		color: var(--ac);
+		text-decoration: none;
 	}
 </style>

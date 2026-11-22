@@ -10,6 +10,15 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.21.0 · 22.11.2026 · Mediathek
+
+- Neu unter Wissen: die Mediathek mit Videos aus den Abteilungen und Hubs, etwa Schulungen und Anleitungen. Durchsuchbar nach Titel, Beschreibung und dem, was in den Untertiteln gesagt wird.
+- Wer in einer Einheit das neue Recht „Mediathek“ hat, lädt Videos hoch, ergänzt Untertitel und Kapitel und veröffentlicht sie.
+- Videos haben Kapitel zum Springen, Untertitel, ±10 Sekunden und eine einstellbare Geschwindigkeit. Die Qualität passt sich der Verbindung an.
+- Auf den Seiten der Abteilungen und Hubs gibt es einen Abschnitt „Videos“.
+- FAQs bekommen Themen aus derselben Liste wie die Videos und lassen sich danach filtern. Fehlt ein Thema, kannst du es vorschlagen.
+- Niemand sieht, wer welches Video angeschaut hat.
+
 ## 0.20.0 · 22.11.2026 · Speicherorte für Dateien
 
 - System-Admins legen unter Verwaltung → Speicher fest, wo die Dateien des Intranets liegen: auf dem Server oder in einem S3-Speicher.

@@ -30,6 +30,8 @@ export const init: ServerInit = async () => {
 	startEntraSync();
 	const { startUmzuege } = await import('#lib/server/files/umzug.ts');
 	startUmzuege();
+	const { startMediathek } = await import('#lib/server/mediathek.ts');
+	startMediathek();
 };
 
 /**

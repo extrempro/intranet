@@ -6,6 +6,7 @@
 	import { groupResponsibilities, matchesSearch } from '#lib/departments.ts';
 	import { formatDay } from '#lib/news.ts';
 	import Avatar from '#lib/components/Avatar.svelte';
+	import EinheitMediathek from '#lib/components/EinheitMediathek.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 
 	let { data, form } = $props();
@@ -49,7 +50,8 @@
 			e.about && { id: 'ueber', l: 'Über uns' },
 			(e.termine.length || e.canEvents) && { id: 'termine', l: 'Termine' },
 			(data.beitraege.length || e.canPost) && { id: 'beitraege', l: 'Beiträge' },
-			(e.faqs.length || e.canFaqs) && { id: 'faqs', l: 'FAQs' }
+			(e.faqs.length || e.canFaqs) && { id: 'faqs', l: 'FAQs' },
+			(data.mediathek.videos.length || data.mediathek.darf) && { id: 'mediathek', l: 'Videos' }
 		].filter(Boolean) as { id: string; l: string }[]
 	);
 	const monat = new Intl.DateTimeFormat('de-DE', { month: 'short', timeZone: 'UTC' });
@@ -415,6 +417,7 @@
 					</div>
 				</section>
 			{/if}
+			<EinheitMediathek unitId={e.id} m={data.mediathek} />
 		</aside>
 	</div>
 </div>

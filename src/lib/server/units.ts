@@ -140,6 +140,7 @@ export async function teamFuerPflege(p: Principal, unitId: string) {
 				mayWriteFaqs: unitMembers.mayWriteFaqs,
 				mayWriteEvents: unitMembers.mayWriteEvents,
 				mayWriteDocuments: unitMembers.mayWriteDocuments,
+				mayWriteMedia: unitMembers.mayWriteMedia,
 				hubTask: unitMembers.hubTask
 			})
 			.from(unitMembers)
@@ -183,7 +184,8 @@ export async function getUnitForAdmin(p: Principal, unitId: string) {
 			mayWriteFaqs: unitMembers.mayWriteFaqs,
 			mayWriteEvents: unitMembers.mayWriteEvents,
 			mayWriteBehindScenes: unitMembers.mayWriteBehindScenes,
-			mayWriteDocuments: unitMembers.mayWriteDocuments
+			mayWriteDocuments: unitMembers.mayWriteDocuments,
+			mayWriteMedia: unitMembers.mayWriteMedia
 		})
 		.from(unitMembers)
 		.innerJoin(persons, eq(persons.id, unitMembers.personId))
@@ -430,6 +432,8 @@ export interface MemberRights {
 	mayWriteBehindScenes: boolean;
 	/** Nur Hubs: Dokumente pflegen */
 	mayWriteDocuments?: boolean;
+	/** Mediathek; ohne Angabe bleibt es, wie es ist */
+	mayWriteMedia?: boolean;
 	verwaltet: boolean;
 	/** Nur beim KBB: Pläne hochladen und löschen (Kap. 8.6). */
 	fachpflege?: boolean;
@@ -454,7 +458,8 @@ export async function setMemberRights(
 		// Ohne Angabe bleibt das Recht „Dokumente“, wie es ist
 		...(r.mayWriteDocuments === undefined
 			? {}
-			: { mayWriteDocuments: isHub && r.mayWriteDocuments })
+			: { mayWriteDocuments: isHub && r.mayWriteDocuments }),
+		...(r.mayWriteMedia === undefined ? {} : { mayWriteMedia: r.mayWriteMedia })
 	};
 	const writes = Object.values(rights).some(Boolean);
 	// Die Pflege-Rolle und Fachpflege vergibt nur die Verwaltung; das Hub-Team
@@ -494,7 +499,8 @@ export async function setMemberRights(
 							unitMembers.mayWriteFaqs,
 							unitMembers.mayWriteEvents,
 							unitMembers.mayWriteBehindScenes,
-							unitMembers.mayWriteDocuments
+							unitMembers.mayWriteDocuments,
+							unitMembers.mayWriteMedia
 						),
 						managers.length ? notInArray(unitMembers.personId, managers) : undefined
 					)

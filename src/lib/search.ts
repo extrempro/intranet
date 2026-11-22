@@ -9,6 +9,7 @@ export const SEARCH_KINDS = [
 	{ key: 'zustaendigkeiten', label: 'Zuständigkeiten' },
 	{ key: 'beitraege', label: 'Beiträge' },
 	{ key: 'faqs', label: 'FAQs' },
+	{ key: 'videos', label: 'Videos' },
 	{ key: 'rechtliches', label: 'Rechtliches' },
 	{ key: 'termine', label: 'Termine' },
 	{ key: 'hubs', label: 'Hubs' },

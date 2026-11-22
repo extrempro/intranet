@@ -3,7 +3,8 @@ name: Release
 # Legt nach dem Merge für eine neue Version (package.json) ein GitHub-Release an.
 # Der Text kommt aus CHANGELOG.md (gleicher Eintrag wie „Neu im Intranet“).
 # Dazu baut er die Images ghcr.io/extrempro/intranet:<Version> und
-# ghcr.io/extrempro/intranet-backup:<Version> (bei der neuesten Version auch :latest).
+# ghcr.io/extrempro/intranet-backup:<Version> und ghcr.io/extrempro/intranet-video:<Version>
+# (bei der neuesten Version auch :latest).
 # Von Hand (Actions → Release → Run workflow) lässt sich auch ein Release für
 # eine frühere Version an einem bestimmten Commit nachtragen.
 on:
@@ -85,6 +86,8 @@ jobs:
             context: .
           - name: intranet-backup
             context: backup
+          - name: intranet-video
+            context: video
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

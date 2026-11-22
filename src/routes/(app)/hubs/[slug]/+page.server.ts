@@ -4,6 +4,7 @@ import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import { db } from '#lib/server/db/index.ts';
 import { subscriptionActions } from '#lib/server/hub-actions.ts';
 import { getHub } from '#lib/server/hubs.ts';
+import { einheitVideos } from '#lib/server/mediathek.ts';
 import { listNews } from '#lib/server/news.ts';
 import { listFavorites, toggleFavorite, unitFavoriteKey } from '#lib/server/preferences.ts';
 import { fail } from '@sveltejs/kit';
@@ -43,6 +44,7 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 		alle,
 		beitraege: beitraege.map((b) => ({ ...b, bild: bilder.get(b.id) ?? null })),
 		weitere: !alle && liste.length > ERSTE,
+		mediathek: await einheitVideos(p, hub.id),
 		favorit: (await listFavorites(p.personId)).some((f) => f.key === unitFavoriteKey(hub.id))
 	};
 };

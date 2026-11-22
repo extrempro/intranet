@@ -8,9 +8,10 @@ import { unitTypeLabel } from '../roles.ts';
 import { canWriteFaqs, faqUnitIds, type Principal } from './auth/access.ts';
 import { doc, headline, matches, rank } from './fts.ts';
 import { db, scoped } from './db/index.ts';
-import { faqAttachments, faqs, files, units } from './db/schema.ts';
+import { faqAttachments, faqs, faqTopics, files, topics, units } from './db/schema.ts';
 import { deleteStored, MAX_ATTACHMENTS, ownUnlinkedFiles } from './files/store.ts';
 import { htmlToText } from './html.ts';
+import { gueltigeThemen, themenSetzen } from './themen.ts';
 import { bilderVerknuepfen, textMitBildern } from './textbilder.ts';
 
 export class FaqError extends Error {}
@@ -38,22 +39,24 @@ export interface FaqItem {
 	question: string;
 	answerHtml: string;
 	attachments: { id: string; name: string; size: number; kind: string }[];
+	themen: { id: string; name: string }[];
 	canEdit: boolean;
 }
 
 /** Alle sichtbaren FAQs, nach Einheit gruppiert; optional gefiltert. */
 export async function listFaqs(
 	p: Principal,
-	opts: { unitId?: string | null; q?: string | null; meine?: boolean }
+	opts: { unitId?: string | null; q?: string | null; meine?: boolean; thema?: string | null }
 ) {
 	const q = opts.q?.trim().slice(0, 100) ?? '';
 	const like = `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 	const unitId = opts.unitId && GUID.test(opts.unitId) ? opts.unitId : null;
+	const thema = opts.thema && GUID.test(opts.thema) ? opts.thema : null;
 	// „Meine“: nur Einheiten, in denen die Person Mitglied ist (wie bei Neuigkeiten)
 	const meineIds = p.memberships.map((m) => m.unitId);
 	const writable = new Set((await faqWritableUnits(p)).map((u) => u.id));
 
-	const { rows, unitsWithFaqs } = await scoped(p, async (tx) => {
+	const { rows, unitsWithFaqs, themenMitFaqs, zuordnung } = await scoped(p, async (tx) => {
 		const rows = await tx
 			.select({
 				id: faqs.id,
@@ -71,7 +74,10 @@ export async function listFaqs(
 				and(
 					unitId ? eq(faqs.unitId, unitId) : undefined,
 					opts.meine ? (meineIds.length ? inArray(faqs.unitId, meineIds) : sql`false`) : undefined,
-					q ? or(ilike(faqs.question, like), ilike(faqs.answerText, like)) : undefined
+					q ? or(ilike(faqs.question, like), ilike(faqs.answerText, like)) : undefined,
+					thema
+						? sql`exists (select 1 from faq_topics ft where ft.faq_id = ${faqs.id} and ft.topic_id = ${thema})`
+						: undefined
 				)
 			)
 			.orderBy(asc(units.name), asc(faqs.position), asc(faqs.createdAt));
@@ -81,7 +87,22 @@ export async function listFaqs(
 			.from(faqs)
 			.innerJoin(units, eq(units.id, faqs.unitId))
 			.orderBy(asc(units.name));
-		return { rows, unitsWithFaqs };
+		// Für den Filter: Themen, die sichtbare FAQs haben
+		const themenMitFaqs = await tx
+			.selectDistinct({ id: topics.id, name: topics.name })
+			.from(faqTopics)
+			.innerJoin(topics, eq(topics.id, faqTopics.topicId))
+			.orderBy(asc(topics.name));
+		const ids = rows.map((r) => r.id);
+		const zuordnung = ids.length
+			? await tx
+					.select({ faqId: faqTopics.faqId, id: topics.id, name: topics.name })
+					.from(faqTopics)
+					.innerJoin(topics, eq(topics.id, faqTopics.topicId))
+					.where(inArray(faqTopics.faqId, ids))
+					.orderBy(asc(topics.name))
+			: [];
+		return { rows, unitsWithFaqs, themenMitFaqs, zuordnung };
 	});
 	// Dateien liest die App-Rolle nicht; die FAQs oben sind bereits geprüft.
 	const ids = rows.map((r) => r.id);
@@ -121,12 +142,15 @@ export async function listFaqs(
 			attachments: atts
 				.filter((a) => a.faqId === r.id)
 				.map(({ id, name, size, kind }) => ({ id, name, size, kind })),
+			themen: zuordnung.filter((z) => z.faqId === r.id).map(({ id, name }) => ({ id, name })),
 			canEdit: writable.has(r.unitId)
 		});
 	}
 	return {
 		groups,
 		units: unitsWithFaqs,
+		themen: themenMitFaqs,
+		thema,
 		canWrite: writable.size > 0,
 		q,
 		unitId,
@@ -147,7 +171,11 @@ export async function faqForEdit(p: Principal, id: string) {
 		.innerJoin(files, eq(files.id, faqAttachments.fileId))
 		.where(eq(faqAttachments.faqId, id))
 		.orderBy(asc(faqAttachments.position));
-	return { ...row, attachments };
+	const themen = await db
+		.select({ id: faqTopics.topicId })
+		.from(faqTopics)
+		.where(eq(faqTopics.faqId, id));
+	return { ...row, attachments, themen: themen.map((t) => t.id) };
 }
 
 export interface FaqInput {
@@ -155,6 +183,8 @@ export interface FaqInput {
 	question: string;
 	answerHtml: string;
 	attachmentIds: string[];
+	/** IDs aus der festen Themenliste (Kap. 8.15) */
+	themen?: string[];
 }
 
 export type FaqErrors = Partial<Record<'unitId' | 'question' | 'answer' | 'attachments', string>>;
@@ -230,6 +260,7 @@ export async function saveFaq(
 		await bilderVerknuepfen(tx, { art: 'faq', id: faqIdInner! }, text.bilder);
 		return faqIdInner;
 	});
+	await themenSetzen('faq', faqId, await gueltigeThemen(input.themen ?? []));
 	await deleteStored(removed);
 	return { ok: true, id: faqId };
 }

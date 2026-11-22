@@ -1,0 +1,109 @@
+#!/bin/sh
+# Wandelt hochgeladene Videos der Mediathek um (Kap. 8.15). Läuft im eigenen
+# Container ohne Netz; Austausch mit der Anwendung nur über den Arbeitsordner:
+#   <ARBEIT>/<id>/eingang.bin   hochgeladenes Original (schreibt die Anwendung)
+#   <ARBEIT>/<id>/auftrag       Auftrag liegt vor (schreibt die Anwendung)
+#   <ARBEIT>/<id>/laeuft        wird gerade umgewandelt
+#   <ARBEIT>/<id>/fortschritt   Prozent (0–100)
+#   <ARBEIT>/<id>/aus/          HLS (master.m3u8, <Höhe>/…), vorschau.jpg
+#   <ARBEIT>/<id>/fertig        dauer=<Sekunden> und hoehen=<360,720,…>
+#   <ARBEIT>/<id>/fehler        kurze Meldung
+# Das Original wird danach immer gelöscht. Immer nur eine Umwandlung gleichzeitig.
+set -u
+ARBEIT="${ARBEIT:-/arbeit}"
+MAX_SEKUNDEN="${MAX_SEKUNDEN:-10800}"
+PAUSE="${PAUSE:-5}"
+
+fehler() {
+	printf '%s\n' "$2" >"$1/fehler"
+	rm -f "$1/eingang.bin" "$1/laeuft"
+	rm -rf "$1/aus"
+}
+
+umwandeln() {
+	d="$1"
+	ein="$d/eingang.bin"
+	: >"$d/laeuft"
+	echo 0 >"$d/fortschritt"
+	[ -s "$ein" ] || { fehler "$d" 'Die Datei ist leer.'; return; }
+
+	dauer=$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "$ein" 2>/dev/null | head -n1)
+	hoehe=$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of default=nw=1:nk=1 "$ein" 2>/dev/null | head -n1)
+	ton=$(ffprobe -v error -select_streams a:0 -show_entries stream=index -of default=nw=1:nk=1 "$ein" 2>/dev/null | head -n1)
+	case "$hoehe" in '' | *[!0-9]*) fehler "$d" 'Das ist keine Videodatei, die sich umwandeln lässt.'; return ;; esac
+	sek=$(printf '%s' "$dauer" | cut -d. -f1)
+	case "$sek" in '' | *[!0-9]*) fehler "$d" 'Die Länge des Videos lässt sich nicht lesen.'; return ;; esac
+	[ "$sek" -ge 1 ] || { fehler "$d" 'Das Video ist zu kurz.'; return; }
+	[ "$sek" -le "$MAX_SEKUNDEN" ] || { fehler "$d" 'Das Video ist länger als 3 Stunden.'; return; }
+
+	# Qualitätsstufen bis zur Höhe des Originals (mindestens eine)
+	stufen=''
+	for h in 360 720 1080; do [ "$hoehe" -ge "$h" ] && stufen="$stufen $h"; done
+	[ -n "$stufen" ] || stufen=" $(( (hoehe / 2) * 2 ))"
+	# shellcheck disable=SC2086 # Liste bewusst aufgeteilt (nur Ziffern)
+	set -- $stufen
+	n=$#
+
+	filter="[0:v]split=$n"
+	i=0; for h in "$@"; do filter="${filter}[s$i]"; i=$((i + 1)); done
+	i=0; for h in "$@"; do filter="${filter};[s$i]scale=-2:$h,format=yuv420p[v$i]"; i=$((i + 1)); done
+
+	rm -rf "$d/aus"; mkdir -p "$d/aus"
+	karte=''
+	argumente=''
+	i=0
+	for h in "$@"; do
+		case "$h" in 360) rate=800k ;; 720) rate=2800k ;; 1080) rate=5000k ;; *) rate=600k ;; esac
+		argumente="$argumente -map [v$i] -c:v:$i libx264 -preset veryfast -profile:v main -b:v:$i $rate -maxrate:v:$i $rate -bufsize:v:$i $rate"
+		if [ -n "$ton" ]; then
+			argumente="$argumente -map 0:a:0"
+			karte="$karte v:$i,a:$i,name:$h"
+		else
+			karte="$karte v:$i,name:$h"
+		fi
+		i=$((i + 1))
+	done
+	[ -n "$ton" ] && argumente="$argumente -c:a aac -b:a 128k -ac 2"
+
+	# shellcheck disable=SC2086 # Argumente bewusst aufgeteilt
+	ffmpeg -hide_banner -nostdin -loglevel error -y -i "$ein" -map_metadata -1 -map_chapters -1 \
+		-filter_complex "$filter" $argumente \
+		-g 48 -keyint_min 48 -sc_threshold 0 \
+		-f hls -hls_time 6 -hls_playlist_type vod -hls_segment_type fmp4 \
+		-hls_flags independent_segments -hls_fmp4_init_filename init.mp4 \
+		-hls_segment_filename "$d/aus/%v/s%05d.m4s" -master_pl_name master.m3u8 \
+		-var_stream_map "${karte# }" -progress "$d/progress.txt" "$d/aus/%v/index.m3u8" \
+		2>"$d/ffmpeg.log" &
+	pid=$!
+	while kill -0 "$pid" 2>/dev/null; do
+		us=$(grep '^out_time_us=' "$d/progress.txt" 2>/dev/null | tail -n1 | cut -d= -f2)
+		case "$us" in '' | *[!0-9]*) ;; *) echo $(( us / 10000 / sek )) >"$d/fortschritt" ;; esac
+		sleep 2
+	done
+	if ! wait "$pid"; then
+		fehler "$d" 'Das Video ließ sich nicht umwandeln.'
+		rm -f "$d/progress.txt"
+		return
+	fi
+	ffmpeg -hide_banner -nostdin -loglevel error -y -ss $(( sek / 10 )) -i "$ein" -frames:v 1 \
+		-vf scale=640:-2 -q:v 4 -map_metadata -1 "$d/aus/vorschau.jpg" 2>>"$d/ffmpeg.log" || true
+	rm -f "$ein" "$d/progress.txt" "$d/ffmpeg.log"
+	hoehen=$(printf '%s' "$*" | tr ' ' ',')
+	printf 'dauer=%s\nhoehen=%s\n' "$sek" "$hoehen" >"$d/fertig.tmp"
+	echo 100 >"$d/fortschritt"
+	mv "$d/fertig.tmp" "$d/fertig"
+	rm -f "$d/laeuft"
+}
+
+echo "Umwandlung bereit, Arbeitsordner $ARBEIT"
+while :; do
+	for d in "$ARBEIT"/*/; do
+		d=${d%/}
+		[ -f "$d/auftrag" ] || continue
+		[ -e "$d/fertig" ] || [ -e "$d/fehler" ] && continue
+		# Abgebrochener Lauf (Neustart): neu beginnen, sofern das Original noch da ist
+		umwandeln "$d"
+	done
+	[ "${EINMAL:-}" = 1 ] && exit 0
+	sleep "$PAUSE"
+done

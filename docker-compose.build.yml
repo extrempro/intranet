@@ -4,6 +4,9 @@ services:
   app:
     build: .
     pull_policy: build
+  video:
+    build: ./video
+    pull_policy: build
   backup:
     build: ./backup
     pull_policy: build

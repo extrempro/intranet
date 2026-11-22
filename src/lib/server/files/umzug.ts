@@ -32,6 +32,8 @@ export async function umzugStarten(category: Kategorie, targetId: string | null,
 		.from(storageMoves)
 		.where(and(eq(storageMoves.category, category), eq(storageMoves.status, 'laufend')));
 	if (laufend) throw new UmzugFehler('Für diese Inhaltsart läuft schon ein Umzug.');
+	if (category === 'videos')
+		throw new UmzugFehler('Vorhandene Videos bleiben am bisherigen Ort; neue landen am gewählten.');
 	const [{ n }] = await db
 		.select({ n: sql<number>`count(*)::int` })
 		.from(files)

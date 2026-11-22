@@ -26,6 +26,8 @@ export interface Membership {
 	mayWriteBehindScenes: boolean;
 	/** Dokumente der Einheit pflegen (Hubs) */
 	mayWriteDocuments?: boolean;
+	/** Mediathek der Einheit pflegen (Kap. 8.15) */
+	mayWriteMedia?: boolean;
 }
 
 export interface Principal {
@@ -63,7 +65,8 @@ export async function loadPrincipal(person: { id: string; tenantId: string }): P
 				mayWriteFaqs: unitMembers.mayWriteFaqs,
 				mayWriteEvents: unitMembers.mayWriteEvents,
 				mayWriteBehindScenes: unitMembers.mayWriteBehindScenes,
-				mayWriteDocuments: unitMembers.mayWriteDocuments
+				mayWriteDocuments: unitMembers.mayWriteDocuments,
+				mayWriteMedia: unitMembers.mayWriteMedia
 			})
 			.from(unitMembers)
 			.where(eq(unitMembers.personId, person.id)),
@@ -144,7 +147,8 @@ export function canManageUnit(
 	return !unitHasOwnMaintenance && isEditorial(p, unit.tenantId);
 }
 
-type WriteRight = 'mayWriteNews' | 'mayWriteFaqs' | 'mayWriteEvents' | 'mayWriteBehindScenes';
+type WriteRight =
+	'mayWriteNews' | 'mayWriteFaqs' | 'mayWriteEvents' | 'mayWriteBehindScenes' | 'mayWriteMedia';
 
 function hasDelegated(p: Principal, unitId: string, right: WriteRight): boolean {
 	return p.memberships.some((m) => m.unitId === unitId && m[right]);
@@ -168,6 +172,21 @@ export function canWriteFaqs(p: Principal, unit: UnitRef): boolean {
 		hasUnitRole(p, 'abteilungsverwaltung', unit.id) ||
 		hasUnitRole(p, 'hub_team', unit.id)
 	);
+}
+
+/** Darf Videos der Einheit hochladen, bearbeiten, veröffentlichen und löschen (Kap. 8.15). */
+export function canWriteMedia(p: Principal, unit: UnitRef): boolean {
+	if (!canSeeUnit(p, unit)) return false;
+	return (
+		hasDelegated(p, unit.id, 'mayWriteMedia') ||
+		hasUnitRole(p, 'abteilungsverwaltung', unit.id) ||
+		hasUnitRole(p, 'hub_team', unit.id)
+	);
+}
+
+/** Einheiten, für die die Person die Mediathek pflegen darf (IDs, ohne Sichtprüfung). */
+export function mediaUnitIds(p: Principal): Set<string> {
+	return writeUnitIds(p, 'mayWriteMedia');
 }
 
 /** Einheiten, für die die Person Neuigkeiten schreiben darf (IDs). */

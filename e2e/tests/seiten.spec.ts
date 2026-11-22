@@ -22,6 +22,8 @@ const SEITEN = [
 	'/organigramm',
 	'/wissen',
 	'/faqs',
+	'/mediathek',
+	'/mediathek/00000000-0000-4000-8000-0000000000d1',
 	'/handbuch',
 	'/rechtliches',
 	'/neu-im-intranet',
@@ -49,7 +51,8 @@ test('Verwaltung für System-Admins', async ({ page }) => {
 		'/verwaltung/abteilungen',
 		'/verwaltung/benutzer',
 		'/verwaltung/regeln',
-		'/verwaltung/speicher'
+		'/verwaltung/speicher',
+		'/verwaltung/themen'
 	]) {
 		const antwort = await page.goto(pfad);
 		expect(antwort?.status(), pfad).toBe(200);

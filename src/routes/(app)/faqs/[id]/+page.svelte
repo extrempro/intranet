@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import FaqFormular from '#lib/components/FaqFormular.svelte';
+	import ThemaVorschlag from '#lib/components/ThemaVorschlag.svelte';
 	import MitFrage from '#lib/components/MitFrage.svelte';
 
 	let { data, form } = $props();
@@ -18,6 +19,7 @@
 		<form method="POST" action="?/speichern" class="felder karte">
 			<FaqFormular
 				einheiten={data.einheiten}
+				themen={data.themen}
 				werte={form && 'werte' in form && form.werte ? form.werte : data.werte}
 				fehler={form && 'fehler' in form && form.fehler ? form.fehler : {}}
 			/>
@@ -29,6 +31,7 @@
 			</div>
 		</form>
 	{/key}
+	<ThemaVorschlag />
 
 	<section class="karte">
 		<MitFrage
