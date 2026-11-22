@@ -10,6 +10,10 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.26.1 · 22.11.2026 · Schnellzugriff im Hub
+
+- Lange Titel und Beschreibungen im Schnellzugriff bleiben jetzt in ihren Kästen. Längere Beschreibungen werden nach drei Zeilen gekürzt, der ganze Text erscheint beim Darüberfahren.
+
 ## 0.26.0 · 22.11.2026 · Konten ausblenden
 
 - In der Verwaltung lassen sich Konten für andere ausblenden, etwa Test- oder Funktionskonten. Sie erscheinen dann nicht mehr in der Personenliste, in der Suche, in Teams und bei Zuständigkeiten.

@@ -97,7 +97,9 @@
 											</span>
 										</span>{/if}
 								</strong>
-								{#if l.description}<span class="unter">{l.description}</span>{/if}
+								{#if l.description}<span class="unter" title={l.description}>
+										{l.description}
+									</span>{/if}
 							</a>
 						</li>
 					{/each}
@@ -746,8 +748,24 @@
 		background: var(--tint);
 		color: var(--ac);
 	}
-	.kacheltitel {
+	.kacheln > li {
+		min-width: 0;
+	}
+	.kachel {
+		min-width: 0;
+	}
+	/* Lange Wörter und Adressen umbrechen, Beschreibung höchstens drei Zeilen */
+	.kacheltitel,
+	.kachel .unter {
 		overflow-wrap: anywhere;
+		hyphens: auto;
+	}
+	.kachel .unter {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 3;
+		line-clamp: 3;
+		overflow: hidden;
 	}
 	.extern {
 		display: inline-flex;
