@@ -7,6 +7,7 @@ import { menuFileAllowed } from '#lib/server/canteen.ts';
 import { kulissenFileAllowed } from '#lib/server/kulissen.ts';
 import { legalFileAllowed } from '#lib/server/legal.ts';
 import { faqOfFile } from '#lib/server/faqs.ts';
+import { videoDateiErlaubt } from '#lib/server/mediathek.ts';
 import { feedbackScreenshotAllowed } from '#lib/server/feedback.ts';
 import { textBildErlaubt } from '#lib/server/textbilder.ts';
 import { hubDateiErlaubt } from '#lib/server/hub-inhalte.ts';
@@ -31,6 +32,7 @@ export const GET: RequestHandler = async ({ locals, params, url }) => {
 				(await menuFileAllowed(p, id)) ||
 				Boolean(await newsOfFile(p, id)) ||
 				(await faqOfFile(p, id)) ||
+				(await videoDateiErlaubt(p, id)) ||
 				(await boardPhotoAllowed(p, id)) ||
 				(await kulissenFileAllowed(p, id)) ||
 				(await legalFileAllowed(p, id)) ||

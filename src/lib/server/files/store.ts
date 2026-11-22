@@ -119,6 +119,7 @@ export async function deleteOrphans() {
 /** Datei hängt nirgends: Jede Tabelle, die auf Dateien verweist, muss hier stehen. */
 const unlinked = sql`not exists (select 1 from news_attachments a where a.file_id = ${files.id})
 	and not exists (select 1 from faq_attachments fa where fa.file_id = ${files.id})
+	and not exists (select 1 from video_attachments va where va.file_id = ${files.id})
 	and not exists (select 1 from plans pl where pl.file_id = ${files.id})
 	and not exists (select 1 from org_chart o where o.file_id = ${files.id})
 	and not exists (select 1 from menus m where m.file_id = ${files.id})

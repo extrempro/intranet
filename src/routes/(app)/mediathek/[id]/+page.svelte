@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import VideoPlayer from '#lib/components/VideoPlayer.svelte';
 	import { zeitText } from '#lib/mediathek.ts';
+	import { formatSize } from '#lib/format.ts';
 
 	let { data } = $props();
 	const v = $derived(data.v);
@@ -118,6 +119,33 @@
 				</div>
 			{/if}
 			{#if v.description}<p class="beschreibung">{v.description}</p>{/if}
+			{#if v.anhaenge.length}
+				<section class="stapel eng" aria-labelledby="h-anh">
+					<h2 id="h-anh">Anhänge</h2>
+					<ul class="anhaenge">
+						{#each v.anhaenge as a (a.id)}
+							<li>
+								<a
+									href={resolve('/(app)/dateien/[id]', { id: a.id })}
+									target="_blank"
+									rel="noopener"
+								>
+									{a.name}
+								</a>
+								<span class="hinweis">{a.kind.toUpperCase()} · {formatSize(a.size)}</span>
+							</li>
+						{/each}
+					</ul>
+				</section>
+			{/if}
+			{#if v.transcriptHtml}
+				<details class="karte textfassung">
+					<summary>Textfassung lesen</summary>
+					<!-- Vom Server bereinigt (feste Erlaubnisliste, keine Bilder) -->
+					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+					<div class="text">{@html v.transcriptHtml}</div>
+				</details>
+			{/if}
 		</div>
 		<aside class="stapel">
 			{#if v.chapters.length}
@@ -207,6 +235,27 @@
 		align-items: center;
 		font-size: 14px;
 		color: var(--mu);
+	}
+	.anhaenge {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+	.anhaenge li {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px 10px;
+	}
+	.textfassung summary {
+		cursor: pointer;
+		font-weight: 600;
+		min-height: 32px;
+	}
+	.textfassung .text {
+		margin-top: 8px;
 	}
 	.beschreibung {
 		white-space: pre-line;

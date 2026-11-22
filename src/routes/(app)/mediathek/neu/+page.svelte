@@ -3,7 +3,8 @@
 	import { untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { MAX_TITEL, MAX_VIDEO_BYTES, TEIL_BYTES } from '#lib/mediathek.ts';
+	import { MAX_TITEL, MAX_VIDEO_BYTES } from '#lib/mediathek.ts';
+	import { anfragen, fortsetzenAb, teileSenden } from '#lib/hochladen.ts';
 
 	let { data } = $props();
 	let einheit = $state(untrack(() => data.einheit));
@@ -31,47 +32,28 @@
 				.slice(0, MAX_TITEL);
 	}
 
+	/** Angelegtes Video: bei einem Abbruch geht es damit weiter */
+	let videoId = $state<string | null>(null);
+
 	async function senden(e: SubmitEvent) {
 		e.preventDefault();
 		if (!datei || laeuft) return;
 		fehler = '';
 		laeuft = true;
-		gesendet = 0;
 		try {
-			const r = await fetch('/mediathek/hochladen', {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ unitId: einheit, title: titel, size: datei.size })
-			});
-			const j = (await r.json().catch(() => ({}))) as { id?: string; fehler?: string };
-			if (!r.ok || !j.id) throw new Error(j.fehler ?? 'Das Hochladen hat nicht geklappt.');
-			while (gesendet < datei.size) {
-				const teil = datei.slice(gesendet, Math.min(datei.size, gesendet + TEIL_BYTES));
-				let ok = false;
-				let meldung = '';
-				for (let versuch = 0; versuch < 3 && !ok; versuch++) {
-					const t = await fetch(`/mediathek/${j.id}/teil?offset=${gesendet}`, {
-						method: 'PUT',
-						body: teil
-					}).catch(() => null);
-					const a = (await t?.json().catch(() => ({}))) as
-						{ erhalten?: number; fehler?: string } | undefined;
-					if (t?.ok && typeof a?.erhalten === 'number') {
-						gesendet = a.erhalten;
-						ok = true;
-					} else {
-						meldung =
-							a?.fehler ??
-							(t?.status === 413
-								? 'Der Server nimmt die Teile nicht an (zu groß). Wende dich bitte an die IT.'
-								: 'Die Verbindung ist unterbrochen. Versuch es bitte noch einmal.');
-						if (t && t.status < 500) break;
-						await new Promise((w) => setTimeout(w, 2000 * (versuch + 1)));
-					}
-				}
-				if (!ok) throw new Error(meldung);
+			let ab = 0;
+			if (videoId) {
+				ab = await fortsetzenAb(videoId, datei);
+			} else {
+				const j = await anfragen<{ id: string }>('/mediathek/hochladen', {
+					unitId: einheit,
+					title: titel,
+					size: datei.size
+				});
+				videoId = j.id;
 			}
-			await goto(resolve('/(app)/mediathek/[id]/bearbeiten', { id: j.id }));
+			await teileSenden(videoId, datei, ab, (n) => (gesendet = n));
+			await goto(resolve('/(app)/mediathek/[id]/bearbeiten', { id: videoId }));
 		} catch (err) {
 			fehler = err instanceof Error ? err.message : 'Das Hochladen hat nicht geklappt.';
 		} finally {
@@ -89,7 +71,7 @@
 	<form class="karte felder" onsubmit={senden}>
 		<label class="feld">
 			<span>Abteilung oder Hub</span>
-			<select bind:value={einheit} disabled={laeuft}>
+			<select bind:value={einheit} disabled={laeuft || Boolean(videoId)}>
 				{#each data.einheiten as u (u.id)}<option value={u.id}>{u.name} ({u.label})</option>{/each}
 			</select>
 		</label>
@@ -108,7 +90,12 @@
 		</label>
 		<label class="feld">
 			<span>Titel</span>
-			<input bind:value={titel} required maxlength={MAX_TITEL} disabled={laeuft} />
+			<input
+				bind:value={titel}
+				required
+				maxlength={MAX_TITEL}
+				disabled={laeuft || Boolean(videoId)}
+			/>
 		</label>
 		<p class="hinweis">
 			Nach dem Hochladen wandelt das Intranet das Video um und benachrichtigt dich, wenn es fertig
@@ -124,7 +111,17 @@
 				<progress max="100" value={prozent} aria-label="Fortschritt beim Hochladen"></progress>
 			</div>
 		{/if}
-		<div><button class="knopf" type="submit" disabled={!datei || laeuft}>Hochladen</button></div>
+		<div>
+			<button class="knopf" type="submit" disabled={!datei || laeuft}>
+				{videoId ? 'Hochladen fortsetzen' : 'Hochladen'}
+			</button>
+		</div>
+		{#if videoId && !laeuft}
+			<p class="hinweis">
+				Du kannst auch später weitermachen: In der Mediathek steht das Video als „Wird hochgeladen“;
+				wähle dort dieselbe Datei erneut. Nach 24 Stunden ohne Fortschritt wird es gelöscht.
+			</p>
+		{/if}
 	</form>
 </div>
 

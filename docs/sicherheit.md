@@ -140,6 +140,14 @@ Neu: „Weiter, wo du warst“ am Konto.
 - **Nur sichtbare Videos**: Gemerkt wird nur nach derselben Rechteprüfung wie beim Ansehen (Entwürfe ohne Recht: nichts). Endpunkt mit Origin-Prüfung, Größen- und Wertgrenzen.
 - **Ausgeschaltet**: Stand nur im Browser (`localStorage`, 90 Tage), beim Löschen im Konto ebenfalls entfernt.
 
+## Nachprüfung Mediathek: Untertitel, Textfassung, Fortsetzen, Ersetzen (22.11.2026, Version 0.23.0)
+
+- **Spracherkennung lokal**: whisper.cpp und Modell sind im Image (Quellstand per Commit, Modell per Prüfsumme festgelegt) und laufen im Dienst `video` ohne Netz; kein Audio verlässt den Server. Erzeugte Untertitel laufen durch dieselbe Bereinigung wie hochgeladene (nur Zeiten und reiner Text).
+- **Korrigieren**: nur Texte zu den vorhandenen Zeiten; die Anzahl muss passen, sonst Abbruch (Schutz vor veralteten Formularen). „Geprüft“ setzen und zurücknehmen nur mit Recht; automatische Untertitel ohne „geprüft“ verhindern das Veröffentlichen (DB-Test).
+- **Textfassung**: HTML mit fester Erlaubnisliste bereinigt, ohne Bilder (Test mit Skript und Event-Attributen). **Anhänge** nur aus eigenen, noch nicht verknüpften Uploads; Abruf über `/dateien/<id>` nur mit Sicht auf das Video (Entwurf: nur mit Recht; DB-Test). Entfernte Anhänge werden gelöscht.
+- **Fortsetzen**: nur durch die Person, die begonnen hat; Stand und SHA-256 des ersten Teils nur für sie; die Reihenfolge der Teile prüft der Server weiter.
+- **Ersetzen**: Die neue Fassung ist bis zum Tausch eine unsichtbare Zeile (weder in Listen noch über ihre ID abrufbar); Tausch der Medien in einer Transaktion, danach werden die alten Medien gelöscht. Höchstens eine neue Fassung gleichzeitig.
+
 ## Stand je ASVS-Kapitel (5.0)
 
 | Kapitel                                    | Stand             | Umsetzung, Belege                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
