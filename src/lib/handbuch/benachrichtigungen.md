@@ -28,7 +28,7 @@ Bist du länger weg, etwa im Urlaub, trag den Zeitraum unter **Abwesenheit** ein
 
 ## Teams
 
-Mit einem Microsoft-Konto gibt es das Intranet auch als App in Teams. Du bist dort automatisch angemeldet. Meldungen kommen in Teams unter „Aktivität“ an; welche, stellst du in der Spalte „Teams“ ein. Voreingestellt ist sie wie Push. Die Spalte erscheint, sobald die IT Teams eingerichtet hat. Ein Klick auf die Meldung öffnet den Beitrag direkt in der App. Ruhezeiten gelten wie bei Push.
+Mit einem Microsoft-Konto gibt es das Intranet auch als App in Teams. Du bist dort automatisch angemeldet. Meldungen kommen in Teams unter „Aktivität“ an; welche, stellst du in der Spalte „Teams“ ein. Voreingestellt ist sie wie Push. Die Spalte erscheint, sobald die IT Teams eingerichtet hat. Klickst du auf die Meldung, siehst du dort einen kurzen Hinweis. Mit „In der Intranet-App öffnen“ wechselst du in die App und landest direkt beim Beitrag. Ruhezeiten gelten wie bei Push.
 
 In der Teams-App gibt es kein Push. Für Handy oder Browser schaltest du Push dort ein, wo du das Intranet außerhalb von Teams öffnest.
 

@@ -4,6 +4,7 @@ import { TEAMS_FRAME_ANCESTORS } from '#lib/server/teams-frame.ts';
 /**
  * Einstieg der Teams-App (Inhalt des Reiters „Intranet“): meldet per SSO an
  * und öffnet dann das Ziel, z. B. den Beitrag aus einer Benachrichtigung.
+ * Aus dem Aktivitätsfeed nur ein Hinweis mit Wechsel in die App.
  */
 const HTML = `<!doctype html>
 <html lang="de">
@@ -27,6 +28,13 @@ button:focus-visible,a:focus-visible{outline:3px solid #2f7de1;outline-offset:2p
 <main>
 <h1>Intranet</h1>
 <p id="status" role="status">Wird geöffnet …</p>
+<div id="hinweis" hidden>
+<p>Es gibt eine neue Benachrichtigung im Intranet.</p>
+<div class="aktionen">
+<button id="zurapp" type="button">In der Intranet-App öffnen</button>
+<a id="hinweisbrowser" href="/" target="_blank" rel="noopener">Im Browser öffnen</a>
+</div>
+</div>
 <div id="fehler" hidden>
 <p id="fehlertext" role="alert"></p>
 <div class="aktionen">

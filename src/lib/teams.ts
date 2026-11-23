@@ -1,8 +1,9 @@
 /**
  * Teams-Aktivitätsfeed (Kap. 11.1): Bausteine ohne Ein-/Ausgabe, damit testbar.
  *
- * Ein Klick auf die Benachrichtigung öffnet in Teams den Reiter der
- * Intranet-App (/teams/app): Anmeldung per SSO, dann direkt der Beitrag.
+ * Ein Klick auf die Benachrichtigung zeigt Teams im Aktivitätsbereich an.
+ * Dort steht nur ein kurzer Hinweis mit „In der Intranet-App öffnen“; der
+ * Beitrag selbst öffnet sich in der App (/teams/app: Anmeldung per SSO).
  */
 
 import { safeTarget } from './ziel.ts';
@@ -15,9 +16,22 @@ export function safeTabTarget(value: string | null | undefined): string {
 	return safeTarget(value, 300);
 }
 
+/**
+ * Vorsatz in der subEntityId für Links aus dem Aktivitätsfeed: Der Einstieg
+ * zeigt dann nur den Hinweis statt des ganzen Intranets im Aktivitätsbereich.
+ */
+export const HINWEIS_PRAEFIX = 'hinweis:';
+
 /** Deep Link auf den Tab der App; subEntityId trägt den Pfad im Intranet */
-export function teamsDeepLink(appId: string, path: string, entity = TEAMS_TAB_ENTITY): string {
-	const context = JSON.stringify({ subEntityId: safeTabTarget(path) });
+export function teamsDeepLink(
+	appId: string,
+	path: string,
+	entity = TEAMS_TAB_ENTITY,
+	hinweis = false
+): string {
+	const context = JSON.stringify({
+		subEntityId: (hinweis ? HINWEIS_PRAEFIX : '') + safeTabTarget(path)
+	});
 	return `https://teams.microsoft.com/l/entity/${encodeURIComponent(appId)}/${entity}?context=${encodeURIComponent(context)}`;
 }
 
@@ -59,7 +73,11 @@ export function activityBody(
 	entity = TEAMS_TAB_ENTITY
 ) {
 	return {
-		topic: { source: 'text', value: 'Intranet', webUrl: teamsDeepLink(appId, a.link, entity) },
+		topic: {
+			source: 'text',
+			value: 'Intranet',
+			webUrl: teamsDeepLink(appId, a.link, entity, true)
+		},
 		activityType: 'systemDefault',
 		previewText: { content: a.preview },
 		templateParameters: [{ name: 'systemDefaultText', value: a.text }],
