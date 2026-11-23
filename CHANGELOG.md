@@ -10,6 +10,10 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.37.1 · 23.11.2026 · Startseite: Absender wie in den Neuigkeiten
+
+- Unter „Neuigkeiten“ auf der Startseite steht der Absender jetzt wie in der Übersicht: mit Kürzel, Name der Abteilung bzw. des Hubs und Art.
+
 ## 0.37.0 · 23.11.2026 · Umfragen je Abteilung und Hub freischalten
 
 - Die Verwaltung schaltet Umfragen jetzt zusätzlich für jede Abteilung und jeden Hub einzeln frei.
