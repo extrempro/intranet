@@ -46,7 +46,13 @@ function umfrage(o: Partial<UmfrageEingabe> = {}): UmfrageEingabe {
 		ab: 'antwort',
 		ende: '2099-01-10T12:00',
 		fragen: [
-			{ art: 'auswahl', text: 'Pizza oder Pasta?', pflicht: true, mehrfach: false, optionen: ['Pizza', 'Pasta'] },
+			{
+				art: 'auswahl',
+				text: 'Pizza oder Pasta?',
+				pflicht: true,
+				mehrfach: false,
+				optionen: ['Pizza', 'Pasta']
+			},
 			{ art: 'freitext', text: 'Sonst noch was?', pflicht: false, mehrfach: false, optionen: [] }
 		],
 		...o
@@ -112,7 +118,11 @@ describe.skipIf(!url)('Umfragen', () => {
 		await expect(um.umfrageSpeichern(redaktion, N.anonym, umfrage(), '127.0.0.1')).rejects.toThrow(
 			/Recht „Umfragen“/
 		);
-		const v = await um.umfrageVorpruefen(redaktion, { id: U, tenantId: T, isCentral: false }, JSON.stringify(umfrage()));
+		const v = await um.umfrageVorpruefen(
+			redaktion,
+			{ id: U, tenantId: T, isCentral: false },
+			JSON.stringify(umfrage())
+		);
 		expect(v.fehler).toMatch(/Recht „Umfragen“/);
 		// Fehlt das Feld (Editor nicht angezeigt), bleibt alles, wie es ist
 		expect(await um.umfrageVorpruefen(redaktion, undefined, undefined, N.anonym)).toEqual({
@@ -128,12 +138,20 @@ describe.skipIf(!url)('Umfragen', () => {
 		);
 		expect(v.fehler).toMatch(/Zukunft/);
 		await um.umfrageSpeichern(team, N.anonym, umfrage(), '127.0.0.1');
-		await um.umfrageSpeichern(team, N.namentlich, umfrage({ anonym: false, ergebnis: 'team' }), '127.0.0.1');
+		await um.umfrageSpeichern(
+			team,
+			N.namentlich,
+			umfrage({ anonym: false, ergebnis: 'team' }),
+			'127.0.0.1'
+		);
 		const u = await um.umfrageFuerBeitrag(a, N.anonym);
 		expect(u?.fragen.map((f) => f.text)).toEqual(['Pizza oder Pasta?', 'Sonst noch was?']);
 		expect(u?.teamNamen).toEqual(['Team Person']);
 		fragen.push(...u!.fragen.map((f) => f.id));
-		expect((await um.offeneUmfragen(a)).map((o) => o.titel).sort()).toEqual(['Essen', 'Sommerfest']);
+		expect((await um.offeneUmfragen(a)).map((o) => o.titel).sort()).toEqual([
+			'Essen',
+			'Sommerfest'
+		]);
 	});
 
 	it('Pflichtfragen werden gemeldet', async () => {
@@ -142,7 +160,11 @@ describe.skipIf(!url)('Umfragen', () => {
 	});
 
 	it('anonym: ohne Person gespeichert, nur einmal, danach nicht änderbar', async () => {
-		await um.antwortenSpeichern(a, N.anonym, antwort({ [`q-${fragen[0]}`]: '1', [`q-${fragen[1]}`]: 'Mehr Salat' }));
+		await um.antwortenSpeichern(
+			a,
+			N.anonym,
+			antwort({ [`q-${fragen[0]}`]: '1', [`q-${fragen[1]}`]: 'Mehr Salat' })
+		);
 		const rows = await db.execute(
 			sql`select a.person_id from survey_answers a join surveys s on s.id = a.survey_id where s.news_id = ${N.anonym}`
 		);
@@ -176,7 +198,9 @@ describe.skipIf(!url)('Umfragen', () => {
 		expect(e.gesperrt).toBe(true);
 		expect(e.wert).toMatchObject({ anonym: true, ende: '2099-02-01T12:00' });
 		expect(e.wert?.fragen).toHaveLength(2);
-		await expect(um.umfrageSpeichern(team, N.anonym, null, '127.0.0.1')).rejects.toThrow(/Beende sie/);
+		await expect(um.umfrageSpeichern(team, N.anonym, null, '127.0.0.1')).rejects.toThrow(
+			/Beende sie/
+		);
 	});
 
 	it('namentlich: Antwort änderbar, Ergebnis nur für das Team', async () => {
@@ -184,7 +208,12 @@ describe.skipIf(!url)('Umfragen', () => {
 		await um.antwortenSpeichern(b, N.namentlich, antwort({ [`q-${f1}`]: '0' }));
 		await um.antwortenSpeichern(b, N.namentlich, antwort({ [`q-${f1}`]: '1' }));
 		const u = await um.umfrageFuerBeitrag(b, N.namentlich);
-		expect(u).toMatchObject({ teilgenommen: true, aenderbar: true, teilnehmende: 1, ergebnisse: null });
+		expect(u).toMatchObject({
+			teilgenommen: true,
+			aenderbar: true,
+			teilnehmende: 1,
+			ergebnisse: null
+		});
 		expect(u?.fragen[0].meine).toEqual([1]);
 		const t = await um.umfrageFuerBeitrag(team, N.namentlich);
 		expect(t?.ergebnisse?.[0].zeilen.map((z) => z.anzahl)).toEqual([0, 1]);
@@ -204,9 +233,9 @@ describe.skipIf(!url)('Umfragen', () => {
 	it('Beenden nur mit Recht; danach keine Antworten mehr', async () => {
 		await expect(um.umfrageBeenden(redaktion, N.namentlich, '127.0.0.1')).rejects.toThrow();
 		await um.umfrageBeenden(team, N.namentlich, '127.0.0.1');
-		await expect(
-			um.antwortenSpeichern(a, N.namentlich, antwort({ [`q-x`]: '0' }))
-		).rejects.toThrow(/beendet/);
+		await expect(um.antwortenSpeichern(a, N.namentlich, antwort({ [`q-x`]: '0' }))).rejects.toThrow(
+			/beendet/
+		);
 		expect(await um.offeneUmfragen(a)).toEqual([]);
 	});
 });

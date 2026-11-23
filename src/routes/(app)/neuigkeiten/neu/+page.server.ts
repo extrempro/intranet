@@ -10,7 +10,6 @@ import { describeAttachments, NewsError, saveNews, writableUnits } from '#lib/se
 import { getContentRules } from '#lib/server/rules.ts';
 import {
 	mitUmfrageRecht,
-	umfrageFuerEditor,
 	UmfrageFehler,
 	umfrageSpeichern,
 	umfrageVorpruefen

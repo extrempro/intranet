@@ -595,10 +595,7 @@ export async function umfrageVorpruefen(
 	const { wert, fehler } = leseUmfrage(roh);
 	if (fehler) return { aendern: true, wert: null, fehler };
 	const [u] = newsId
-		? await db
-				.select({ id: surveys.id })
-				.from(surveys)
-				.where(eq(surveys.newsId, newsId))
+		? await db.select({ id: surveys.id }).from(surveys).where(eq(surveys.newsId, newsId))
 		: [];
 	if (!wert && !u) return { aendern: true, wert: null };
 	if (!einheit || !canWriteSurveys(p, einheit))

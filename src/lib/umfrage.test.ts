@@ -144,7 +144,13 @@ describe('ergebnisSichtbar', () => {
 	});
 	it('nur Team: andere nie, auch nicht nach dem Ende', () => {
 		expect(
-			ergebnisSichtbar({ ...basis, ergebnis: 'team', ab: 'sofort', teilgenommen: true, beendet: true })
+			ergebnisSichtbar({
+				...basis,
+				ergebnis: 'team',
+				ab: 'sofort',
+				teilgenommen: true,
+				beendet: true
+			})
 		).toBe(false);
 	});
 	it('alle: sofort, nach Antwort oder nach Ende', () => {
@@ -153,9 +159,9 @@ describe('ergebnisSichtbar', () => {
 		expect(
 			ergebnisSichtbar({ ...basis, ergebnis: 'alle', ab: 'antwort', teilgenommen: true })
 		).toBe(true);
-		expect(
-			ergebnisSichtbar({ ...basis, ergebnis: 'alle', ab: 'ende', teilgenommen: true })
-		).toBe(false);
+		expect(ergebnisSichtbar({ ...basis, ergebnis: 'alle', ab: 'ende', teilgenommen: true })).toBe(
+			false
+		);
 		expect(ergebnisSichtbar({ ...basis, ergebnis: 'alle', ab: 'ende', beendet: true })).toBe(true);
 	});
 });

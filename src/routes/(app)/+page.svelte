@@ -480,11 +480,9 @@
 									>
 										{o.titel}
 									</a>
-									<span class="meta"
-										>{o.fragen === 1 ? '1 Frage' : `${o.fragen} Fragen`} · bis {formatDay(
-											o.endsAt
-										)}</span
-									>
+									<span class="meta">
+										{o.fragen === 1 ? '1 Frage' : `${o.fragen} Fragen`} · bis {formatDay(o.endsAt)}
+									</span>
 								</li>
 							{/each}
 						</ul>

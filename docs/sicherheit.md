@@ -148,6 +148,7 @@ Neu: „Weiter, wo du warst“ am Konto.
 - **Textfassung**: HTML mit fester Erlaubnisliste bereinigt, ohne Bilder (Test mit Skript und Event-Attributen). **Anhänge** nur aus eigenen, noch nicht verknüpften Uploads; Abruf über `/dateien/<id>` nur mit Sicht auf das Video (Entwurf: nur mit Recht; DB-Test). Entfernte Anhänge werden gelöscht.
 - **Fortsetzen**: nur durch die Person, die begonnen hat; Stand und SHA-256 des ersten Teils nur für sie; die Reihenfolge der Teile prüft der Server weiter.
 - **Ersetzen**: Die neue Fassung ist bis zum Tausch eine unsichtbare Zeile (weder in Listen noch über ihre ID abrufbar); Tausch der Medien in einer Transaktion, danach werden die alten Medien gelöscht. Höchstens eine neue Fassung gleichzeitig.
+
 ## Nachprüfung Umfragen (23.11.2026, Version 0.36.0)
 
 - **Recht**: Anlegen, Ändern, Beenden, Auswertung und CSV nur mit dem Recht „Umfragen“ der Einheit (oder Abteilungsverwaltung/Hub-Team); das Recht „Neuigkeiten“ allein reicht nicht (DB-Test). Antworten nur auf sichtbare, veröffentlichte Beiträge.

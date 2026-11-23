@@ -119,15 +119,19 @@
 								class="klein"
 								disabled={i === 0}
 								aria-label="Frage {i + 1} nach oben"
-								onclick={() => schieben(i, -1)}><Icon d={PFEIL_HOCH} size={16} stroke={2} /></button
+								onclick={() => schieben(i, -1)}
 							>
+								<Icon d={PFEIL_HOCH} size={16} stroke={2} />
+							</button>
 							<button
 								type="button"
 								class="klein"
 								disabled={i === u.fragen.length - 1}
 								aria-label="Frage {i + 1} nach unten"
-								onclick={() => schieben(i, 1)}><Icon d={PFEIL_RUNTER} size={16} stroke={2} /></button
+								onclick={() => schieben(i, 1)}
 							>
+								<Icon d={PFEIL_RUNTER} size={16} stroke={2} />
+							</button>
 							<button
 								type="button"
 								class="klein"
@@ -136,8 +140,10 @@
 									u!.fragen.splice(i, 1);
 									ansage = `Frage ${i + 1} entfernt.`;
 									if (!u!.fragen.length) u = null;
-								}}><Icon d={MUELL} size={16} stroke={2} /></button
+								}}
 							>
+								<Icon d={MUELL} size={16} stroke={2} />
+							</button>
 						{/if}
 					</div>
 					<label class="feld">
@@ -146,8 +152,10 @@
 					</label>
 					{#if f.art === 'auswahl' || f.art === 'termin'}
 						<div class="optionen">
-							<span class="unter">{f.art === 'auswahl' ? 'Antworten' : 'Termine, z. B. „Di 12.1., 11:30–13:00“'}</span>
-							{#each f.optionen as _, k (k)}
+							<span class="unter">
+								{f.art === 'auswahl' ? 'Antworten' : 'Termine, z. B. „Di 12.1., 11:30–13:00“'}
+							</span>
+							{#each f.optionen.keys() as k (k)}
 								<div class="option">
 									<label class="sr-only" for="opt-{i}-{k}">
 										{f.art === 'auswahl' ? 'Antwort' : 'Termin'}
@@ -167,8 +175,9 @@
 											disabled={f.optionen.length <= 2}
 											aria-label="{f.art === 'auswahl' ? 'Antwort' : 'Termin'} {k + 1} entfernen"
 											onclick={() => f.optionen.splice(k, 1)}
-											><Icon d="M6 6l12 12M18 6l-12 12" size={16} stroke={2} /></button
 										>
+											<Icon d="M6 6l12 12M18 6l-12 12" size={16} stroke={2} />
+										</button>
 									{/if}
 								</div>
 							{/each}
@@ -180,14 +189,14 @@
 						</div>
 					{/if}
 					<div class="schalter">
-						<label class="haken"
-							><input type="checkbox" bind:checked={f.pflicht} disabled={gesperrt} /> Pflichtfrage</label
-						>
+						<label class="haken">
+							<input type="checkbox" bind:checked={f.pflicht} disabled={gesperrt} /> Pflichtfrage
+						</label>
 						{#if f.art === 'auswahl'}
-							<label class="haken"
-								><input type="checkbox" bind:checked={f.mehrfach} disabled={gesperrt} /> Mehrere Antworten
-								erlauben</label
-							>
+							<label class="haken">
+								<input type="checkbox" bind:checked={f.mehrfach} disabled={gesperrt} /> Mehrere Antworten
+								erlauben
+							</label>
 						{/if}
 					</div>
 				</li>
@@ -205,31 +214,34 @@
 		<div class="einstellungen">
 			<label class="haken">
 				<input type="checkbox" bind:checked={u.anonym} disabled={gesperrt} />
-				<span><strong>Anonym</strong><br /><span class="unter"
-						>Niemand sieht, wer was geantwortet hat. Anonyme Antworten lassen sich danach nicht mehr
-						ändern.</span
-					></span
-				>
+				<span>
+					<strong>Anonym</strong><br /><span class="unter">
+						Niemand sieht, wer was geantwortet hat. Anonyme Antworten lassen sich danach nicht mehr
+						ändern.
+					</span>
+				</span>
 			</label>
 			<fieldset class="wahl">
 				<legend>Wer sieht das Ergebnis?</legend>
-				<label class="haken"
-					><input type="radio" value="alle" bind:group={u.ergebnis} /> Alle Teilnehmenden</label
-				>
-				<label class="haken"
-					><input type="radio" value="team" bind:group={u.ergebnis} /> Nur {team}</label
-				>
+				<label class="haken">
+					<input type="radio" value="alle" bind:group={u.ergebnis} /> Alle Teilnehmenden
+				</label>
+				<label class="haken">
+					<input type="radio" value="team" bind:group={u.ergebnis} /> Nur {team}
+				</label>
 			</fieldset>
 			{#if u.ergebnis === 'alle'}
 				<fieldset class="wahl">
 					<legend>Ab wann?</legend>
-					<label class="haken"><input type="radio" value="sofort" bind:group={u.ab} /> Sofort</label>
-					<label class="haken"
-						><input type="radio" value="antwort" bind:group={u.ab} /> Nach der eigenen Antwort</label
-					>
-					<label class="haken"
-						><input type="radio" value="ende" bind:group={u.ab} /> Erst nach dem Ende</label
-					>
+					<label class="haken">
+						<input type="radio" value="sofort" bind:group={u.ab} /> Sofort
+					</label>
+					<label class="haken">
+						<input type="radio" value="antwort" bind:group={u.ab} /> Nach der eigenen Antwort
+					</label>
+					<label class="haken">
+						<input type="radio" value="ende" bind:group={u.ab} /> Erst nach dem Ende
+					</label>
 				</fieldset>
 			{/if}
 			<label class="feld ende">

@@ -1912,4 +1912,3 @@ export const surveyAnswers = pgTable(
 	},
 	(t) => [index('survey_answers_question').on(t.questionId)]
 );
-

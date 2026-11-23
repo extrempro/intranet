@@ -103,12 +103,12 @@
 		<h2 id="umfrage-titel">Umfrage · {anzahlFragen}</h2>
 		<div class="schilder">
 			<span class="schild">{u.anonym ? 'Anonym' : 'Mit Namen'}</span>
-			<span class="schild"
-				>{u.ergebnis === 'team' ? `Ergebnis nur für ${u.teamText}` : 'Ergebnis für alle'}</span
-			>
-			<span class="schild" class:warn={u.beendet}
-				>{u.beendet ? `Beendet ${formatWhen(u.endsAt)}` : `Bis ${formatWhen(u.endsAt)}`}</span
-			>
+			<span class="schild">
+				{u.ergebnis === 'team' ? `Ergebnis nur für ${u.teamText}` : 'Ergebnis für alle'}
+			</span>
+			<span class="schild" class:warn={u.beendet}>
+				{u.beendet ? `Beendet ${formatWhen(u.endsAt)}` : `Bis ${formatWhen(u.endsAt)}`}
+			</span>
 		</div>
 	</div>
 
@@ -146,14 +146,12 @@
 		>
 			{#each u.fragen as f, i (f.id)}
 				{@const fehlt = fehlend.includes(f.id)}
-				<fieldset
-					class="frage"
-					class:fehlt
-					aria-describedby={fehlt ? `fehlt-${f.id}` : undefined}
-				>
+				<fieldset class="frage" class:fehlt aria-describedby={fehlt ? `fehlt-${f.id}` : undefined}>
 					<legend>
 						<span class="nr">{i + 1}</span>
-						<span>{f.text}{#if f.pflicht}<span class="pflicht">&nbsp;· Pflicht</span>{/if}</span>
+						<span>
+							{f.text}{#if f.pflicht}<span class="pflicht">&nbsp;· Pflicht</span>{/if}
+						</span>
 					</legend>
 					{#if fehlt}<p class="fehlertext" id="fehlt-{f.id}">Bitte beantworte diese Frage.</p>{/if}
 					{#if f.art === 'auswahl'}
@@ -207,9 +205,10 @@
 							name="q-{f.id}"
 							maxlength={MAX_FREITEXT}
 							rows="3"
-							value={typeof f.meine === 'string' ? f.meine : ''}
-						></textarea>
-						<p class="hinweis">Höchstens {MAX_FREITEXT} Zeichen. Lesen kann das nur {u.teamText}.</p>
+							value={typeof f.meine === 'string' ? f.meine : ''}></textarea>
+						<p class="hinweis">
+							Höchstens {MAX_FREITEXT} Zeichen. Lesen kann das nur {u.teamText}.
+						</p>
 					{/if}
 				</fieldset>
 			{/each}
@@ -218,9 +217,9 @@
 					{u.teilgenommen ? 'Änderungen senden' : 'Antworten senden'}
 				</button>
 				{#if aendern}
-					<button class="knopf zweit" type="button" onclick={() => (aendern = false)}
-						>Abbrechen</button
-					>
+					<button class="knopf zweit" type="button" onclick={() => (aendern = false)}>
+						Abbrechen
+					</button>
 				{/if}
 			</div>
 			<p class="hinweis">
@@ -230,9 +229,9 @@
 			</p>
 		</form>
 	{:else if u.teilgenommen && !u.beendet && u.aenderbar}
-		<button class="knopf zweit" type="button" onclick={() => (aendern = true)}
-			>Antworten ändern</button
-		>
+		<button class="knopf zweit" type="button" onclick={() => (aendern = true)}>
+			Antworten ändern
+		</button>
 	{/if}
 
 	{#if u.ergebnisse && (!zeigeFormular || u.team)}
@@ -248,7 +247,9 @@
 								{#if e.texte.length}
 									<ul class="texte">
 										{#each e.texte as t, k (k)}
-											<li>{t.text}{#if t.name}<span class="hinweis"> · {t.name}</span>{/if}</li>
+											<li>
+												{t.text}{#if t.name}<span class="hinweis"> · {t.name}</span>{/if}
+											</li>
 										{/each}
 									</ul>
 								{:else}<p class="hinweis">Noch keine Antworten.</p>{/if}
@@ -268,16 +269,18 @@
 								{#each e.zeilen as z (z.text)}
 									<li class:vorne={z.vorne}>
 										<span class="zeile">
-											<span>{z.text}{#if f.art === 'termin'}<span class="hinweis"> · passt</span>{/if}</span>
-											<span class="zahl"
-												>{z.anzahl} · {prozent(z.anteil)}{#if z.zusatz}<span class="hinweis">
-														· {z.zusatz}</span
-													>{/if}</span
-											>
+											<span>
+												{z.text}{#if f.art === 'termin'}<span class="hinweis"> · passt</span>{/if}
+											</span>
+											<span class="zahl">
+												{z.anzahl} · {prozent(z.anteil)}{#if z.zusatz}<span class="hinweis">
+														· {z.zusatz}
+													</span>{/if}
+											</span>
 										</span>
-										<span class="spur" aria-hidden="true"
-											><span class="fuellung" style:width={prozent(z.anteil)}></span></span
-										>
+										<span class="spur" aria-hidden="true">
+											<span class="fuellung" style:width={prozent(z.anteil)}></span>
+										</span>
 									</li>
 								{/each}
 							</ul>
@@ -301,8 +304,10 @@
 				<a
 					class="knopf zweit"
 					href={resolve('/(app)/neuigkeiten/[id]/umfrage.csv', { id: newsId })}
-					download>Als CSV herunterladen</a
+					download
 				>
+					Als CSV herunterladen
+				</a>
 				{#if !u.beendet}
 					<MitFrage
 						action="?/umfrageBeenden"

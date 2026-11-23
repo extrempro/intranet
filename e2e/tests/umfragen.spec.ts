@@ -1,9 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { anmelden, keineA11yFehler, nichtZuBreit } from './helpers';
 
-test('Umfrage am Beitrag: anlegen, Pflichtfrage, beantworten, Ergebnis', async ({
-	page
-}, info) => {
+test('Umfrage am Beitrag: anlegen, Pflichtfrage, beantworten, Ergebnis', async ({ page }, info) => {
 	const titel = `Mittagessen ${info.project.name} ${info.retry}`;
 	await anmelden(page, 'hanna');
 	await page.goto('/neuigkeiten/neu?absender=00000000-0000-4000-8000-0000000000b1');
