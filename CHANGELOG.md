@@ -10,6 +10,10 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.35.1 · 23.11.2026 · Begrüßung mit Vornamen
+
+- Die Startseite und die E-Mails sprechen dich mit deinem Vornamen an, auch wenn dein Name als „Nachname, Vorname“ hinterlegt ist. Bei Anmeldung über Microsoft wird der Vorname direkt übernommen.
+
 ## 0.35.0 · 22.11.2026 · Hubs-Übersicht neu
 
 - Oben stehen jetzt **deine Hubs** mit dem letzten Beitrag und der Zahl neuer Beiträge seit deinem letzten Besuch.

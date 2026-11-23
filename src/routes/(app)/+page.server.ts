@@ -8,7 +8,8 @@ import { todayAndTomorrow } from '#lib/server/calendar.ts';
 import { subscribedHubIds } from '#lib/server/hubs.ts';
 import { canteenCards } from '#lib/server/canteen.ts';
 import { latestPlans } from '#lib/server/plans.ts';
-import { tenants } from '#lib/server/db/schema.ts';
+import { persons, tenants } from '#lib/server/db/schema.ts';
+import { vorname } from '#lib/vorname.ts';
 import {
 	getNewsSeen,
 	getPreferences,
@@ -49,6 +50,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 		subscribedHubIds(principal).then((ids) => listNews(principal, { unitIds: ids, limit: 4 })),
 		getNewsSeen(principal.personId)
 	]);
+	const [ich] = await db
+		.select({ givenName: persons.givenName })
+		.from(persons)
+		.where(eq(persons.id, principal.personId));
 	const now = new Date();
 	const hour = Number(
 		new Intl.DateTimeFormat('de-DE', { hour: 'numeric', hourCycle: 'h23', timeZone: ZONE }).format(
@@ -56,7 +61,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		)
 	);
 	return {
-		gruss: `${greeting(hour)}, ${locals.person!.displayName.split(/\s+/)[0]}`,
+		gruss: `${greeting(hour)}, ${vorname(locals.person!.displayName, ich?.givenName)}`,
 		datum: new Intl.DateTimeFormat('de-DE', {
 			weekday: 'long',
 			day: 'numeric',
