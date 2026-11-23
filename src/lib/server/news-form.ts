@@ -24,6 +24,8 @@ export interface NewsFormValues {
 		kind: string;
 		description?: string | null;
 	}[];
+	/** Umfrage als JSON; undefined = Feld fehlte (unverändert lassen) */
+	umfrage?: string;
 }
 
 export function readNewsForm(form: FormData): { input: SaveInput; values: NewsFormValues } {
@@ -42,7 +44,8 @@ export function readNewsForm(form: FormData): { input: SaveInput; values: NewsFo
 		allTenants: form.get('zielgruppe') !== 'auswahl',
 		tenantIds: form.getAll('mandanten').map(String).slice(0, 50),
 		replacePin: form.get('ersetzen') === 'on',
-		attachments: []
+		attachments: [],
+		umfrage: form.has('umfrage') ? s('umfrage', 100_000) : undefined
 	};
 	const input: SaveInput = {
 		unitId: values.unitId,

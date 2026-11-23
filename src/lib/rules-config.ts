@@ -22,6 +22,8 @@ export interface ContentRules {
 	boardMaxActive: number;
 	/** Hub-Anträge: ohne Antwort auf eine Rückfrage geschlossen nach … Tagen */
 	hubAnswerDays: number;
+	/** Umfragen an Beiträgen (Kap. 8.18): eingeschaltet? Recht „Umfragen“ je Einheit */
+	surveys: boolean;
 }
 
 export const DEFAULT_RULES: ContentRules = {
@@ -37,7 +39,8 @@ export const DEFAULT_RULES: ContentRules = {
 	eventsHubs: true,
 	responsibilityReviewMonths: 12,
 	boardMaxActive: 3,
-	hubAnswerDays: 30
+	hubAnswerDays: 30,
+	surveys: false
 };
 
 type NumberKey = {
@@ -151,6 +154,19 @@ export const RULE_GROUPS: { id: string; title: string; info?: string; fields: Ru
 				hint: 'Ausnahmen stellst du je Einheit ein.'
 			},
 			{ type: 'bool', key: 'eventsHubs', label: 'Hubs dürfen Termine eintragen' }
+		]
+	},
+	{
+		id: 'umfragen',
+		title: 'Umfragen',
+		info: 'Umfragen hängen an Beiträgen in Neuigkeiten und Hubs. Anlegen darf, wer in der Abteilung oder im Hub das Recht „Umfragen“ hat. Ausgeschaltet lassen sich keine neuen Umfragen anlegen; laufende Umfragen bleiben sichtbar und lassen sich beenden.',
+		fields: [
+			{
+				type: 'bool',
+				key: 'surveys',
+				label: 'Umfragen an Beiträgen erlauben',
+				hint: 'Anonyme Umfragen speichern nur, dass jemand teilgenommen hat, nicht wer was geantwortet hat.'
+			}
 		]
 	},
 	{

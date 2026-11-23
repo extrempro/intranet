@@ -14,6 +14,13 @@ import {
 	writableUnits
 } from '#lib/server/news.ts';
 import { getContentRules } from '#lib/server/rules.ts';
+import {
+	mitUmfrageRecht,
+	umfrageFuerEditor,
+	UmfrageFehler,
+	umfrageSpeichern,
+	umfrageVorpruefen
+} from '#lib/server/umfragen.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 const day = (d: Date | null) => (d ? dateToBerlinInput(d).slice(0, 10) : '');
@@ -39,11 +46,17 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		replacePin: false,
 		attachments: n.attachments
 	};
+	const umfrage = await umfrageFuerEditor(n.id);
+	werte.umfrage = umfrage.wert ? JSON.stringify(umfrage.wert) : '';
 	return {
 		id: n.id,
 		werte,
 		// Absender bleibt beim Bearbeiten gleich
-		einheiten: (await writableUnits(p)).filter((u) => u.id === n.unitId),
+		einheiten: mitUmfrageRecht(
+			p,
+			(await writableUnits(p)).filter((u) => u.id === n.unitId)
+		),
+		umfrageGesperrt: umfrage.gesperrt,
 		mandanten: await db
 			.select({ id: tenants.id, name: tenants.name })
 			.from(tenants)
@@ -59,6 +72,15 @@ export const actions: Actions = {
 		const existing = await newsForEdit(p, params.id);
 		if (!existing) error(404);
 		input.unitId = existing.unitId;
+		const einheit = (await writableUnits(p)).find((e) => e.id === existing.unitId);
+		const umfrage = await umfrageVorpruefen(p, einheit, values.umfrage, params.id);
+		if (umfrage.fehler) {
+			values.attachments = mitBeschreibungen(
+				await describeAttachments(p, input.attachmentIds, params.id),
+				input.descriptions ?? new Map()
+			);
+			return fail(400, { werte: values, fehler: { umfrage: umfrage.fehler }, pinKonflikt: null });
+		}
 		try {
 			const r = await saveNews(p, input, getClientAddress(), params.id);
 			if (!r.ok) {
@@ -68,9 +90,10 @@ export const actions: Actions = {
 				);
 				return fail(400, { werte: values, fehler: r.errors, pinKonflikt: r.pinConflict ?? null });
 			}
+			if (umfrage.aendern) await umfrageSpeichern(p, r.id, umfrage.wert, getClientAddress());
 			redirect(303, `/neuigkeiten/${r.id}`);
 		} catch (err) {
-			if (err instanceof NewsError)
+			if (err instanceof NewsError || err instanceof UmfrageFehler)
 				return fail(403, { werte: values, fehler: { title: err.message }, pinKonflikt: null });
 			throw err;
 		}
