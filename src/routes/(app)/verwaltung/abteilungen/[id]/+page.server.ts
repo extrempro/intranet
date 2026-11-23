@@ -67,6 +67,7 @@ export const actions: Actions = {
 					// Nur bei Hubs gibt es das Feld
 					mayWriteDocuments: f.has('dokumente_feld') ? on('dokumente') : undefined,
 					mayWriteMedia: on('mediathek'),
+					mayWriteSurveys: on('umfragen'),
 					verwaltet: on('verwaltet'),
 					fachpflege: f.has('fachpflege_feld') ? on('fachpflege') : undefined
 				},

@@ -64,6 +64,7 @@
 			mayWriteEvents: boolean;
 			mayWriteDocuments: boolean;
 			mayWriteMedia: boolean;
+			mayWriteSurveys: boolean;
 		}[];
 		termine: {
 			id: string;
@@ -113,6 +114,7 @@
 		termine: boolean;
 		dokumente: boolean;
 		mediathek: boolean;
+		umfragen: boolean;
 	};
 	let team = $state<Mitglied[]>(
 		(pf?.team ?? []).map((m) => ({
@@ -129,7 +131,8 @@
 			faqs: m.mayWriteFaqs,
 			termine: m.mayWriteEvents,
 			dokumente: m.mayWriteDocuments,
-			mediathek: m.mayWriteMedia
+			mediathek: m.mayWriteMedia,
+			umfragen: m.mayWriteSurveys
 		}))
 	);
 	let kontakte = $state(
@@ -195,7 +198,9 @@
 	const hubTeam = $derived(team.filter((m) => m.hubteam));
 	const schreibende = $derived(team.filter((m) => !m.hubteam));
 	const mitRecht = $derived(
-		schreibende.filter((m) => m.news || m.faqs || m.termine || m.dokumente || m.mediathek).length
+		schreibende.filter(
+			(m) => m.news || m.faqs || m.termine || m.dokumente || m.mediathek || m.umfragen
+		).length
 	);
 	const voll = $derived(pf ? mitRecht >= pf.maxSchreibende : false);
 	const RECHTE = [
@@ -203,7 +208,8 @@
 		['faqs', 'FAQs'],
 		['termine', 'Termine'],
 		['dokumente', 'Dokumente'],
-		['mediathek', 'Mediathek']
+		['mediathek', 'Mediathek'],
+		['umfragen', 'Umfragen']
 	] as const;
 	const ordnerNamen = $derived(
 		[...new Set(dokumente.map((d) => d.ordner.trim()).filter(Boolean))].sort()
@@ -227,7 +233,8 @@
 				faqs: m.faqs,
 				termine: m.termine,
 				dokumente: m.dokumente,
-				mediathek: m.mediathek
+				mediathek: m.mediathek,
+				umfragen: m.umfragen
 			})),
 			kontakte,
 			links,
@@ -258,7 +265,8 @@
 			faqs: false,
 			termine: false,
 			dokumente: false,
-			mediathek: false
+			mediathek: false,
+			umfragen: false
 		});
 	}
 	function entfernen(m: Mitglied) {
@@ -394,7 +402,7 @@
 										aria-label="{text} für {m.name}"
 										disabled={!m[k] &&
 											voll &&
-											!(m.news || m.faqs || m.termine || m.dokumente || m.mediathek)}
+											!(m.news || m.faqs || m.termine || m.dokumente || m.mediathek || m.umfragen)}
 										onclick={() => (m[k] = !m[k])}
 									>
 										{#if m[k]}<Icon d="M5 12l5 5l10 -10" size={14} stroke={2.4} />{/if}{text}

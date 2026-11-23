@@ -141,6 +141,7 @@ export async function teamFuerPflege(p: Principal, unitId: string) {
 				mayWriteEvents: unitMembers.mayWriteEvents,
 				mayWriteDocuments: unitMembers.mayWriteDocuments,
 				mayWriteMedia: unitMembers.mayWriteMedia,
+				mayWriteSurveys: unitMembers.mayWriteSurveys,
 				hubTask: unitMembers.hubTask
 			})
 			.from(unitMembers)
@@ -185,7 +186,8 @@ export async function getUnitForAdmin(p: Principal, unitId: string) {
 			mayWriteEvents: unitMembers.mayWriteEvents,
 			mayWriteBehindScenes: unitMembers.mayWriteBehindScenes,
 			mayWriteDocuments: unitMembers.mayWriteDocuments,
-			mayWriteMedia: unitMembers.mayWriteMedia
+			mayWriteMedia: unitMembers.mayWriteMedia,
+			mayWriteSurveys: unitMembers.mayWriteSurveys
 		})
 		.from(unitMembers)
 		.innerJoin(persons, eq(persons.id, unitMembers.personId))
@@ -434,6 +436,8 @@ export interface MemberRights {
 	mayWriteDocuments?: boolean;
 	/** Mediathek; ohne Angabe bleibt es, wie es ist */
 	mayWriteMedia?: boolean;
+	/** Umfragen; ohne Angabe bleibt es, wie es ist */
+	mayWriteSurveys?: boolean;
 	verwaltet: boolean;
 	/** Nur beim KBB: Pläne hochladen und löschen (Kap. 8.6). */
 	fachpflege?: boolean;
@@ -459,7 +463,8 @@ export async function setMemberRights(
 		...(r.mayWriteDocuments === undefined
 			? {}
 			: { mayWriteDocuments: isHub && r.mayWriteDocuments }),
-		...(r.mayWriteMedia === undefined ? {} : { mayWriteMedia: r.mayWriteMedia })
+		...(r.mayWriteMedia === undefined ? {} : { mayWriteMedia: r.mayWriteMedia }),
+		...(r.mayWriteSurveys === undefined ? {} : { mayWriteSurveys: r.mayWriteSurveys })
 	};
 	const writes = Object.values(rights).some(Boolean);
 	// Die Pflege-Rolle und Fachpflege vergibt nur die Verwaltung; das Hub-Team
@@ -500,7 +505,8 @@ export async function setMemberRights(
 							unitMembers.mayWriteEvents,
 							unitMembers.mayWriteBehindScenes,
 							unitMembers.mayWriteDocuments,
-							unitMembers.mayWriteMedia
+							unitMembers.mayWriteMedia,
+							unitMembers.mayWriteSurveys
 						),
 						managers.length ? notInArray(unitMembers.personId, managers) : undefined
 					)

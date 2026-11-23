@@ -42,7 +42,8 @@
 		['faqs', 'FAQs', 'mayWriteFaqs'],
 		['termine', 'Termine', 'mayWriteEvents'],
 		['kulissen', 'Hinter den Kulissen', 'mayWriteBehindScenes'],
-		['mediathek', 'Mediathek', 'mayWriteMedia']
+		['mediathek', 'Mediathek', 'mayWriteMedia'],
+		['umfragen', 'Umfragen', 'mayWriteSurveys']
 	] as const;
 
 	const fehlerFuer = (id: string): ResponsibilityErrors =>
