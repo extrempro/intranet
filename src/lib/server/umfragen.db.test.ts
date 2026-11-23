@@ -114,6 +114,23 @@ describe.skipIf(!url)('Umfragen', () => {
 		await rules.saveContentRules({ ...r, surveys: true }, P.team, '127.0.0.1');
 	});
 
+	it('zusätzlich je Abteilung/Hub freischalten (Standard aus)', async () => {
+		await expect(um.umfrageSpeichern(team, N.anonym, umfrage(), '127.0.0.1')).rejects.toThrow(
+			/nicht freigeschaltet/
+		);
+		const v = await um.umfrageVorpruefen(
+			team,
+			{ id: U, tenantId: T, isCentral: false },
+			JSON.stringify(umfrage())
+		);
+		expect(v.fehler).toMatch(/nicht freigeschaltet/);
+		const [e] = await um.mitUmfrageRecht(team, [{ id: U, tenantId: T, isCentral: false }]);
+		expect(e).toMatchObject({ mayUmfrage: true, umfrageFrei: false });
+		await db.execute(sql`update units set surveys = true where id = ${U}`);
+		const [f] = await um.mitUmfrageRecht(team, [{ id: U, tenantId: T, isCentral: false }]);
+		expect(f.umfrageFrei).toBe(true);
+	});
+
 	it('ohne Recht „Umfragen“ keine Umfrage, auch nicht mit Recht für Neuigkeiten', async () => {
 		await expect(um.umfrageSpeichern(redaktion, N.anonym, umfrage(), '127.0.0.1')).rejects.toThrow(
 			/Recht „Umfragen“/
@@ -228,6 +245,19 @@ describe.skipIf(!url)('Umfragen', () => {
 		expect(anonym?.csv).not.toContain('Anna');
 		const namentlich = await um.umfrageCsv(team, N.namentlich);
 		expect(namentlich?.csv).toContain('Ben B');
+	});
+
+	it('Freischaltung zurückgenommen: laufende Umfragen bleiben, neue nicht', async () => {
+		await db.execute(sql`update units set surveys = false where id = ${U}`);
+		const n = '00000000-0000-4000-8000-00000000c003';
+		await db.execute(sql`
+			insert into news (id, unit_id, tenant_id, title, body_html, body_text, publish_at, all_tenants) values
+				(${n}, ${U}, ${T}, 'Neu', '<p>x</p>', 'x', now() - interval '1 hour', true)`);
+		await expect(um.umfrageSpeichern(team, n, umfrage(), '127.0.0.1')).rejects.toThrow(
+			/nicht freigeschaltet/
+		);
+		await um.umfrageSpeichern(team, N.anonym, umfrage({ ende: '2099-03-01T12:00' }), '127.0.0.1');
+		expect((await um.umfrageFuerEditor(N.anonym)).wert?.ende).toBe('2099-03-01T12:00');
 	});
 
 	it('Beenden nur mit Recht; danach keine Antworten mehr', async () => {

@@ -19,7 +19,7 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const p = requirePrincipal(locals);
-	const einheiten = mitUmfrageRecht(p, await writableUnits(p));
+	const einheiten = await mitUmfrageRecht(p, await writableUnits(p));
 	if (einheiten.length === 0) error(403, 'Dafür fehlt dir das Recht.');
 	const entwurf = await entwurfLaden(p, url.searchParams.get('entwurf'), 'news');
 	let werte: NewsFormValues = {

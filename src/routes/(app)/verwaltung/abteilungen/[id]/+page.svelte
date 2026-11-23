@@ -17,7 +17,10 @@
 			['dokumente', 'Dokumente', 'mayWriteDocuments'],
 			['mediathek', 'Mediathek', 'mayWriteMedia'],
 			['umfragen', 'Umfragen', 'mayWriteSurveys']
-		].filter(([k]) => (hub ? k !== 'kulissen' : k !== 'dokumente')) as [
+		]
+			.filter(([k]) => (hub ? k !== 'kulissen' : k !== 'dokumente'))
+			// Umfragen nur, wenn für die Einheit freigeschaltet
+			.filter(([k]) => k !== 'umfragen' || e.surveys) as [
 			string,
 			string,
 			keyof (typeof e.team)[number]

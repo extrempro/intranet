@@ -160,10 +160,12 @@ export async function teamFuerPflege(p: Principal, unitId: string) {
 		db.select({ id: tenants.id, short: tenants.shortName }).from(tenants)
 	]);
 	const kurz = new Map(tenantRows.map((t) => [t.id, t.short]));
-	const { writersMax } = await getContentRules();
+	const { writersMax, surveys } = await getContentRules();
 	return {
 		admin: u.admin,
 		maxSchreibende: writersMax,
+		/** Recht „Umfragen“ nur anbieten, wenn Regel an und Einheit freigeschaltet */
+		umfragenFrei: surveys && u.unit.surveys,
 		team: team.map(({ tenantId, ...m }) => ({
 			...m,
 			mandant: kurz.get(tenantId) ?? '',
@@ -235,6 +237,8 @@ export interface UnitInput {
 	mandatorySubscription?: boolean;
 	/** Hinter den Kulissen freigeschaltet (nicht für Hubs) */
 	behindScenes?: boolean;
+	/** Umfragen freigeschaltet (Kap. 8.16) */
+	surveys?: boolean;
 }
 
 async function checkInput(p: Principal, input: UnitInput) {
@@ -297,7 +301,8 @@ export async function createUnit(p: Principal, input: UnitInput, ip: string): Pr
 			mayPostUrgent: input.mayPostUrgent,
 			mayCreateEvents: input.mayCreateEvents,
 			mandatorySubscription: input.type === 'hub' && Boolean(input.mandatorySubscription),
-			behindScenes: input.type !== 'hub' && Boolean(input.behindScenes)
+			behindScenes: input.type !== 'hub' && Boolean(input.behindScenes),
+			surveys: Boolean(input.surveys)
 		})
 		.returning({ id: units.id });
 	if (input.type === 'abteilung') await setKbb(input.tenantId, row.id, input.isKbb);
@@ -331,7 +336,8 @@ export async function updateUnit(p: Principal, unitId: string, input: UnitInput,
 			mayPostUrgent: input.mayPostUrgent,
 			mayCreateEvents: input.mayCreateEvents,
 			mandatorySubscription: input.type === 'hub' && Boolean(input.mandatorySubscription),
-			behindScenes: input.type !== 'hub' && Boolean(input.behindScenes)
+			behindScenes: input.type !== 'hub' && Boolean(input.behindScenes),
+			surveys: Boolean(input.surveys)
 		})
 		.where(eq(units.id, unitId));
 	if (input.type === 'abteilung') await setKbb(input.tenantId, unitId, input.isKbb);
@@ -349,7 +355,8 @@ export async function updateUnit(p: Principal, unitId: string, input: UnitInput,
 			mayPostUrgent: input.mayPostUrgent,
 			mayCreateEvents: input.mayCreateEvents,
 			mandatorySubscription: input.mandatorySubscription,
-			kbb: input.isKbb
+			kbb: input.isKbb,
+			surveys: Boolean(input.surveys)
 		},
 		ip
 	});

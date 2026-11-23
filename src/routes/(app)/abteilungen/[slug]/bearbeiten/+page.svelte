@@ -37,14 +37,18 @@
 	const gruppen = $derived(
 		[...new Set(e.zustaendigkeiten.map((z) => z.groupName).filter(Boolean))].sort()
 	);
-	const rechte = [
-		['neuigkeiten', 'Neuigkeiten', 'mayWriteNews'],
-		['faqs', 'FAQs', 'mayWriteFaqs'],
-		['termine', 'Termine', 'mayWriteEvents'],
-		['kulissen', 'Hinter den Kulissen', 'mayWriteBehindScenes'],
-		['mediathek', 'Mediathek', 'mayWriteMedia'],
-		['umfragen', 'Umfragen', 'mayWriteSurveys']
-	] as const;
+	const rechte = $derived(
+		(
+			[
+				['neuigkeiten', 'Neuigkeiten', 'mayWriteNews'],
+				['faqs', 'FAQs', 'mayWriteFaqs'],
+				['termine', 'Termine', 'mayWriteEvents'],
+				['kulissen', 'Hinter den Kulissen', 'mayWriteBehindScenes'],
+				['mediathek', 'Mediathek', 'mayWriteMedia'],
+				['umfragen', 'Umfragen', 'mayWriteSurveys']
+			] as const
+		).filter(([k]) => k !== 'umfragen' || e.umfragenFrei)
+	);
 
 	const fehlerFuer = (id: string): ResponsibilityErrors =>
 		form && 'eintrag' in form && form.eintrag === id && 'felder' in form

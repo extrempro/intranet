@@ -12,6 +12,7 @@
 		mayCreateEvents: boolean | null;
 		mandatorySubscription?: boolean;
 		behindScenes?: boolean;
+		surveys?: boolean;
 		isKbb: boolean;
 	}
 
@@ -116,6 +117,13 @@
 		<span>„Hinter den Kulissen“ freigeschaltet</span>
 	</label>
 {/if}
+
+<label class="option">
+	<input type="checkbox" name="umfragen" checked={werte.surveys ?? false} />
+	<span>
+		Umfragen freigeschaltet – wirkt nur, wenn Umfragen unter „Regeln für Inhalte“ eingeschaltet sind
+	</span>
+</label>
 
 {#if typ === 'hub'}
 	<label class="option">

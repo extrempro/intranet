@@ -26,7 +26,7 @@ Unter „Wer sieht was?“ steht an jeder Umfrage, wer deine Antworten, das Erge
 
 ## Umfragen anlegen
 
-Umfragen gibt es, wenn die Verwaltung sie eingeschaltet hat. Anlegen darfst du sie mit dem Recht „Umfragen“ einer Abteilung oder eines Hubs; Abteilungsverwaltung und Hub-Team haben es immer.
+Umfragen gibt es, wenn die Verwaltung sie grundsätzlich eingeschaltet und für deine Abteilung bzw. deinen Hub freigeschaltet hat. Anlegen darfst du sie mit dem Recht „Umfragen“ einer Abteilung oder eines Hubs; Abteilungsverwaltung und Hub-Team haben es immer.
 
 - Im Beitrag unter **Umfrage hinzufügen** legst du bis zu 15 Fragen an, sortierst sie mit ↑ ↓ und legst je Frage fest, ob sie Pflicht ist.
 - Darunter stellst du ein, ob die Umfrage **anonym** ist, **wer das Ergebnis sieht** und **wann sie endet**. „Wer sieht was?“ zeigt dir sofort, wie es den Teilnehmenden erklärt wird.

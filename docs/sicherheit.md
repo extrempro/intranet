@@ -152,7 +152,7 @@ Neu: „Weiter, wo du warst“ am Konto.
 ## Nachprüfung Umfragen (23.11.2026, Version 0.36.0)
 
 - **Recht**: Anlegen, Ändern, Beenden, Auswertung und CSV nur mit dem Recht „Umfragen“ der Einheit (oder Abteilungsverwaltung/Hub-Team); das Recht „Neuigkeiten“ allein reicht nicht (DB-Test). Antworten nur auf sichtbare, veröffentlichte Beiträge.
-- **Schalter**: Umfragen in der Verwaltung standardmäßig aus; ausgeschaltet keine neuen Umfragen (DB-Test).
+- **Schalter**: Umfragen in der Verwaltung standardmäßig aus, zusätzlich je Einheit freizuschalten (Standard aus); ohne beides keine neuen Umfragen, auch nicht per direktem Formularaufruf (DB-Test).
 - **Anonymität**: Antworten ohne Person und ohne Zeitstempel, Teilnahme getrennt; je Abgabe eine zufällige Kennung; CSV ohne Namen und gemischt; keine Änderung nach dem Senden (sonst ließe sich die Abgabe über die Änderung zuordnen). **Restrisiko**: Wer direkt auf die Datenbank zugreift, könnte aus der physischen Reihenfolge der Zeilen und den Zeitpunkten der Teilnahme bei sehr wenigen Teilnehmenden Rückschlüsse ziehen. Der Datenbankzugang ist dem Serverbetrieb vorbehalten.
 - **Doppelte Teilnahme**: Primärschlüssel (Umfrage, Person) und Sperre in der Transaktion (DB-Test).
 - **Eingaben**: Fragebogen und Antworten serverseitig geprüft (Arten, Längen, Indizes, Pflichtfragen); Texte werden nur als Text ausgegeben. CSV mit BOM, Semikolon und Schutz vor Formeln (`=`, `+`, `-`, `@` am Anfang).

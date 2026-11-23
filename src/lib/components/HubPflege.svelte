@@ -48,6 +48,7 @@
 	}
 	interface Pflege {
 		maxSchreibende: number;
+		umfragenFrei?: boolean;
 		darfTermine: boolean;
 		team: {
 			personId: string;
@@ -203,14 +204,18 @@
 		).length
 	);
 	const voll = $derived(pf ? mitRecht >= pf.maxSchreibende : false);
-	const RECHTE = [
-		['news', 'Neuigkeiten'],
-		['faqs', 'FAQs'],
-		['termine', 'Termine'],
-		['dokumente', 'Dokumente'],
-		['mediathek', 'Mediathek'],
-		['umfragen', 'Umfragen']
-	] as const;
+	const RECHTE = $derived(
+		(
+			[
+				['news', 'Neuigkeiten'],
+				['faqs', 'FAQs'],
+				['termine', 'Termine'],
+				['dokumente', 'Dokumente'],
+				['mediathek', 'Mediathek'],
+				['umfragen', 'Umfragen']
+			] as const
+		).filter(([k]) => k !== 'umfragen' || pf?.umfragenFrei)
+	);
 	const ordnerNamen = $derived(
 		[...new Set(dokumente.map((d) => d.ordner.trim()).filter(Boolean))].sort()
 	);

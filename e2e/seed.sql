@@ -45,3 +45,4 @@ from persons;
 -- Umfragen eingeschaltet (in der Verwaltung voreingestellt aus)
 insert into settings (key, value) values ('regeln.inhalte', '{"surveys": true}')
 on conflict (key) do update set value = settings.value || excluded.value;
+update units set surveys = true where id = '00000000-0000-4000-8000-0000000000b1';
