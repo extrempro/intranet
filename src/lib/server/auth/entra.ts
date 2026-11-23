@@ -81,6 +81,7 @@ export async function getOidcConfiguration(entra: EntraConfig): Promise<oidc.Con
 export interface GraphMe {
 	id: string;
 	displayName: string | null;
+	givenName?: string | null;
 	mail: string | null;
 	userPrincipalName: string;
 	accountEnabled?: boolean;
@@ -99,7 +100,7 @@ async function graphGet<T>(url: string, accessToken: string): Promise<T> {
 
 export function fetchMe(accessToken: string): Promise<GraphMe> {
 	return graphGet<GraphMe>(
-		`${GRAPH}/me?$select=id,displayName,mail,userPrincipalName,accountEnabled`,
+		`${GRAPH}/me?$select=id,displayName,givenName,mail,userPrincipalName,accountEnabled`,
 		accessToken
 	);
 }

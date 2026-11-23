@@ -61,7 +61,7 @@ export const graphClient: GraphClient = {
 	async lookup(oid) {
 		if (!GUID.test(oid)) return null;
 		const user = await graphAppGet<GraphUser>(
-			`/users/${oid}?$select=id,displayName,mail,userPrincipalName,accountEnabled`
+			`/users/${oid}?$select=id,displayName,givenName,mail,userPrincipalName,accountEnabled`
 		);
 		if (!user) return null;
 		const groupIds: string[] = [];
@@ -85,6 +85,7 @@ async function loadPersons(): Promise<SyncPerson[]> {
 			oid: persons.entraOid,
 			email: persons.email,
 			displayName: persons.displayName,
+			givenName: persons.givenName,
 			tenantId: persons.tenantId,
 			status: persons.status,
 			disabledBy: persons.disabledBy
@@ -166,6 +167,7 @@ async function apply(a: SyncAction): Promise<'aktualisiert' | 'gesperrt' | 'nich
 			.set({
 				email: a.email,
 				displayName: a.displayName,
+				givenName: a.givenName,
 				tenantId: a.tenantId,
 				...(a.freigeben ? { status: 'active' as const, disabledAt: null, disabledBy: null } : {})
 			})

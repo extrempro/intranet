@@ -262,6 +262,8 @@ export const persons = pgTable(
 			.references(() => tenants.id, { onDelete: 'restrict' }),
 		email: text('email').notNull(),
 		displayName: text('display_name').notNull(),
+		/** Vorname aus Entra (für die Ansprache per du); lokale Konten: aus dem Anzeigenamen */
+		givenName: text('given_name'),
 		authSource: authSource('auth_source').notNull(),
 		/** Object-ID in Entra, nur bei Entra-Konten. */
 		entraOid: text('entra_oid').unique(),

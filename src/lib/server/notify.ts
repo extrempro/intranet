@@ -5,6 +5,7 @@
  * - sendEmails(): sofort bzw. als Zusammenfassung (täglich/wöchentlich um 7 Uhr).
  * Läuft minütlich im Anwendungsprozess (startNotifier).
  */
+import { vorname } from '../vorname.ts';
 import { track } from './jobs.ts';
 import { and, asc, desc, eq, gt, inArray, isNull, lt, lte, or, sql } from 'drizzle-orm';
 import { berlinNow } from '../canteen.ts';
@@ -371,6 +372,7 @@ async function sendBatch(modes: string[], digest: boolean, before?: Date) {
 			personId: persons.id,
 			email: persons.email,
 			name: persons.displayName,
+			givenName: persons.givenName,
 			pref: personPreferences.notify,
 			topic: notifications.topic,
 			title: notifications.title,
@@ -397,13 +399,17 @@ async function sendBatch(modes: string[], digest: boolean, before?: Date) {
 		// Abwesend: E-Mails warten und kommen danach gesammelt (Dringendes nach Wahl)
 		if (isAbsent(heute, einst.absence) && !(r.topic === 'dringend' && einst.absence?.urgent))
 			continue;
-		const entry = byPerson.get(r.personId) ?? { email: r.email, name: r.name, items: [] };
+		const entry = byPerson.get(r.personId) ?? {
+			email: r.email,
+			name: vorname(r.name, r.givenName),
+			items: []
+		};
 		entry.items.push({ id: r.nid, topic: r.topic, title: r.title, detail: r.detail, link: r.link });
 		byPerson.set(r.personId, entry);
 	}
 	for (const { email, name, items } of byPerson.values()) {
 		try {
-			await sendMail({ to: email, ...mailFor(name.split(/\s+/)[0], items, digest) });
+			await sendMail({ to: email, ...mailFor(name, items, digest) });
 			await db
 				.update(notifications)
 				.set({ email: 'sent' })

@@ -38,6 +38,7 @@ export async function upsertEntraPerson(input: {
 	oid: string;
 	email: string;
 	displayName: string;
+	givenName?: string | null;
 	tenantId: string;
 	roles: DerivedRole[];
 }): Promise<UpsertResult> {
@@ -66,6 +67,7 @@ export async function upsertEntraPerson(input: {
 				.set({
 					email: input.email,
 					displayName: input.displayName,
+					givenName: input.givenName ?? null,
 					tenantId: input.tenantId,
 					status: 'active',
 					disabledAt: null,
@@ -80,6 +82,7 @@ export async function upsertEntraPerson(input: {
 					tenantId: input.tenantId,
 					email: input.email,
 					displayName: input.displayName,
+					givenName: input.givenName ?? null,
 					authSource: 'entra',
 					entraOid: input.oid,
 					status: 'active',

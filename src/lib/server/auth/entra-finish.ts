@@ -42,6 +42,7 @@ export async function finishEntraLogin(oid: string, graphToken: string): Promise
 		oid,
 		email: decision.email,
 		displayName: me.displayName?.trim() || decision.email,
+		givenName: me.givenName?.trim() || null,
 		tenantId: decision.tenantId,
 		roles: decision.roles
 	});

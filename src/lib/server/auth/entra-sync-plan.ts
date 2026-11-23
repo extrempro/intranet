@@ -15,6 +15,8 @@ export interface SyncPerson {
 	oid: string;
 	email: string;
 	displayName: string;
+	/** fehlt in älteren Tests: zählt dann nicht als Änderung */
+	givenName?: string | null;
 	tenantId: string;
 	status: 'active' | 'invited' | 'disabled';
 	disabledBy: 'verwaltung' | 'entra' | null;
@@ -25,6 +27,7 @@ export interface SyncPerson {
 export interface GraphUser {
 	id: string;
 	displayName: string | null;
+	givenName?: string | null;
 	mail: string | null;
 	userPrincipalName: string;
 	accountEnabled?: boolean;
@@ -49,6 +52,7 @@ export type SyncAction =
 			freigeben: boolean;
 			email: string;
 			displayName: string;
+			givenName: string | null;
 			tenantId: string;
 			roles: DerivedRole[];
 			geaendert: boolean;
@@ -87,12 +91,14 @@ export function planPerson(person: SyncPerson, lookup: Lookup, ctx: SyncContext)
 			: { art: 'sperren', person, grund: decision.reason };
 
 	const displayName = lookup.user.displayName?.trim() || decision.email;
+	const givenName = lookup.user.givenName?.trim() || null;
 	const neu = decision.roles.map(rolleSchluessel).sort();
 	const alt = [...person.entraRoles].sort();
 	const rollenGeaendert = neu.length !== alt.length || neu.some((k, i) => k !== alt[i]);
 	const geaendert =
 		person.email !== decision.email ||
 		person.displayName !== displayName ||
+		(person.givenName !== undefined && (person.givenName ?? null) !== givenName) ||
 		person.tenantId !== decision.tenantId;
 	return {
 		art: 'abgleichen',
@@ -100,6 +106,7 @@ export function planPerson(person: SyncPerson, lookup: Lookup, ctx: SyncContext)
 		freigeben: gesperrt,
 		email: decision.email,
 		displayName,
+		givenName,
 		tenantId: decision.tenantId,
 		roles: decision.roles,
 		geaendert,
