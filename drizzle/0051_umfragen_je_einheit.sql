@@ -1,0 +1,1 @@
+ALTER TABLE "units" ADD COLUMN "surveys" boolean DEFAULT false NOT NULL;

@@ -52,7 +52,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		id: n.id,
 		werte,
 		// Absender bleibt beim Bearbeiten gleich
-		einheiten: mitUmfrageRecht(
+		einheiten: await mitUmfrageRecht(
 			p,
 			(await writableUnits(p)).filter((u) => u.id === n.unitId)
 		),

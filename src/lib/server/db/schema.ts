@@ -155,6 +155,8 @@ export const units = pgTable(
 		mayCreateEvents: boolean('may_create_events'),
 		/** „Hinter den Kulissen“ für die Einheit freigeschaltet (Kap. 8.4) */
 		behindScenes: boolean('behind_scenes').notNull().default(false),
+		/** Umfragen für die Einheit freigeschaltet (Kap. 8.16); wirkt nur mit der Regel „Umfragen“ */
+		surveys: boolean('surveys').notNull().default(false),
 		// --- Nur Hubs (Kap. 8.12) ---
 		/** Über uns */
 		about: text('about'),

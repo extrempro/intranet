@@ -16,6 +16,8 @@
 		isHub: boolean;
 		/** Darf an Beiträgen dieser Einheit Umfragen anlegen (Recht und Regel an) */
 		mayUmfrage?: boolean;
+		/** Umfragen für die Einheit von der Verwaltung freigeschaltet */
+		umfrageFrei?: boolean;
 	}
 	interface Werte {
 		unitId: string;
@@ -286,7 +288,7 @@
 	</fieldset>
 {/if}
 
-{#if einheit?.mayUmfrage && (regeln.surveys || hatUmfrage)}
+{#if einheit?.mayUmfrage && ((regeln.surveys && einheit.umfrageFrei) || hatUmfrage)}
 	<UmfrageEditor
 		json={v.umfrage ?? ''}
 		einheit={einheit?.name ?? ''}

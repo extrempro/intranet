@@ -396,7 +396,7 @@ Videos wie Schulungen und Anleitungen, für alle Beschäftigten abrufbar, auch m
 
 Umfragen hängen an einem Beitrag (Neuigkeiten und Hubs) und stehen im Beitrag unter dem Text.
 
-- **Einschalten:** Verwaltung → Regeln für Inhalte → Umfragen, **Standard aus**. Ausgeschaltet lassen sich keine neuen Umfragen anlegen; vorhandene laufen weiter und lassen sich bearbeiten und beenden.
+- **Einschalten in zwei Stufen:** grundsätzlich unter Verwaltung → Regeln für Inhalte → Umfragen, **Standard aus**; zusätzlich je Abteilung bzw. Hub in der Verwaltung („Umfragen freigeschaltet“, **Standard aus**). Neue Umfragen gibt es nur, wenn beides an ist; das Recht „Umfragen“ wird erst dann bei den Schreibrechten angeboten. Wird eins davon ausgeschaltet, laufen vorhandene Umfragen weiter und lassen sich bearbeiten und beenden.
 - **Recht:** eigenes Schreibrecht „Umfragen“ je Person und Einheit (Kap. 5.2); Abteilungsverwaltung und Hub-Team haben es immer. Wer es hat, gehört zum „Team von <Einheit>“. Das Recht „Neuigkeiten“ allein reicht nicht.
 - **Fragebogen:** 1 bis 15 Fragen, je Frage eine Art und „Pflichtfrage“ ja/nein: **Auswahl** (2–10 Antworten, wahlweise mehrere wählbar), **Terminfindung** (2–10 Termine, je Termin „Passt“, „Vielleicht“, „Passt nicht“), **Bewertung** (1–5 Sterne), **Freitext** (bis 500 Zeichen). Ein Knopf sendet alle Antworten; fehlende Pflichtfragen werden markiert.
 - **Anonym** wählbar je Umfrage, **Standard an**. Anonyme Antworten werden ohne Person und ohne Zeitpunkt gespeichert, die Teilnahme getrennt davon (nur, damit niemand doppelt abstimmt). Anonyme Antworten lassen sich nach dem Senden nicht mehr ändern; namentliche bis zum Ende.

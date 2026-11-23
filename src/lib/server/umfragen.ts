@@ -8,7 +8,7 @@
  * Anonym: Antworten ohne Person und ohne Zeitstempel, die Teilnahme getrennt
  * davon. Deshalb lässt sich eine anonyme Antwort nicht mehr ändern.
  */
-import { and, asc, eq, gt, isNull, notExists, or, sql } from 'drizzle-orm';
+import { and, asc, eq, gt, inArray, isNull, notExists, or, sql } from 'drizzle-orm';
 import {
 	ergebnisSichtbar,
 	FRAGE_ARTEN,
@@ -316,13 +316,25 @@ export async function umfrageFuerEditor(newsId: string) {
 	return { wert, gesperrt: await hatAntworten(u.id) };
 }
 
-/** Darf die Person für diese Einheit Umfragen anlegen (Regel an, Recht vorhanden)? */
-export async function darfUmfragen(
-	p: Principal,
-	unit: Einheit | { id: string; tenantId: string; isCentral: boolean }
-) {
-	const regeln = await getContentRules();
-	return regeln.surveys && canWriteSurveys(p, unit);
+/** Einheiten, für die die Verwaltung Umfragen freigeschaltet hat. */
+async function freigeschaltet(unitIds: string[]): Promise<Set<string>> {
+	if (unitIds.length === 0) return new Set();
+	const rows = await db
+		.select({ id: units.id })
+		.from(units)
+		.where(and(inArray(units.id, unitIds), eq(units.surveys, true)));
+	return new Set(rows.map((r) => r.id));
+}
+
+/**
+ * Neue Umfragen nur, wenn die Regel „Umfragen“ an ist und die Verwaltung sie
+ * für die Einheit freigeschaltet hat. Laufende Umfragen bleiben bearbeitbar.
+ */
+async function neueUmfrageFehler(unitId: string): Promise<string | null> {
+	if (!(await getContentRules()).surveys) return 'Umfragen sind in der Verwaltung ausgeschaltet.';
+	if (!(await freigeschaltet([unitId])).has(unitId))
+		return 'Für diese Abteilung bzw. diesen Hub sind Umfragen nicht freigeschaltet. Das macht die Verwaltung.';
+	return null;
 }
 
 /**
@@ -341,8 +353,8 @@ export async function umfrageSpeichern(
 	if (!u && !eingabe) return;
 	if (!canWriteSurveys(p, einheit))
 		throw new UmfrageFehler('Für Umfragen fehlt dir in dieser Einheit das Recht „Umfragen“.');
-	if (!u && !(await getContentRules()).surveys)
-		throw new UmfrageFehler('Umfragen sind in der Verwaltung ausgeschaltet.');
+	const sperre = u ? null : await neueUmfrageFehler(einheit.id);
+	if (sperre) throw new UmfrageFehler(sperre);
 	const gesperrt = u ? await hatAntworten(u.id) : false;
 
 	if (!eingabe) {
@@ -569,12 +581,19 @@ export async function offeneUmfragen(p: Principal, limit = 5) {
 		}));
 }
 
-/** Absender-Einheiten fürs Beitragsformular um das Umfrage-Recht ergänzen. */
-export function mitUmfrageRecht<T extends { id: string; tenantId: string; isCentral: boolean }>(
-	p: Principal,
-	einheiten: T[]
-): (T & { mayUmfrage: boolean })[] {
-	return einheiten.map((e) => ({ ...e, mayUmfrage: canWriteSurveys(p, e) }));
+/**
+ * Absender-Einheiten fürs Beitragsformular: `mayUmfrage` = Recht „Umfragen“,
+ * `umfrageFrei` = von der Verwaltung für die Einheit freigeschaltet.
+ */
+export async function mitUmfrageRecht<
+	T extends { id: string; tenantId: string; isCentral: boolean }
+>(p: Principal, einheiten: T[]): Promise<(T & { mayUmfrage: boolean; umfrageFrei: boolean })[]> {
+	const frei = await freigeschaltet(einheiten.map((e) => e.id));
+	return einheiten.map((e) => ({
+		...e,
+		mayUmfrage: canWriteSurveys(p, e),
+		umfrageFrei: frei.has(e.id)
+	}));
 }
 
 /**
@@ -604,8 +623,8 @@ export async function umfrageVorpruefen(
 			wert,
 			fehler: 'Für Umfragen fehlt dir in dieser Einheit das Recht „Umfragen“.'
 		};
-	if (!u && !(await getContentRules()).surveys)
-		return { aendern: true, wert, fehler: 'Umfragen sind in der Verwaltung ausgeschaltet.' };
+	const sperre = u ? null : await neueUmfrageFehler(einheit.id);
+	if (sperre) return { aendern: true, wert, fehler: sperre };
 	const gesperrt = u ? await hatAntworten(u.id) : false;
 	if (!wert && gesperrt)
 		return {

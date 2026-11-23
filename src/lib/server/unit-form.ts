@@ -16,6 +16,7 @@ export function readUnitForm(form: FormData): UnitInput {
 		mayCreateEvents: events === 'ja' ? true : events === 'nein' ? false : null,
 		isKbb: form.get('kbb') === 'on',
 		mandatorySubscription: form.get('pflichtabo') === 'on',
-		behindScenes: form.get('kulissen') === 'on'
+		behindScenes: form.get('kulissen') === 'on',
+		surveys: form.get('umfragen') === 'on'
 	};
 }

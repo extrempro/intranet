@@ -10,6 +10,11 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.37.0 · 23.11.2026 · Umfragen je Abteilung und Hub freischalten
+
+- Die Verwaltung schaltet Umfragen jetzt zusätzlich für jede Abteilung und jeden Hub einzeln frei.
+- Erst dann gibt es dort das Recht „Umfragen“ und den Knopf „Umfrage hinzufügen“. Laufende Umfragen bleiben, auch wenn die Freischaltung später weggenommen wird.
+
 ## 0.36.0 · 23.11.2026 · Umfragen
 
 - An Beiträgen in Neuigkeiten und Hubs kann eine Umfrage hängen: Auswahl (auch mehrere Antworten), Terminfindung, Bewertung mit Sternen oder Freitext, bis zu 15 Fragen mit Pflichtfragen.

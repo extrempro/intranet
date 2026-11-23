@@ -374,8 +374,10 @@ export async function getDepartmentForEdit(p: Principal, slug: string) {
 			.where(and(eq(roleAssignments.scopeUnitId, u.id), eq(roleAssignments.role, 'fachpflege'))),
 		responsibilityRows([u.id])
 	]);
-	const { writersMax } = await getContentRules();
+	const { writersMax, surveys } = await getContentRules();
 	return {
+		/** Recht „Umfragen“ nur anbieten, wenn Regel an und Einheit freigeschaltet */
+		umfragenFrei: surveys && u.surveys,
 		id: u.id,
 		slug: u.slug,
 		name: u.name,
