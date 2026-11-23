@@ -26,13 +26,18 @@
 	const sichtbareKarten = $derived(data.karten.filter((k) => k.visible));
 	const zeigePlaene = $derived(sichtbareKarten.some((k) => k.id === 'plaene'));
 	/** „Für dich“: Neuigkeiten und die übrigen Karten (ohne Pläne) in der eingestellten Reihenfolge */
-	const fuerDich = $derived(sichtbareKarten.filter((k) => k.id !== 'plaene'));
+	const fuerDich = $derived(
+		sichtbareKarten.filter(
+			(k) => k.id !== 'plaene' && (k.id !== 'umfragen' || data.umfragen.length > 0)
+		)
+	);
 	const mitNeuigkeiten = $derived(fuerDich.some((k) => k.id === 'neuigkeiten'));
 	const leer: Record<string, boolean> = $derived({
 		neuigkeiten: data.neuigkeiten.length === 0,
 		hubs: data.hubBeitraege.length === 0,
 		termine: data.termine.items.length === 0,
-		speiseplan: data.kantinen.length === 0
+		speiseplan: data.kantinen.length === 0,
+		umfragen: data.umfragen.length === 0
 	});
 	/** PC: leere Karten rechts ausblenden; sind alle leer, steht dort „So geht es los“ */
 	const seiteLeer = $derived(
@@ -42,14 +47,16 @@
 		neuigkeiten: 'Neues',
 		hubs: 'Hubs',
 		termine: 'Termine',
-		speiseplan: 'Kantine'
+		speiseplan: 'Kantine',
+		umfragen: 'Umfragen'
 	};
 	const SYMBOL: Record<string, string> = {
 		neuigkeiten: 'M4 5h12v14h-10a2 2 0 0 1 -2 -2zM16 9h4v8a2 2 0 0 1 -2 2M8 9h4M8 13h4',
 		hubs: 'M12 3l8 4.5v9l-8 4.5l-8 -4.5v-9zM12 12l8 -4.5M12 12v9M12 12l-8 -4.5',
 		termine:
 			'M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2zM16 3v4M8 3v4M4 11h16',
-		speiseplan: 'M4 3v8a2 2 0 0 0 2 2h2a2 2 0 0 0 2 -2v-8M7 3v18M17 3c-2 2 -3 5 -3 8h3v10'
+		speiseplan: 'M4 3v8a2 2 0 0 0 2 2h2a2 2 0 0 0 2 -2v-8M7 3v18M17 3c-2 2 -3 5 -3 8h3v10',
+		umfragen: 'M4 20h16M7 16v-4M12 16v-9M17 16v-6'
 	};
 	// Handy: ein Bereich zur Zeit
 	let gewaehlt = $state<string | null>(null);
@@ -452,6 +459,33 @@
 								{/each}
 							</ul>
 						{/if}
+					</section>
+				{:else if k.id === 'umfragen'}
+					<section
+						id="bereich-umfragen"
+						class="karte block seite"
+						class:aus={tab !== k.id}
+						aria-labelledby="karte-umfragen"
+					>
+						<div class="kartenkopf">
+							<h2 id="karte-umfragen">Offene Umfragen</h2>
+						</div>
+						<ul class="zeilen">
+							{#each data.umfragen as o (o.newsId)}
+								<li class="kurz">
+									<span class="hubname">{o.von}</span>
+									<a
+										class="dehnen titellink"
+										href="{resolve('/(app)/neuigkeiten/[id]', { id: o.newsId })}#umfrage-titel"
+									>
+										{o.titel}
+									</a>
+									<span class="meta">
+										{o.fragen === 1 ? '1 Frage' : `${o.fragen} Fragen`} · bis {formatDay(o.endsAt)}
+									</span>
+								</li>
+							{/each}
+						</ul>
 					</section>
 				{:else if k.id === 'termine'}
 					<section

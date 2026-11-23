@@ -231,6 +231,8 @@ export const unitMembers = pgTable(
 		mayWriteDocuments: boolean('may_write_documents').notNull().default(false),
 		/** Mediathek: Videos hochladen, bearbeiten, veröffentlichen (Kap. 8.15) */
 		mayWriteMedia: boolean('may_write_media').notNull().default(false),
+		/** Umfragen an Beiträgen anlegen und auswerten (Kap. 8.16) */
+		mayWriteSurveys: boolean('may_write_surveys').notNull().default(false),
 		/** Hub-Team: Aufgabe im Hub (z. B. „Technik und Aufbau“) */
 		hubTask: text('hub_task'),
 		createdAt: createdAt()
@@ -1826,4 +1828,87 @@ export const videoProgress = pgTable(
 		updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
 	},
 	(t) => [primaryKey({ columns: [t.personId, t.videoId] })]
+);
+
+// ---------------------------------------------------------------------------
+// Umfragen (Kap. 8.16)
+// ---------------------------------------------------------------------------
+
+/** Umfrage an einem Beitrag; höchstens eine je Beitrag. */
+export const surveys = pgTable('surveys', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	newsId: uuid('news_id')
+		.notNull()
+		.unique()
+		.references(() => news.id, { onDelete: 'cascade' }),
+	/** Anonym: Antworten ohne Person; nach der ersten Antwort gesperrt */
+	anonymous: boolean('anonymous').notNull().default(true),
+	/** Wer sieht das Ergebnis: alle Teilnehmenden oder nur das Team der Einheit */
+	results: text('results', { enum: ['alle', 'team'] })
+		.notNull()
+		.default('alle'),
+	/** Ab wann (bei „alle“): sofort, nach der eigenen Antwort, nach dem Ende */
+	resultsFrom: text('results_from', { enum: ['sofort', 'antwort', 'ende'] })
+		.notNull()
+		.default('antwort'),
+	endsAt: timestamp('ends_at', { withTimezone: true }).notNull(),
+	createdBy: uuid('created_by').references(() => persons.id, { onDelete: 'set null' }),
+	createdAt: createdAt(),
+	updatedAt: updatedAt()
+});
+
+export const surveyQuestions = pgTable(
+	'survey_questions',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		surveyId: uuid('survey_id')
+			.notNull()
+			.references(() => surveys.id, { onDelete: 'cascade' }),
+		position: integer('position').notNull(),
+		kind: text('kind', { enum: ['auswahl', 'termin', 'bewertung', 'freitext'] }).notNull(),
+		text: text('text').notNull(),
+		required: boolean('required').notNull().default(false),
+		multiple: boolean('multiple').notNull().default(false),
+		/** Antworten (Auswahl) bzw. Termine (Terminfindung) */
+		options: jsonb('options').$type<string[]>().notNull().default([])
+	},
+	(t) => [index('survey_questions_survey').on(t.surveyId, t.position)]
+);
+
+/** Wer teilgenommen hat (auch bei anonymen Umfragen, ohne Zuordnung zu Antworten). */
+export const surveyParticipations = pgTable(
+	'survey_participations',
+	{
+		surveyId: uuid('survey_id')
+			.notNull()
+			.references(() => surveys.id, { onDelete: 'cascade' }),
+		personId: uuid('person_id')
+			.notNull()
+			.references(() => persons.id, { onDelete: 'cascade' })
+	},
+	(t) => [primaryKey({ columns: [t.surveyId, t.personId] })]
+);
+
+/**
+ * Antworten. Anonym: ohne Person und ohne Zeitstempel, damit sie sich nicht
+ * über die Teilnahme zuordnen lassen. `response` fasst die Antworten einer
+ * Abgabe zusammen (Zufallswert).
+ */
+export const surveyAnswers = pgTable(
+	'survey_answers',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		surveyId: uuid('survey_id')
+			.notNull()
+			.references(() => surveys.id, { onDelete: 'cascade' }),
+		questionId: uuid('question_id')
+			.notNull()
+			.references(() => surveyQuestions.id, { onDelete: 'cascade' }),
+		response: uuid('response').notNull(),
+		/** nur bei namentlichen Umfragen */
+		personId: uuid('person_id').references(() => persons.id, { onDelete: 'cascade' }),
+		/** Auswahl: Indizes; Termin: je Termin 'ja'|'vielleicht'|'nein'; Bewertung: 1–5; Freitext: Text */
+		value: jsonb('value').notNull()
+	},
+	(t) => [index('survey_answers_question').on(t.questionId)]
 );

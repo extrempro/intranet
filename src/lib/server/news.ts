@@ -413,6 +413,27 @@ export async function getNews(p: Principal, id: string) {
 	return { ...item, bodyHtml: row.bodyHtml, attachments: await attachmentsOf(id) };
 }
 
+/** Welche der Beiträge die Person sehen darf und schon veröffentlicht sind (z. B. Umfragen auf der Startseite). */
+export async function visibleNewsIds(p: Principal, ids: string[]): Promise<Set<string>> {
+	if (!ids.length) return new Set();
+	const now = new Date();
+	const writable = [...newsUnitIds(p)];
+	const rows = await scoped(p, (tx) =>
+		tx
+			.select({ id: news.id })
+			.from(news)
+			.where(
+				and(
+					inArray(news.id, ids),
+					eq(news.channel, 'news'),
+					lte(news.publishAt, now),
+					readerVisible(p, writable, isEditorial(p), now)
+				)
+			)
+	);
+	return new Set(rows.map((r) => r.id));
+}
+
 /** Absender, die in der sichtbaren Liste vorkommen (Filter „Von: …“). */
 export async function senders(p: Principal, opts: ListOptions = {}) {
 	const now = new Date();

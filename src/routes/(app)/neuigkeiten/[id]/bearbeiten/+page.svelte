@@ -20,6 +20,7 @@
 				mandanten={data.mandanten}
 				fehler={form?.fehler ?? {}}
 				pinKonflikt={form?.pinKonflikt ?? null}
+				umfrageGesperrt={data.umfrageGesperrt}
 				regeln={data.regeln}
 				knopf="Speichern"
 			/>

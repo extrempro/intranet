@@ -4,6 +4,7 @@
 	import Anhaenge from './Anhaenge.svelte';
 	import Editor from './Editor.svelte';
 	import Info from './Info.svelte';
+	import UmfrageEditor from './UmfrageEditor.svelte';
 	import { berlinToDate, endOfBerlinDay, lifecycle } from '#lib/news.ts';
 
 	interface Einheit {
@@ -13,6 +14,8 @@
 		isCentral: boolean;
 		mayUrgent: boolean;
 		isHub: boolean;
+		/** Darf an Beiträgen dieser Einheit Umfragen anlegen (Recht und Regel an) */
+		mayUmfrage?: boolean;
 	}
 	interface Werte {
 		unitId: string;
@@ -29,6 +32,8 @@
 		tenantIds: string[];
 		replacePin: boolean;
 		attachments: { id: string; name: string; size: number }[];
+		/** Umfrage als JSON (Kap. 8.16), leer = keine */
+		umfrage?: string;
 	}
 
 	let {
@@ -39,17 +44,20 @@
 		pinKonflikt = null,
 		regeln,
 		knopf,
-		zusatz
+		zusatz,
+		umfrageGesperrt = false
 	}: {
 		werte: Werte;
 		einheiten: Einheit[];
 		mandanten: { id: string; name: string }[];
 		fehler?: Record<string, string>;
 		pinKonflikt?: { id: string; title: string } | null;
-		regeln: { pinMaxDays: number; urgentMaxDays: number };
+		regeln: { pinMaxDays: number; urgentMaxDays: number; surveys?: boolean };
 		knopf: string;
 		/** Weitere Knöpfe neben „Speichern“, z. B. Entwurf */
 		zusatz?: Snippet;
+		/** Umfrage hat schon Antworten */
+		umfrageGesperrt?: boolean;
 	} = $props();
 
 	// Startwerte aus den Props, danach im Formular änderbar (tief reaktiv).
@@ -65,6 +73,7 @@
 			urgentUntil: (v.urgent && v.urgentUntil && berlinToDate(v.urgentUntil)) || null
 		})
 	);
+	const hatUmfrage = $derived(!!v.umfrage && v.umfrage !== 'null');
 	const fid = (k: string) => (fehler[k] ? `f-${k}` : undefined);
 </script>
 
@@ -275,6 +284,15 @@
 			</div>
 		{/if}
 	</fieldset>
+{/if}
+
+{#if einheit?.mayUmfrage && (regeln.surveys || hatUmfrage)}
+	<UmfrageEditor
+		json={v.umfrage ?? ''}
+		einheit={einheit?.name ?? ''}
+		gesperrt={umfrageGesperrt}
+		fehler={fehler.umfrage}
+	/>
 {/if}
 
 <section class="karte ablauf" aria-label="So läuft der Beitrag ab">

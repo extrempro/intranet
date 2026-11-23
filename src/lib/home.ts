@@ -18,7 +18,8 @@ export const HOME_CARDS: CardDefinition[] = [
 	{ id: 'termine', label: 'Heute und morgen' },
 	{ id: 'hubs', label: 'Neu in deinen Hubs' },
 	{ id: 'speiseplan', label: 'Speiseplan' },
-	{ id: 'plaene', label: 'Aktuelle Pläne' }
+	{ id: 'plaene', label: 'Aktuelle Pläne' },
+	{ id: 'umfragen', label: 'Offene Umfragen' }
 ];
 
 export const FAVORITES_MAX = 8;

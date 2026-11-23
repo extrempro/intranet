@@ -7,6 +7,7 @@
 	import Reaktionen from '#lib/components/Reaktionen.svelte';
 	import { formatDay, formatWhen } from '#lib/news.ts';
 	import MitFrage from '#lib/components/MitFrage.svelte';
+	import Umfrage from '#lib/components/Umfrage.svelte';
 
 	let { data, form } = $props();
 	const b = $derived(data.beitrag);
@@ -94,6 +95,14 @@
 					{/each}
 				</ul>
 			</section>
+		{/if}
+		{#if data.umfrage && !b.planned}
+			<Umfrage
+				u={data.umfrage}
+				newsId={b.id}
+				fehlend={form && 'umfrageFehlend' in form ? (form.umfrageFehlend as string[]) : []}
+				gesendet={!!(form && 'umfrageGesendet' in form)}
+			/>
 		{/if}
 		{#if b.expiresAt}<p class="hinweis">Sichtbar bis {formatDay(b.expiresAt)}</p>{/if}
 		{#if !b.planned}

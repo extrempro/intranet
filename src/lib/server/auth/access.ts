@@ -28,6 +28,8 @@ export interface Membership {
 	mayWriteDocuments?: boolean;
 	/** Mediathek der Einheit pflegen (Kap. 8.15) */
 	mayWriteMedia?: boolean;
+	/** Umfragen an Beiträgen der Einheit (Kap. 8.16) */
+	mayWriteSurveys?: boolean;
 }
 
 export interface Principal {
@@ -66,7 +68,8 @@ export async function loadPrincipal(person: { id: string; tenantId: string }): P
 				mayWriteEvents: unitMembers.mayWriteEvents,
 				mayWriteBehindScenes: unitMembers.mayWriteBehindScenes,
 				mayWriteDocuments: unitMembers.mayWriteDocuments,
-				mayWriteMedia: unitMembers.mayWriteMedia
+				mayWriteMedia: unitMembers.mayWriteMedia,
+				mayWriteSurveys: unitMembers.mayWriteSurveys
 			})
 			.from(unitMembers)
 			.where(eq(unitMembers.personId, person.id)),
@@ -148,7 +151,12 @@ export function canManageUnit(
 }
 
 type WriteRight =
-	'mayWriteNews' | 'mayWriteFaqs' | 'mayWriteEvents' | 'mayWriteBehindScenes' | 'mayWriteMedia';
+	| 'mayWriteNews'
+	| 'mayWriteFaqs'
+	| 'mayWriteEvents'
+	| 'mayWriteBehindScenes'
+	| 'mayWriteMedia'
+	| 'mayWriteSurveys';
 
 function hasDelegated(p: Principal, unitId: string, right: WriteRight): boolean {
 	return p.memberships.some((m) => m.unitId === unitId && m[right]);
@@ -182,6 +190,24 @@ export function canWriteMedia(p: Principal, unit: UnitRef): boolean {
 		hasUnitRole(p, 'abteilungsverwaltung', unit.id) ||
 		hasUnitRole(p, 'hub_team', unit.id)
 	);
+}
+
+/**
+ * Darf an Beiträgen der Einheit Umfragen anlegen, ändern, beenden und alle
+ * Ergebnisse sehen (Kap. 8.16). Ob Umfragen eingeschaltet sind, prüft der Aufrufer.
+ */
+export function canWriteSurveys(p: Principal, unit: UnitRef): boolean {
+	if (!canSeeUnit(p, unit)) return false;
+	return (
+		hasDelegated(p, unit.id, 'mayWriteSurveys') ||
+		hasUnitRole(p, 'abteilungsverwaltung', unit.id) ||
+		hasUnitRole(p, 'hub_team', unit.id)
+	);
+}
+
+/** Einheiten, für die die Person Umfragen anlegen darf (IDs, ohne Sichtprüfung). */
+export function surveyUnitIds(p: Principal): Set<string> {
+	return writeUnitIds(p, 'mayWriteSurveys');
 }
 
 /** Einheiten, für die die Person die Mediathek pflegen darf (IDs, ohne Sichtprüfung). */

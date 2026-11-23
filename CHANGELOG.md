@@ -10,6 +10,13 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.36.0 · 23.11.2026 · Umfragen
+
+- An Beiträgen in Neuigkeiten und Hubs kann eine Umfrage hängen: Auswahl (auch mehrere Antworten), Terminfindung, Bewertung mit Sternen oder Freitext, bis zu 15 Fragen mit Pflichtfragen.
+- Anonym oder mit Namen, je Umfrage wählbar. Unter „Wer sieht was?“ steht klar, wer deine Antworten, das Ergebnis und die Freitexte sieht.
+- Offene Umfragen stehen auf der Startseite.
+- Anlegen darf, wer das neue Recht „Umfragen“ hat. Die Verwaltung schaltet Umfragen unter „Regeln für Inhalte“ ein.
+
 ## 0.35.3 · 23.11.2026 · Begrüßung passend zur Uhrzeit
 
 - Die Startseite begrüßt dich morgens wieder mit „Guten Morgen“ statt „Guten Abend“.

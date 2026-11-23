@@ -15,7 +15,8 @@
 			['termine', 'Termine', 'mayWriteEvents'],
 			['kulissen', 'Hinter den Kulissen', 'mayWriteBehindScenes'],
 			['dokumente', 'Dokumente', 'mayWriteDocuments'],
-			['mediathek', 'Mediathek', 'mayWriteMedia']
+			['mediathek', 'Mediathek', 'mayWriteMedia'],
+			['umfragen', 'Umfragen', 'mayWriteSurveys']
 		].filter(([k]) => (hub ? k !== 'kulissen' : k !== 'dokumente')) as [
 			string,
 			string,

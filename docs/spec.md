@@ -160,7 +160,7 @@ Eine eigene Rolle „Autor“ gibt es nicht. Schreibrechte werden je Person dele
 
 ### 5.2 Delegierte Schreibrechte
 
-- Abteilungsverwaltung bzw. Hub-Team vergibt je Person einzeln: **Neuigkeiten**, **FAQs**, **Termine**, **Hinter den Kulissen**, **Mediathek** (Hubs: Neuigkeiten, FAQs, Termine, Dokumente, Mediathek).
+- Abteilungsverwaltung bzw. Hub-Team vergibt je Person einzeln: **Neuigkeiten**, **FAQs**, **Termine**, **Hinter den Kulissen**, **Mediathek**, **Umfragen** (Hubs: Neuigkeiten, FAQs, Termine, Dokumente, Mediathek, Umfragen).
 - Höchstens **10 Personen** mit mindestens einem Schreibrecht je Einheit (einstellbar). Abteilungsverwaltung und Hub-Team zählen nicht mit.
 - Als Absender erscheint immer die Einheit, nie die Person.
 
@@ -392,6 +392,20 @@ Videos wie Schulungen und Anleitungen, für alle Beschäftigten abrufbar, auch m
 - **„Weiter, wo du warst“** (Fortschritt am Konto): je Person und Video nur die Position in Sekunden und das Datum der letzten Änderung; kein Verlauf, nichts im Protokoll. Lesbar nur für die Person selbst (Row-Level Security), keine Ansicht für Admins, Leitungen oder Hub-Teams, kein Export, keine Zahlen. Eintrag wird gelöscht, sobald das Video zu Ende gesehen ist, sonst nach 90 Tagen. Im Konto: Schalter „Fortschritt auf meinem Konto speichern“ (Standard an) und „Meinen Fortschritt löschen“; ist der Schalter aus, bleibt der Fortschritt nur im Browser (Ausschalten löscht den Stand am Konto). Angefangene Videos stehen in der Mediathek unter „Weiter ansehen“. Mitbestimmung nach § 87 Abs. 1 Nr. 6 BetrVG: gehört in die Unterlage für den Betriebsrat.
 - **Obergrenze** für den Speicher der Mediathek in der Verwaltung (Kap. 14); ist sie erreicht, sind keine neuen Uploads möglich; ab 90 % werden System-Admins benachrichtigt.
 
+### 8.16 Umfragen
+
+Umfragen hängen an einem Beitrag (Neuigkeiten und Hubs) und stehen im Beitrag unter dem Text.
+
+- **Einschalten:** Verwaltung → Regeln für Inhalte → Umfragen, **Standard aus**. Ausgeschaltet lassen sich keine neuen Umfragen anlegen; vorhandene laufen weiter und lassen sich bearbeiten und beenden.
+- **Recht:** eigenes Schreibrecht „Umfragen“ je Person und Einheit (Kap. 5.2); Abteilungsverwaltung und Hub-Team haben es immer. Wer es hat, gehört zum „Team von <Einheit>“. Das Recht „Neuigkeiten“ allein reicht nicht.
+- **Fragebogen:** 1 bis 15 Fragen, je Frage eine Art und „Pflichtfrage“ ja/nein: **Auswahl** (2–10 Antworten, wahlweise mehrere wählbar), **Terminfindung** (2–10 Termine, je Termin „Passt“, „Vielleicht“, „Passt nicht“), **Bewertung** (1–5 Sterne), **Freitext** (bis 500 Zeichen). Ein Knopf sendet alle Antworten; fehlende Pflichtfragen werden markiert.
+- **Anonym** wählbar je Umfrage, **Standard an**. Anonyme Antworten werden ohne Person und ohne Zeitpunkt gespeichert, die Teilnahme getrennt davon (nur, damit niemand doppelt abstimmt). Anonyme Antworten lassen sich nach dem Senden nicht mehr ändern; namentliche bis zum Ende.
+- **Wer sieht das Ergebnis:** „Alle Teilnehmenden“ (ab sofort, nach der eigenen Antwort oder erst nach dem Ende) oder „Nur das Team von <Einheit>“. Freitexte sieht immer nur das Team, bei anonymen Umfragen ohne Namen. Verwaltung und zentrale Redaktion sehen Ergebnisse nur, wenn sie zum Team gehören.
+- **„Wer sieht was?“** steht im Editor und an der Umfrage: deine Antworten, Ergebnis, Freitexte, Teilnahme, dazu die Namen im Team.
+- **Nach der ersten Antwort** sind Fragen, Reihenfolge und „Anonym“ gesperrt; Ende und Sichtbarkeit bleiben änderbar. Entfernen geht dann nicht mehr, nur „Jetzt beenden“.
+- **Auswertung** für das Team: Zahlen und Balken, Durchschnitt bei Bewertungen, Freitexte, Export als CSV (bei anonymen Umfragen ohne Namen und in zufälliger Reihenfolge). Export und Änderungen stehen im Protokoll.
+- **Startseite:** Karte „Offene Umfragen“ mit laufenden Umfragen, an denen du noch nicht teilgenommen hast; nur sichtbar, wenn es welche gibt.
+
 ## 9. Nachrichten
 
 - **Nur Gespräche zu Vorgängen**: Hub-Anträge, Anzeigen am Schwarzen Brett (Moderation und Interessierte), Rückmeldungen. Keine freien Nachrichten zwischen Personen (dafür ist Teams da).
@@ -481,7 +495,7 @@ Nur Mandanten-Admins (eigener Mandant) und System-Admins.
 | Standorte            | Standorte, Betreiber-Konten                                                                                                                                                                                                                                       |
 | Benutzer und Rollen  | Benutzerliste, lokale Konten anlegen/deaktivieren, Rollen mit Geltungsbereich, Rollen aus Entra-Gruppen, Konten für andere ausblenden (Personen, Suche, Profil, Teams, Zuständigkeiten; Anmelden und Rechte bleiben; System- und Mandanten-Admins, protokolliert) |
 | Anmeldung            | Entra-Verbindung, Zugangsgruppe, Abgleich, Graph-Berechtigungen; Passwortrichtlinie (4.2)                                                                                                                                                                         |
-| Regeln für Inhalte   | Anheften, Dringende Meldungen, Schreibrechte, Kalender, Zuständigkeiten, Hinter den Kulissen, Schwarzes Brett, Hub-Anträge, Reaktionen                                                                                                                            |
+| Regeln für Inhalte   | Anheften, Dringende Meldungen, Schreibrechte, Kalender, Zuständigkeiten, Hinter den Kulissen, Schwarzes Brett, Hub-Anträge, Reaktionen, Umfragen                                                                                                                  |
 | Benachrichtigungen   | Web Push, E-Mail (SMTP), Teams (Meldungen, App-Paket, Aussehen); Status und Testnachricht                                                                                                                                                                         |
 | Rückmeldungen        | Eingegangene Fehler und Ideen bearbeiten, beantworten                                                                                                                                                                                                             |
 | Speicher             | Speicherorte (lokal, S3-kompatibel), Zuordnung je Inhaltsart, Umzug vorhandener Dateien, Obergrenze der Mediathek (nur System-Admins, siehe 18)                                                                                                                   |
