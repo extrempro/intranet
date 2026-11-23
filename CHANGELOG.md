@@ -10,6 +10,10 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.35.3 · 23.11.2026 · Begrüßung passend zur Uhrzeit
+
+- Die Startseite begrüßt dich morgens wieder mit „Guten Morgen“ statt „Guten Abend“.
+
 ## 0.35.2 · 23.11.2026 · Teams: Hinweis statt Intranet unter „Aktivität“
 
 - Klickst du in Teams unter „Aktivität“ auf eine Meldung aus dem Intranet, siehst du dort nur noch den Hinweis auf die neue Benachrichtigung.

@@ -51,6 +51,21 @@ export function moveItem<T>(list: readonly T[], index: number, delta: number): T
 }
 
 /** Begrüßung nach Tageszeit. */
+/**
+ * Stunde (0–23) in Berlin. Über formatToParts, weil `format` je nach
+ * Laufzeit „08 Uhr“ liefert und Number() daraus NaN macht.
+ */
+export function berlinHour(now: Date): number {
+	const h = new Intl.DateTimeFormat('de-DE', {
+		hour: 'numeric',
+		hourCycle: 'h23',
+		timeZone: 'Europe/Berlin'
+	})
+		.formatToParts(now)
+		.find((p) => p.type === 'hour')?.value;
+	return Number(h ?? 12);
+}
+
 export function greeting(hour: number): string {
 	if (hour < 11) return 'Guten Morgen';
 	if (hour < 18) return 'Hallo';

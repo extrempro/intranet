@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
-import { greeting, HOME_CARDS, resolveLayout } from '#lib/home.ts';
+import { berlinHour, greeting, HOME_CARDS, resolveLayout } from '#lib/home.ts';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import { db } from '#lib/server/db/index.ts';
 import { listNews, urgentForBanner } from '#lib/server/news.ts';
@@ -55,11 +55,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		.from(persons)
 		.where(eq(persons.id, principal.personId));
 	const now = new Date();
-	const hour = Number(
-		new Intl.DateTimeFormat('de-DE', { hour: 'numeric', hourCycle: 'h23', timeZone: ZONE }).format(
-			now
-		)
-	);
+	const hour = berlinHour(now);
 	return {
 		gruss: `${greeting(hour)}, ${vorname(locals.person!.displayName, ich?.givenName)}`,
 		datum: new Intl.DateTimeFormat('de-DE', {

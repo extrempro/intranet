@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { greeting, moveItem, resolveLayout } from './home';
+import { berlinHour, greeting, moveItem, resolveLayout } from './home';
 
 const cards = [
 	{ id: 'neuigkeiten', label: 'Neuigkeiten' },
@@ -44,6 +44,15 @@ describe('moveItem', () => {
 	it('ändert am Rand nichts', () => {
 		expect(moveItem(['a', 'b'], 0, -1)).toEqual(['a', 'b']);
 		expect(moveItem(['a', 'b'], 1, 1)).toEqual(['a', 'b']);
+	});
+});
+
+describe('berlinHour', () => {
+	it('Stunde in Berlin als Zahl, auch im Winter und Sommer', () => {
+		expect(berlinHour(new Date('2026-11-23T07:00:00Z'))).toBe(8);
+		expect(berlinHour(new Date('2026-07-01T05:30:00Z'))).toBe(7);
+		expect(berlinHour(new Date('2026-11-23T23:10:00Z'))).toBe(0);
+		expect(greeting(berlinHour(new Date('2026-11-23T07:00:00Z')))).toBe('Guten Morgen');
 	});
 });
 
