@@ -1,5 +1,5 @@
 /**
- * Umfragen an Beiträgen (Kap. 8.18): Eingaben aus dem Editor und Antworten
+ * Umfragen an Beiträgen (Kap. 8.16): Eingaben aus dem Editor und Antworten
  * prüfen. Rein und getestet; gespeichert wird in server/umfragen.ts.
  */
 

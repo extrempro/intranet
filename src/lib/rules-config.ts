@@ -22,7 +22,7 @@ export interface ContentRules {
 	boardMaxActive: number;
 	/** Hub-Anträge: ohne Antwort auf eine Rückfrage geschlossen nach … Tagen */
 	hubAnswerDays: number;
-	/** Umfragen an Beiträgen (Kap. 8.18): eingeschaltet? Recht „Umfragen“ je Einheit */
+	/** Umfragen an Beiträgen (Kap. 8.16): eingeschaltet? Recht „Umfragen“ je Einheit */
 	surveys: boolean;
 }
 

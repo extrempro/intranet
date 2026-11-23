@@ -10,6 +10,8 @@ import { canteenCards } from '#lib/server/canteen.ts';
 import { latestPlans } from '#lib/server/plans.ts';
 import { persons, tenants } from '#lib/server/db/schema.ts';
 import { vorname } from '#lib/vorname.ts';
+import { offeneUmfragen } from '#lib/server/umfragen.ts';
+import { getContentRules } from '#lib/server/rules.ts';
 import {
 	getNewsSeen,
 	getPreferences,
@@ -34,7 +36,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 		kantinen,
 		termine,
 		hubBeitraege,
-		neuSeit
+		neuSeit,
+		umfragen,
+		regeln
 	] = await Promise.all([
 		getPreferences(principal.personId),
 		listFavorites(principal.personId),
@@ -48,7 +52,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 		canteenCards(principal.personId),
 		todayAndTomorrow(principal),
 		subscribedHubIds(principal).then((ids) => listNews(principal, { unitIds: ids, limit: 4 })),
-		getNewsSeen(principal.personId)
+		getNewsSeen(principal.personId),
+		offeneUmfragen(principal),
+		getContentRules()
 	]);
 	const [ich] = await db
 		.select({ givenName: persons.givenName })
@@ -71,7 +77,12 @@ export const load: PageServerLoad = async ({ locals }) => {
 			href: f.href,
 			icon: f.icon
 		})),
-		karten: resolveLayout(HOME_CARDS, prefs.homeLayout, tenant?.homeDefault),
+		// Karte „Offene Umfragen“ nur, wenn Umfragen eingeschaltet sind
+		karten: resolveLayout(
+			HOME_CARDS.filter((c) => c.id !== 'umfragen' || regeln.surveys),
+			prefs.homeLayout,
+			tenant?.homeDefault
+		),
 		eigeneEinstellung: prefs.homeLayout !== null,
 		dringend,
 		neuigkeiten: neuigkeiten.filter((n) => !n.planned),
@@ -80,7 +91,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 		termine,
 		hubBeitraege: hubBeitraege.filter((n) => !n.planned),
 		/** Letzter Besuch der Neuigkeiten (für „neu“) */
-		neuSeit
+		neuSeit,
+		umfragen
 	};
 };
 

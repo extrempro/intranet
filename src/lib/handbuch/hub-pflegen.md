@@ -22,7 +22,7 @@ Das Titelbild (breit, 4:1) liegt hinter dem Kopf der Hub-Seite, das Symbol (quad
 ## Hub-Team und Schreibrechte
 
 - Im **Hub-Team** pflegen Personen den Hub gemeinsam und dürfen alles. Jede bekommt eine kurze **Aufgabe im Hub**. Das Hub-Team holt selbst weitere Personen dazu; mindestens eine Person bleibt im Hub-Team.
-- Unter **Wer darf schreiben?** gibst du weiteren Personen einzelne Rechte: Beiträge, FAQs, Termine, Dokumente.
+- Unter **Wer darf schreiben?** gibst du weiteren Personen einzelne Rechte: Beiträge, FAQs, Termine, Dokumente, Umfragen.
 - Bei Hubs für alle Mandanten können Personen aller Mandanten mitmachen.
 
 ## Ansprechpersonen und Schnellzugriff

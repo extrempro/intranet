@@ -1,5 +1,5 @@
 /**
- * Umfragen an Beiträgen (Kap. 8.18).
+ * Umfragen an Beiträgen (Kap. 8.16).
  *
  * Sichtbar ist eine Umfrage für alle, die den Beitrag sehen (getNews prüft
  * das mit RLS). Anlegen, ändern, beenden und alle Ergebnisse sehen darf das

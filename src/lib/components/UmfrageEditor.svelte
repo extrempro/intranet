@@ -1,6 +1,6 @@
 <script lang="ts">
 	/**
-	 * Umfrage im Beitragsformular (Kap. 8.18): Fragen anlegen, sortieren,
+	 * Umfrage im Beitragsformular (Kap. 8.16): Fragen anlegen, sortieren,
 	 * Einstellungen für die ganze Umfrage und „Wer sieht was?“. Der Wert geht
 	 * als JSON im Feld `umfrage` mit; nach der ersten Antwort sind Fragen und
 	 * „Anonym“ gesperrt.

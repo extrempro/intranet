@@ -32,7 +32,7 @@
 		tenantIds: string[];
 		replacePin: boolean;
 		attachments: { id: string; name: string; size: number }[];
-		/** Umfrage als JSON (Kap. 8.18), leer = keine */
+		/** Umfrage als JSON (Kap. 8.16), leer = keine */
 		umfrage?: string;
 	}
 

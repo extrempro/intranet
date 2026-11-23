@@ -41,3 +41,7 @@ from persons;
 insert into sessions (id, person_id, auth_method, expires_at)
 select encode(sha256(convert_to('e2e-' || split_part(email, '@', 1), 'UTF8')), 'hex'), id, 'local', now() + interval '1 day'
 from persons;
+
+-- Umfragen eingeschaltet (in der Verwaltung voreingestellt aus)
+insert into settings (key, value) values ('regeln.inhalte', '{"surveys": true}')
+on conflict (key) do update set value = settings.value || excluded.value;

@@ -231,7 +231,7 @@ export const unitMembers = pgTable(
 		mayWriteDocuments: boolean('may_write_documents').notNull().default(false),
 		/** Mediathek: Videos hochladen, bearbeiten, veröffentlichen (Kap. 8.15) */
 		mayWriteMedia: boolean('may_write_media').notNull().default(false),
-		/** Umfragen an Beiträgen anlegen und auswerten (Kap. 8.18) */
+		/** Umfragen an Beiträgen anlegen und auswerten (Kap. 8.16) */
 		mayWriteSurveys: boolean('may_write_surveys').notNull().default(false),
 		/** Hub-Team: Aufgabe im Hub (z. B. „Technik und Aufbau“) */
 		hubTask: text('hub_task'),
@@ -1831,7 +1831,7 @@ export const videoProgress = pgTable(
 );
 
 // ---------------------------------------------------------------------------
-// Umfragen (Kap. 8.18)
+// Umfragen (Kap. 8.16)
 // ---------------------------------------------------------------------------
 
 /** Umfrage an einem Beitrag; höchstens eine je Beitrag. */

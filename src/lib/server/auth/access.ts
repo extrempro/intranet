@@ -28,7 +28,7 @@ export interface Membership {
 	mayWriteDocuments?: boolean;
 	/** Mediathek der Einheit pflegen (Kap. 8.15) */
 	mayWriteMedia?: boolean;
-	/** Umfragen an Beiträgen der Einheit (Kap. 8.18) */
+	/** Umfragen an Beiträgen der Einheit (Kap. 8.16) */
 	mayWriteSurveys?: boolean;
 }
 
@@ -194,7 +194,7 @@ export function canWriteMedia(p: Principal, unit: UnitRef): boolean {
 
 /**
  * Darf an Beiträgen der Einheit Umfragen anlegen, ändern, beenden und alle
- * Ergebnisse sehen (Kap. 8.18). Ob Umfragen eingeschaltet sind, prüft der Aufrufer.
+ * Ergebnisse sehen (Kap. 8.16). Ob Umfragen eingeschaltet sind, prüft der Aufrufer.
  */
 export function canWriteSurveys(p: Principal, unit: UnitRef): boolean {
 	if (!canSeeUnit(p, unit)) return false;

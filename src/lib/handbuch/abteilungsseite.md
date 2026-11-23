@@ -20,7 +20,7 @@ Nach 12 Monaten erinnert dich das Intranet, alles zu prüfen. Bestätige mit **�
 
 ## Team und Schreibrechte
 
-Personen fügst du per E-Mail-Adresse hinzu. Schreibrechte vergibst du je Person: Neuigkeiten, FAQs, Termine, Hinter den Kulissen. Höchstens 10 Personen mit Schreibrecht; die Abteilungsverwaltung zählt nicht mit. Die Rolle Abteilungsverwaltung selbst vergibt die Verwaltung.
+Personen fügst du per E-Mail-Adresse hinzu. Schreibrechte vergibst du je Person: Neuigkeiten, FAQs, Termine, Hinter den Kulissen, Umfragen. Höchstens 10 Personen mit Schreibrecht; die Abteilungsverwaltung zählt nicht mit. Die Rolle Abteilungsverwaltung selbst vergibt die Verwaltung.
 
 ## Hinter den Kulissen
 
