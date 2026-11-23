@@ -93,6 +93,15 @@
 		};
 </script>
 
+<!-- Absender wie in der Übersicht der Neuigkeiten: Kürzel, Einheit, Art und Datum -->
+{#snippet absender(s: { name: string; label: string }, wann: Date)}
+	<span class="meta absender">
+		<span class="kuerzel" aria-hidden="true">{s.name.length <= 3 ? s.name : s.name.charAt(0)}</span>
+		<strong>{s.name}</strong>
+		<span>{s.label} · {formatDay(wann)}</span>
+	</span>
+{/snippet}
+
 <svelte:head><title>Start · Intranet</title></svelte:head>
 
 <div class="start">
@@ -394,9 +403,7 @@
 												></span><span class="sr-only">Neu: </span>{/if}{aufmacher.title}
 										</a>
 									</h3>
-									<span class="meta">
-										{aufmacher.sender.name} · {formatDay(aufmacher.publishAt)}
-									</span>
+									{@render absender(aufmacher.sender, aufmacher.publishAt)}
 									{#if aufmacher.excerpt}<p class="auszug">{aufmacher.excerpt}</p>{/if}
 								</div>
 							</article>
@@ -419,7 +426,7 @@
 													{#if ungelesen(n.publishAt)}<span class="punkt" aria-hidden="true"
 														></span><span class="sr-only">Neu: </span>{/if}{n.title}
 												</a>
-												<span class="meta">{n.sender.name} · {formatDay(n.publishAt)}</span>
+												{@render absender(n.sender, n.publishAt)}
 											</span>
 										</li>
 									{/each}
@@ -872,6 +879,28 @@
 	.meta {
 		font-size: 13px;
 		color: var(--mu);
+	}
+	.absender {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 2px 6px;
+	}
+	.absender strong {
+		color: var(--tx);
+	}
+	.kuerzel {
+		flex: none;
+		width: 20px;
+		height: 20px;
+		border-radius: 6px;
+		background: var(--fill);
+		color: #fff;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: 700;
+		font-size: 10px;
 	}
 	.termin {
 		display: flex;
