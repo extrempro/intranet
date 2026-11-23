@@ -128,7 +128,7 @@ Als Faustregel dauern Umwandlung und Untertitel mit 2 Kernen zusammen etwa doppe
 1. Verwaltung → Benachrichtigungen → Teams: **Aussehen** festlegen, Teams-Meldungen einschalten, **App-Paket** herunterladen.
 2. Im **Teams Admin Center** unter „Apps verwalten“ hochladen und per **Setup-Richtlinie** für die Intranet-Gruppe installieren.
 3. Die **App-ID** (steht unter „Aussehen der Teams-App“) als `TEAMS_APP_ID` in die `.env` eintragen. So bleibt sie auch nach einer Neuinstallation mit neuer Datenbank gleich (eine Wiederherstellung aus der Sicherung behält sie ohnehin); sonst meldet Teams „App nicht gefunden“ und die App muss neu verteilt werden. Nach einer neuen Datenbank beginnt die Paketversion wieder bei 1.0.1: vor dem Aktualisieren im Teams Admin Center so oft „Neue Version erzeugen“, bis sie über der hochgeladenen liegt.
-4. „Testmeldung an mich“ senden und in Teams auf Desktop, im Browser, auf iPhone und Android prüfen: Die Meldung erscheint unter „Aktivität“, ein Klick öffnet das Intranet.
+4. „Testmeldung an mich“ senden und in Teams auf Desktop, im Browser, auf iPhone und Android prüfen: Die Meldung erscheint unter „Aktivität“, ein Klick zeigt den Hinweis auf die neue Benachrichtigung, „In der Intranet-App öffnen“ wechselt in die App.
 
 ## 9. Vor dem Start
 

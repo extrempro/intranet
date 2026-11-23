@@ -10,6 +10,11 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.35.2 · 23.11.2026 · Teams: Hinweis statt Intranet unter „Aktivität“
+
+- Klickst du in Teams unter „Aktivität“ auf eine Meldung aus dem Intranet, siehst du dort nur noch den Hinweis auf die neue Benachrichtigung.
+- Mit „In der Intranet-App öffnen“ wechselst du in die Intranet-App und landest direkt beim Beitrag.
+
 ## 0.35.1 · 23.11.2026 · Begrüßung mit Vornamen
 
 - Die Startseite und die E-Mails sprechen dich mit deinem Vornamen an, auch wenn dein Name als „Nachname, Vorname“ hinterlegt ist. Bei Anmeldung über Microsoft wird der Vorname direkt übernommen.

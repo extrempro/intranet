@@ -422,7 +422,7 @@ Arbeitsliste (keine Einstellungen). Sichtbar mit der Rolle Redaktion; mit der Ro
 - **Glocke** im Intranet.
 - **Web Push** (VAPID). Auf dem iPhone erst nach „Zum Home-Bildschirm“.
 - **E-Mail** per SMTP (STARTTLS, TLS oder interner Relay) mit in der Verwaltung festgelegtem Server, Absender (Anzeigename, optional „Antworten an“) und Zugangsdaten; das Passwort wird verschlüsselt gespeichert.
-- **Teams**: Das Intranet läuft als App in Teams (persönliche App, per Setup-Richtlinie verteilt; Anmeldung siehe 4.1). Benachrichtigungen erscheinen im Aktivitätsfeed (Graph, Anwendungsberechtigung TeamsActivity.Send) mit Titel, Absender und Link; ein Klick öffnet den Beitrag in der App. In Teams hat das Intranet keine eigene Kopfzeile (Teams zeigt App-Name und Symbol); Push gibt es dort nicht. Name, Beschreibung, Herausgeber, Akzentfarbe und Symbol der App sind in der Verwaltung einstellbar; Standard ist das Branding des Hauptmandanten.
+- **Teams**: Das Intranet läuft als App in Teams (persönliche App, per Setup-Richtlinie verteilt; Anmeldung siehe 4.1). Benachrichtigungen erscheinen im Aktivitätsfeed (Graph, Anwendungsberechtigung TeamsActivity.Send) mit Titel, Absender und Link. Ein Klick zeigt im Aktivitätsbereich nur den Hinweis „Es gibt eine neue Benachrichtigung im Intranet“ mit „In der Intranet-App öffnen“ (und „Im Browser öffnen“); erst der Knopf wechselt in die App und öffnet den Beitrag. So läuft das Intranet nicht im Aktivitätsbereich. In Teams hat das Intranet keine eigene Kopfzeile (Teams zeigt App-Name und Symbol); Push gibt es dort nicht. Name, Beschreibung, Herausgeber, Akzentfarbe und Symbol der App sind in der Verwaltung einstellbar; Standard ist das Branding des Hauptmandanten.
 
 ### 11.2 Voreinstellungen je Thema
 

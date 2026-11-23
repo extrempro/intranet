@@ -58,8 +58,47 @@
 		}
 	}
 
+	// Gleicher Vorsatz wie HINWEIS_PRAEFIX in src/lib/teams.ts
+	const HINWEIS = 'hinweis:';
+	// entityId des Reiters im Manifest (TEAMS_TAB_ENTITY)
+	const REITER = 'intranet';
+
+	/**
+	 * Aus dem Aktivitätsfeed: Teams zeigt die App im Aktivitätsbereich. Dort nur
+	 * den Hinweis zeigen; der Knopf wechselt in die App und öffnet das Ziel.
+	 */
+	function zeigeHinweis(ziel, ctx) {
+		status.hidden = true;
+		document.getElementById('hinweis').hidden = false;
+		document.getElementById('hinweisbrowser').href = ziel;
+		document.getElementById('zurapp').addEventListener('click', async () => {
+			try {
+				const pages = microsoftTeams.pages;
+				if (pages.currentApp && pages.currentApp.isSupported()) {
+					await pages.currentApp.navigateTo({ pageId: REITER, subPageId: ziel });
+				} else {
+					await pages.navigateToApp({
+						appId: String(ctx.app.appId),
+						pageId: REITER,
+						subPageId: ziel
+					});
+				}
+			} catch {
+				zeigeFehler(
+					'Teams konnte nicht in die App wechseln. Öffne die Intranet-App links in Teams oder das Intranet im Browser.'
+				);
+				document.getElementById('erneut').hidden = true;
+			}
+		});
+	}
+
 	async function start() {
-		const roh = params.get('ziel');
+		let roh = params.get('ziel');
+		let hinweis = false;
+		if (roh && roh.indexOf(HINWEIS) === 0) {
+			hinweis = true;
+			roh = roh.slice(HINWEIS.length);
+		}
 		let ziel = sicher(roh && roh.charAt(0) !== '{' ? roh : '/');
 		try {
 			// Außerhalb von Teams antwortet niemand: nach 5 Sekunden aufgeben
@@ -71,9 +110,15 @@
 			// nosemgrep: javascript.browser.security.open-redirect.js-open-redirect -- ziel ist durch sicher() auf einen Pfad derselben Herkunft begrenzt
 			return location.replace(ziel);
 		}
+		let ctx = null;
 		try {
-			const ctx = await microsoftTeams.app.getContext();
-			if (ziel === '/' && ctx.page && ctx.page.subPageId) ziel = sicher(ctx.page.subPageId);
+			ctx = await microsoftTeams.app.getContext();
+			let sub = ctx.page && ctx.page.subPageId;
+			if (sub && sub.indexOf(HINWEIS) === 0) {
+				hinweis = true;
+				sub = sub.slice(HINWEIS.length);
+			}
+			if (ziel === '/' && sub) ziel = sicher(sub);
 		} catch {
 			/* ohne Kontext zur Startseite */
 		}
@@ -82,6 +127,7 @@
 		} catch {
 			/* egal */
 		}
+		if (hinweis && ctx) return zeigeHinweis(ziel, ctx);
 		knopf.addEventListener('click', () => anmelden(ziel));
 		document.getElementById('browser').href = ziel;
 		if (params.has('abgemeldet')) {

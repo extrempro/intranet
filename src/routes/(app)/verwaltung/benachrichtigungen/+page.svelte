@@ -247,7 +247,7 @@
 			Teams
 			<Info
 				thema="Teams"
-				text="Das Intranet läuft als App in Teams, angemeldet wird über das Microsoft-Konto. Benachrichtigungen erscheinen in Teams unter „Aktivität“, für jedes Thema wählbar (voreingestellt wie Push). Ein Klick öffnet den Beitrag in der App. Nur für Personen mit Microsoft-Konto, bei denen die App installiert ist; Ruhezeiten gelten wie bei Push."
+				text="Das Intranet läuft als App in Teams, angemeldet wird über das Microsoft-Konto. Benachrichtigungen erscheinen in Teams unter „Aktivität“, für jedes Thema wählbar (voreingestellt wie Push). Ein Klick zeigt dort einen kurzen Hinweis, „In der Intranet-App öffnen“ wechselt in die App zum Beitrag. Nur für Personen mit Microsoft-Konto, bei denen die App installiert ist; Ruhezeiten gelten wie bei Push."
 			/>
 		</h2>
 		{#if data.teams}

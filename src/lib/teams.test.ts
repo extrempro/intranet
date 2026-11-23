@@ -47,6 +47,9 @@ describe('Teams', () => {
 			templateParameters: [{ name: 'systemDefaultText', value: 'IT: T' }]
 		});
 		expect(body.topic.webUrl.startsWith('https://teams.microsoft.com/')).toBe(true);
+		// Aus dem Aktivitätsfeed nur der Hinweis, nicht das ganze Intranet
+		const ctx = new URL(body.topic.webUrl).searchParams.get('context')!;
+		expect(JSON.parse(ctx)).toEqual({ subEntityId: 'hinweis:/x' });
 		expect(body.recipients).toHaveLength(2);
 	});
 
