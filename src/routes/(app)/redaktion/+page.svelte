@@ -163,7 +163,12 @@
 			{/if}
 		</section>
 
-		<section id="hervorgehoben" class="karte stapel" aria-labelledby="h-hervor">
+		<section
+			id="hervorgehoben"
+			class="karte stapel"
+			aria-labelledby="h-hervor"
+			data-tour="hervorgehoben"
+		>
 			<h2 id="h-hervor">Dringend und angeheftet</h2>
 			<p class="hinweis">
 				Du kannst das Anheften lösen, „Dringend“ beenden oder einen Beitrag sofort ablaufen lassen.
@@ -316,7 +321,7 @@
 	}
 	.zaehler {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr));
+		grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr));
 		gap: 10px;
 	}
 	.kachel {

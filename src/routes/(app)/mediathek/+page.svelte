@@ -3,7 +3,10 @@
 	import { untrack } from 'svelte';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import EinfuehrungAngebot from '#lib/components/EinfuehrungAngebot.svelte';
+	import EinfuehrungKnopf from '#lib/components/EinfuehrungKnopf.svelte';
 	import VideoKarte from '#lib/components/VideoKarte.svelte';
+	import { SEITEN } from '#lib/tours.ts';
 	import MehrLaden from '#lib/components/MehrLaden.svelte';
 	import { mitZahl } from '#lib/lange-liste.ts';
 	import { STATUS_TEXT, zeitText } from '#lib/mediathek.ts';
@@ -23,20 +26,23 @@
 <svelte:head><title>Mediathek · Intranet</title></svelte:head>
 
 <div class="stapel seite">
+	<EinfuehrungAngebot tour={SEITEN.mediathek} />
 	<div class="kopf">
 		<div class="stapel eng">
-			<h1>Mediathek</h1>
+			<h1 class="mit-hilfe">Mediathek <EinfuehrungKnopf tour={SEITEN.mediathek} /></h1>
 			<p class="hinweis">
 				Videos aus den Abteilungen und Hubs, zum Beispiel Schulungen und Anleitungen.
 			</p>
 		</div>
 		{#if data.darfHochladen}
-			<a class="knopf" href={resolve('/(app)/mediathek/neu')}>Video hochladen</a>
+			<a class="knopf" href={resolve('/(app)/mediathek/neu')} data-tour="hochladen">
+				Video hochladen
+			</a>
 		{/if}
 	</div>
 
 	{#if data.weiter.length}
-		<section class="karte stapel eng" aria-labelledby="h-weiter">
+		<section class="karte stapel eng" aria-labelledby="h-weiter" data-tour="weiter">
 			<h2 id="h-weiter">Weiter ansehen</h2>
 			<ul class="weiter">
 				{#each data.weiter as w (w.id)}
@@ -80,6 +86,7 @@
 		action={resolve('/(app)/mediathek')}
 		class="karte filter"
 		role="search"
+		data-tour="mediathek-suche"
 		data-sveltekit-keepfocus
 		data-sveltekit-noscroll
 	>
@@ -120,7 +127,12 @@
 	</p>
 	{#if veroeffentlicht.length}
 		<ul class="raster" id="videoraster">
-			{#each veroeffentlicht as v (v.id)}<li data-eintrag><VideoKarte {v} /></li>{/each}
+			{#each veroeffentlicht as v, i (v.id)}<li
+					data-eintrag
+					data-tour={i === 0 ? 'video' : undefined}
+				>
+					<VideoKarte {v} />
+				</li>{/each}
 		</ul>
 		<MehrLaden
 			geladen={veroeffentlicht.length}

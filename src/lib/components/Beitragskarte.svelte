@@ -38,13 +38,16 @@
 		item,
 		mitReaktionen = true,
 		ebene = 2,
-		kompakt = false
+		kompakt = false,
+		tour
 	}: {
 		item: Item;
 		mitReaktionen?: boolean;
 		ebene?: 2 | 3;
 		/** Ansicht „Kompakt“ langer Listen (Kap. 6.7) */
 		kompakt?: boolean;
+		/** Ziel einer Einführung (data-tour) */
+		tour?: string;
 	} = $props();
 
 	const kuerzel = $derived(
@@ -90,7 +93,7 @@
 		'M9 15l6 -6M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463';
 </script>
 
-<article class="karte beitrag" class:kompakt data-eintrag>
+<article class="karte beitrag" class:kompakt data-eintrag data-tour={tour}>
 	<div class="zeile" class:mit-vorschau={mitVorschau}>
 		<div class="text">
 			<div class="schilder">

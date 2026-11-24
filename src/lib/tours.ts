@@ -76,7 +76,8 @@ export const SEITEN: Record<string, Tour> = {
 				text: 'Alle Neuigkeiten, nur die deiner Abteilungen oder – wenn du schreiben darfst – geplante Beiträge.'
 			},
 			{
-				target: 'beitraege',
+				// Angeheftete, sonst der erste Beitrag
+				target: 'angeheftet,beitraege',
 				title: 'Beiträge',
 				text: 'Angeheftete Beiträge stehen oben. Als Absender erscheint immer die Einheit. Mit Reaktionen zeigst du, dass dir etwas gefällt.'
 			},
@@ -129,6 +130,28 @@ export const SEITEN: Record<string, Tour> = {
 			}
 		]
 	},
+	mediathek: {
+		key: 'seite:mediathek',
+		title: 'Mediathek',
+		steps: [
+			{
+				target: 'mediathek-suche',
+				title: 'Suchen und filtern',
+				text: 'Die Suche findet Wörter in Titel, Beschreibung und Untertiteln. Filtere nach Abteilung, Hub oder Thema.'
+			},
+			{
+				// Angefangene Videos, sonst das erste Video
+				target: 'weiter,video',
+				title: 'Ansehen und weiterschauen',
+				text: 'Angefangene Videos stehen oben unter „Weiter ansehen“ und laufen dort weiter, wo du aufgehört hast. Beim Video findest du Untertitel, Kapitel und die Textfassung.'
+			},
+			{
+				target: 'hochladen',
+				title: 'Selbst hochladen',
+				text: 'Mit dem Recht „Mediathek“ in deiner Abteilung oder deinem Hub lädst du Videos hoch. Bis sie veröffentlicht sind, stehen sie unter „In Arbeit und Entwürfe“.'
+			}
+		]
+	},
 	nachrichten: {
 		key: 'seite:nachrichten',
 		title: 'Nachrichten',
@@ -161,7 +184,7 @@ export const ROLLEN: Record<string, Tour> = {
 			{
 				target: 'seite',
 				title: 'Deine Abteilungsseite',
-				text: 'Leitung, Stellvertretung und „Über uns“ pflegst du hier.'
+				text: 'Kurzinfo, Kontakt, Leitung, Stellvertretung und „Über uns“ pflegst du hier.'
 			},
 			{
 				target: 'zustaendigkeiten',
@@ -171,7 +194,12 @@ export const ROLLEN: Record<string, Tour> = {
 			{
 				target: 'team',
 				title: 'Team und Schreibrechte',
-				text: 'Personen hinzufügen und je Person Neuigkeiten, FAQs, Termine und Hinter den Kulissen freigeben.'
+				text: 'Personen suchen und hinzufügen, auch aus Entra. Je Person gibst du Rechte frei, etwa Neuigkeiten, Termine, Dokumente oder Mediathek, und legst die Stammabteilung fest.'
+			},
+			{
+				target: 'gestaltung',
+				title: 'Aufbau, Schnellzugriff und Dokumente',
+				text: 'Reihenfolge der Reiter, Blöcke im Überblick, Schnellzugriff-Kacheln und Dokumente mit Ordnern. Gespeichert wird alles mit einem Klick.'
 			}
 		]
 	},
@@ -187,12 +215,12 @@ export const ROLLEN: Record<string, Tour> = {
 			{
 				target: 'aufbau',
 				title: 'Aufbau der Seite',
-				text: 'Abschnitte ein- und ausblenden und sortieren.'
+				text: 'Reihenfolge der Reiter festlegen und die Blöcke im Überblick ein- und ausblenden und sortieren.'
 			},
 			{
 				target: 'team',
 				title: 'Hub-Team',
-				text: 'Weitere Personen ins Team holen, Aufgaben festlegen und Schreibrechte vergeben.'
+				text: 'Weitere Personen ins Team holen, auch aus Entra, Aufgaben festlegen und Rechte wie Beiträge, Termine oder Dokumente vergeben.'
 			}
 		]
 	},
@@ -213,7 +241,12 @@ export const ROLLEN: Record<string, Tour> = {
 			{
 				target: 'zu-pruefen',
 				title: 'Zu prüfen',
-				text: 'Überfällige Zuständigkeiten, ablaufende Beiträge, alte FAQs und inaktive Ansprechpersonen. Einträge verschwinden, sobald sie erledigt sind.'
+				text: 'Überfällige Zuständigkeiten, ablaufende Beiträge, alte FAQs und inaktive Ansprechpersonen. Noch richtige FAQs bestätigst du mit „Noch aktuell“.'
+			},
+			{
+				target: 'hervorgehoben',
+				title: 'Eingreifen',
+				text: 'Bei dringenden und angehefteten Beiträgen löst du das Anheften, beendest „Dringend“ oder lässt einen Beitrag sofort ablaufen. Jeder Eingriff steht im Protokoll.'
 			}
 		]
 	},
@@ -227,7 +260,7 @@ export const ROLLEN: Record<string, Tour> = {
 				text: 'Freigeben, Rückfrage stellen oder mit Begründung ablehnen.'
 			},
 			{
-				target: 'postfach',
+				target: 'nachrichten',
 				title: 'Gemeinsames Postfach',
 				text: 'Rückfragen laufen über Nachrichten; alle mit der Rolle sehen dieselben Gespräche.'
 			},

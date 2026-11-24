@@ -86,8 +86,8 @@
 	{#if form && 'fehler' in form}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
 	{#if form && 'ok' in form}<p class="meldung" role="status">{form.ok}</p>{/if}
 
-	<details class="karte" open data-tour="seite">
-		<summary><h2>Seite</h2></summary>
+	<details class="karte" open>
+		<summary data-tour="seite"><h2>Seite</h2></summary>
 		<form method="POST" action="?/seite" class="stapel" use:enhance={behalten}>
 			<div class="zwei">
 				<label class="feld">
@@ -368,6 +368,7 @@
 	<details
 		class="karte"
 		id="gestaltung"
+		data-tour="gestaltung"
 		open={(form && 'bereich' in form && form.bereich === 'gestaltung') ||
 			['#gestaltung', '#dokumente'].includes(page.url.hash) ||
 			undefined}
