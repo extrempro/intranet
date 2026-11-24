@@ -1,6 +1,6 @@
 <script lang="ts">
 	/**
-	 * Abteilungen (Kap. 8.2) wie die Hubs-Übersicht: oben „Deine Abteilung“,
+	 * Abteilungen (Kap. 8.11) wie die Hubs-Übersicht: oben „Deine Abteilung“,
 	 * darunter alle Einheiten als Karten mit Suche (auch nach Thema und Person),
 	 * Filter nach Mandant und Sortierung nach Art oder A–Z.
 	 */

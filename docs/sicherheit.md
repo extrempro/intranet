@@ -164,6 +164,12 @@ Neu: „Weiter, wo du warst“ am Konto.
 - **Fremde Seiten**: Das Anlegen (`POST`) verlangt zusätzlich zu SameSite-Cookie und CORS den eigenen `Origin`, sonst 403 (live geprüft).
 - **Datensparsamkeit**: Treffer zeigen Name, E-Mail, Position bzw. Abteilung und Mandant – dieselben Angaben wie im Personenverzeichnis. Antworten werden nicht zwischengespeichert.
 
+## Nachprüfung Abteilungen wie Hubs (24.11.2026, Version 0.39.0)
+
+- **Recht**: Aufbau, Schnellzugriff und Dokumente einer Abteilung speichert nur, wer die Seite pflegt (Abteilungsverwaltung, Redaktion ohne eigene Pflege, Verwaltung); Hubs bleiben bei „Hub bearbeiten“ (DB-Test, e2e). Abo, Ruhen und Archivieren bleiben auf Hubs beschränkt.
+- **Dateien**: Dokumente einer Abteilung liefert `/dateien/<id>` nur aus, wenn die Person die Abteilung sehen darf (gleiche Prüfung wie bei Hubs, jetzt für Hubs und Abteilungen).
+- **Schnellzugriff**: Ziele nur https/http, mailto, tel oder Pfade im Intranet; `javascript:` und Ähnliches werden abgelehnt, ohne dass etwas halb gespeichert wird (DB-Test).
+
 ## Stand je ASVS-Kapitel (5.0)
 
 | Kapitel                                    | Stand             | Umsetzung, Belege                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |

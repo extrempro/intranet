@@ -1,6 +1,6 @@
 /**
  * Seite einer Abteilung (auch Geschäftsführung, Stabsstelle) wie bei Hubs
- * (Kap. 8.2): Aufbau (Reiter, Blöcke im Überblick), Schnellzugriff und
+ * (Kap. 8.11): Aufbau (Reiter, Blöcke im Überblick), Schnellzugriff und
  * Dokumente. Pflegen dürfen Abteilungsverwaltung, Redaktion (ohne eigene
  * Pflege) und Verwaltung; Dokumente auch, wer das Recht „Dokumente“ hat.
  */

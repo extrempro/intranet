@@ -335,8 +335,13 @@ Je Einheit; Schreibrecht „FAQs“. Frage, Antwort im Editor mit Links, Anhäng
 
 ### 8.11 Abteilungsseiten
 
-- Kopf: Name, Typ bzw. Titel, Zuständigkeit (Mandant/alle), Leitung (+ zweite Leitung) und Stellvertretung, Stern für Favoriten.
-- Hauptspalte: **Wer hilft bei was?**, **Team**, **Über uns**. Seitenspalte: Nächste Termine, Beiträge, FAQs.
+Gilt für Abteilungen, Geschäftsführung und Stabsstellen; Aufbau wie bei Hubs (Kap. 8.12).
+
+- **Übersicht**: oben „Deine Abteilung“ (Stammabteilung und Einheiten, in deren Team du bist), darunter alle Einheiten als Karten (Kürzel, Art, Personen, Zuständigkeiten, Kurzinfo, Mandant, Leitung). Suche nach Abteilung, Thema oder Person (passende Zuständigkeiten stehen oben), Filter nach Mandant, Sortierung „Nach Art“ (Geschäftsführung, Stabsstellen, Abteilungen) oder „A–Z“.
+- **Kopf** wie bei Hubs: Art und Zuständigkeit (Mandant/alle), Name, Kurzinfo, Leitung (+ zweite Leitung) und Stellvertretung, Favorit, Link kopieren, Bearbeiten, Team-Gesichter. Darunter Kontakt (Funktionsadresse, Telefon, Sprechzeiten, Raum).
+- **Reiter** als eigene Unterseiten: Überblick, Neues, Termine, Dokumente, Videos, Fragen, Über uns & Team. Leere Reiter sehen nur, die sie füllen dürfen.
+- **Überblick**: Blöcke **Wer hilft bei was?**, Schnellzugriff, Neues aus der Abteilung, Als Nächstes, Häufige Fragen, Dokumente; daneben „Fragen? Sprich uns an“ (Leitung und Stellvertretung, sonst das Team) und Videos. Für die Pflege „Für dich zum Pflegen“ mit leeren Bereichen.
+- **Aufbau, Schnellzugriff und Dokumente** pflegt die Abteilungsverwaltung (bzw. Redaktion ohne eigene Pflege, Verwaltung) unter „Bearbeiten“: Reihenfolge der Reiter, Blöcke im Überblick an/aus und sortieren, bis 12 Schnellzugriff-Kacheln, Dokumente mit Ordnern (wie bei Hubs, Dateien nur nach Anmeldung und Rechteprüfung).
 - **Zuständigkeiten**: Suche, Stichwörter, Gruppen, Links; ist eine Person inaktiv, wird die Vertretung angezeigt. Prüf-Erinnerung nach 12 Monaten (einstellbar), Bestätigung mit „Alles geprüft“. Bearbeiten als Akkordeon.
 - Leere Felder werden nicht angezeigt.
 

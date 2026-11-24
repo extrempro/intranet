@@ -30,13 +30,15 @@
 	const bloecke = $derived(
 		h.layout.ueberblick.filter(
 			(k): k is HubBlock =>
-				(({
-					schnellzugriff: h.links.length,
-					termine: h.termine.length,
-					faqs: h.faqs.length,
-					beitraege: data.beitraege.length,
-					dokumente: h.dokumente.length
-				}) as Record<string, number>)[k] > 0
+				(
+					({
+						schnellzugriff: h.links.length,
+						termine: h.termine.length,
+						faqs: h.faqs.length,
+						beitraege: data.beitraege.length,
+						dokumente: h.dokumente.length
+					}) as Record<string, number>
+				)[k] > 0
 		)
 	);
 	/** Ansprechpersonen, sonst das Hub-Team (Koordination zuerst) */

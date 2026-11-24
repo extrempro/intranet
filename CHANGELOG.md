@@ -10,6 +10,12 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.39.0 · 24.11.2026 · Abteilungen wie Hubs
+
+- Die Abteilungsseite sieht jetzt aus wie ein Hub: farbiger Kopf mit Kurzinfo und Leitung, darunter Reiter für Überblick, Neues, Termine, Dokumente, Videos, Fragen und „Über uns & Team“.
+- Abteilungen, Geschäftsführung und Stabsstellen können einen Schnellzugriff und Dokumente pflegen und den Aufbau ihrer Seite selbst einstellen.
+- Die Übersicht zeigt oben deine Abteilung, darunter alle als Karten. Du kannst nach Mandant filtern und nach Art oder A–Z sortieren.
+
 ## 0.38.1 · 24.11.2026 · Stammabteilung verständlicher
 
 - Beim Team einer Abteilung heißt der Haken „Eigene Abteilung der Person“ jetzt „Stammabteilung“, mit kurzer Erklärung, wofür er da ist.

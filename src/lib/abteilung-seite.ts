@@ -1,4 +1,4 @@
-/** Abteilungsseite (Kap. 8.2): Reiter wie bei Hubs aus den Daten der Seite berechnen. */
+/** Abteilungsseite (Kap. 8.11): Reiter wie bei Hubs aus den Daten der Seite berechnen. */
 import { hubReiter, type HubLayout, type HubReiter, type HubReiterStand } from './hubs.ts';
 
 interface Daten {
