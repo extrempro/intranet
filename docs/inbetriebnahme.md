@@ -42,7 +42,7 @@ Unter **App-Registrierungen → Neue Registrierung**, „Nur Konten in diesem Or
 2. **Zertifikate & Geheimnisse**: Clientgeheimnis anlegen → `ENTRA_CLIENT_SECRET`. Ablaufdatum im Kalender eintragen; vor Ablauf ein neues anlegen und in den Umgebungsvariablen tauschen.
 3. **API-Berechtigungen** (Microsoft Graph), danach **Administratorzustimmung erteilen**:
    - Delegiert: `openid`, `profile`, `email`, `User.Read`, `GroupMember.Read.All`
-   - Anwendung: `User.Read.All`, `GroupMember.Read.All` (nächtlicher Abgleich), `TeamsActivity.Send` (Teams-Meldungen)
+   - Anwendung: `User.Read.All`, `GroupMember.Read.All` (nächtlicher Abgleich, Personensuche beim Hinzufügen ins Team), `TeamsActivity.Send` (Teams-Meldungen)
 4. **API verfügbar machen** (für die Teams-App):
    - Anwendungs-ID-URI: `api://<Adresse ohne https://>/<Client-ID>`
    - Bereich `access_as_user` (Administratoren und Benutzer)

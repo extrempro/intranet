@@ -41,6 +41,8 @@ export async function upsertEntraPerson(input: {
 	givenName?: string | null;
 	tenantId: string;
 	roles: DerivedRole[];
+	/** Vorab angelegt (Team hinzugefügt), noch nicht angemeldet */
+	vorab?: boolean;
 }): Promise<UpsertResult> {
 	return db.transaction(async (tx) => {
 		const [byOid] = await tx.select().from(persons).where(eq(persons.entraOid, input.oid));
@@ -86,7 +88,7 @@ export async function upsertEntraPerson(input: {
 					authSource: 'entra',
 					entraOid: input.oid,
 					status: 'active',
-					lastLoginAt: new Date()
+					lastLoginAt: input.vorab ? null : new Date()
 				})
 				.returning({ id: persons.id });
 			personId = row.id;

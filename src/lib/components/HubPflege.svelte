@@ -249,7 +249,7 @@
 	);
 
 	// --- Personen hinzufügen ---
-	const quelle = $derived(`${resolve('/(app)/hubs/[slug]', { slug: hub.slug })}/personen`);
+	const quelle = $derived(resolve('/(app)/einheiten/[id]/personen', { id: hub.id }));
 	function insTeam(t: Treffer, hubteam: boolean) {
 		const da = team.find((m) => m.personId === t.id);
 		if (da) {
@@ -744,6 +744,7 @@
 					knopf="Person hinzufügen"
 					ausschliessen={kontakte.map((k) => k.personId)}
 					mandantZeigen={hub.isCentral}
+					mitEntra={false}
 					onwahl={(t) => kontakte.push({ personId: t.id, name: t.name, aufgabe: '' })}
 				/>
 			{/if}

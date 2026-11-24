@@ -13,6 +13,7 @@ import {
 	updateDepartmentPage,
 	updateResponsibility
 } from '#lib/server/departments.ts';
+import { personAusWahl } from '#lib/server/personen-suche.ts';
 import { addMember, removeMember, setMemberRights, UnitError } from '#lib/server/units.ts';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -88,11 +89,24 @@ export const actions: Actions = {
 		});
 	},
 	hinzufuegen: async ({ request, locals, params, getClientAddress }) => {
-		const email = str(await request.formData(), 'email', 320);
+		const f = await request.formData();
 		const id = await unitId(locals, params.slug);
-		return guard(() => addMember(requirePrincipal(locals), id, email, getClientAddress()), {
-			ok: 'Zum Team hinzugefügt.'
-		});
+		const p = requirePrincipal(locals);
+		return guard(
+			async () =>
+				addMember(
+					p,
+					id,
+					await personAusWahl(
+						p,
+						id,
+						str(f, 'person', 80) || str(f, 'email', 320),
+						getClientAddress()
+					),
+					getClientAddress()
+				),
+			{ ok: 'Zum Team hinzugefügt.' }
+		);
 	},
 	rechte: async ({ request, locals, params, getClientAddress }) => {
 		const f = await request.formData();

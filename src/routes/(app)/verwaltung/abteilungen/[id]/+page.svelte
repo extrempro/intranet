@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PersonSuche from '#lib/components/PersonSuche.svelte';
 	import MitFrage from '#lib/components/MitFrage.svelte';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
@@ -26,6 +27,8 @@
 			keyof (typeof e.team)[number]
 		][]
 	);
+	let hinzuForm = $state<HTMLFormElement>();
+	let hinzuId = $state('');
 </script>
 
 <svelte:head><title>{e.name} · Verwaltung · Intranet</title></svelte:head>
@@ -72,12 +75,22 @@
 		{data.maxSchreibende} Personen mit Schreibrecht.
 	</p>
 
-	<form method="POST" action="?/hinzufuegen" class="hinzu" use:enhance>
-		<label class="feld">
-			<span>Person hinzufügen (E-Mail-Adresse)</span>
-			<input name="email" type="email" required autocomplete="off" />
-		</label>
-		<button class="knopf zweit" type="submit">Hinzufügen</button>
+	<form method="POST" action="?/hinzufuegen" class="hinzu-suche" bind:this={hinzuForm} use:enhance>
+		<input type="hidden" name="person" value={hinzuId} />
+		<span class="feld-titel" id="hinzu-titel">Person hinzufügen</span>
+		<PersonSuche
+			quelle={resolve('/(app)/einheiten/[id]/personen', { id: e.id })}
+			beschriftung="Name oder E-Mail-Adresse"
+			ausschliessen={e.team.map((m) => m.personId)}
+			onwahl={(t) => {
+				hinzuId = t.id;
+				queueMicrotask(() => hinzuForm?.requestSubmit());
+			}}
+		/>
+		<p class="hinweis">
+			Findet Personen im Intranet und aus Entra. Wer sich noch nie angemeldet hat, bekommt sein
+			Konto gleich beim Hinzufügen.
+		</p>
 	</form>
 
 	{#if e.team.length === 0}
@@ -179,14 +192,16 @@
 	details[open] summary {
 		margin-bottom: 12px;
 	}
-	.hinzu {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 10px;
-		align-items: flex-end;
+	.hinzu-suche {
+		display: grid;
+		gap: 6px;
 	}
-	.hinzu .feld {
-		flex: 1 1 260px;
+	.hinzu-suche .hinweis {
+		margin: 0;
+	}
+	.feld-titel {
+		font-weight: 600;
+		font-size: 14px;
 	}
 	.team {
 		list-style: none;

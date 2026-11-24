@@ -6,7 +6,7 @@ reihenfolge: 2
 kurz: Kurzinfo, Vorstellung, Hinweis, Aufbau, Bilder, Team, Schnellzugriff, Dokumente.
 ---
 
-Auf der Hub-Seite → „Bearbeiten“. Das Hub-Team, die Verwaltung und (wenn es noch kein Hub-Team gibt) die Redaktion pflegen den Hub. Alles steht auf einer Seite; erst „Speichern“ unten übernimmt die Änderungen. Personen findest du über „Person suchen“: Namen tippen und aus den Vorschlägen wählen.
+Auf der Hub-Seite → „Bearbeiten“. Das Hub-Team, die Verwaltung und (wenn es noch kein Hub-Team gibt) die Redaktion pflegen den Hub. Alles steht auf einer Seite; erst „Speichern“ unten übernimmt die Änderungen. Personen findest du über „Person suchen“: Namen tippen und aus den Vorschlägen wählen. Die Suche findet auch Kolleginnen und Kollegen aus Entra, die sich noch nie angemeldet haben; ihr Konto entsteht schon beim Hinzufügen, ins Team kommen sie erst mit „Speichern“.
 
 ## Seite
 
