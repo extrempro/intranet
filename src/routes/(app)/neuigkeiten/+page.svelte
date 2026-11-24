@@ -139,7 +139,7 @@
 	{/if}
 
 	{#if sichtbarAngeheftet.length}
-		<section aria-labelledby="angeheftet-h" class="angeheftet">
+		<section aria-labelledby="angeheftet-h" class="angeheftet" data-tour="angeheftet">
 			<h2 id="angeheftet-h">
 				<Icon d={PIN} size={14} stroke={2.2} />Angeheftet · {angeheftet.length}
 			</h2>
@@ -173,14 +173,19 @@
 		</section>
 	{/if}
 
-	<div class="liste" data-tour="beitraege">
-		{#each gruppen as g (g.monat)}
+	<div class="liste">
+		{#each gruppen as g, gi (g.monat)}
 			<section class="monat" aria-labelledby="monat-{g.monat}">
 				<h2 id="monat-{g.monat}">
 					{g.titel}<span class="anzahl">{mitZahl(g.anzahl, 'Beitrag', 'Beiträge')}</span>
 				</h2>
-				{#each g.eintraege as item (item.id)}
-					<Beitragskarte {item} ebene={3} kompakt={ansicht === 'kompakt'} />
+				{#each g.eintraege as item, i (item.id)}
+					<Beitragskarte
+						{item}
+						ebene={3}
+						kompakt={ansicht === 'kompakt'}
+						tour={gi === 0 && i === 0 ? 'beitraege' : undefined}
+					/>
 				{/each}
 			</section>
 		{/each}

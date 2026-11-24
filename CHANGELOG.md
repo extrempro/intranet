@@ -10,6 +10,14 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.41.1 · 24.11.2026 · Einführungen auf Stand
+
+- Die Einführungen für Abteilungsverwaltung, Hub-Team und Redaktion erklären jetzt auch die neuen Möglichkeiten, etwa Aufbau, Schnellzugriff und Dokumente oder das Eingreifen der Redaktion.
+- Der Erklärkasten weicht neben das hervorgehobene Ziel aus und verdeckt es nicht mehr. Bei großen Bereichen steht er unten am Rand.
+- Auch bei schnellem Weiterklicken bleibt das Ziel im Bild.
+- In der Moderations-Einführung zeigt „Gemeinsames Postfach“ wieder auf die Nachrichten.
+- Die Arbeitsliste der Redaktion zeigt am Handy die Zähler in zwei Spalten.
+
 ## 0.41.0 · 24.11.2026 · Mehr Möglichkeiten für die Redaktion
 
 - Die Redaktion wählt bei jedem Beitrag, an welche Mandanten er geht, auch aus einer normalen Abteilung. Mit der Rolle für alle Mandanten geht auch „Alle Mandanten“.

@@ -4,7 +4,7 @@
 	 * den Blick und erklärt es. Tastatur: Pfeiltasten blättern, Escape beendet.
 	 * „Bewegung reduzieren“ des Systems schaltet das weiche Scrollen ab.
 	 */
-	import { tick } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import { hilfe } from '#lib/hilfe.svelte.ts';
 	import type { Tour } from '#lib/tours.ts';
 
@@ -13,7 +13,18 @@
 	let i = $state(0);
 	let rahmen = $state<{ top: number; left: number; width: number; height: number } | null>(null);
 	let ueberschrift: HTMLHeadingElement | undefined = $state();
-	let kastenOben = $state(true);
+	/** Lage des Erklärkastens zum Ziel; „fest“ = unten am Rand, wenn nirgends Platz ist */
+	let lage = $state<{
+		art: 'unten' | 'oben' | 'rechts' | 'links' | 'fest';
+		top: number;
+		left: number;
+	}>({
+		art: 'fest',
+		top: 0,
+		left: 0
+	});
+	let kastenHoehe = $state(200);
+	const ABSTAND = 12;
 
 	const schritt = $derived(tour.steps[i]);
 	const letzter = $derived(i === tour.steps.length - 1);
@@ -36,29 +47,63 @@
 		}
 		const r = el.getBoundingClientRect();
 		const pad = 6;
-		rahmen = {
-			top: r.top - pad,
-			left: r.left - pad,
-			width: r.width + pad * 2,
-			height: r.height + pad * 2
-		};
-		// Erklärung unter das Ziel, wenn unten Platz ist, sonst darüber
-		kastenOben = r.bottom + 220 > innerHeight && r.top > 240 ? true : false;
+		// Große Ziele nur so weit hervorheben, wie sie im Bild sind
+		const oben = Math.max(r.top - pad, 4);
+		const unten = Math.min(r.bottom + pad, innerHeight - 4);
+		if (unten - oben < 8) {
+			rahmen = null;
+			return;
+		}
+		rahmen = { top: oben, left: r.left - pad, width: r.width + pad * 2, height: unten - oben };
+		// Erklärung dorthin, wo Platz ist: unter, über, rechts oder links vom Ziel
+		const breite = Math.min(360, innerWidth - 24);
+		const hoehe = kastenHoehe + ABSTAND;
+		const rechts = rahmen.left + rahmen.width;
+		const links = Math.max(ABSTAND, Math.min(rahmen.left, innerWidth - breite - ABSTAND));
+		const senkrecht = Math.max(ABSTAND, Math.min(oben, innerHeight - kastenHoehe - ABSTAND));
+		if (innerHeight - unten >= hoehe + ABSTAND)
+			lage = { art: 'unten', top: unten + ABSTAND, left: links };
+		else if (oben >= hoehe + ABSTAND) lage = { art: 'oben', top: oben - hoehe, left: links };
+		else if (innerWidth - rechts >= breite + 2 * ABSTAND)
+			lage = { art: 'rechts', top: senkrecht, left: rechts + ABSTAND };
+		else if (rahmen.left >= breite + 2 * ABSTAND)
+			lage = { art: 'links', top: senkrecht, left: rahmen.left - breite - ABSTAND };
+		else lage = { art: 'fest', top: 0, left: 0 };
 	}
+
+	const imBild = (el: HTMLElement) => {
+		const r = el.getBoundingClientRect();
+		return r.bottom > 0 && r.top < innerHeight;
+	};
 
 	async function zeigen() {
 		await tick();
 		const el = ziel(schritt?.target);
 		const ruhig = matchMedia('(prefers-reduced-motion: reduce)').matches;
-		el?.scrollIntoView({ block: 'center', behavior: ruhig ? 'auto' : 'smooth' });
+		// Hohe Ziele mit dem Anfang nach oben, sonst mittig
+		const hoch = el ? el.getBoundingClientRect().height > innerHeight * 0.6 : false;
+		el?.scrollIntoView({ block: hoch ? 'start' : 'center', behavior: ruhig ? 'auto' : 'smooth' });
 		messen();
-		setTimeout(messen, ruhig ? 0 : 350);
+		setTimeout(
+			() => {
+				// Wurde das weiche Scrollen unterbrochen (schnelles Weiterklicken), sofort hinspringen
+				if (el && !imBild(el)) el.scrollIntoView({ block: hoch ? 'start' : 'center' });
+				messen();
+			},
+			ruhig ? 0 : 400
+		);
 		ueberschrift?.focus();
 	}
 
 	$effect(() => {
 		void i;
 		void zeigen();
+	});
+
+	// Andere Texthöhe: Lage des Kastens neu bestimmen
+	$effect(() => {
+		void kastenHoehe;
+		untrack(messen);
 	});
 
 	$effect(() => {
@@ -86,11 +131,8 @@
 
 	const position = $derived.by(() => {
 		if (!rahmen) return 'top: 50%; left: 50%; transform: translate(-50%, -50%);';
-		const breite = Math.min(360, innerWidth - 24);
-		const links = Math.max(12, Math.min(rahmen.left, innerWidth - breite - 12));
-		return kastenOben
-			? `bottom: ${Math.max(12, innerHeight - rahmen.top + 12)}px; left: ${links}px;`
-			: `top: ${Math.min(innerHeight - 200, rahmen.top + rahmen.height + 12)}px; left: ${links}px;`;
+		if (lage.art === 'fest') return `bottom: ${ABSTAND}px; left: 50%; transform: translateX(-50%);`;
+		return `top: ${lage.top}px; left: ${lage.left}px;`;
 	});
 </script>
 
@@ -116,6 +158,7 @@
 		aria-labelledby="tour-titel"
 		aria-describedby="tour-text"
 		style={position}
+		bind:clientHeight={kastenHoehe}
 	>
 		<p class="zaehler">{tour.title} · {i + 1} von {tour.steps.length}</p>
 		<h2 id="tour-titel" tabindex="-1" bind:this={ueberschrift}>{schritt.title}</h2>
@@ -137,6 +180,11 @@
 </div>
 
 <style>
+	/* Ziele nicht unter die feste Kopfzeile scrollen */
+	:global([data-tour]) {
+		scroll-margin-top: 80px;
+		scroll-margin-bottom: 24px;
+	}
 	.tour {
 		position: fixed;
 		inset: 0;
