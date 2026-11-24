@@ -38,6 +38,8 @@ export const actions: Actions = {
 		const p = requirePrincipal(locals);
 		const e = await getDepartment(p, params.slug);
 		if (!e) error(404, 'Diese Abteilung gibt es nicht.');
+		// Recht auch hier prüfen (zusätzlich zu dokumenteSpeichern)
+		if (!e.canDocs) return fail(403, { fehler: 'Dafür fehlt dir das Recht.' });
 		const f = await request.formData();
 		const daten = hubDatenLesen(String(f.get('daten') ?? '{}'));
 		try {

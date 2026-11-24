@@ -22,7 +22,7 @@ import { db } from '../db/index.ts';
 import { storageTargets } from '../db/schema.ts';
 import { decryptSecret } from '../crypto.ts';
 import { getSetting, setSetting } from '../settings.ts';
-import { sichererAgent } from '../sicheres-netz.ts';
+import { sichererAgent, sichererLookup } from '../sicheres-netz.ts';
 import { istKategorie, KATEGORIEN, type Kategorie, type Zuordnung } from '../../speicher.ts';
 
 export class SpeicherFehler extends Error {}
@@ -66,8 +66,11 @@ export function s3Client(
 		maxAttempts: 3,
 		requestHandler: new NodeHttpHandler({
 			httpsAgent: sichererAgent(),
-			// http nur im Testmodus (lokaler Testspeicher)
-			httpAgent: test ? new HttpAgent({ keepAlive: true }) : undefined,
+			// http nur im Testmodus (lokaler Testspeicher); sonst ebenfalls mit
+			// geprüfter Zieladresse, falls je ein http-Ziel durch die Prüfung käme
+			httpAgent: test
+				? new HttpAgent({ keepAlive: true })
+				: new HttpAgent({ keepAlive: true, lookup: sichererLookup }),
 			connectionTimeout: 5_000,
 			requestTimeout: 120_000
 		}),

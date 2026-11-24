@@ -51,7 +51,11 @@ export const actions: Actions = {
 	dokumente: async ({ request, locals, params }) => {
 		const p = requirePrincipal(locals);
 		const f = await request.formData();
-		const id = await hubId(locals, params.slug);
+		const hub = await getHub(p, params.slug);
+		if (!hub) error(404, 'Diesen Hub gibt es nicht.');
+		// Recht auch hier prüfen (zusätzlich zu dokumenteSpeichern)
+		if (!hub.canDocs) return fail(403, { bereich: 'seite', fehler: 'Dafür fehlt dir das Recht.' });
+		const id = hub.id;
 		try {
 			await dokumenteSpeichern(
 				p,

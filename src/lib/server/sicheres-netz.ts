@@ -17,8 +17,9 @@ for (const [netz, laenge] of [
 	['172.16.0.0', 12],
 	['192.0.0.0', 24],
 	['192.0.2.0', 24],
+	['192.88.99.0', 24],
 	['192.168.0.0', 16],
-	['198.16.0.0', 15],
+	['198.18.0.0', 15],
 	['198.51.100.0', 24],
 	['203.0.113.0', 24],
 	['224.0.0.0', 4],
@@ -26,13 +27,20 @@ for (const [netz, laenge] of [
 ] as const)
 	gesperrt.addSubnet(netz, laenge, 'ipv4');
 for (const [netz, laenge] of [
-	['::', 128],
-	['::1', 128],
+	// IPv4-kompatibel (veraltet, ::a.b.c.d) inkl. :: und ::1
+	['::', 96],
+	// IPv4 übersetzt (SIIT, ::ffff:0:a.b.c.d)
+	['::ffff:0:0:0', 96],
+	// NAT64 (bekannt und lokal) und 6to4: betten IPv4-Adressen ein
 	['64:ff9b::', 96],
+	['64:ff9b:1::', 48],
+	['2002::', 16],
 	['100::', 64],
 	['2001:db8::', 32],
 	['fc00::', 7],
 	['fe80::', 10],
+	// site-local (veraltet)
+	['fec0::', 10],
 	['ff00::', 8]
 ] as const)
 	gesperrt.addSubnet(netz, laenge, 'ipv6');
