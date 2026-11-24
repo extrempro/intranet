@@ -22,7 +22,7 @@ import {
 } from './db/schema.ts';
 import { JpegError, stripJpeg } from './files/jpeg.ts';
 import { deleteStored, ownUnlinkedFiles, storeBytes } from './files/store.ts';
-import { dokumentePflegbar, HubError, hubSichtbar, manageable } from './hubs.ts';
+import { dokumentePflegbar, HubError, hubSichtbar, manageable, seitePflegbar } from './hubs.ts';
 import { photosOf } from './people.ts';
 
 const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -207,7 +207,7 @@ export async function kontaktHinzufuegen(
 	email: string,
 	aufgabe: string
 ) {
-	const u = await manageable(p, unitId);
+	const u = await seitePflegbar(p, unitId);
 	const [{ n }] = await db
 		.select({ n: sql<number>`count(*)::int` })
 		.from(unitContacts)
@@ -247,7 +247,7 @@ export async function kontaktAendern(
 	eintrag: string,
 	aufgabe: string
 ) {
-	const u = await manageable(p, unitId);
+	const u = await seitePflegbar(p, unitId);
 	await db
 		.update(unitContacts)
 		.set({ task: aufgabe.trim().slice(0, HUB_GRENZEN.aufgabe) })
@@ -255,7 +255,7 @@ export async function kontaktAendern(
 }
 
 export async function kontaktEntfernen(p: Principal, unitId: string, eintrag: string) {
-	const u = await manageable(p, unitId);
+	const u = await seitePflegbar(p, unitId);
 	await db
 		.delete(unitContacts)
 		.where(and(eq(unitContacts.id, id(eintrag)), eq(unitContacts.unitId, u.id)));
@@ -268,13 +268,13 @@ export async function kontaktVerschieben(
 	eintrag: string,
 	delta: -1 | 1
 ) {
-	const u = await manageable(p, unitId);
+	const u = await seitePflegbar(p, unitId);
 	await tauschen(unitContacts, u.id, id(eintrag), delta);
 }
 
 /** Aufgabe einer Person im Hub-Team (z. B. „Technik und Aufbau“) */
 export async function teamAufgabe(p: Principal, unitId: string, personId: string, aufgabe: string) {
-	const u = await manageable(p, unitId);
+	const u = await seitePflegbar(p, unitId);
 	await db
 		.update(unitMembers)
 		.set({ hubTask: aufgabe.trim().slice(0, HUB_GRENZEN.aufgabe) || null })
@@ -309,7 +309,7 @@ function linkPruefen(l: LinkEingabe) {
 }
 
 export async function linkHinzufuegen(p: Principal, unitId: string, l: LinkEingabe) {
-	const u = await manageable(p, unitId);
+	const u = await seitePflegbar(p, unitId);
 	const werte = linkPruefen(l);
 	const [{ n }] = await db
 		.select({ n: sql<number>`count(*)::int` })
@@ -322,7 +322,7 @@ export async function linkHinzufuegen(p: Principal, unitId: string, l: LinkEinga
 }
 
 export async function linkAendern(p: Principal, unitId: string, eintrag: string, l: LinkEingabe) {
-	const u = await manageable(p, unitId);
+	const u = await seitePflegbar(p, unitId);
 	await db
 		.update(unitLinks)
 		.set(linkPruefen(l))
@@ -330,7 +330,7 @@ export async function linkAendern(p: Principal, unitId: string, eintrag: string,
 }
 
 export async function linkEntfernen(p: Principal, unitId: string, eintrag: string) {
-	const u = await manageable(p, unitId);
+	const u = await seitePflegbar(p, unitId);
 	await db.delete(unitLinks).where(and(eq(unitLinks.id, id(eintrag)), eq(unitLinks.unitId, u.id)));
 }
 
@@ -340,7 +340,7 @@ export async function linkVerschieben(
 	eintrag: string,
 	delta: -1 | 1
 ) {
-	const u = await manageable(p, unitId);
+	const u = await seitePflegbar(p, unitId);
 	await tauschen(unitLinks, u.id, id(eintrag), delta);
 }
 

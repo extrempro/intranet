@@ -21,15 +21,29 @@ export const HUB_BLOECKE = [
 ] as const;
 export type HubBlock = (typeof HUB_BLOECKE)[number]['key'];
 
+/** Blöcke im Überblick einer Abteilung (auch Geschäftsführung, Stabsstelle): dazu „Wer hilft bei was?“ */
+export const ABTEILUNG_BLOECKE = [
+	{ key: 'zustaendigkeiten', label: 'Wer hilft bei was?' },
+	...HUB_BLOECKE.map((b) =>
+		b.key === 'beitraege' ? { key: b.key, label: 'Neues aus der Abteilung' } : b
+	)
+] as const;
+export type SeitenBlock = HubBlock | 'zustaendigkeiten';
+
 /** Reihenfolge der Reiter und sichtbare Blöcke im Überblick */
 export interface HubLayout {
 	reiter: HubReiter[];
-	ueberblick: HubBlock[];
+	ueberblick: SeitenBlock[];
 }
 
 export const DEFAULT_HUB_LAYOUT: HubLayout = {
 	reiter: HUB_REITER.map((r) => r.key),
 	ueberblick: ['schnellzugriff', 'termine', 'faqs', 'beitraege']
+};
+
+export const DEFAULT_ABTEILUNG_LAYOUT: HubLayout = {
+	reiter: HUB_REITER.map((r) => r.key),
+	ueberblick: ['zustaendigkeiten', 'schnellzugriff', 'beitraege', 'termine', 'faqs']
 };
 
 /** Was eine Hub-Seite für die Reiter wissen muss */
@@ -46,6 +60,8 @@ export interface HubReiterQuelle {
 	canFaqs: boolean;
 	canManage: boolean;
 	canVideos: boolean;
+	/** Termine anlegen (Abteilungen: eigenes Recht), sonst wie Beiträge */
+	canEvents?: boolean;
 }
 
 export interface HubReiterStand {
@@ -79,7 +95,7 @@ export function hubReiter(layout: HubLayout, q: HubReiterQuelle): HubReiterStand
 	};
 	const pflegbar: Record<HubReiter, boolean> = {
 		neues: q.canPost && !q.resting,
-		termine: q.canPost,
+		termine: q.canEvents ?? q.canPost,
 		dokumente: q.canDocs,
 		videos: q.canVideos,
 		fragen: q.canFaqs,
@@ -186,6 +202,7 @@ export function linkAdresse(roh: string): string | null {
 
 const REITER = new Set<string>(HUB_REITER.map((r) => r.key));
 const BLOECKE = new Set<string>(HUB_BLOECKE.map((b) => b.key));
+const ABT_BLOECKE = new Set<string>(ABTEILUNG_BLOECKE.map((b) => b.key));
 
 function eindeutig<T extends string>(list: unknown, erlaubt: Set<string>): T[] {
 	const seen = new Set<string>();
@@ -199,8 +216,9 @@ function eindeutig<T extends string>(list: unknown, erlaubt: Set<string>): T[] {
  * Blöcke nur bekannte, jeder höchstens einmal. Ältere Aufbauten mit Haupt- und
  * Seitenbereich werden übernommen: Was dort sichtbar war, bleibt im Überblick.
  */
-export function cleanLayout(l: unknown): HubLayout {
-	if (!l || typeof l !== 'object') return DEFAULT_HUB_LAYOUT;
+export function cleanLayout(l: unknown, art: 'hub' | 'abteilung' = 'hub'): HubLayout {
+	const standard = art === 'hub' ? DEFAULT_HUB_LAYOUT : DEFAULT_ABTEILUNG_LAYOUT;
+	if (!l || typeof l !== 'object') return standard;
 	const o = l as Record<string, unknown>;
 	if (!('reiter' in o) && !('ueberblick' in o) && ('main' in o || 'side' in o)) {
 		const alt = new Set([
@@ -208,13 +226,16 @@ export function cleanLayout(l: unknown): HubLayout {
 			...(Array.isArray(o.side) ? o.side : [])
 		]);
 		return {
-			reiter: DEFAULT_HUB_LAYOUT.reiter,
-			ueberblick: DEFAULT_HUB_LAYOUT.ueberblick.filter((k) => alt.has(k))
+			reiter: standard.reiter,
+			ueberblick: standard.ueberblick.filter((k) => alt.has(k))
 		};
 	}
 	const reiter = eindeutig<HubReiter>(o.reiter, REITER);
-	for (const r of DEFAULT_HUB_LAYOUT.reiter) if (!reiter.includes(r)) reiter.push(r);
-	return { reiter, ueberblick: eindeutig<HubBlock>(o.ueberblick, BLOECKE) };
+	for (const r of standard.reiter) if (!reiter.includes(r)) reiter.push(r);
+	return {
+		reiter,
+		ueberblick: eindeutig<SeitenBlock>(o.ueberblick, art === 'hub' ? BLOECKE : ABT_BLOECKE)
+	};
 }
 
 export interface HubApplicationInput {

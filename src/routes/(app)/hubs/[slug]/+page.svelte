@@ -29,14 +29,14 @@
 	/** Blöcke mit Inhalt in der eingestellten Reihenfolge */
 	const bloecke = $derived(
 		h.layout.ueberblick.filter(
-			(k) =>
-				({
+			(k): k is HubBlock =>
+				(({
 					schnellzugriff: h.links.length,
 					termine: h.termine.length,
 					faqs: h.faqs.length,
 					beitraege: data.beitraege.length,
 					dokumente: h.dokumente.length
-				})[k] > 0
+				}) as Record<string, number>)[k] > 0
 		)
 	);
 	/** Ansprechpersonen, sonst das Hub-Team (Koordination zuerst) */

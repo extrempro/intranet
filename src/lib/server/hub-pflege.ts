@@ -179,26 +179,7 @@ export async function hubSpeichern(
 	const u = await manageable(p, unitId);
 	try {
 		// Zuerst alles prüfen, was ohne Datenbank geht, damit nichts halb gespeichert wird
-		// --- Schnellzugriff prüfen ---
-		const links = d.links
-			.filter((l) => l.label.trim() || l.url.trim())
-			.map((l, i) => {
-				const url = linkAdresse(l.url);
-				const label = l.label.trim().slice(0, HUB_GRENZEN.linkTitel);
-				if (!label) throw new HubError(`Schnellzugriff ${i + 1}: Bitte gib eine Bezeichnung ein.`);
-				if (!url)
-					throw new HubError(
-						`Schnellzugriff „${label}“: Bitte wähl ein Ziel (Seite im Intranet, Dokument oder https://…).`
-					);
-				return {
-					unitId,
-					label,
-					description: l.description.trim().slice(0, HUB_GRENZEN.linkBeschreibung) || null,
-					url,
-					icon: istLinkSymbol(l.icon) ? l.icon : 'link',
-					position: i
-				};
-			});
+		const links = linksPruefen(unitId, d.links);
 
 		// --- Team und Rechte ---
 		const vorher = await teamFuerPflege(p, unitId);
@@ -283,11 +264,7 @@ export async function hubSpeichern(
 			if (zeilen.length) await tx.insert(unitContacts).values(zeilen);
 		});
 
-		// --- Schnellzugriff: Liste ersetzen ---
-		await db.transaction(async (tx) => {
-			await tx.delete(unitLinks).where(eq(unitLinks.unitId, unitId));
-			if (links.length) await tx.insert(unitLinks).values(links);
-		});
+		await linksErsetzen(unitId, links);
 
 		// --- Dokumente ---
 		await dokumenteSpeichern(p, unitId, d.dokumente, neueDateien);
@@ -311,6 +288,37 @@ export async function hubSpeichern(
 		ip
 	});
 	return {};
+}
+
+/** Schnellzugriff prüfen (vor dem Speichern, damit nichts halb gespeichert wird) */
+export function linksPruefen(unitId: string, liste: HubDaten['links']) {
+	return liste
+		.filter((l) => l.label.trim() || l.url.trim())
+		.map((l, i) => {
+			const url = linkAdresse(l.url);
+			const label = l.label.trim().slice(0, HUB_GRENZEN.linkTitel);
+			if (!label) throw new HubError(`Schnellzugriff ${i + 1}: Bitte gib eine Bezeichnung ein.`);
+			if (!url)
+				throw new HubError(
+					`Schnellzugriff „${label}“: Bitte wähl ein Ziel (Seite im Intranet, Dokument oder https://…).`
+				);
+			return {
+				unitId,
+				label,
+				description: l.description.trim().slice(0, HUB_GRENZEN.linkBeschreibung) || null,
+				url,
+				icon: istLinkSymbol(l.icon) ? l.icon : 'link',
+				position: i
+			};
+		});
+}
+
+/** Schnellzugriff: Liste ersetzen */
+export async function linksErsetzen(unitId: string, links: ReturnType<typeof linksPruefen>) {
+	await db.transaction(async (tx) => {
+		await tx.delete(unitLinks).where(eq(unitLinks.unitId, unitId));
+		if (links.length) await tx.insert(unitLinks).values(links);
+	});
 }
 
 /** Dokumente: entfernte löschen, Titel, Ordner (per Name) und Reihenfolge, neue anhängen */

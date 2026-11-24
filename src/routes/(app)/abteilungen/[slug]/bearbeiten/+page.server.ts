@@ -13,6 +13,7 @@ import {
 	updateDepartmentPage,
 	updateResponsibility
 } from '#lib/server/departments.ts';
+import { einheitSeiteSpeichern, seitenDatenLesen } from '#lib/server/einheit-seite.ts';
 import { personAusWahl } from '#lib/server/personen-suche.ts';
 import { addMember, removeMember, setMemberRights, UnitError } from '#lib/server/units.ts';
 import type { Actions, PageServerLoad } from './$types';
@@ -57,6 +58,21 @@ function readResponsibility(f: FormData): ResponsibilityInput {
 }
 
 export const actions: Actions = {
+	/** Aufbau, Schnellzugriff und Dokumente in einem Schritt (wie bei Hubs) */
+	gestaltung: async ({ request, locals, params, getClientAddress }) => {
+		const p = requirePrincipal(locals);
+		const f = await request.formData();
+		const id = await unitId(locals, params.slug);
+		const r = await einheitSeiteSpeichern(
+			p,
+			id,
+			seitenDatenLesen(String(f.get('daten') ?? '{}')),
+			f.getAll('anhaenge').map(String).slice(0, 20),
+			getClientAddress()
+		);
+		if (r.fehler) return fail(400, { bereich: 'gestaltung', fehler: r.fehler });
+		return { bereich: 'gestaltung', ok: 'Gespeichert.' };
+	},
 	seite: async ({ request, locals, params, getClientAddress }) => {
 		const f = await request.formData();
 		const id = await unitId(locals, params.slug);

@@ -4,7 +4,7 @@
  * mit Vorprüfung durch die Redaktion. Sichtbar und abonnierbar sind Hubs des
  * eigenen Mandanten und zentrale Hubs.
  */
-import { and, asc, desc, eq, gte, inArray, isNull, lt, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, isNull, lt, ne, or, sql } from 'drizzle-orm';
 import { addDays, berlinNow } from '../canteen.ts';
 import {
 	cleanLayout,
@@ -49,7 +49,7 @@ import {
 	type RoleBox
 } from './messages.ts';
 import { notify } from './notify.ts';
-import { createUnit, UnitError } from './units.ts';
+import { createUnit, hasOwnMaintenance, UnitError } from './units.ts';
 import { bilderVerknuepfen, textMitBildern } from './textbilder.ts';
 
 export class HubError extends Error {}
@@ -217,6 +217,18 @@ export async function getHub(p: Principal, slug: string) {
 	};
 }
 
+/**
+ * Hubs und Abteilungen (auch Geschäftsführung, Stabsstellen), die die Person
+ * sieht. Schnellzugriff, Dokumente und Aufbau der Seite gibt es für beide.
+ */
+function einheitInScope(p: Principal) {
+	return and(
+		isNull(units.archivedAt),
+		or(eq(units.isCentral, true), eq(units.tenantId, p.tenantId)),
+		or(ne(units.type, 'hub'), eq(units.hidden, false))
+	)!;
+}
+
 async function hubInScope(p: Principal, unitId: string) {
 	if (!GUID.test(unitId)) throw new HubError('Hub nicht gefunden.');
 	const [u] = await db
@@ -224,6 +236,16 @@ async function hubInScope(p: Principal, unitId: string) {
 		.from(units)
 		.where(and(eq(units.id, unitId), inScope(p)));
 	if (!u) throw new HubError('Hub nicht gefunden.');
+	return u;
+}
+
+async function seiteInScope(p: Principal, unitId: string) {
+	if (!GUID.test(unitId)) throw new HubError('Nicht gefunden.');
+	const [u] = await db
+		.select()
+		.from(units)
+		.where(and(eq(units.id, unitId), einheitInScope(p)));
+	if (!u) throw new HubError('Nicht gefunden.');
 	return u;
 }
 
@@ -380,20 +402,31 @@ export async function manageable(p: Principal, unitId: string) {
 	return u;
 }
 
-/** Dokumente pflegen: wer den Hub pflegt oder das Recht „Dokumente“ hat. */
-export async function dokumentePflegbar(p: Principal, unitId: string) {
-	const u = await hubInScope(p, unitId);
-	if (p.memberships.some((m) => m.unitId === u.id && m.mayWriteDocuments)) return u;
-	return manageable(p, unitId);
+/**
+ * Seite eines Hubs oder einer Abteilung pflegen (Schnellzugriff, Ansprechpersonen):
+ * Hub-Team bzw. Abteilungsverwaltung, Redaktion (ohne eigene Pflege) und Verwaltung.
+ */
+export async function seitePflegbar(p: Principal, unitId: string) {
+	const u = await seiteInScope(p, unitId);
+	if (!canManageUnit(p, u, await hasOwnMaintenance(u.id)) && !canAdministerTenant(p, u.tenantId))
+		throw new HubError('Dafür fehlt dir das Recht.');
+	return u;
 }
 
-/** Darf die Person diesen Hub sehen? (für Bilder und Dokumente) */
+/** Dokumente pflegen: wer den Hub pflegt oder das Recht „Dokumente“ hat. */
+export async function dokumentePflegbar(p: Principal, unitId: string) {
+	const u = await seiteInScope(p, unitId);
+	if (p.memberships.some((m) => m.unitId === u.id && m.mayWriteDocuments)) return u;
+	return seitePflegbar(p, unitId);
+}
+
+/** Darf die Person diesen Hub bzw. diese Abteilung sehen? (für Bilder und Dokumente) */
 export async function hubSichtbar(p: Principal, unitId: string): Promise<boolean> {
 	if (!GUID.test(unitId)) return false;
 	const [u] = await db
 		.select({ id: units.id })
 		.from(units)
-		.where(and(eq(units.id, unitId), inScope(p)));
+		.where(and(eq(units.id, unitId), einheitInScope(p)));
 	return Boolean(u);
 }
 
