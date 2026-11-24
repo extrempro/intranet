@@ -34,3 +34,10 @@ test('Einführung Neuigkeiten: mit Ziel und Escape beendet', async ({ page }) =>
 	await page.keyboard.press('Escape');
 	await expect(page.locator('.tour')).toHaveCount(0);
 });
+
+test('Einführung Mediathek: Suche, Video und Hochladen', async ({ page }) => {
+	await anmelden(page, 'hanna');
+	await page.goto('/mediathek');
+	await page.getByRole('button', { name: 'Einführung: Mediathek' }).click();
+	await durchklicken(page, 3, [1, 2, 3]);
+});

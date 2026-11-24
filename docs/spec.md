@@ -486,7 +486,7 @@ Gruppen:
 ## 13. Hilfe
 
 - **Führung** beim ersten Start (8 Schritte) mit Hervorhebung und automatischem Scrollen; jederzeit erneut startbar.
-- **Einführungen auf Seiten**: Neuigkeiten, Kalender, Schwarzes Brett, Nachrichten (je 3 Schritte). Beim ersten Besuch als Zeile angeboten („Starten“ / „Nein danke“), danach über „?“ neben der Überschrift.
+- **Einführungen auf Seiten**: Neuigkeiten, Kalender, Schwarzes Brett, Nachrichten, Mediathek (je 3 Schritte). Beim ersten Besuch als Zeile angeboten („Starten“ / „Nein danke“), danach über „?“ neben der Überschrift.
 - **Einführungen für Rollen**: Abteilungsverwaltung, Hub-Team, Redaktion, Moderation – einmalig beim ersten Öffnen des Bereichs nach Erhalt der Rolle angeboten.
 - **Handbuch** unter Wissen, nach Rolle gefiltert, mit Suche und Kapiteln (Grundlagen, Erstellen, Pflegen, Verwaltung).
 - **„i“-Erläuterungen** an Feldern.

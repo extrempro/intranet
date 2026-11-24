@@ -39,7 +39,7 @@ insert into video_topics (video_id, topic_id) values ('00000000-0000-4000-8000-0
 
 -- Einführungen und „Neu in Version“ als gesehen, damit nichts die Seiten überdeckt
 insert into person_preferences (person_id, help_seen, version_hint)
-select id, '["fuehrung","seite:neuigkeiten","seite:kalender","seite:brett","seite:nachrichten","rolle:abteilungsverwaltung","rolle:hub_team","rolle:redaktion","rolle:moderation"]'::jsonb, false
+select id, '["fuehrung","seite:neuigkeiten","seite:kalender","seite:brett","seite:nachrichten","seite:mediathek","rolle:abteilungsverwaltung","rolle:hub_team","rolle:redaktion","rolle:moderation"]'::jsonb, false
 from persons;
 
 insert into sessions (id, person_id, auth_method, expires_at)

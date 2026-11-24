@@ -12,6 +12,7 @@ Release mit Tag v<Version> an (.github/workflows/release.yml).
 
 ## 0.41.1 · 24.11.2026 · Einführungen auf Stand
 
+- Neu: eine kurze Einführung für die Mediathek (Suchen und filtern, Weiterschauen, selbst hochladen).
 - Die Einführungen für Abteilungsverwaltung, Hub-Team und Redaktion erklären jetzt auch die neuen Möglichkeiten, etwa Aufbau, Schnellzugriff und Dokumente oder das Eingreifen der Redaktion.
 - Der Erklärkasten weicht neben das hervorgehobene Ziel aus und verdeckt es nicht mehr. Bei großen Bereichen steht er unten am Rand.
 - Auch bei schnellem Weiterklicken bleibt das Ziel im Bild.

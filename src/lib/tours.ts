@@ -130,6 +130,28 @@ export const SEITEN: Record<string, Tour> = {
 			}
 		]
 	},
+	mediathek: {
+		key: 'seite:mediathek',
+		title: 'Mediathek',
+		steps: [
+			{
+				target: 'mediathek-suche',
+				title: 'Suchen und filtern',
+				text: 'Die Suche findet Wörter in Titel, Beschreibung und Untertiteln. Filtere nach Abteilung, Hub oder Thema.'
+			},
+			{
+				// Angefangene Videos, sonst das erste Video
+				target: 'weiter,video',
+				title: 'Ansehen und weiterschauen',
+				text: 'Angefangene Videos stehen oben unter „Weiter ansehen“ und laufen dort weiter, wo du aufgehört hast. Beim Video findest du Untertitel, Kapitel und die Textfassung.'
+			},
+			{
+				target: 'hochladen',
+				title: 'Selbst hochladen',
+				text: 'Mit dem Recht „Mediathek“ in deiner Abteilung oder deinem Hub lädst du Videos hoch. Bis sie veröffentlicht sind, stehen sie unter „In Arbeit und Entwürfe“.'
+			}
+		]
+	},
 	nachrichten: {
 		key: 'seite:nachrichten',
 		title: 'Nachrichten',
