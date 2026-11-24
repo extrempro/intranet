@@ -148,10 +148,19 @@
 								</label>
 								{#if m.fachpflegeAusEntra}<input type="hidden" name="fachpflege" value="on" />{/if}
 							{/if}
-							<label class="option">
-								<input type="checkbox" name="primaer" checked={m.isPrimary} />
-								Eigene Abteilung der Person
-							</label>
+							<!-- Hubs sind nie Stammabteilung -->
+							{#if !hub}
+								<label class="option">
+									<input type="checkbox" name="primaer" checked={m.isPrimary} />
+									<span class="stamm">
+										<strong>Stammabteilung</strong>
+										<span class="hinweis">
+											Wird im Personenverzeichnis und im Profil als Abteilung der Person angezeigt.
+											Jede Person hat nur eine.
+										</span>
+									</span>
+								</label>
+							{/if}
 						</fieldset>
 						<div class="aktionen">
 							<button class="knopf zweit" type="submit">Rechte speichern</button>
@@ -237,5 +246,21 @@
 	}
 	.knopf {
 		justify-self: start;
+	}
+	.stamm {
+		display: grid;
+		gap: 2px;
+		max-width: 60ch;
+	}
+	/* Haken oben neben der Überschrift, Zeile über die ganze Breite */
+	.option:has(.stamm) {
+		grid-column: 1 / -1;
+		align-items: flex-start;
+	}
+	.option:has(.stamm) input {
+		margin-top: 1px;
+	}
+	.stamm .hinweis {
+		font-size: 13px;
 	}
 </style>

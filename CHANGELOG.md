@@ -10,6 +10,11 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.38.1 · 24.11.2026 · Stammabteilung verständlicher
+
+- Beim Team einer Abteilung heißt der Haken „Eigene Abteilung der Person“ jetzt „Stammabteilung“, mit kurzer Erklärung, wofür er da ist.
+- Bei Hubs gibt es den Haken nicht mehr, weil ein Hub nie Stammabteilung ist.
+
 ## 0.38.0 · 24.11.2026 · Personensuche beim Hinzufügen ins Team
 
 - Personen holst du jetzt über eine Live-Suche nach Name oder E-Mail-Adresse ins Team, in der Verwaltung genauso wie in Abteilungen, Geschäftsführung, Stabsstellen und Hubs.

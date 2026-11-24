@@ -330,7 +330,13 @@
 								{/if}
 								<label class="option">
 									<input type="checkbox" name="primaer" checked={m.isPrimary} />
-									Eigene Abteilung der Person
+									<span class="stamm">
+										<strong>Stammabteilung</strong>
+										<span class="hinweis">
+											Wird im Personenverzeichnis und im Profil als Abteilung der Person angezeigt.
+											Jede Person hat nur eine.
+										</span>
+									</span>
 								</label>
 							</fieldset>
 							<div class="aktionen">
@@ -481,5 +487,21 @@
 	.schild.warnung {
 		background: #fcebeb;
 		color: #b42318;
+	}
+	.stamm {
+		display: grid;
+		gap: 2px;
+		max-width: 60ch;
+	}
+	/* Haken oben neben der Überschrift, Zeile über die ganze Breite */
+	.option:has(.stamm) {
+		grid-column: 1 / -1;
+		align-items: flex-start;
+	}
+	.option:has(.stamm) input {
+		margin-top: 1px;
+	}
+	.stamm .hinweis {
+		font-size: 13px;
 	}
 </style>

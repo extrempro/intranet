@@ -223,7 +223,7 @@ export const unitMembers = pgTable(
 		personId: uuid('person_id')
 			.notNull()
 			.references(() => persons.id, { onDelete: 'cascade' }),
-		/** Eigene Abteilung der Person (für „Meine“ und „Nur mein Team“). */
+		/** Stammabteilung der Person: Anzeige im Personenverzeichnis und Profil (je Person höchstens eine). */
 		isPrimary: boolean('is_primary').notNull().default(false),
 		mayWriteNews: boolean('may_write_news').notNull().default(false),
 		mayWriteFaqs: boolean('may_write_faqs').notNull().default(false),
