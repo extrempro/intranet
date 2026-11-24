@@ -170,6 +170,14 @@ Neu: „Weiter, wo du warst“ am Konto.
 - **Dateien**: Dokumente einer Abteilung liefert `/dateien/<id>` nur aus, wenn die Person die Abteilung sehen darf (gleiche Prüfung wie bei Hubs, jetzt für Hubs und Abteilungen).
 - **Schnellzugriff**: Ziele nur https/http, mailto, tel oder Pfade im Intranet; `javascript:` und Ähnliches werden abgelehnt, ohne dass etwas halb gespeichert wird (DB-Test).
 
+## Nachprüfung Rechte der Redaktion (24.11.2026, Version 0.41.0)
+
+- **Mandantentrennung bei Absendern**: Die Sicht `news_absender` läuft mit den Rechten der Besitzer-Rolle und umgeht damit die Row-Level Security von `units`. Die Bedingung steht deshalb in der Sicht selbst: eigener Mandant, zentrale Einheiten oder Einheiten mit einem Beitrag an den eigenen Mandanten. Live geprüft: Mit dem Kontext des Zweithauses liefert sie nur zentrale Einheiten, keine nicht-zentralen des Hauptmandanten. Die Sicht wird nur für Neuigkeiten benutzt; Seiten fremder Einheiten bleiben 404, Listen zeigen dann keinen Link (DB-Test).
+- **Zielmandanten**: Die Mandantenwahl prüft der Server: Redaktion je Mandant darf weder „alle“ noch fremde Mandanten wählen; ohne Redaktion bleibt es beim eigenen Mandanten, unabhängig vom Formular (DB-Test, Unit-Test).
+- **Eingriffe**: Anheften lösen, Dringend beenden, Beitrag beenden, Video zurückziehen und FAQ „noch aktuell“ prüfen das Recht je Inhalt (Redaktion für alle; je Mandant nur bei eigenen oder nur an sie gerichteten Inhalten). Live als Person ohne Rolle und aus dem anderen Mandanten: jeweils „Dafür fehlt dir das Recht“, nichts geändert; fremder Origin 403. Alles wird protokolliert.
+- **Einheiten ohne Pflege**: Die Liste wird beim Laden der Person berechnet (Rollen `abteilungsverwaltung`/`hub_team` fehlen, nicht archiviert) und gibt nur Beiträge, FAQs und Termine frei, nicht Mediathek, Umfragen oder Hinter den Kulissen (DB-Test).
+- **Themen**: Pflege nur System-Admins und Redaktion für alle Mandanten; Redaktion je Mandant und andere 403 (Unit-Test, live).
+
 ## Stand je ASVS-Kapitel (5.0)
 
 | Kapitel                                    | Stand             | Umsetzung, Belege                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |

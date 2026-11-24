@@ -10,6 +10,15 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.41.0 · 24.11.2026 · Mehr Möglichkeiten für die Redaktion
+
+- Die Redaktion wählt bei jedem Beitrag, an welche Mandanten er geht, auch aus einer normalen Abteilung. Mit der Rolle für alle Mandanten geht auch „Alle Mandanten“.
+- Für Abteilungen und Hubs ohne eigene Pflege schreibt die Redaktion jetzt auch Beiträge, FAQs und Termine.
+- In der Arbeitsliste und im Beitrag selbst kann die Redaktion das Anheften lösen, „Dringend“ beenden oder einen Beitrag sofort ablaufen lassen.
+- Veröffentlichte Videos kann die Redaktion zurückziehen. Sie werden dabei nicht gelöscht.
+- Lange nicht geänderte FAQs bestätigt die Redaktion mit „Noch aktuell“.
+- Die Redaktion für alle Mandanten pflegt die Themen für Videos und FAQs und entscheidet über Vorschläge.
+
 ## 0.40.0 · 24.11.2026 · Recht „Dokumente“ für Abteilungen
 
 - Wie bei den Hubs kann die Abteilungsverwaltung einzelnen Personen das Recht „Dokumente“ geben.

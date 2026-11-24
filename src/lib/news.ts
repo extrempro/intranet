@@ -90,14 +90,20 @@ export interface NewsDraft {
 	pinnedUntil: Date | null;
 	urgentUntil: Date | null;
 	urgentText: string | null;
-	/** Zentrale Absender: alle oder einzelne Mandanten. */
+	/** Mit Mandantenwahl (zentrale Absender, Redaktion): alle oder einzelne Mandanten. */
 	allTenants: boolean;
 	tenantIds: string[];
 }
 
+export type Zielmandanten = 'alle' | string[] | null;
+
 export interface NewsContext {
 	now: Date;
-	unitIsCentral: boolean;
+	/**
+	 * Wählbare Zielmandanten: null = nur der eigene, 'alle' = frei (zentrale
+	 * Einheiten, Redaktion für alle), sonst diese Mandanten (Redaktion je Mandant).
+	 */
+	zielMandanten: Zielmandanten;
 	unitTenantId: string;
 	unitMayPostUrgent: boolean;
 	pinMaxDays: number;
@@ -166,19 +172,27 @@ export function validateNews(d: NewsDraft, c: NewsContext): NewsErrors {
 		}
 	}
 
-	if (c.unitIsCentral) {
-		if (!d.allTenants && d.tenantIds.length === 0)
+	if (c.zielMandanten) {
+		const erlaubt = c.zielMandanten;
+		if (d.allTenants && erlaubt !== 'alle')
+			e.tenants = 'An alle Mandanten darfst du nicht schreiben. Wähle einzelne aus.';
+		else if (!d.allTenants && d.tenantIds.length === 0)
 			e.tenants = 'Wähle bitte mindestens einen Mandanten.';
+		else if (!d.allTenants && erlaubt !== 'alle' && d.tenantIds.some((t) => !erlaubt.includes(t)))
+			e.tenants = 'An diesen Mandanten darfst du nicht schreiben.';
 	}
 	return e;
 }
 
-/** Zielmandanten: Nicht-zentrale Einheiten immer nur der eigene (Kap. 8.1). */
+/**
+ * Zielmandanten: ohne Mandantenwahl immer nur der eigene (Kap. 8.1), mit
+ * Mandantenwahl die Auswahl (vorher mit validateNews geprüft).
+ */
 export function effectiveTargets(
 	d: Pick<NewsDraft, 'allTenants' | 'tenantIds'>,
-	c: Pick<NewsContext, 'unitIsCentral' | 'unitTenantId'>
+	c: Pick<NewsContext, 'zielMandanten' | 'unitTenantId'>
 ) {
-	if (!c.unitIsCentral) return { allTenants: false, tenantIds: [c.unitTenantId] };
+	if (!c.zielMandanten) return { allTenants: false, tenantIds: [c.unitTenantId] };
 	return d.allTenants
 		? { allTenants: true, tenantIds: [] }
 		: { allTenants: false, tenantIds: [...new Set(d.tenantIds)] };

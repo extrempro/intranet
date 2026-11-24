@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page } from '@playwright/test';
 
 /** Personen aus seed.sql; das Cookie enthält das Token „e2e-<Name>“. */
-export type Person = 'ada' | 'nils' | 'hanna' | 'bea';
+export type Person = 'ada' | 'nils' | 'hanna' | 'bea' | 'rita';
 
 export async function anmelden(page: Page, wer: Person) {
 	const url = new URL(process.env.BASE_URL ?? 'http://localhost:3999');

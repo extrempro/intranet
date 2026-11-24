@@ -26,15 +26,24 @@ import {
 	ZONE,
 	validateNews,
 	type NewsDraft,
-	type NewsErrors
+	type NewsErrors,
+	type Zielmandanten
 } from '../news.ts';
 import { mayPostUrgent, unitTypeLabel } from '../roles.ts';
 import { audit } from './audit.ts';
-import { canWriteNews, isEditorial, newsUnitIds, type Principal } from './auth/access.ts';
+import {
+	canSeeUnit,
+	canWriteNews,
+	editorialTenants,
+	isEditorial,
+	newsUnitIds,
+	type Principal
+} from './auth/access.ts';
 import { db, scoped } from './db/index.ts';
 import {
 	files,
 	news,
+	newsAbsender as absender,
 	newsAttachments,
 	newsReactions,
 	newsTenants,
@@ -62,9 +71,27 @@ export interface SenderUnit {
 	label: string;
 	tenantId: string;
 	isCentral: boolean;
+	/** Wählbare Zielmandanten (Kap. 8.1, 10) */
+	zielMandanten: Zielmandanten;
 	mayUrgent: boolean;
 	/** Hub: Beiträge erscheinen unter „Aus den Hubs“, ohne Anheften und Dringend */
 	isHub: boolean;
+}
+
+/**
+ * Wohin die Person aus dieser Einheit schreiben darf: zentrale Einheiten an
+ * alle; die Redaktion an die Mandanten, für die sie Redaktion ist (dazu der
+ * eigene der Einheit); sonst nur an den Mandanten der Einheit.
+ */
+export function zielMandantenVon(
+	p: Principal,
+	u: { isCentral: boolean; tenantId: string }
+): Zielmandanten {
+	if (u.isCentral) return 'alle';
+	const red = editorialTenants(p);
+	if (red === 'alle') return 'alle';
+	if (!red.length) return null;
+	return [...new Set([u.tenantId, ...red])];
 }
 
 /** Einheiten, für die die Person schreiben darf (Kap. 5.2). */
@@ -88,6 +115,7 @@ export async function writableUnits(p: Principal): Promise<SenderUnit[]> {
 				label: unitTypeLabel(r.unit),
 				tenantId: r.unit.tenantId,
 				isCentral: r.unit.isCentral,
+				zielMandanten: zielMandantenVon(p, r.unit),
 				mayUrgent:
 					r.unit.type !== 'hub' && mayPostUrgent({ ...r.unit, isKbb: r.kbbUnitId === r.unit.id }),
 				isHub: r.unit.type === 'hub'
@@ -156,12 +184,12 @@ const columns = {
 	urgentUntil: news.urgentUntil,
 	urgentText: news.urgentText,
 	allTenants: news.allTenants,
-	unitName: units.name,
-	unitSlug: units.slug,
-	unitType: units.type,
-	unitTitle: units.title,
-	unitTenantId: units.tenantId,
-	unitIsCentral: units.isCentral
+	unitName: absender.name,
+	unitSlug: absender.slug,
+	unitType: absender.type,
+	unitTitle: absender.title,
+	unitTenantId: absender.tenantId,
+	unitIsCentral: absender.isCentral
 };
 
 type Row = {
@@ -243,7 +271,10 @@ async function decorate(p: Principal, rows: Row[], now: Date) {
 			...state,
 			sender: {
 				id: r.unitId,
-				slug: r.unitSlug,
+				// Seiten anderer Mandanten sind nicht erreichbar: dann ohne Link
+				slug: canSeeUnit(p, { id: r.unitId, tenantId: r.unitTenantId, isCentral: r.unitIsCentral })
+					? r.unitSlug
+					: undefined,
 				hub: r.unitType === 'hub',
 				name: r.unitName,
 				label: unitTypeLabel({ type: r.unitType, title: r.unitTitle })
@@ -303,10 +334,10 @@ function listConds(p: Principal, opts: ListOptions, now: Date): SQL[] {
 	if (opts.from) conds.push(eq(news.unitId, opts.from));
 	if (opts.unitIds)
 		conds.push(opts.unitIds.length ? inArray(news.unitId, opts.unitIds) : sql`false`);
-	else if (opts.hubs === 'only') conds.push(sql`${units.type} = 'hub'`);
-	else conds.push(sql`${units.type} <> 'hub'`);
+	else if (opts.hubs === 'only') conds.push(sql`${absender.type} = 'hub'`);
+	else conds.push(sql`${absender.type} <> 'hub'`);
 	// Archivierte Hubs sind nirgends mehr sichtbar
-	conds.push(isNull(units.archivedAt));
+	conds.push(isNull(absender.archivedAt));
 	// Hinter den Kulissen hat eine eigene Seite (Kap. 8.4)
 	conds.push(eq(news.channel, 'news'));
 	const q = opts.q?.trim().slice(0, 100);
@@ -328,7 +359,7 @@ export async function listNews(p: Principal, opts: ListOptions = {}) {
 		tx
 			.select(columns)
 			.from(news)
-			.innerJoin(units, eq(units.id, news.unitId))
+			.innerJoin(absender, eq(absender.id, news.unitId))
 			.where(and(...conds))
 			.orderBy(
 				...(opts.nachDatum ? [] : [desc(sql`(${news.pinnedUntil} > now())`)]),
@@ -357,7 +388,7 @@ export async function newsMonths(
 		tx
 			.select({ monat, n: sql<number>`count(*)::int` })
 			.from(news)
-			.innerJoin(units, eq(units.id, news.unitId))
+			.innerJoin(absender, eq(absender.id, news.unitId))
 			.where(and(...conds))
 			.groupBy(monat)
 			.orderBy(desc(monat))
@@ -376,14 +407,14 @@ export async function countNewNews(p: Principal, since: Date): Promise<number> {
 		tx
 			.select({ n: sql<number>`count(*)::int` })
 			.from(news)
-			.innerJoin(units, eq(units.id, news.unitId))
+			.innerJoin(absender, eq(absender.id, news.unitId))
 			.where(
 				and(
 					readerVisible(p, writable, isEditorial(p), now),
 					lte(news.publishAt, now),
 					gt(news.publishAt, since),
-					sql`${units.type} <> 'hub'`,
-					isNull(units.archivedAt),
+					sql`${absender.type} <> 'hub'`,
+					isNull(absender.archivedAt),
 					eq(news.channel, 'news')
 				)
 			)
@@ -399,7 +430,7 @@ export async function getNews(p: Principal, id: string) {
 		tx
 			.select({ ...columns, bodyHtml: news.bodyHtml })
 			.from(news)
-			.innerJoin(units, eq(units.id, news.unitId))
+			.innerJoin(absender, eq(absender.id, news.unitId))
 			.where(
 				and(
 					eq(news.id, id),
@@ -440,9 +471,9 @@ export async function senders(p: Principal, opts: ListOptions = {}) {
 	const conds = listConds(p, { ...opts, q: null, from: null, angeheftet: undefined }, now);
 	const rows = await scoped(p, (tx) =>
 		tx
-			.selectDistinct({ id: units.id, name: units.name })
+			.selectDistinct({ id: absender.id, name: absender.name })
 			.from(news)
-			.innerJoin(units, eq(units.id, news.unitId))
+			.innerJoin(absender, eq(absender.id, news.unitId))
 			.where(and(...conds))
 	);
 	return rows.sort((a, b) => a.name.localeCompare(b.name, 'de'));
@@ -455,7 +486,7 @@ export async function urgentForBanner(p: Principal) {
 		tx
 			.select(columns)
 			.from(news)
-			.innerJoin(units, eq(units.id, news.unitId))
+			.innerJoin(absender, eq(absender.id, news.unitId))
 			.where(
 				and(
 					readerVisible(p, [], false, now),
@@ -621,7 +652,7 @@ export async function saveNews(
 
 	const errors = validateNews(draft, {
 		now,
-		unitIsCentral: sender.isCentral,
+		zielMandanten: sender.zielMandanten,
 		unitTenantId: sender.tenantId,
 		unitMayPostUrgent: sender.mayUrgent,
 		pinMaxDays: rules.pinMaxDays,
@@ -635,10 +666,26 @@ export async function saveNews(
 	}
 
 	// Zielmandanten prüfen
-	const targets = effectiveTargets(draft, {
-		unitIsCentral: sender.isCentral,
-		unitTenantId: sender.tenantId
-	});
+	// Ohne eigene Mandantenwahl bleiben die Zielmandanten eines bestehenden
+	// Beitrags erhalten (z. B. von der Redaktion an mehrere Mandanten gerichtet)
+	const bisher =
+		existing && !sender.zielMandanten
+			? (
+					await db
+						.select({ t: newsTenants.tenantId })
+						.from(newsTenants)
+						.where(eq(newsTenants.newsId, existing.id))
+				).map((r) => r.t)
+			: [];
+	const targets =
+		existing && !sender.zielMandanten && existing.unitId === sender.id
+			? existing.allTenants
+				? { allTenants: true, tenantIds: [] }
+				: { allTenants: false, tenantIds: bisher.length ? bisher : [sender.tenantId] }
+			: effectiveTargets(draft, {
+					zielMandanten: sender.zielMandanten,
+					unitTenantId: sender.tenantId
+				});
 	if (targets.tenantIds.length) {
 		const known = await db
 			.select({ id: tenants.id })
@@ -852,17 +899,17 @@ export async function searchNews(p: Principal, tsq: string, limit = 20) {
 				id: news.id,
 				title: news.title,
 				publishAt: news.publishAt,
-				unitName: units.name,
-				isHub: sql<boolean>`${units.type} = 'hub'`,
+				unitName: absender.name,
+				isHub: sql<boolean>`${absender.type} = 'hub'`,
 				snippet: headline(news.bodyText, tsq)
 			})
 			.from(news)
-			.innerJoin(units, eq(units.id, news.unitId))
+			.innerJoin(absender, eq(absender.id, news.unitId))
 			.where(
 				and(
 					readerVisible(p, [...newsUnitIds(p)], isEditorial(p), now),
 					lte(news.publishAt, now),
-					isNull(units.archivedAt),
+					isNull(absender.archivedAt),
 					eq(news.channel, 'news'),
 					matches(document, tsq)
 				)

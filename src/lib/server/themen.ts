@@ -136,6 +136,20 @@ export async function vorschlagen(personId: string, raw: unknown) {
 		detail: 'Themen der Mediathek und FAQs',
 		link: '/verwaltung/themen'
 	});
+	// Redaktion für alle Mandanten entscheidet ebenfalls (Kap. 10)
+	const redaktion = (
+		await db
+			.selectDistinct({ id: roleAssignments.personId })
+			.from(roleAssignments)
+			.where(and(eq(roleAssignments.role, 'redaktion'), eq(roleAssignments.scope, 'all')))
+	)
+		.map((r) => r.id)
+		.filter((id) => !admins.includes(id));
+	await notify('nachrichten', redaktion, {
+		title: `Neuer Themenvorschlag: ${name}`,
+		detail: 'Themen der Mediathek und FAQs',
+		link: '/redaktion/themen'
+	});
 	return name;
 }
 

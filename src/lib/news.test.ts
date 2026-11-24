@@ -29,7 +29,7 @@ const now = new Date('2026-11-20T10:00:00Z');
 const H = 60 * 60 * 1000;
 const ctx: NewsContext = {
 	now,
-	unitIsCentral: false,
+	zielMandanten: null,
 	unitTenantId: 't1',
 	unitMayPostUrgent: true,
 	pinMaxDays: 14,
@@ -106,10 +106,17 @@ describe('validateNews', () => {
 	});
 
 	it('verlangt bei zentralen Absendern eine Zielgruppe', () => {
-		expect(validateNews(draft, { ...ctx, unitIsCentral: true }).tenants).toBeDefined();
-		expect(validateNews({ ...draft, allTenants: true }, { ...ctx, unitIsCentral: true })).toEqual(
+		expect(validateNews(draft, { ...ctx, zielMandanten: 'alle' }).tenants).toBeDefined();
+		expect(validateNews({ ...draft, allTenants: true }, { ...ctx, zielMandanten: 'alle' })).toEqual(
 			{}
 		);
+	});
+
+	it('Redaktion je Mandant: nur die eigenen Mandanten, nicht „alle“', () => {
+		const c = { ...ctx, zielMandanten: ['t1', 't2'] };
+		expect(validateNews({ ...draft, allTenants: true }, c).tenants).toMatch(/alle Mandanten/);
+		expect(validateNews({ ...draft, tenantIds: ['t1', 't3'] }, c).tenants).toMatch(/nicht/);
+		expect(validateNews({ ...draft, tenantIds: ['t1', 't2'] }, c)).toEqual({});
 	});
 });
 
@@ -118,7 +125,7 @@ describe('effectiveTargets', () => {
 		expect(
 			effectiveTargets(
 				{ allTenants: true, tenantIds: ['x'] },
-				{ unitIsCentral: false, unitTenantId: 't1' }
+				{ zielMandanten: null, unitTenantId: 't1' }
 			)
 		).toEqual({
 			allTenants: false,
@@ -129,7 +136,7 @@ describe('effectiveTargets', () => {
 		expect(
 			effectiveTargets(
 				{ allTenants: false, tenantIds: ['a', 'a', 'b'] },
-				{ unitIsCentral: true, unitTenantId: 't1' }
+				{ zielMandanten: 'alle', unitTenantId: 't1' }
 			)
 		).toEqual({
 			allTenants: false,

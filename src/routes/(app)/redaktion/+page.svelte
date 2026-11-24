@@ -1,10 +1,12 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import EinfuehrungAngebot from '#lib/components/EinfuehrungAngebot.svelte';
 	import EinfuehrungKnopf from '#lib/components/EinfuehrungKnopf.svelte';
+	import MitFrage from '#lib/components/MitFrage.svelte';
 	import { ROLLEN } from '#lib/tours.ts';
 
-	let { data } = $props();
+	let { data, form } = $props();
 	const l = $derived(data.liste);
 	const datum = new Intl.DateTimeFormat('de-DE', {
 		dateStyle: 'medium',
@@ -26,6 +28,7 @@
 				n: l.hervorgehoben.length
 			},
 			l.redaktion && { id: 'antraege', label: 'Hub-Anträge vorprüfen', n: l.antraege.length },
+			l.themen && { id: 'themen', label: 'Themen-Vorschläge', n: l.themen.length },
 			l.moderation && { id: 'brett', label: 'Schwarzes Brett prüfen', n: l.brett.length }
 		].filter(Boolean) as { id: string; label: string; n: number }[]
 	);
@@ -52,6 +55,9 @@
 		</p>
 	</div>
 
+	{#if form?.fehler}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
+	{#if form?.ok}<p class="meldung" role="status">{form.ok}</p>{/if}
+
 	<nav class="zaehler" aria-label="Abschnitte" data-tour="zaehler">
 		{#each abschnitte as a (a.id)}
 			<a class="karte kachel" href="#{a.id}">
@@ -65,8 +71,8 @@
 		<section id="ohne-pflege" data-tour="ohne-pflege" class="karte stapel" aria-labelledby="h-ohne">
 			<h2 id="h-ohne">Ohne Pflege</h2>
 			<p class="hinweis">
-				Einheiten ohne eigene Pflegeperson pflegt die Redaktion. Einheiten mit eigener Pflege
-				bearbeitet die Redaktion nicht.
+				Einheiten ohne eigene Pflegeperson pflegt die Redaktion: die Seite und dazu Beiträge, FAQs
+				und Termine. Einheiten mit eigener Pflege bearbeitet die Redaktion nicht.
 			</p>
 			{#if l.ohnePflege.length === 0}<p class="hinweis">Alles hat eine Pflege.</p>{/if}
 			<ul class="liste">
@@ -126,6 +132,16 @@
 						<li>
 							<a href="{resolve('/(app)/faqs')}#faq-{f.id}">{f.question}</a>
 							<span class="hinweis">{f.unitName} · zuletzt {datum.format(f.updatedAt)}</span>
+							<form method="POST" action="?/faqAktuell" use:enhance>
+								<input type="hidden" name="id" value={f.id} />
+								<button
+									class="knopf zweit klein"
+									type="submit"
+									aria-label="„{f.question}“ ist noch aktuell"
+								>
+									Noch aktuell
+								</button>
+							</form>
 						</li>
 					{/each}
 				</ul>
@@ -149,6 +165,10 @@
 
 		<section id="hervorgehoben" class="karte stapel" aria-labelledby="h-hervor">
 			<h2 id="h-hervor">Dringend und angeheftet</h2>
+			<p class="hinweis">
+				Du kannst das Anheften lösen, „Dringend“ beenden oder einen Beitrag sofort ablaufen lassen.
+				Das Protokoll hält fest, wer eingegriffen hat.
+			</p>
 			{#if l.hervorgehoben.length === 0}<p class="hinweis">
 					Gerade nichts dringend oder angeheftet.
 				</p>{/if}
@@ -169,6 +189,61 @@
 								n.urgentUntil && n.urgentUntil > new Date() ? n.urgentUntil : n.pinnedUntil!
 							)}
 						</span>
+						{#if n.eingreifen}<span class="eingriffe">
+								{#if n.pinnedUntil && n.pinnedUntil > new Date()}
+									<MitFrage
+										action="?/beitrag"
+										knopf="Anheften lösen"
+										knopfKlasse="knopf zweit klein"
+										frage={{
+											titel: 'Anheften lösen?',
+											text: `„${n.title}“ bleibt sichtbar, steht aber nicht mehr oben.`,
+											ja: 'Lösen'
+										}}
+									>
+										{#snippet felder()}<input type="hidden" name="id" value={n.id} /><input
+												type="hidden"
+												name="art"
+												value="loesen"
+											/>{/snippet}
+									</MitFrage>
+								{/if}
+								{#if n.urgentUntil && n.urgentUntil > new Date()}
+									<MitFrage
+										action="?/beitrag"
+										knopf="Dringend beenden"
+										knopfKlasse="knopf zweit klein"
+										frage={{
+											titel: 'Dringende Meldung beenden?',
+											text: `Das Banner zu „${n.title}“ verschwindet sofort. Der Beitrag bleibt als normale Neuigkeit.`,
+											ja: 'Beenden'
+										}}
+									>
+										{#snippet felder()}<input type="hidden" name="id" value={n.id} /><input
+												type="hidden"
+												name="art"
+												value="dringend"
+											/>{/snippet}
+									</MitFrage>
+								{/if}
+								<MitFrage
+									action="?/beitrag"
+									knopf="Beitrag beenden"
+									knopfKlasse="knopf zweit klein"
+									frage={{
+										titel: 'Beitrag jetzt beenden?',
+										text: `„${n.title}“ läuft sofort ab und ist danach für niemanden mehr sichtbar.`,
+										ja: 'Beenden',
+										gefahr: true
+									}}
+								>
+									{#snippet felder()}<input type="hidden" name="id" value={n.id} /><input
+											type="hidden"
+											name="art"
+											value="beenden"
+										/>{/snippet}
+								</MitFrage>
+							</span>{/if}
 					</li>
 				{/each}
 			</ul>
@@ -187,6 +262,19 @@
 			</ul>
 			{#if l.antraege.length}<a href={resolve('/(app)/hubs/antraege')}>Zu den Anträgen</a>{/if}
 		</section>
+
+		{#if l.themen}
+			<section id="themen" class="karte stapel" aria-labelledby="h-themen">
+				<h2 id="h-themen">Themen-Vorschläge</h2>
+				<p class="hinweis">
+					{l.themen.length
+						? `${l.themen.length === 1 ? 'Ein Vorschlag wartet' : `${l.themen.length} Vorschläge warten`} auf deine Entscheidung.`
+						: 'Gerade keine Vorschläge.'}
+					Die Themen gelten für Videos und FAQs in allen Mandanten.
+				</p>
+				<p><a href={resolve('/(app)/redaktion/themen')}>Themen pflegen</a></p>
+			</section>
+		{/if}
 	{/if}
 
 	{#if l.moderation}
@@ -262,6 +350,12 @@
 		gap: 4px 12px;
 		padding: 8px 0;
 		border-top: 1px solid var(--bd);
+	}
+	.eingriffe {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		flex-basis: 100%;
 	}
 	.schild.dringend {
 		background: #fcebeb;

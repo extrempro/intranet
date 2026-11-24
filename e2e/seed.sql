@@ -8,16 +8,20 @@ insert into tenants (id, name, short_name, is_main) values
 insert into units (id, tenant_id, type, name, slug, is_central, about) values
 	('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-000000000001', 'abteilung', 'IT', 'it', true, null),
 	('00000000-0000-4000-8000-0000000000b1', '00000000-0000-4000-8000-000000000001', 'hub', 'Chor', 'chor', true, 'Proben und Auftritte des Betriebschors'),
-	('00000000-0000-4000-8000-0000000000b2', '00000000-0000-4000-8000-000000000001', 'hub', 'Laufgruppe', 'laufgruppe', false, 'Gemeinsam laufen nach Feierabend');
+	('00000000-0000-4000-8000-0000000000b2', '00000000-0000-4000-8000-000000000001', 'hub', 'Laufgruppe', 'laufgruppe', false, 'Gemeinsam laufen nach Feierabend'),
+	-- Ohne eigene Pflege: hier schreibt die Redaktion
+	('00000000-0000-4000-8000-0000000000a2', '00000000-0000-4000-8000-000000000001', 'abteilung', 'Lager', 'lager', false, null);
 
 insert into persons (id, tenant_id, email, display_name, auth_source, position) values
 	('00000000-0000-4000-8000-0000000000c1', '00000000-0000-4000-8000-000000000001', 'ada@haus-a.test', 'Ada Admin', 'local', 'IT-Leitung'),
 	('00000000-0000-4000-8000-0000000000c2', '00000000-0000-4000-8000-000000000001', 'nils@haus-a.test', 'Nils Normal', 'local', 'Bühnentechnik'),
 	('00000000-0000-4000-8000-0000000000c3', '00000000-0000-4000-8000-000000000001', 'hanna@haus-a.test', 'Hanna Hub', 'local', 'Kostüm'),
-	('00000000-0000-4000-8000-0000000000c4', '00000000-0000-4000-8000-000000000002', 'bea@zweithaus.test', 'Bea Bauer', 'local', 'Tanz');
+	('00000000-0000-4000-8000-0000000000c4', '00000000-0000-4000-8000-000000000002', 'bea@zweithaus.test', 'Bea Bauer', 'local', 'Tanz'),
+	('00000000-0000-4000-8000-0000000000c5', '00000000-0000-4000-8000-000000000001', 'rita@haus-a.test', 'Rita Redaktion', 'local', 'Kommunikation');
 
 insert into role_assignments (person_id, role, scope) values
-	('00000000-0000-4000-8000-0000000000c1', 'system_admin', 'all');
+	('00000000-0000-4000-8000-0000000000c1', 'system_admin', 'all'),
+	('00000000-0000-4000-8000-0000000000c5', 'redaktion', 'all');
 insert into role_assignments (person_id, role, scope, scope_unit_id) values
 	('00000000-0000-4000-8000-0000000000c3', 'hub_team', 'unit', '00000000-0000-4000-8000-0000000000b1');
 
