@@ -5,10 +5,10 @@
  * Die Mandantentrennung gilt doppelt: hier im Code und zusätzlich per
  * Row-Level Security in PostgreSQL (siehe db/index.ts, scoped()).
  */
-import { eq } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { Role } from '../../roles.ts';
 import { db } from '../db/index.ts';
-import { locationOperators, roleAssignments, unitMembers } from '../db/schema.ts';
+import { locationOperators, roleAssignments, unitMembers, units } from '../db/schema.ts';
 
 export interface RoleGrant {
 	role: Role;
@@ -39,6 +39,11 @@ export interface Principal {
 	memberships: Membership[];
 	/** Betreiber-Konto: nur dieser Standort, sonst nichts (Kap. 4.3). */
 	operatorLocationId?: string | null;
+	/**
+	 * Redaktion: Einheiten ohne eigene Pflege in ihrem Bereich. Für sie schreibt
+	 * sie Beiträge, FAQs und Termine (Kap. 10). Beim Laden der Person berechnet.
+	 */
+	ohnePflege?: string[];
 }
 
 /** Die für Rechte nötigen Angaben einer Einheit. */
@@ -83,8 +88,34 @@ export async function loadPrincipal(person: { id: string; tenantId: string }): P
 		tenantId: person.tenantId,
 		roles,
 		memberships,
-		operatorLocationId: operator[0]?.locationId ?? null
+		operatorLocationId: operator[0]?.locationId ?? null,
+		ohnePflege: await einheitenOhnePflege(roles)
 	};
+}
+
+/** Einheiten ohne Abteilungsverwaltung bzw. Hub-Team im Bereich der Redaktion. */
+async function einheitenOhnePflege(roles: RoleGrant[]): Promise<string[]> {
+	const red = roles.filter((r) => r.role === 'redaktion');
+	if (!red.length) return [];
+	const alle = red.some((r) => r.scope === 'all');
+	const mandanten = red.map((r) => r.scopeTenantId).filter((t): t is string => Boolean(t));
+	if (!alle && !mandanten.length) return [];
+	const rows = await db
+		.select({ id: units.id })
+		.from(units)
+		.where(
+			and(
+				isNull(units.archivedAt),
+				alle ? undefined : inArray(units.tenantId, mandanten),
+				sql`not exists (select 1 from role_assignments r where r.scope_unit_id = ${units.id} and r.role in ('abteilungsverwaltung', 'hub_team'))`
+			)
+		);
+	return rows.map((r) => r.id);
+}
+
+/** Redaktion schreibt für diese Einheit, weil sie keine eigene Pflege hat. */
+function redaktionOhnePflege(p: Principal, unitId: string): boolean {
+	return Boolean(p.ohnePflege?.includes(unitId));
 }
 
 // ---------------------------------------------------------------------------
@@ -121,6 +152,16 @@ export function canSeeAdministration(p: Principal): boolean {
 /** Redaktion für den Mandanten der Person oder für alle (Kap. 10). */
 export function isEditorial(p: Principal, tenantId = p.tenantId): boolean {
 	return hasTenantRole(p, 'redaktion', tenantId);
+}
+
+/**
+ * Mandanten, für die die Person Redaktion ist: 'alle' bei Redaktion für alle,
+ * sonst die einzelnen Mandanten (leer = keine Redaktion).
+ */
+export function editorialTenants(p: Principal): 'alle' | string[] {
+	const r = p.roles.filter((x) => x.role === 'redaktion');
+	if (r.some((x) => x.scope === 'all')) return 'alle';
+	return [...new Set(r.map((x) => x.scopeTenantId).filter((t): t is string => Boolean(t)))];
 }
 
 // ---------------------------------------------------------------------------
@@ -167,6 +208,7 @@ export function canWriteNews(p: Principal, unit: UnitRef): boolean {
 	if (!canSeeUnit(p, unit)) return false;
 	return (
 		hasDelegated(p, unit.id, 'mayWriteNews') ||
+		redaktionOhnePflege(p, unit.id) ||
 		hasUnitRole(p, 'abteilungsverwaltung', unit.id) ||
 		hasUnitRole(p, 'hub_team', unit.id)
 	);
@@ -177,6 +219,7 @@ export function canWriteFaqs(p: Principal, unit: UnitRef): boolean {
 	if (!canSeeUnit(p, unit)) return false;
 	return (
 		hasDelegated(p, unit.id, 'mayWriteFaqs') ||
+		redaktionOhnePflege(p, unit.id) ||
 		hasUnitRole(p, 'abteilungsverwaltung', unit.id) ||
 		hasUnitRole(p, 'hub_team', unit.id)
 	);
@@ -228,6 +271,7 @@ export function canWriteEvents(p: Principal, unit: UnitRef): boolean {
 	if (!canSeeUnit(p, unit)) return false;
 	return (
 		hasDelegated(p, unit.id, 'mayWriteEvents') ||
+		redaktionOhnePflege(p, unit.id) ||
 		hasUnitRole(p, 'abteilungsverwaltung', unit.id) ||
 		hasUnitRole(p, 'hub_team', unit.id)
 	);
@@ -246,6 +290,9 @@ export function faqUnitIds(p: Principal): Set<string> {
 function writeUnitIds(p: Principal, right: WriteRight): Set<string> {
 	const ids = new Set<string>();
 	for (const m of p.memberships) if (m[right]) ids.add(m.unitId);
+	// Redaktion: Beiträge, FAQs und Termine für Einheiten ohne eigene Pflege
+	if (right === 'mayWriteNews' || right === 'mayWriteFaqs' || right === 'mayWriteEvents')
+		for (const id of p.ohnePflege ?? []) ids.add(id);
 	for (const r of p.roles) {
 		if ((r.role === 'abteilungsverwaltung' || r.role === 'hub_team') && r.scopeUnitId) {
 			ids.add(r.scopeUnitId);

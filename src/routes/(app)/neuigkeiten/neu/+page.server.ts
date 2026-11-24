@@ -22,9 +22,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const einheiten = await mitUmfrageRecht(p, await writableUnits(p));
 	if (einheiten.length === 0) error(403, 'Dafür fehlt dir das Recht.');
 	const entwurf = await entwurfLaden(p, url.searchParams.get('entwurf'), 'news');
+	// ?absender= z. B. vom Hub aus
+	const start = einheiten.find((e) => e.id === url.searchParams.get('absender')) ?? einheiten[0];
 	let werte: NewsFormValues = {
-		// ?absender= z. B. vom Hub aus
-		unitId: einheiten.find((e) => e.id === url.searchParams.get('absender'))?.id ?? einheiten[0].id,
+		unitId: start.id,
 		title: '',
 		bodyHtml: '',
 		publishAt: dateToBerlinInput(new Date()),
@@ -34,8 +35,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		urgent: false,
 		urgentUntil: '',
 		urgentText: '',
-		allTenants: true,
-		tenantIds: [],
+		// Zentral an alle, sonst der eigene Mandant (Redaktion kann weitere wählen)
+		allTenants: start.isCentral,
+		tenantIds: start.isCentral ? [] : [start.tenantId],
 		replacePin: false,
 		attachments: [],
 		umfrage: ''

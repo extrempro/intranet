@@ -12,6 +12,9 @@
 		name: string;
 		label: string;
 		isCentral: boolean;
+		tenantId: string;
+		/** Wählbare Zielmandanten: null = nur der eigene, 'alle' = frei */
+		zielMandanten: 'alle' | string[] | null;
 		mayUrgent: boolean;
 		isHub: boolean;
 		/** Darf an Beiträgen dieser Einheit Umfragen anlegen (Recht und Regel an) */
@@ -67,6 +70,22 @@
 	let v = $state<Werte>(untrack(() => structuredClone(werte)));
 
 	const einheit = $derived(einheiten.find((e) => e.id === v.unitId) ?? einheiten[0]);
+	// Mandantenwahl: zentrale Einheiten und die Redaktion (Kap. 8.1, 10)
+	const ziel = $derived(einheit?.zielMandanten ?? null);
+	const waehlbar = $derived(
+		ziel === 'alle' ? mandanten : mandanten.filter((m) => ziel?.includes(m.id))
+	);
+	// Absender gewechselt: Zielgruppe passend vorbelegen (zentral an alle, sonst der eigene Mandant)
+	let letzteEinheit = untrack(() => v.unitId);
+	$effect(() => {
+		const e = einheit;
+		if (!e || e.id === letzteEinheit) return;
+		letzteEinheit = e.id;
+		untrack(() => {
+			v.allTenants = e.isCentral;
+			v.tenantIds = e.isCentral ? [] : [e.tenantId];
+		});
+	});
 	const ablauf = $derived(
 		lifecycle({
 			publishAt: (v.publishAt && berlinToDate(v.publishAt)) || undefined,
@@ -122,42 +141,54 @@
 
 <Anhaenge start={werte.attachments} fehler={fehler.attachments} beschreibungen />
 
-{#if einheit?.isCentral}
+{#if ziel}
 	<fieldset class="gruppe">
 		<legend>
 			Wer sieht das?
 			<Info
 				thema="Wer sieht das?"
-				text="Du kannst für alle Mandanten schreiben oder nur für einzelne. Wer nicht dazugehört, sieht den Beitrag nicht, auch nicht in der Suche."
+				text={ziel === 'alle'
+					? 'Du kannst für alle Mandanten schreiben oder nur für einzelne. Wer nicht dazugehört, sieht den Beitrag nicht, auch nicht in der Suche.'
+					: 'Du kannst an die Mandanten schreiben, für die du Redaktion bist. Wer nicht dazugehört, sieht den Beitrag nicht, auch nicht in der Suche.'}
 			/>
 		</legend>
-		<label class="option">
-			<input
-				type="radio"
-				name="zielgruppe"
-				value="alle"
-				checked={v.allTenants}
-				onchange={() => (v.allTenants = true)}
-			/> Alle Mandanten
-		</label>
-		<label class="option">
-			<input
-				type="radio"
-				name="zielgruppe"
-				value="auswahl"
-				checked={!v.allTenants}
-				onchange={() => (v.allTenants = false)}
-			/> Nur ausgewählte Mandanten
-		</label>
-		{#if !v.allTenants}
-			<div class="einzug">
-				{#each mandanten as m (m.id)}
+		{#if ziel === 'alle'}
+			<label class="option">
+				<input
+					type="radio"
+					name="zielgruppe"
+					value="alle"
+					checked={v.allTenants}
+					onchange={() => (v.allTenants = true)}
+				/> Alle Mandanten
+			</label>
+		{/if}
+		{#if ziel === 'alle'}
+			<label class="option">
+				<input
+					type="radio"
+					name="zielgruppe"
+					value="auswahl"
+					checked={!v.allTenants}
+					onchange={() => (v.allTenants = false)}
+				/> Nur ausgewählte Mandanten
+			</label>
+		{:else}
+			<input type="hidden" name="zielgruppe" value="auswahl" />
+		{/if}
+		{#if !v.allTenants || ziel !== 'alle'}
+			<div class={ziel === 'alle' ? 'einzug' : ''}>
+				{#each waehlbar as m (m.id)}
 					<label class="option">
 						<input
 							type="checkbox"
 							name="mandanten"
 							value={m.id}
 							checked={v.tenantIds.includes(m.id)}
+							onchange={(ev) =>
+								(v.tenantIds = ev.currentTarget.checked
+									? [...v.tenantIds, m.id]
+									: v.tenantIds.filter((t) => t !== m.id))}
 						/>
 						{m.name}
 					</label>

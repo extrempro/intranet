@@ -143,18 +143,18 @@ Im Konto sichtbar und einzeln beendbar. In der Teams-App gilt ein eigenes Sitzun
 
 ### 5.1 Rollen
 
-| Rolle                      | Geltungsbereich   | Darf                                                                                                                                                         |
-| -------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Redaktion                  | Mandant oder alle | Sieht geplante Beiträge aller Absender, darf an mehrere Mandanten pushen, mehr anheften; pflegt Einheiten ohne eigene Pflege; Bereich „Redaktion“ (Kap. 10). |
-| Abteilungsverwaltung       | je Abteilung      | Pflegt Seite, Team, Zuständigkeiten; vergibt Schreibrechte; schaltet „Hinter den Kulissen“ für die Abteilung frei.                                           |
-| Hub-Team                   | je Hub            | Pflegt den Hub gemeinsam; Koordination durch eine Person möglich; vergibt Schreibrechte; kann den Hub ruhen lassen.                                          |
-| Organigramm pflegen        | alle Mandanten    | Lädt neue Fassungen des Organigramms hoch.                                                                                                                   |
-| Vereinbarungen pflegen     | je Mandant        | Stellt Betriebs- und Dienstvereinbarungen ein. Auch an Personen außerhalb von Betriebsrat/Personalrat vergebbar.                                             |
-| Fachpflege                 | je KBB            | Lädt Pläne des KBB hoch und löscht sie.                                                                                                                      |
-| Moderation Schwarzes Brett | je Mandant        | Prüft neue und gemeldete Anzeigen, stellt Rückfragen.                                                                                                        |
-| Mandanten-Admin            | je Mandant        | Verwaltet den eigenen Mandanten: Branding, Benutzer, Standorte.                                                                                              |
-| System-Admin               | alle              | Verwaltet alles, auch Anmeldung, Regeln und System. Sparsam vergeben.                                                                                        |
-| Betreiber                  | je Standort       | Externe; Speiseplan und Standort-Infos.                                                                                                                      |
+| Rolle                      | Geltungsbereich   | Darf                                                                                                                                                                                                                                                                                      |
+| -------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Redaktion                  | Mandant oder alle | Sieht geplante Beiträge aller Absender; wählt bei jedem Beitrag die Zielmandanten (für alle: frei, je Mandant: ihre Mandanten); mehr anheften; pflegt Einheiten ohne eigene Pflege samt Beiträgen, FAQs und Terminen; greift bei Beiträgen und Videos ein; Bereich „Redaktion“ (Kap. 10). |
+| Abteilungsverwaltung       | je Abteilung      | Pflegt Seite, Team, Zuständigkeiten; vergibt Schreibrechte; schaltet „Hinter den Kulissen“ für die Abteilung frei.                                                                                                                                                                        |
+| Hub-Team                   | je Hub            | Pflegt den Hub gemeinsam; Koordination durch eine Person möglich; vergibt Schreibrechte; kann den Hub ruhen lassen.                                                                                                                                                                       |
+| Organigramm pflegen        | alle Mandanten    | Lädt neue Fassungen des Organigramms hoch.                                                                                                                                                                                                                                                |
+| Vereinbarungen pflegen     | je Mandant        | Stellt Betriebs- und Dienstvereinbarungen ein. Auch an Personen außerhalb von Betriebsrat/Personalrat vergebbar.                                                                                                                                                                          |
+| Fachpflege                 | je KBB            | Lädt Pläne des KBB hoch und löscht sie.                                                                                                                                                                                                                                                   |
+| Moderation Schwarzes Brett | je Mandant        | Prüft neue und gemeldete Anzeigen, stellt Rückfragen.                                                                                                                                                                                                                                     |
+| Mandanten-Admin            | je Mandant        | Verwaltet den eigenen Mandanten: Branding, Benutzer, Standorte.                                                                                                                                                                                                                           |
+| System-Admin               | alle              | Verwaltet alles, auch Anmeldung, Regeln und System. Sparsam vergeben.                                                                                                                                                                                                                     |
+| Betreiber                  | je Standort       | Externe; Speiseplan und Standort-Infos.                                                                                                                                                                                                                                                   |
 
 Eine eigene Rolle „Autor“ gibt es nicht. Schreibrechte werden je Person delegiert (5.2).
 
@@ -254,7 +254,7 @@ Listen, die mit der Zeit wachsen (Neuigkeiten, Pläne, Mitglieder, Mediathek …
 - **Entwürfe** (auch Hub-Beiträge, Hinter den Kulissen, FAQs): neue Einträge werden beim Schreiben automatisch (wenige Sekunden nach der letzten Änderung) und per Knopf als Entwurf gespeichert; nur für die eigene Person sichtbar (Row-Level Security), Liste „Meine Entwürfe“; nach dem Veröffentlichen gelöscht, sonst 90 Tage nach der letzten Änderung. Hochgeladene Bilder und Anhänge eines Entwurfs bleiben so lange erhalten.
 - **Schutz vor Verlassen**: In allen Formularen fragt das Intranet vor dem Verlassen nach, wenn Eingaben weder abgeschickt noch als Entwurf gesichert sind (Fenster nach 6.5; beim Schließen oder Neuladen fragt der Browser).
 - **Freigabe** (geplant veröffentlichen) und **Ablaufdatum**. Geplante Beiträge sehen die Schreibenden der Einheit und die Redaktion (Filter „Geplant“).
-- **Zielgruppe („Wer sieht das?“)**: Nicht-zentrale Einheiten veröffentlichen nur für den eigenen Mandanten; zentrale Absender wählen alle oder einzelne Mandanten. Standortbezogene Beiträge sehen nur Personen mit diesem Standort.
+- **Zielgruppe („Wer sieht das?“)**: Nicht-zentrale Einheiten veröffentlichen nur für den eigenen Mandanten; zentrale Absender wählen alle oder einzelne Mandanten. Die Redaktion wählt bei jedem Beitrag die Mandanten, auch aus nicht-zentralen Einheiten (Kap. 10). Standortbezogene Beiträge sehen nur Personen mit diesem Standort.
 - Veröffentlichung **ohne Redaktionsfreigabe**.
 - **WYSIWYG-Editor** (fett, kursiv, unterstrichen, H2/H3, Listen, Zitat, Link, einfache Tabellen mit Kopfzeile ohne verbundene Zellen, Infokasten Info/Hinweis/Warnung), **Dateianhänge** (verschlüsselt). Tabellen und Infokästen gibt es wie Bilder im Text auch bei Hub-Beiträgen, Hinter den Kulissen und FAQs.
 - **Bilder im Text** (auch Hub-Beiträge, Hinter den Kulissen, FAQs): JPEG, PNG, WebP; im Browser auf höchstens 1600 px verkleinert, animierte WebP unverändert bis 5 MB. Breite 10–100 % der Textbreite in 5er-Schritten (Anfasser an der Ecke, Schnellwahl klein/mittel/volle Breite, − und +), Ausrichtung links/rechts, verschieben per Ziehen im Text (am Handy immer volle Breite). Bildbeschreibung Pflicht. Höchstens 20 Bilder je Beitrag. Animationen starten angehalten mit Knopf „Abspielen“ (WCAG 2.2.2). Abrufbar nur für Personen, die den Beitrag sehen dürfen.
@@ -428,10 +428,14 @@ Umfragen hängen an einem Beitrag (Neuigkeiten und Hubs) und stehen im Beitrag u
 Arbeitsliste (keine Einstellungen). Sichtbar mit der Rolle Redaktion; mit der Rolle Moderation Schwarzes Brett nur der Abschnitt Schwarzes Brett.
 
 - Zähler je Abschnitt mit Sprung dorthin.
-- **Ohne Pflege**: Einheiten ohne eigene Pflege, Direktsprung zum Bearbeiten. Einheiten mit eigener Pflege bearbeitet die Redaktion nicht.
-- **Zu prüfen**: überfällige Zuständigkeiten, bald ablaufende Beiträge, lange nicht geänderte FAQs, inaktive Ansprechpersonen. Einträge verschwinden, sobald erledigt.
-- **Dringend und angeheftet**: Überblick über alle Einheiten.
+- **Ohne Pflege**: Einheiten ohne eigene Pflege, Direktsprung zum Bearbeiten. Für sie schreibt die Redaktion auch Beiträge, FAQs und Termine. Einheiten mit eigener Pflege bearbeitet die Redaktion nicht.
+- **Zu prüfen**: überfällige Zuständigkeiten, bald ablaufende Beiträge, lange nicht geänderte FAQs („Noch aktuell“ bestätigt sie, ohne „zuletzt geändert“ zu ändern), inaktive Ansprechpersonen. Einträge verschwinden, sobald erledigt.
+- **Dringend und angeheftet**: Überblick über alle Einheiten; **Anheften lösen**, **Dringend beenden**, **Beitrag beenden** (läuft sofort ab). Dieselben Eingriffe im Beitrag selbst, wenn die Person ihn nicht bearbeiten darf.
 - **Hub-Anträge vorprüfen** (8.12).
+- **Themen-Vorschläge** (nur Redaktion für alle Mandanten, sonst System-Admins): Themenliste pflegen und Vorschläge entscheiden unter „Redaktion → Themen“.
+- **Videos zurückziehen**: veröffentlichtes Video wieder auf Entwurf; Löschen bleibt bei der Einheit.
+- **Bereich der Redaktion**: Redaktion für alle überall; Redaktion je Mandant bei Inhalten aus ihren Mandanten oder nur an ihre Mandanten gerichteten. Jeder Eingriff wird protokolliert (`news.redaktion_*`, `video.redaktion_zurueckziehen`, `faq.redaktion_geprueft`).
+- **Zielmandanten**: Die Redaktion wählt bei jedem Beitrag die Mandanten (für alle: auch „Alle Mandanten“; je Mandant: nur ihre). Leser anderer Mandanten sehen den Absender (Sicht `news_absender`), aber keinen Link auf dessen Seite.
 - **Schwarzes Brett prüfen**.
 
 ---

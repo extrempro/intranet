@@ -208,7 +208,7 @@ export const ROLLEN: Record<string, Tour> = {
 			{
 				target: 'ohne-pflege',
 				title: 'Ohne Pflege',
-				text: 'Einheiten ohne eigene Pflegeperson pflegt die Redaktion.'
+				text: 'Einheiten ohne eigene Pflegeperson pflegt die Redaktion, auch Beiträge, FAQs und Termine.'
 			},
 			{
 				target: 'zu-pruefen',

@@ -176,7 +176,7 @@
 		data-tour="nachrichten"
 		href={resolve('/(app)/nachrichten')}
 		aria-label={data.nachrichten
-			? `Nachrichten, ${data.nachrichten} mit neuen Antworten`
+			? `Nachrichten, ${data.nachrichten > 99 ? '99+' : data.nachrichten} mit neuen Antworten`
 			: 'Nachrichten'}
 		title="Nachrichten"
 		aria-current={page.url.pathname.startsWith('/nachrichten') ? 'page' : undefined}
@@ -192,7 +192,7 @@
 		data-tour="glocke"
 		href={resolve('/(app)/benachrichtigungen')}
 		aria-label={data.ungelesen
-			? `Benachrichtigungen, ${data.ungelesen} ungelesen`
+			? `Benachrichtigungen, ${data.ungelesen > 99 ? '99+' : data.ungelesen} ungelesen`
 			: 'Benachrichtigungen'}
 		title="Benachrichtigungen"
 		aria-current={page.url.pathname === '/benachrichtigungen' ? 'page' : undefined}

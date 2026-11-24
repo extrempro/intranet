@@ -9,7 +9,10 @@ import { isEditorial, type Principal } from './auth/access.ts';
 import { isModerator, moderationQueue } from './board.ts';
 import { db } from './db/index.ts';
 import { overdueWithoutMaintenance } from './departments.ts';
-import { faqs, hubApplications, news, persons, tenants, units } from './db/schema.ts';
+import { faqs, hubApplications, news, newsTenants, persons, tenants, units } from './db/schema.ts';
+import { imBereich } from './redaktion-eingriffe.ts';
+import { darfThemenPflegen } from './themen-seite.ts';
+import { vorschlaege } from './themen.ts';
 
 /** Mandanten, für die die Person Redaktion ist. */
 async function editorialTenants(p: Principal) {
@@ -22,6 +25,32 @@ async function editorialTenants(p: Principal) {
 
 export function mayOpenEditorial(p: Principal) {
 	return p.roles.some((r) => r.role === 'redaktion') || isModerator(p);
+}
+
+/** Darf die Redaktion bei diesen Beiträgen eingreifen? (zentrale nur im eigenen Bereich) */
+async function mitEingriff<T extends { id: string; tenantId: string; allTenants: boolean }>(
+	p: Principal,
+	liste: T[]
+) {
+	const ziele = liste.length
+		? await db
+				.select({ newsId: newsTenants.newsId, t: newsTenants.tenantId })
+				.from(newsTenants)
+				.where(
+					inArray(
+						newsTenants.newsId,
+						liste.map((n) => n.id)
+					)
+				)
+		: [];
+	return liste.map(({ tenantId, allTenants, ...n }) => ({
+		...n,
+		eingreifen: imBereich(p, {
+			tenantId,
+			allTenants,
+			ziele: ziele.filter((z) => z.newsId === n.id).map((z) => z.t)
+		})
+	}));
 }
 
 export async function editorialWorklist(p: Principal) {
@@ -95,7 +124,13 @@ export async function editorialWorklist(p: Principal) {
 						})
 						.from(faqs)
 						.innerJoin(units, eq(units.id, faqs.unitId))
-						.where(and(unitScope, lt(faqs.updatedAt, yearAgo)))
+						// „Noch aktuell“ der Redaktion zählt wie eine Änderung
+						.where(
+							and(
+								unitScope,
+								sql`greatest(${faqs.updatedAt}, coalesce(${faqs.checkedAt}, ${faqs.updatedAt})) < ${yearAgo.toISOString()}::timestamptz`
+							)
+						)
 						.orderBy(asc(faqs.updatedAt))
 						.limit(100)
 				: [],
@@ -130,6 +165,8 @@ export async function editorialWorklist(p: Principal) {
 						.select({
 							id: news.id,
 							title: news.title,
+							tenantId: news.tenantId,
+							allTenants: news.allTenants,
 							unitName: units.name,
 							urgentUntil: news.urgentUntil,
 							pinnedUntil: news.pinnedUntil,
@@ -165,8 +202,9 @@ export async function editorialWorklist(p: Principal) {
 		mandanten: tenantList.map((t) => t.short),
 		ohnePflege: ohnePflege.map((u) => ({ ...u, label: unitTypeLabel(u) })),
 		zuPruefen: { ueberfaellig, ablaufend, alteFaqs, inaktiv },
-		hervorgehoben,
+		hervorgehoben: await mitEingriff(p, hervorgehoben),
 		antraege,
+		themen: darfThemenPflegen(p) ? await vorschlaege() : null,
 		brett: brett.map((a) => ({
 			id: a.id,
 			title: a.title,

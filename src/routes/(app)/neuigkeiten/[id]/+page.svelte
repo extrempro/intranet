@@ -114,6 +114,61 @@
 
 	{#if form?.fehler}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
 
+	{#if form && 'eingegriffen' in form}
+		<p class="meldung" role="status">
+			{form.eingegriffen === 'loesen' ? 'Anheften gelöst.' : 'Dringende Meldung beendet.'}
+		</p>
+	{/if}
+
+	{#if data.eingreifen}
+		<section class="karte stapel eng" aria-labelledby="h-redaktion">
+			<h2 id="h-redaktion" class="klein">Redaktion</h2>
+			<p class="hinweis">
+				Du kannst als Redaktion eingreifen. Das Protokoll hält fest, wer eingegriffen hat.
+			</p>
+			<div class="aktionen">
+				{#if b.pinned}
+					<MitFrage
+						action="?/eingreifen"
+						knopf="Anheften lösen"
+						frage={{
+							titel: 'Anheften lösen?',
+							text: 'Der Beitrag bleibt sichtbar, steht aber nicht mehr oben.',
+							ja: 'Lösen'
+						}}
+					>
+						{#snippet felder()}<input type="hidden" name="art" value="loesen" />{/snippet}
+					</MitFrage>
+				{/if}
+				{#if b.urgent && b.urgentUntil}
+					<MitFrage
+						action="?/eingreifen"
+						knopf="Dringend beenden"
+						frage={{
+							titel: 'Dringende Meldung beenden?',
+							text: 'Das Banner verschwindet sofort. Der Beitrag bleibt als normale Neuigkeit.',
+							ja: 'Beenden'
+						}}
+					>
+						{#snippet felder()}<input type="hidden" name="art" value="dringend" />{/snippet}
+					</MitFrage>
+				{/if}
+				<MitFrage
+					action="?/eingreifen"
+					knopf="Beitrag beenden"
+					frage={{
+						titel: 'Beitrag jetzt beenden?',
+						text: 'Der Beitrag läuft sofort ab und ist danach für niemanden mehr sichtbar, auch nicht für die Einheit.',
+						ja: 'Beenden',
+						gefahr: true
+					}}
+				>
+					{#snippet felder()}<input type="hidden" name="art" value="beenden" />{/snippet}
+				</MitFrage>
+			</div>
+		</section>
+	{/if}
+
 	{#if b.canEdit}
 		<div class="aktionen">
 			<a class="knopf zweit" href={resolve('/(app)/neuigkeiten/[id]/bearbeiten', { id: b.id })}>

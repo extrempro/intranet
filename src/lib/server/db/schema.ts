@@ -21,6 +21,7 @@ import {
 	jsonb,
 	pgEnum,
 	pgTable,
+	pgView,
 	primaryKey,
 	text,
 	timestamp,
@@ -214,6 +215,23 @@ export const units = pgTable(
  * Team einer Einheit samt delegierter Schreibrechte (Kap. 5.2).
  * Die Obergrenze (Standard 10 Personen mit Schreibrecht) prüft die Anwendung.
  */
+/**
+ * Absender von Neuigkeiten (Migration 0052). Wie units, aber zusätzlich
+ * Einheiten anderer Mandanten, deren Beiträge an den eigenen Mandanten
+ * gerichtet sind (Redaktion schreibt an mehrere Mandanten, Kap. 10).
+ * Nur zum Lesen mit der App-Rolle; die Bedingung steht in der Sicht selbst.
+ */
+export const newsAbsender = pgView('news_absender', {
+	id: uuid('id').notNull(),
+	tenantId: uuid('tenant_id').notNull(),
+	type: unitType('type').notNull(),
+	name: text('name').notNull(),
+	title: text('title'),
+	slug: text('slug').notNull(),
+	isCentral: boolean('is_central').notNull(),
+	archivedAt: timestamp('archived_at', { withTimezone: true })
+}).existing();
+
 export const unitMembers = pgTable(
 	'unit_members',
 	{
@@ -883,7 +901,9 @@ export const faqs = pgTable(
 		position: integer('position').notNull().default(0),
 		updatedBy: uuid('updated_by').references(() => persons.id, { onDelete: 'set null' }),
 		createdAt: createdAt(),
-		updatedAt: updatedAt()
+		updatedAt: updatedAt(),
+		/** Von der Redaktion als „noch aktuell“ bestätigt (Kap. 10) */
+		checkedAt: timestamp('checked_at', { withTimezone: true })
 	},
 	(t) => [index('faqs_unit_position').on(t.unitId, t.position)]
 );

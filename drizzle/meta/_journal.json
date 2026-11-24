@@ -365,6 +365,20 @@
       "when": 1795425871485,
       "tag": "0051_umfragen_je_einheit",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1795520000000,
+      "tag": "0052_news_absender",
+      "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1795520100000,
+      "tag": "0053_faq_geprueft",
+      "breakpoints": true
     }
   ]
 }

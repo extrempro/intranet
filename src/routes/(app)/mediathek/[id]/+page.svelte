@@ -1,11 +1,12 @@
 <script lang="ts">
 	/** Video ansehen (Kap. 8.15). */
 	import { resolve } from '$app/paths';
+	import MitFrage from '#lib/components/MitFrage.svelte';
 	import VideoPlayer from '#lib/components/VideoPlayer.svelte';
 	import { zeitText } from '#lib/mediathek.ts';
 	import { formatSize } from '#lib/format.ts';
 
-	let { data } = $props();
+	let { data, form } = $props();
 	const v = $derived(data.v);
 	let zeit = $state(0);
 	let player = $state<VideoPlayer>();
@@ -201,8 +202,21 @@
 					<a class="knopf zweit" href={resolve('/(app)/mediathek/[id]/bearbeiten', { id: v.id })}>
 						Bearbeiten
 					</a>
+				{:else if data.zurueckziehen}
+					<MitFrage
+						action="?/zurueckziehen"
+						knopf="Zurückziehen"
+						knopfKlasse="knopf zweit"
+						frage={{
+							titel: 'Video zurückziehen?',
+							text: 'Als Redaktion nimmst du das Video aus der Mediathek. Es wird nicht gelöscht: Die Einheit kann es wieder veröffentlichen. Das Protokoll hält fest, wer es war.',
+							ja: 'Zurückziehen',
+							gefahr: true
+						}}
+					/>
 				{/if}
 			</div>
+			{#if form?.fehler}<p class="meldung fehler" role="alert">{form.fehler}</p>{/if}
 			{#if reiter.length > 1}
 				<div class="reiter" role="tablist" aria-label="Mehr zum Video">
 					{#each reiter as r (r.key)}
