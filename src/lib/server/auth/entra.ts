@@ -191,12 +191,19 @@ export class GraphError extends Error {
  * GET gegen Graph mit Anwendungs-Token. 404 → null. Bei Drosselung (429/503)
  * bis zu dreimal nach Retry-After erneut.
  */
-export async function graphAppGet<T>(pathOrUrl: string): Promise<T | null> {
+export async function graphAppGet<T>(
+	pathOrUrl: string,
+	extraHeaders: Record<string, string> = {}
+): Promise<T | null> {
 	const url = pathOrUrl.startsWith('https://') ? pathOrUrl : `${GRAPH}${pathOrUrl}`;
 	if (!url.startsWith(`${GRAPH}/`)) throw new Error('Unerwartete Graph-Adresse');
 	for (let versuch = 0; ; versuch++) {
 		const res = await fetch(url, {
-			headers: { Authorization: `Bearer ${await graphAppToken()}`, Accept: 'application/json' },
+			headers: {
+				...extraHeaders,
+				Authorization: `Bearer ${await graphAppToken()}`,
+				Accept: 'application/json'
+			},
 			signal: AbortSignal.timeout(15_000),
 			redirect: 'error'
 		});

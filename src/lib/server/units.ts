@@ -81,6 +81,12 @@ export async function hasOwnMaintenance(unitId: string): Promise<boolean> {
  * der Einheit (Abteilungsverwaltung, Hub-Team, Redaktion bei Einheiten ohne
  * eigene Pflege). Die Pflege-Rolle selbst vergibt nur die Verwaltung.
  */
+/** Einheit, deren Team die Person pflegen darf (Verwaltung oder Pflege-Rolle). */
+export async function teamEinheit(p: Principal, unitId: string) {
+	const u = await loadForTeam(p, unitId);
+	return { unit: u.unit, admin: u.admin };
+}
+
 async function loadForTeam(p: Principal, unitId: string) {
 	const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 	if (!GUID.test(unitId)) throw new UnitError('Einheit nicht gefunden.');

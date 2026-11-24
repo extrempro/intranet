@@ -7,6 +7,8 @@
 		abteilung: string | null;
 		mandant: string;
 		foto: string | null;
+		/** Noch nicht im Intranet, kommt aus Entra (id = entra:<Object-ID>) */
+		entra?: boolean;
 	}
 </script>
 
@@ -14,6 +16,8 @@
 	/**
 	 * Person suchen und auswählen (Kombinationsfeld mit Vorschlägen).
 	 * Tastatur: Pfeil runter/hoch wählt, Enter übernimmt, Escape schließt.
+	 * Treffer aus Entra legt die Quelle beim Übernehmen an (POST), danach
+	 * bekommt `onwahl` die echte Personen-ID.
 	 */
 
 	let {
@@ -23,6 +27,7 @@
 		ausschliessen = [],
 		deaktiviert = false,
 		mandantZeigen = false,
+		mitEntra = true,
 		onwahl
 	}: {
 		/** Adresse der Suche, z. B. /hubs/chor/personen */
@@ -33,6 +38,8 @@
 		ausschliessen?: string[];
 		deaktiviert?: boolean;
 		mandantZeigen?: boolean;
+		/** Auch Personen aus Entra finden, die noch nicht im Intranet sind */
+		mitEntra?: boolean;
 		onwahl: (p: Treffer) => void;
 	} = $props();
 
@@ -42,6 +49,8 @@
 	let offen = $state(false);
 	let aktiv = $state(-1);
 	let gewaehlt = $state<Treffer | null>(null);
+	let fehler = $state('');
+	let arbeitet = $state(false);
 	let timer: ReturnType<typeof setTimeout> | undefined;
 	let anfrage = 0;
 	const sichtbar = $derived(treffer.filter((t) => !ausschliessen.includes(t.id)));
@@ -57,7 +66,9 @@
 		}
 		timer = setTimeout(async () => {
 			const nr = ++anfrage;
-			const res = await fetch(`${quelle}?q=${encodeURIComponent(q)}`).catch(() => null);
+			const res = await fetch(
+				`${quelle}?q=${encodeURIComponent(q)}${mitEntra ? '' : '&entra=0'}`
+			).catch(() => null);
 			const liste = res?.ok ? ((await res.json()) as Treffer[]) : [];
 			if (nr !== anfrage) return;
 			treffer = liste;
@@ -72,10 +83,27 @@
 		offen = false;
 	}
 
-	function uebernehmen() {
+	async function uebernehmen() {
 		const t = gewaehlt ?? (sichtbar.length === 1 ? sichtbar[0] : null);
-		if (!t) return;
-		onwahl(t);
+		if (!t || arbeitet) return;
+		fehler = '';
+		if (t.entra) {
+			arbeitet = true;
+			const res = await fetch(quelle, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ wahl: t.id })
+			}).catch(() => null);
+			const body = res
+				? ((await res.json().catch(() => null)) as { id?: string; fehler?: string } | null)
+				: null;
+			arbeitet = false;
+			if (!res?.ok || !body?.id) {
+				fehler = body?.fehler ?? 'Die Person ließ sich nicht hinzufügen. Versuch es noch einmal.';
+				return;
+			}
+			onwahl({ ...t, id: body.id, entra: false });
+		} else onwahl(t);
 		text = '';
 		gewaehlt = null;
 		treffer = [];
@@ -118,7 +146,7 @@
 		<button
 			class="knopf zweit"
 			type="button"
-			disabled={deaktiviert || !(gewaehlt || sichtbar.length === 1)}
+			disabled={deaktiviert || arbeitet || !(gewaehlt || sichtbar.length === 1)}
 			onclick={uebernehmen}
 		>
 			{knopf}
@@ -143,6 +171,7 @@
 							.filter(Boolean)
 							.join(' · ')}
 					</span>
+					{#if t.entra}<span class="entra">Aus Entra · noch nicht im Intranet angemeldet</span>{/if}
 				</li>
 			{:else}
 				<li class="leer" role="option" aria-selected="false" aria-disabled="true">
@@ -151,6 +180,7 @@
 			{/each}
 		</ul>
 	{/if}
+	{#if fehler}<p class="fehler" role="alert">{fehler}</p>{/if}
 </div>
 
 <style>
@@ -196,6 +226,16 @@
 	.vorschlaege li.aktiv,
 	.vorschlaege li:hover {
 		background: var(--tint);
+	}
+	.vorschlaege li span.entra {
+		color: var(--ac);
+		font-weight: 600;
+	}
+	.fehler {
+		margin: 6px 0 0;
+		color: var(--rot, #c62828);
+		font-size: 14px;
+		font-weight: 600;
 	}
 	.vorschlaege li.leer {
 		cursor: default;

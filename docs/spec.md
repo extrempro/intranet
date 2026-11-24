@@ -162,6 +162,8 @@ Eine eigene Rolle „Autor“ gibt es nicht. Schreibrechte werden je Person dele
 
 - Abteilungsverwaltung bzw. Hub-Team vergibt je Person einzeln: **Neuigkeiten**, **FAQs**, **Termine**, **Hinter den Kulissen**, **Mediathek**, **Umfragen** (Hubs: Neuigkeiten, FAQs, Termine, Dokumente, Mediathek, Umfragen).
 - Höchstens **10 Personen** mit mindestens einem Schreibrecht je Einheit (einstellbar). Abteilungsverwaltung und Hub-Team zählen nicht mit.
+- **Team pflegen:** Personen holen Verwaltung und Pflege-Rolle (Abteilungsverwaltung in Abteilungen, Geschäftsführung und Stabsstellen; Hub-Team in Hubs) selbst ins Team und entfernen sie wieder. Personen mit Pflege-Rolle entfernt in Abteilungen nur die Verwaltung.
+- **Personensuche beim Hinzufügen** (Live-Suche nach Name oder E-Mail): Personen im Intranet und, wenn Entra eingerichtet ist, Mitglieder der Zugangsgruppe, die sich noch nie angemeldet haben (Graph durchsucht dabei nur den Anzeigenamen). Nur der eigene Mandant, bei zentralen Hubs alle. Wird eine Person aus Entra gewählt, legt das Intranet ihr Konto gleich an – mit Mandant und Rollen wie bei der Anmeldung, ohne Anmeldezeitpunkt; mit lokalem Konto gleicher E-Mail-Adresse wird nicht zusammengeführt. Kontakte in Hubs suchen nur unter Personen im Intranet.
 - Als Absender erscheint immer die Einheit, nie die Person.
 
 ### 5.3 Sichtbarkeit

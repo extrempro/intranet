@@ -3,7 +3,7 @@
  * Intranet-PWA): Laden aller Angaben und Übernehmen der Änderungen in einem
  * Schritt. Jede Teiländerung prüft die Rechte wie die Einzelaktionen.
  */
-import { and, asc, eq, gte, ilike, inArray, ne, notInArray, or, sql } from 'drizzle-orm';
+import { and, asc, eq, gte, inArray, ne, sql } from 'drizzle-orm';
 import { addDays, berlinNow } from '../canteen.ts';
 import { cleanLayout, HUB_GRENZEN, istLinkSymbol, linkAdresse, type HubLayout } from '../hubs.ts';
 import { audit } from './audit.ts';
@@ -12,9 +12,7 @@ import { deleteEvent, eventWritableUnits, saveEvent } from './calendar.ts';
 import { db } from './db/index.ts';
 import {
 	events,
-	locationOperators,
 	persons,
-	tenants,
 	unitContacts,
 	unitDocumentFolders,
 	unitDocuments,
@@ -30,45 +28,6 @@ import { addMember, removeMember, setMemberRights, teamFuerPflege, UnitError } f
 const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 const ZEIT = /^([01]\d|2[0-3]):[0-5]\d$/;
-
-/** Personen für die Auswahl (Hub-Team, Schreibrechte, Ansprechpersonen) */
-export async function personenFuerHub(p: Principal, unitId: string, q: string) {
-	const u = await manageable(p, unitId);
-	const text = q.trim().slice(0, 60);
-	if (text.length < 2) return [];
-	const muster = `%${text.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
-	const rows = await db
-		.select({
-			id: persons.id,
-			name: persons.displayName,
-			email: persons.email,
-			position: persons.position,
-			mandant: tenants.shortName,
-			abteilung: sql<
-				string | null
-			>`(select un.name from unit_members m join units un on un.id = m.unit_id
-				where m.person_id = ${persons.id} and m.is_primary and un.type <> 'hub' limit 1)`
-		})
-		.from(persons)
-		.innerJoin(tenants, eq(tenants.id, persons.tenantId))
-		.where(
-			and(
-				ne(persons.status, 'disabled'),
-				eq(persons.hidden, false),
-				// Zentrale Hubs: alle Mandanten, sonst nur der Mandant des Hubs
-				u.isCentral ? undefined : eq(persons.tenantId, u.tenantId),
-				notInArray(
-					persons.id,
-					db.select({ id: locationOperators.personId }).from(locationOperators)
-				),
-				or(ilike(persons.displayName, muster), ilike(persons.email, muster))
-			)
-		)
-		.orderBy(asc(persons.displayName))
-		.limit(8);
-	const fotos = await photosOf(rows.map((r) => r.id));
-	return rows.map((r) => ({ ...r, foto: fotos.get(r.id) ?? null }));
-}
 
 /** Alles, was „Hub bearbeiten“ braucht, das nicht schon in getHub steht. */
 export async function hubPflegeDaten(p: Principal, unitId: string) {

@@ -20,7 +20,7 @@ Nach 12 Monaten erinnert dich das Intranet, alles zu prüfen. Bestätige mit **�
 
 ## Team und Schreibrechte
 
-Personen fügst du per E-Mail-Adresse hinzu. Schreibrechte vergibst du je Person: Neuigkeiten, FAQs, Termine, Hinter den Kulissen, Umfragen. Höchstens 10 Personen mit Schreibrecht; die Abteilungsverwaltung zählt nicht mit. Die Rolle Abteilungsverwaltung selbst vergibt die Verwaltung.
+Personen findest du beim Hinzufügen über die Suche nach Name oder E-Mail-Adresse – auch Kolleginnen und Kollegen, die sich noch nie im Intranet angemeldet haben; ihr Konto wird dann gleich angelegt. Über „Aus dem Team entfernen“ nimmst du jemanden wieder heraus. Schreibrechte vergibst du je Person: Neuigkeiten, FAQs, Termine, Hinter den Kulissen, Umfragen. Höchstens 10 Personen mit Schreibrecht; die Abteilungsverwaltung zählt nicht mit. Die Rolle Abteilungsverwaltung selbst vergibt die Verwaltung.
 
 ## Hinter den Kulissen
 

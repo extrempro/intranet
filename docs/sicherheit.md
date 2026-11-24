@@ -157,6 +157,13 @@ Neu: „Weiter, wo du warst“ am Konto.
 - **Doppelte Teilnahme**: Primärschlüssel (Umfrage, Person) und Sperre in der Transaktion (DB-Test).
 - **Eingaben**: Fragebogen und Antworten serverseitig geprüft (Arten, Längen, Indizes, Pflichtfragen); Texte werden nur als Text ausgegeben. CSV mit BOM, Semikolon und Schutz vor Formeln (`=`, `+`, `-`, `@` am Anfang).
 
+## Nachprüfung Personensuche für Teams (24.11.2026, Version 0.38.0)
+
+- **Recht**: Suche (`GET /einheiten/<id>/personen`) und Anlegen aus Entra (`POST`) nur für Verwaltung und Pflege-Rolle der Einheit, sonst 404 (DB-Test, e2e). Ergebnisse nur aus dem Mandanten der Einheit, bei zentralen Hubs aus allen.
+- **Entra**: Suche nur in der Zugangsgruppe (`transitiveMembers`, nur Anzeigename), Eingabe ohne Anführungszeichen und Backslash, je Person höchstens 120 Graph-Abfragen pro Minute; fällt Graph aus, bleiben die lokalen Treffer. Beim Anlegen prüft der Server erneut wie bei der Anmeldung (Konto aktiv, Zugangsgruppe, Domain, Mandant) und übernimmt die Rollen aus Entra-Gruppen; kein Zusammenführen mit lokalen Konten gleicher E-Mail. Angelegte Konten stehen im Protokoll (`person.entra_vorab`).
+- **Fremde Seiten**: Das Anlegen (`POST`) verlangt zusätzlich zu SameSite-Cookie und CORS den eigenen `Origin`, sonst 403 (live geprüft).
+- **Datensparsamkeit**: Treffer zeigen Name, E-Mail, Position bzw. Abteilung und Mandant – dieselben Angaben wie im Personenverzeichnis. Antworten werden nicht zwischengespeichert.
+
 ## Stand je ASVS-Kapitel (5.0)
 
 | Kapitel                                    | Stand             | Umsetzung, Belege                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |

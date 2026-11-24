@@ -1,4 +1,5 @@
 <script lang="ts">
+	import PersonSuche from '#lib/components/PersonSuche.svelte';
 	import MitFrage from '#lib/components/MitFrage.svelte';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
@@ -61,6 +62,8 @@
 			await update({ reset: false });
 			if (result.type === 'success') neuZaehler++;
 		};
+	let hinzuForm = $state<HTMLFormElement>();
+	let hinzuId = $state('');
 </script>
 
 <svelte:head><title>{e.name} bearbeiten · Intranet</title></svelte:head>
@@ -278,12 +281,28 @@
 				Abteilungsverwaltung zählt nicht mit und darf immer alles. Die Abteilungsverwaltung selbst vergibt
 				die Verwaltung.
 			</p>
-			<form method="POST" action="?/hinzufuegen" class="hinzu" use:enhance>
-				<label class="feld">
-					<span>Person hinzufügen (E-Mail-Adresse)</span>
-					<input name="email" type="email" required autocomplete="off" />
-				</label>
-				<button class="knopf zweit" type="submit">Hinzufügen</button>
+			<form
+				method="POST"
+				action="?/hinzufuegen"
+				class="hinzu-suche"
+				bind:this={hinzuForm}
+				use:enhance
+			>
+				<input type="hidden" name="person" value={hinzuId} />
+				<span class="feld-titel" id="hinzu-titel">Person hinzufügen</span>
+				<PersonSuche
+					quelle={resolve('/(app)/einheiten/[id]/personen', { id: e.id })}
+					beschriftung="Name oder E-Mail-Adresse"
+					ausschliessen={e.team.map((m) => m.personId)}
+					onwahl={(t) => {
+						hinzuId = t.id;
+						queueMicrotask(() => hinzuForm?.requestSubmit());
+					}}
+				/>
+				<p class="hinweis">
+					Findet Personen im Intranet und aus Entra. Wer sich noch nie angemeldet hat, bekommt sein
+					Konto gleich beim Hinzufügen.
+				</p>
 			</form>
 			<ul class="team">
 				{#each e.team as m (m.personId)}
@@ -408,14 +427,16 @@
 		border-top: 1px solid var(--bd);
 		padding-top: 4px;
 	}
-	.hinzu {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 10px;
-		align-items: flex-end;
+	.hinzu-suche {
+		display: grid;
+		gap: 6px;
 	}
-	.hinzu .feld {
-		flex: 1 1 260px;
+	.hinzu-suche .hinweis {
+		margin: 0;
+	}
+	.feld-titel {
+		font-weight: 600;
+		font-size: 14px;
 	}
 	.team {
 		list-style: none;

@@ -1,6 +1,7 @@
 import { error, fail } from '@sveltejs/kit';
 import { requirePrincipal } from '#lib/server/auth/guard.ts';
 import { getContentRules } from '#lib/server/rules.ts';
+import { personAusWahl } from '#lib/server/personen-suche.ts';
 import { readUnitForm } from '#lib/server/unit-form.ts';
 import {
 	addMember,
@@ -46,8 +47,16 @@ export const actions: Actions = {
 	},
 	hinzufuegen: async ({ request, locals, params, getClientAddress }) => {
 		const principal = requirePrincipal(locals);
-		const email = String((await request.formData()).get('email') ?? '').slice(0, 320);
-		return guarded(() => addMember(principal, params.id, email, getClientAddress()));
+		const f = await request.formData();
+		const wahl = String(f.get('person') || f.get('email') || '').slice(0, 320);
+		return guarded(async () =>
+			addMember(
+				principal,
+				params.id,
+				await personAusWahl(principal, params.id, wahl, getClientAddress()),
+				getClientAddress()
+			)
+		);
 	},
 	rechte: async ({ request, locals, params, getClientAddress }) => {
 		const principal = requirePrincipal(locals);
