@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { cleanLayout, DEFAULT_HUB_LAYOUT, parseTeam, validateApplication } from './hubs.ts';
+import {
+	cleanLayout,
+	DEFAULT_ABTEILUNG_LAYOUT,
+	DEFAULT_HUB_LAYOUT,
+	parseTeam,
+	validateApplication
+} from './hubs.ts';
 
 describe('Hubs', () => {
 	it('bereinigt den Seitenaufbau', () => {
@@ -13,6 +19,14 @@ describe('Hubs', () => {
 			reiter: ['fragen', 'neues', 'termine', 'dokumente', 'videos', 'team'],
 			ueberblick: ['beitraege', 'faqs']
 		});
+	});
+
+	it('Abteilungen: eigener Standard, „Wer hilft bei was?“ nur dort erlaubt', () => {
+		expect(cleanLayout(null, 'abteilung')).toEqual(DEFAULT_ABTEILUNG_LAYOUT);
+		expect(
+			cleanLayout({ ueberblick: ['zustaendigkeiten', 'faqs'] }, 'abteilung').ueberblick
+		).toEqual(['zustaendigkeiten', 'faqs']);
+		expect(cleanLayout({ ueberblick: ['zustaendigkeiten', 'faqs'] }).ueberblick).toEqual(['faqs']);
 	});
 
 	it('übernimmt ältere Aufbauten mit Haupt- und Seitenbereich', () => {

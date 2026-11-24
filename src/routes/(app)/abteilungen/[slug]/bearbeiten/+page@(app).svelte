@@ -1,7 +1,9 @@
 <script lang="ts">
 	import PersonSuche from '#lib/components/PersonSuche.svelte';
+	import SeitenGestaltung from '#lib/components/abteilung/SeitenGestaltung.svelte';
 	import MitFrage from '#lib/components/MitFrage.svelte';
 	import { enhance } from '$app/forms';
+	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import type { SubmitFunction } from '$app/forms';
 	import ZustaendigkeitFormular from '#lib/components/ZustaendigkeitFormular.svelte';
@@ -360,6 +362,24 @@
 				{/each}
 			</ul>
 		</div>
+	</details>
+
+	<details
+		class="karte"
+		id="gestaltung"
+		open={(form && 'bereich' in form && form.bereich === 'gestaltung') ||
+			['#gestaltung', '#dokumente'].includes(page.url.hash) ||
+			undefined}
+	>
+		<summary><h2>Aufbau, Schnellzugriff und Dokumente</h2></summary>
+		{#key e.links.length + e.dokumente.length}
+			<SeitenGestaltung
+				einheit={e}
+				meldung={form && 'bereich' in form && form.bereich === 'gestaltung'
+					? (form as { fehler?: string; ok?: string })
+					: null}
+			/>
+		{/key}
 	</details>
 
 	<details class="karte">

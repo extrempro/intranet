@@ -5,6 +5,7 @@
  * Gepflegt werden die Seiten von der Abteilungsverwaltung, bei Einheiten
  * ohne eigene Pflege von der Redaktion.
  */
+import { cleanLayout } from '../hubs.ts';
 import { and, asc, eq, gte, inArray, isNotNull, isNull, lt, or, sql } from 'drizzle-orm';
 import { addDays, berlinNow } from '../canteen.ts';
 import {
@@ -71,7 +72,9 @@ export async function listDepartments(p: Principal) {
 			title: units.title,
 			tagline: units.tagline,
 			isCentral: units.isCentral,
-			tenantShort: tenants.shortName
+			tenantShort: tenants.shortName,
+			leitung: sql<string | null>`(select x.display_name from persons x
+				where x.id = ${units.leadPersonId} and x.status <> 'disabled' and x.hidden = false)`
 		})
 		.from(units)
 		.innerJoin(tenants, eq(tenants.id, units.tenantId))
@@ -92,6 +95,12 @@ export async function listDepartments(p: Principal) {
 	return rows.map((r) => ({
 		...r,
 		label: unitTypeLabel(r),
+		/** Eigene Einheit: Stammabteilung oder im Team */
+		meine: p.memberships.find((m) => m.unitId === r.id)
+			? p.memberships.find((m) => m.unitId === r.id)!.isPrimary
+				? ('stamm' as const)
+				: ('team' as const)
+			: null,
 		personen: counts.find((c) => c.unitId === r.id)?.n ?? 0,
 		zustaendigkeiten: topics
 			.filter((t) => t.unitId === r.id)
@@ -182,7 +191,8 @@ export async function getDepartment(p: Principal, slug: string) {
 	const today = berlinNow().date;
 	const { responsibilityReviewMonths: months } = await getContentRules();
 
-	const [team, zust, termine, faqRows] = await Promise.all([
+	const { hubInhalte } = await import('./hub-inhalte.ts');
+	const [team, zust, termine, faqRows, inhalte] = await Promise.all([
 		teamOf(p, u.id),
 		responsibilityRows([u.id]),
 		db
@@ -200,13 +210,13 @@ export async function getDepartment(p: Principal, slug: string) {
 				and(eq(events.unitId, u.id), gte(events.date, today), lt(events.date, addDays(today, 120)))
 			)
 			.orderBy(asc(events.date), asc(events.startTime))
-			.limit(5),
+			.limit(30),
 		db
 			.select({ id: faqs.id, question: faqs.question })
 			.from(faqs)
 			.where(eq(faqs.unitId, u.id))
-			.orderBy(asc(faqs.position), asc(faqs.createdAt))
-			.limit(8)
+			.orderBy(asc(faqs.position), asc(faqs.createdAt)),
+		hubInhalte(u.id)
 	]);
 
 	const leadIds = [u.leadPersonId, u.secondLeadPersonId, u.deputyPersonId].filter(
@@ -264,8 +274,15 @@ export async function getDepartment(p: Principal, slug: string) {
 		})),
 		termine,
 		faqs: faqRows,
+		/** Aufbau wie bei Hubs: Reiter und Blöcke im Überblick */
+		layout: cleanLayout(u.pageLayout, 'abteilung'),
+		links: inhalte.links,
+		ordner: inhalte.ordner,
+		dokumente: inhalte.dokumente,
 		canManage,
 		canAdminister,
+		/** Dokumente pflegt, wer die Seite pflegt */
+		canDocs: canManage || canAdminister,
 		canPost: canWriteNews(p, u),
 		canEvents: canWriteEvents(p, u),
 		canFaqs: canWriteFaqs(p, u),
@@ -343,7 +360,8 @@ export async function getDepartmentForEdit(p: Principal, slug: string) {
 	if (!row) return null;
 	const u = await manageable(p, row.unit.id).catch(() => null);
 	if (!u) return null;
-	const [team, managers, fach, zust] = await Promise.all([
+	const { hubInhalte } = await import('./hub-inhalte.ts');
+	const [team, managers, fach, zust, inhalte] = await Promise.all([
 		db
 			.select({
 				personId: persons.id,
@@ -372,7 +390,8 @@ export async function getDepartmentForEdit(p: Principal, slug: string) {
 			.select({ personId: roleAssignments.personId })
 			.from(roleAssignments)
 			.where(and(eq(roleAssignments.scopeUnitId, u.id), eq(roleAssignments.role, 'fachpflege'))),
-		responsibilityRows([u.id])
+		responsibilityRows([u.id]),
+		hubInhalte(u.id)
 	]);
 	const { writersMax, surveys } = await getContentRules();
 	return {
@@ -391,6 +410,11 @@ export async function getDepartmentForEdit(p: Principal, slug: string) {
 		leadPersonId: u.leadPersonId,
 		secondLeadPersonId: u.secondLeadPersonId,
 		deputyPersonId: u.deputyPersonId,
+		/** Aufbau, Schnellzugriff und Dokumente wie bei Hubs */
+		layout: cleanLayout(u.pageLayout, 'abteilung'),
+		links: inhalte.links,
+		ordner: inhalte.ordner,
+		dokumente: inhalte.dokumente,
 		behindScenes: u.behindScenes,
 		isAdmin: canAdministerTenant(p, u.tenantId),
 		maxSchreibende: writersMax,
