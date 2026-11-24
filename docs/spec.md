@@ -160,7 +160,7 @@ Eine eigene Rolle „Autor“ gibt es nicht. Schreibrechte werden je Person dele
 
 ### 5.2 Delegierte Schreibrechte
 
-- Abteilungsverwaltung bzw. Hub-Team vergibt je Person einzeln: **Neuigkeiten**, **FAQs**, **Termine**, **Hinter den Kulissen**, **Mediathek**, **Umfragen** (Hubs: Neuigkeiten, FAQs, Termine, Dokumente, Mediathek, Umfragen).
+- Abteilungsverwaltung bzw. Hub-Team vergibt je Person einzeln: **Neuigkeiten**, **FAQs**, **Termine**, **Hinter den Kulissen**, **Dokumente**, **Mediathek**, **Umfragen** (Hubs: Neuigkeiten, FAQs, Termine, Dokumente, Mediathek, Umfragen).
 - Höchstens **10 Personen** mit mindestens einem Schreibrecht je Einheit (einstellbar). Abteilungsverwaltung und Hub-Team zählen nicht mit.
 - **Team pflegen:** Personen holen Verwaltung und Pflege-Rolle (Abteilungsverwaltung in Abteilungen, Geschäftsführung und Stabsstellen; Hub-Team in Hubs) selbst ins Team und entfernen sie wieder. Personen mit Pflege-Rolle entfernt in Abteilungen nur die Verwaltung.
 - **Personensuche beim Hinzufügen** (Live-Suche nach Name oder E-Mail): Personen im Intranet und, wenn Entra eingerichtet ist, Mitglieder der Zugangsgruppe, die sich noch nie angemeldet haben (Graph durchsucht dabei nur den Anzeigenamen). Nur der eigene Mandant, bei zentralen Hubs alle. Wird eine Person aus Entra gewählt, legt das Intranet ihr Konto gleich an – mit Mandant und Rollen wie bei der Anmeldung, ohne Anmeldezeitpunkt; mit lokalem Konto gleicher E-Mail-Adresse wird nicht zusammengeführt. Kontakte in Hubs suchen nur unter Personen im Intranet.
@@ -341,7 +341,7 @@ Gilt für Abteilungen, Geschäftsführung und Stabsstellen; Aufbau wie bei Hubs 
 - **Kopf** wie bei Hubs: Art und Zuständigkeit (Mandant/alle), Name, Kurzinfo, Leitung (+ zweite Leitung) und Stellvertretung, Favorit, Link kopieren, Bearbeiten, Team-Gesichter. Darunter Kontakt (Funktionsadresse, Telefon, Sprechzeiten, Raum).
 - **Reiter** als eigene Unterseiten: Überblick, Neues, Termine, Dokumente, Videos, Fragen, Über uns & Team. Leere Reiter sehen nur, die sie füllen dürfen.
 - **Überblick**: Blöcke **Wer hilft bei was?**, Schnellzugriff, Neues aus der Abteilung, Als Nächstes, Häufige Fragen, Dokumente; daneben „Fragen? Sprich uns an“ (Leitung und Stellvertretung, sonst das Team) und Videos. Für die Pflege „Für dich zum Pflegen“ mit leeren Bereichen.
-- **Aufbau, Schnellzugriff und Dokumente** pflegt die Abteilungsverwaltung (bzw. Redaktion ohne eigene Pflege, Verwaltung) unter „Bearbeiten“: Reihenfolge der Reiter, Blöcke im Überblick an/aus und sortieren, bis 12 Schnellzugriff-Kacheln, Dokumente mit Ordnern (wie bei Hubs, Dateien nur nach Anmeldung und Rechteprüfung).
+- **Aufbau, Schnellzugriff und Dokumente** pflegt die Abteilungsverwaltung (bzw. Redaktion ohne eigene Pflege, Verwaltung) unter „Bearbeiten“: Reihenfolge der Reiter, Blöcke im Überblick an/aus und sortieren, bis 12 Schnellzugriff-Kacheln, Dokumente mit Ordnern (wie bei Hubs, Dateien nur nach Anmeldung und Rechteprüfung). Wer nur das Recht **Dokumente** hat, pflegt unter „Dokumente pflegen“ ausschließlich die Dokumente (eigene Seite ohne Aufbau, Schnellzugriff und Team).
 - **Zuständigkeiten**: Suche, Stichwörter, Gruppen, Links; ist eine Person inaktiv, wird die Vertretung angezeigt. Prüf-Erinnerung nach 12 Monaten (einstellbar), Bestätigung mit „Alles geprüft“. Bearbeiten als Akkordeon.
 - Leere Felder werden nicht angezeigt.
 

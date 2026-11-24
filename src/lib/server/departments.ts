@@ -281,8 +281,11 @@ export async function getDepartment(p: Principal, slug: string) {
 		dokumente: inhalte.dokumente,
 		canManage,
 		canAdminister,
-		/** Dokumente pflegt, wer die Seite pflegt */
-		canDocs: canManage || canAdminister,
+		/** Dokumente pflegt, wer die Seite pflegt oder das Recht „Dokumente“ hat */
+		canDocs:
+			canManage ||
+			canAdminister ||
+			p.memberships.some((m) => m.unitId === u.id && m.mayWriteDocuments),
 		canPost: canWriteNews(p, u),
 		canEvents: canWriteEvents(p, u),
 		canFaqs: canWriteFaqs(p, u),
@@ -373,6 +376,7 @@ export async function getDepartmentForEdit(p: Principal, slug: string) {
 				mayWriteFaqs: unitMembers.mayWriteFaqs,
 				mayWriteEvents: unitMembers.mayWriteEvents,
 				mayWriteBehindScenes: unitMembers.mayWriteBehindScenes,
+				mayWriteDocuments: unitMembers.mayWriteDocuments,
 				mayWriteMedia: unitMembers.mayWriteMedia,
 				mayWriteSurveys: unitMembers.mayWriteSurveys
 			})

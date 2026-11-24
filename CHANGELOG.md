@@ -10,6 +10,11 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.40.0 · 24.11.2026 · Recht „Dokumente“ für Abteilungen
+
+- Wie bei den Hubs kann die Abteilungsverwaltung einzelnen Personen das Recht „Dokumente“ geben.
+- Wer es hat, findet auf der Abteilungsseite „Dokumente pflegen“ und kann Dateien ablegen, benennen, in Ordner sortieren und entfernen, ohne den Rest der Seite zu ändern.
+
 ## 0.39.0 · 24.11.2026 · Abteilungen wie Hubs
 
 - Die Abteilungsseite sieht jetzt aus wie ein Hub: farbiger Kopf mit Kurzinfo und Leitung, darunter Reiter für Überblick, Neues, Termine, Dokumente, Videos, Fragen und „Über uns & Team“.

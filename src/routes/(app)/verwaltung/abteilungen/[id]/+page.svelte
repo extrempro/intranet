@@ -19,7 +19,7 @@
 			['mediathek', 'Mediathek', 'mayWriteMedia'],
 			['umfragen', 'Umfragen', 'mayWriteSurveys']
 		]
-			.filter(([k]) => (hub ? k !== 'kulissen' : k !== 'dokumente'))
+			.filter(([k]) => !hub || k !== 'kulissen')
 			// Umfragen nur, wenn für die Einheit freigeschaltet
 			.filter(([k]) => k !== 'umfragen' || e.surveys) as [
 			string,
@@ -126,7 +126,6 @@
 									</span>{/if}
 							</label>
 							{#if m.ausEntra}<input type="hidden" name="verwaltet" value="on" />{/if}
-							{#if hub}<input type="hidden" name="dokumente_feld" value="1" />{/if}
 							{#each rechte as [name, text, key] (name)}
 								<label class="option">
 									<input type="checkbox" {name} checked={Boolean(m[key])} />

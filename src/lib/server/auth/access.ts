@@ -24,7 +24,7 @@ export interface Membership {
 	mayWriteFaqs: boolean;
 	mayWriteEvents: boolean;
 	mayWriteBehindScenes: boolean;
-	/** Dokumente der Einheit pflegen (Hubs) */
+	/** Dokumente der Einheit pflegen (Hubs und Abteilungen) */
 	mayWriteDocuments?: boolean;
 	/** Mediathek der Einheit pflegen (Kap. 8.15) */
 	mayWriteMedia?: boolean;
