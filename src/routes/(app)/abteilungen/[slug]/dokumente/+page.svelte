@@ -9,7 +9,9 @@
 	const h = $derived(data.einheit);
 	const r = $derived(abteilungReiterVon(data, 'dokumente'));
 	const pflegen = $derived(
-		`${resolve('/(app)/abteilungen/[slug]/bearbeiten', { slug: h.slug })}#dokumente`
+		h.canManage || h.canAdminister
+			? `${resolve('/(app)/abteilungen/[slug]/bearbeiten', { slug: h.slug })}#dokumente`
+			: resolve('/(app)/abteilungen/[slug]/dokumente-pflegen', { slug: h.slug })
 	);
 </script>
 

@@ -140,6 +140,7 @@ export const actions: Actions = {
 						mayWriteFaqs: on('faqs'),
 						mayWriteEvents: on('termine'),
 						mayWriteBehindScenes: on('kulissen'),
+						mayWriteDocuments: on('dokumente'),
 						mayWriteMedia: on('mediathek'),
 						mayWriteSurveys: on('umfragen'),
 						// Rollen vergibt die Verwaltung; hier bleibt alles, wie es ist

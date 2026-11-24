@@ -73,3 +73,35 @@ test('Abteilungen: Übersicht mit Suche, Sortierung und deiner Abteilung', async
 	await keineA11yFehler(page);
 	await nichtZuBreit(page);
 });
+
+test('Recht „Dokumente“: Person pflegt nur die Dokumente der Abteilung', async ({ page }) => {
+	const rechtSetzen = async (an: boolean) => {
+		await anmelden(page, 'ada');
+		await page.goto('/abteilungen/it/bearbeiten');
+		await page.getByText(/^Team und Schreibrechte/).click();
+		const zeile = page.locator('ul.team > li', { hasText: 'Nils Normal' });
+		await zeile.getByRole('checkbox', { name: 'Dokumente', exact: true }).setChecked(an);
+		await zeile.getByRole('button', { name: 'Rechte speichern' }).click();
+		await expect(page.getByRole('status').filter({ hasText: 'Rechte gespeichert.' })).toBeVisible();
+	};
+	await rechtSetzen(true);
+	try {
+		await anmelden(page, 'nils');
+		await page.goto('/abteilungen/it');
+		await page.getByRole('link', { name: 'Dokumente pflegen' }).click();
+		await expect(page).toHaveURL(/\/abteilungen\/it\/dokumente-pflegen$/);
+		await expect(page.getByRole('heading', { level: 1, name: 'Dokumente von IT' })).toBeVisible();
+		// Nur Dokumente, kein Aufbau und kein Schnellzugriff
+		await expect(page.getByRole('heading', { name: 'Schnellzugriff' })).toHaveCount(0);
+		await expect(page.getByRole('heading', { name: /Aufbau der Seite/ })).toHaveCount(0);
+		await page.getByRole('button', { name: 'Dokumente speichern' }).click();
+		await expect(page.getByRole('status').filter({ hasText: 'Gespeichert.' })).toBeVisible();
+		await keineA11yFehler(page);
+		await nichtZuBreit(page);
+		// Die ganze Pflege bleibt verschlossen
+		const r = await page.goto('/abteilungen/it/bearbeiten');
+		expect(r?.status()).toBe(404);
+	} finally {
+		await rechtSetzen(false);
+	}
+});

@@ -445,7 +445,7 @@ export interface MemberRights {
 	mayWriteFaqs: boolean;
 	mayWriteEvents: boolean;
 	mayWriteBehindScenes: boolean;
-	/** Nur Hubs: Dokumente pflegen */
+	/** Dokumente der Seite pflegen (Hubs und Abteilungen) */
 	mayWriteDocuments?: boolean;
 	/** Mediathek; ohne Angabe bleibt es, wie es ist */
 	mayWriteMedia?: boolean;
@@ -470,12 +470,10 @@ export async function setMemberRights(
 		mayWriteNews: r.mayWriteNews,
 		mayWriteFaqs: r.mayWriteFaqs,
 		mayWriteEvents: r.mayWriteEvents,
-		// Hubs haben kein „Hinter den Kulissen“ (Kap. 5.2), dafür Dokumente
+		// Hubs haben kein „Hinter den Kulissen“ (Kap. 5.2)
 		mayWriteBehindScenes: isHub ? false : r.mayWriteBehindScenes,
 		// Ohne Angabe bleibt das Recht „Dokumente“, wie es ist
-		...(r.mayWriteDocuments === undefined
-			? {}
-			: { mayWriteDocuments: isHub && r.mayWriteDocuments }),
+		...(r.mayWriteDocuments === undefined ? {} : { mayWriteDocuments: r.mayWriteDocuments }),
 		...(r.mayWriteMedia === undefined ? {} : { mayWriteMedia: r.mayWriteMedia }),
 		...(r.mayWriteSurveys === undefined ? {} : { mayWriteSurveys: r.mayWriteSurveys })
 	};

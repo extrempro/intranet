@@ -122,4 +122,57 @@ describe.skipIf(!url)('Abteilungsseite wie Hubs', () => {
 		);
 		expect(n).toBeGreaterThan(0);
 	});
+
+	it('Recht „Dokumente“: Pflege-Rolle vergibt es, die Person pflegt nur Dokumente', async () => {
+		const units = await import('./units.ts');
+		await db.execute(
+			sql`insert into unit_members (unit_id, person_id) values (${ABT}, ${P.mitglied})`
+		);
+		await units.setMemberRights(
+			pflege,
+			ABT,
+			P.mitglied,
+			{
+				isPrimary: false,
+				mayWriteNews: false,
+				mayWriteFaqs: false,
+				mayWriteEvents: false,
+				mayWriteBehindScenes: false,
+				mayWriteDocuments: true,
+				verwaltet: false
+			},
+			'127.0.0.1'
+		);
+		const [row] = await db.execute(
+			sql`select may_write_documents as d from unit_members where unit_id = ${ABT} and person_id = ${P.mitglied}`
+		);
+		expect(row.d).toBe(true);
+
+		const doku: Principal = {
+			...mitglied,
+			memberships: [
+				{
+					unitId: ABT,
+					isPrimary: false,
+					mayWriteNews: false,
+					mayWriteFaqs: false,
+					mayWriteEvents: false,
+					mayWriteBehindScenes: false,
+					mayWriteDocuments: true
+				}
+			]
+		};
+		const e = await dep.getDepartment(doku, 'it');
+		expect(e?.canDocs).toBe(true);
+		expect(e?.canManage).toBe(false);
+		// Dokumente ja, Aufbau und Schnellzugriff nein
+		const { dokumenteSpeichern } = await import('./hub-pflege.ts');
+		await expect(dokumenteSpeichern(doku, ABT, [], [])).resolves.not.toThrow();
+		await expect(
+			es.einheitSeiteSpeichern(doku, ABT, es.seitenDatenLesen(daten({})), [], '127.0.0.1')
+		).rejects.toThrow(/Recht/);
+		// Ohne das Recht auch keine Dokumente
+		expect((await dep.getDepartment(mitglied, 'it'))?.canDocs).toBe(false);
+		await expect(dokumenteSpeichern(mitglied, ABT, [], [])).rejects.toThrow(/Recht/);
+	});
 });

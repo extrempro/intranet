@@ -47,6 +47,7 @@
 				['faqs', 'FAQs', 'mayWriteFaqs'],
 				['termine', 'Termine', 'mayWriteEvents'],
 				['kulissen', 'Hinter den Kulissen', 'mayWriteBehindScenes'],
+				['dokumente', 'Dokumente', 'mayWriteDocuments'],
 				['mediathek', 'Mediathek', 'mayWriteMedia'],
 				['umfragen', 'Umfragen', 'mayWriteSurveys']
 			] as const

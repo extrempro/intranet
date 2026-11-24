@@ -98,7 +98,9 @@
 			{#if pflegen || e.canDocs}
 				<a
 					class="knopf weiss"
-					href={resolve('/(app)/abteilungen/[slug]/bearbeiten', { slug: e.slug })}
+					href={pflegen
+						? resolve('/(app)/abteilungen/[slug]/bearbeiten', { slug: e.slug })
+						: resolve('/(app)/abteilungen/[slug]/dokumente-pflegen', { slug: e.slug })}
 				>
 					{pflegen ? 'Bearbeiten' : 'Dokumente pflegen'}
 				</a>

@@ -2,7 +2,8 @@
 	/**
 	 * Abteilung bearbeiten: Aufbau der Seite (Reiter, Blöcke im Überblick),
 	 * Schnellzugriff und Dokumente wie bei Hubs. Alles bleibt im Browser, bis
-	 * „Speichern“ es in einem Schritt übernimmt.
+	 * „Speichern“ es in einem Schritt übernimmt. Mit `nurDokumente` nur die
+	 * Dokumente (für Personen mit dem Recht „Dokumente“).
 	 */
 	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '$app/forms';
@@ -34,8 +35,15 @@
 		}[];
 	}
 
-	let { einheit, meldung }: { einheit: Einheit; meldung: { fehler?: string; ok?: string } | null } =
-		$props();
+	let {
+		einheit,
+		meldung,
+		nurDokumente = false
+	}: {
+		einheit: Einheit;
+		meldung: { fehler?: string; ok?: string } | null;
+		nurDokumente?: boolean;
+	} = $props();
 
 	const e = untrack(() => einheit);
 
@@ -131,156 +139,164 @@
 		};
 </script>
 
-<form method="POST" action="?/gestaltung" class="stapel" use:enhance={absenden}>
+<form
+	method="POST"
+	action={nurDokumente ? '?/dokumente' : '?/gestaltung'}
+	class="stapel"
+	use:enhance={absenden}
+>
 	<input type="hidden" name="daten" value={daten} />
 	{#if meldung?.fehler}<p class="meldung fehler" role="alert">{meldung.fehler}</p>{/if}
 	{#if meldung?.ok}<p class="meldung" role="status">{meldung.ok}</p>{/if}
 
-	<section class="stapel eng" aria-labelledby="ag-l">
-		<h3 id="ag-l" class="mit-info">
-			Aufbau der Seite<Info
-				thema="Aufbau der Seite"
-				text="Die Abteilungsseite hat Reiter: den Überblick und Unterseiten wie Termine oder Dokumente. Leg fest, in welcher Reihenfolge die Reiter stehen und welche Blöcke der Überblick zeigt. Leere Reiter und Blöcke sehen Leser nicht, Ausgeblendetes behält seine Inhalte."
-			/>
-		</h3>
-		<div class="bereiche">
-			{#each [['reiter', 'Reihenfolge der Reiter'], ['block', 'Blöcke im Überblick']] as const as [bereich, titel] (bereich)}
-				{@const liste = aufbau.filter((z) => z.bereich === bereich)}
-				<div role="list" aria-label={titel}>
-					<span class="bereichstitel">{titel}</span>
-					{#if bereich === 'reiter'}
-						<div class="aufbauzeile fest" role="listitem">
-							<span>Überblick (immer vorne)</span>
-						</div>
-					{/if}
-					{#each liste as z, i (z.key)}
-						{@const name = LABEL[bereich][z.key]}
-						<div class="aufbauzeile" role="listitem">
-							<span id="ag-{bereich}-{z.key}" class:aus={!z.an}>{name}</span>
+	{#if !nurDokumente}
+		<section class="stapel eng" aria-labelledby="ag-l">
+			<h3 id="ag-l" class="mit-info">
+				Aufbau der Seite<Info
+					thema="Aufbau der Seite"
+					text="Die Abteilungsseite hat Reiter: den Überblick und Unterseiten wie Termine oder Dokumente. Leg fest, in welcher Reihenfolge die Reiter stehen und welche Blöcke der Überblick zeigt. Leere Reiter und Blöcke sehen Leser nicht, Ausgeblendetes behält seine Inhalte."
+				/>
+			</h3>
+			<div class="bereiche">
+				{#each [['reiter', 'Reihenfolge der Reiter'], ['block', 'Blöcke im Überblick']] as const as [bereich, titel] (bereich)}
+					{@const liste = aufbau.filter((z) => z.bereich === bereich)}
+					<div role="list" aria-label={titel}>
+						<span class="bereichstitel">{titel}</span>
+						{#if bereich === 'reiter'}
+							<div class="aufbauzeile fest" role="listitem">
+								<span>Überblick (immer vorne)</span>
+							</div>
+						{/if}
+						{#each liste as z, i (z.key)}
+							{@const name = LABEL[bereich][z.key]}
+							<div class="aufbauzeile" role="listitem">
+								<span id="ag-{bereich}-{z.key}" class:aus={!z.an}>{name}</span>
+								<button
+									type="button"
+									class="knopf zweit mini"
+									disabled={i === 0}
+									aria-label="{name} nach oben"
+									onclick={() => schieben(z, -1)}
+								>
+									↑
+								</button>
+								<button
+									type="button"
+									class="knopf zweit mini"
+									disabled={i === liste.length - 1}
+									aria-label="{name} nach unten"
+									onclick={() => schieben(z, 1)}
+								>
+									↓
+								</button>
+								{#if bereich === 'block'}
+									<input
+										type="checkbox"
+										class="schalter"
+										role="switch"
+										aria-labelledby="ag-{bereich}-{z.key}"
+										bind:checked={z.an}
+									/>
+								{/if}
+							</div>
+						{/each}
+						{#if bereich === 'block'}
+							<p class="hinweis aufbauhinweis">
+								Daneben stehen immer die Ansprechpersonen (Leitung und Stellvertretung) und die
+								Videos.
+							</p>
+						{/if}
+					</div>
+				{/each}
+			</div>
+		</section>
+
+		<section class="stapel eng" aria-labelledby="ag-q">
+			<div class="kopf">
+				<h3 id="ag-q">Schnellzugriff</h3>
+				<button
+					type="button"
+					class="knopf zweit klein"
+					disabled={links.length >= HUB_GRENZEN.links}
+					onclick={() => {
+						links.push({ label: '', description: '', url: '', icon: 'link' });
+						zielWaehlen(links.length - 1);
+					}}
+				>
+					Schnellzugriff hinzufügen
+				</button>
+			</div>
+			<p class="hinweis unter">
+				Kacheln mit Links, z. B. zu Formularen oder zum Ticket-System. Höchstens {HUB_GRENZEN.links}.
+			</p>
+			<ul class="zeilen">
+				{#each links as l, i (i)}
+					<li>
+						<span class="symbol" aria-hidden="true">
+							<Icon
+								d={(LINK_SYMBOLE as Record<string, { d: string }>)[l.icon]?.d ??
+									LINK_SYMBOLE.link.d}
+								size={20}
+							/>
+						</span>
+						<input
+							aria-label="Bezeichnung"
+							placeholder="Bezeichnung"
+							maxlength={HUB_GRENZEN.linkTitel}
+							bind:value={l.label}
+						/>
+						<input
+							aria-label="Kurzbeschreibung"
+							placeholder="Kurzbeschreibung"
+							maxlength={HUB_GRENZEN.linkBeschreibung}
+							bind:value={l.description}
+						/>
+						<button
+							type="button"
+							class="knopf zweit klein ziel"
+							title={l.url || 'Noch kein Ziel'}
+							onclick={() => zielWaehlen(i)}
+						>
+							{l.url ? zielText(l.url) : 'Ziel wählen'}<span class="sr-only">, ändern</span>
+						</button>
+						<span class="knoepfe">
 							<button
 								type="button"
 								class="knopf zweit mini"
 								disabled={i === 0}
-								aria-label="{name} nach oben"
-								onclick={() => schieben(z, -1)}
+								aria-label="{l.label || 'Link'} nach oben"
+								onclick={() => ([links[i - 1], links[i]] = [links[i], links[i - 1]])}
 							>
 								↑
 							</button>
 							<button
 								type="button"
-								class="knopf zweit mini"
-								disabled={i === liste.length - 1}
-								aria-label="{name} nach unten"
-								onclick={() => schieben(z, 1)}
+								class="knopf zweit klein"
+								onclick={() => links.splice(i, 1)}
+								aria-label="{l.label || 'Link'} entfernen"
 							>
-								↓
+								Entfernen
 							</button>
-							{#if bereich === 'block'}
-								<input
-									type="checkbox"
-									class="schalter"
-									role="switch"
-									aria-labelledby="ag-{bereich}-{z.key}"
-									bind:checked={z.an}
-								/>
-							{/if}
-						</div>
-					{/each}
-					{#if bereich === 'block'}
-						<p class="hinweis aufbauhinweis">
-							Daneben stehen immer die Ansprechpersonen (Leitung und Stellvertretung) und die
-							Videos.
-						</p>
-					{/if}
-				</div>
-			{/each}
-		</div>
-	</section>
-
-	<section class="stapel eng" aria-labelledby="ag-q">
-		<div class="kopf">
-			<h3 id="ag-q">Schnellzugriff</h3>
-			<button
-				type="button"
-				class="knopf zweit klein"
-				disabled={links.length >= HUB_GRENZEN.links}
-				onclick={() => {
-					links.push({ label: '', description: '', url: '', icon: 'link' });
-					zielWaehlen(links.length - 1);
+						</span>
+					</li>
+				{:else}
+					<li class="leer">Noch kein Schnellzugriff.</li>
+				{/each}
+			</ul>
+			<ZielWaehlen
+				bind:this={zielFenster}
+				{ziele}
+				onwahl={(w) => {
+					if (links[zielFuer]) {
+						links[zielFuer].url = w.url;
+						links[zielFuer].icon = w.icon;
+						if (!links[zielFuer].label)
+							links[zielFuer].label = ziele.find((z) => z.url === w.url)?.label ?? '';
+					}
 				}}
-			>
-				Schnellzugriff hinzufügen
-			</button>
-		</div>
-		<p class="hinweis unter">
-			Kacheln mit Links, z. B. zu Formularen oder zum Ticket-System. Höchstens {HUB_GRENZEN.links}.
-		</p>
-		<ul class="zeilen">
-			{#each links as l, i (i)}
-				<li>
-					<span class="symbol" aria-hidden="true">
-						<Icon
-							d={(LINK_SYMBOLE as Record<string, { d: string }>)[l.icon]?.d ?? LINK_SYMBOLE.link.d}
-							size={20}
-						/>
-					</span>
-					<input
-						aria-label="Bezeichnung"
-						placeholder="Bezeichnung"
-						maxlength={HUB_GRENZEN.linkTitel}
-						bind:value={l.label}
-					/>
-					<input
-						aria-label="Kurzbeschreibung"
-						placeholder="Kurzbeschreibung"
-						maxlength={HUB_GRENZEN.linkBeschreibung}
-						bind:value={l.description}
-					/>
-					<button
-						type="button"
-						class="knopf zweit klein ziel"
-						title={l.url || 'Noch kein Ziel'}
-						onclick={() => zielWaehlen(i)}
-					>
-						{l.url ? zielText(l.url) : 'Ziel wählen'}<span class="sr-only">, ändern</span>
-					</button>
-					<span class="knoepfe">
-						<button
-							type="button"
-							class="knopf zweit mini"
-							disabled={i === 0}
-							aria-label="{l.label || 'Link'} nach oben"
-							onclick={() => ([links[i - 1], links[i]] = [links[i], links[i - 1]])}
-						>
-							↑
-						</button>
-						<button
-							type="button"
-							class="knopf zweit klein"
-							onclick={() => links.splice(i, 1)}
-							aria-label="{l.label || 'Link'} entfernen"
-						>
-							Entfernen
-						</button>
-					</span>
-				</li>
-			{:else}
-				<li class="leer">Noch kein Schnellzugriff.</li>
-			{/each}
-		</ul>
-		<ZielWaehlen
-			bind:this={zielFenster}
-			{ziele}
-			onwahl={(w) => {
-				if (links[zielFuer]) {
-					links[zielFuer].url = w.url;
-					links[zielFuer].icon = w.icon;
-					if (!links[zielFuer].label)
-						links[zielFuer].label = ziele.find((z) => z.url === w.url)?.label ?? '';
-				}
-			}}
-		/>
-	</section>
+			/>
+		</section>
+	{/if}
 
 	<section class="stapel eng" id="dokumente" aria-labelledby="ag-d">
 		<h3 id="ag-d">Dokumente und Anleitungen</h3>
@@ -334,7 +350,7 @@
 	</section>
 
 	<button class="knopf speichern" type="submit">
-		Aufbau, Schnellzugriff und Dokumente speichern
+		{nurDokumente ? 'Dokumente speichern' : 'Aufbau, Schnellzugriff und Dokumente speichern'}
 	</button>
 </form>
 
