@@ -876,6 +876,14 @@
 		gap: 2px;
 		padding-top: 8px;
 	}
+	/* Neuigkeiten unter dem Aufmacher: Abstand zwischen Vorschau und Text */
+	.zeilen .kurz.mitvorschau {
+		gap: 12px;
+		padding: 10px 6px;
+	}
+	.mitvorschau .was {
+		gap: 4px;
+	}
 	.meta {
 		font-size: 13px;
 		color: var(--mu);

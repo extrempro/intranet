@@ -10,6 +10,10 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.42.1 · 25.11.2026 · Startseite aufgeräumt
+
+- Die Neuigkeiten unter dem ersten Beitrag auf der Startseite haben wieder Luft zwischen Vorschaubild und Text.
+
 ## 0.42.0 · 25.11.2026 · Nur für unser Team
 
 - Neu: Abteilungen können Beiträge, Termine und Dokumente nur für das eigene Team veröffentlichen, für alle Mitglieder oder nur für die Stammabteilung. Leitung, Stellvertretung und Abteilungsverwaltung sehen sie immer.
