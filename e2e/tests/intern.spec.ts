@@ -39,6 +39,12 @@ test('Nur für unser Team: Prüfdialog, Reiter „Intern“ und Schild nur für 
 	const karte = page.locator('article', { hasText: titel }).first();
 	await expect(karte).toBeVisible();
 	await expect(karte.getByText('Intern · IT')).toBeVisible();
+	await page.goto('/');
+	await expect(
+		page
+			.locator('#bereich-neuigkeiten li, #bereich-neuigkeiten article', { hasText: titel })
+			.first()
+	).toContainText('Intern · IT');
 	await page.goto('/abteilungen/it');
 	await page.getByRole('link', { name: 'Intern' }).click();
 	await expect(page.getByRole('link', { name: titel })).toBeVisible();

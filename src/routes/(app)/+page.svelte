@@ -76,6 +76,8 @@
 	const weitere = $derived(data.neuigkeiten.filter((n) => n !== aufmacher).slice(0, 3));
 	const TABELLE = 'M3 5h18v14h-18zM3 10h18M3 15h18M9 5v14';
 	const TEXT = 'M5 6h14M5 10h14M5 14h10M5 18h6';
+	const SCHLOSS =
+		'M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2zM8 11v-4a4 4 0 1 1 8 0v4';
 	const monat = new Intl.DateTimeFormat('de-DE', { month: 'short', timeZone: 'UTC' });
 	const tagMonat = (iso: string) => {
 		const d = new Date(`${iso}T12:00:00Z`);
@@ -94,11 +96,14 @@
 </script>
 
 <!-- Absender wie in der Übersicht der Neuigkeiten: Kürzel, Einheit, Art und Datum -->
-{#snippet absender(s: { name: string; label: string }, wann: Date)}
+{#snippet absender(s: { name: string; label: string }, wann: Date, intern = false)}
 	<span class="meta absender">
 		<span class="kuerzel" aria-hidden="true">{s.name.length <= 3 ? s.name : s.name.charAt(0)}</span>
 		<strong>{s.name}</strong>
 		<span>{s.label} · {formatDay(wann)}</span>
+		{#if intern}<span class="schild intern">
+				<Icon d={SCHLOSS} size={12} stroke={2.2} />Intern · {s.name}
+			</span>{/if}
 	</span>
 {/snippet}
 
@@ -403,7 +408,7 @@
 												></span><span class="sr-only">Neu: </span>{/if}{aufmacher.title}
 										</a>
 									</h3>
-									{@render absender(aufmacher.sender, aufmacher.publishAt)}
+									{@render absender(aufmacher.sender, aufmacher.publishAt, aufmacher.intern)}
 									{#if aufmacher.excerpt}<p class="auszug">{aufmacher.excerpt}</p>{/if}
 								</div>
 							</article>
@@ -426,7 +431,7 @@
 													{#if ungelesen(n.publishAt)}<span class="punkt" aria-hidden="true"
 														></span><span class="sr-only">Neu: </span>{/if}{n.title}
 												</a>
-												{@render absender(n.sender, n.publishAt)}
+												{@render absender(n.sender, n.publishAt, n.intern)}
 											</span>
 										</li>
 									{/each}
@@ -875,6 +880,14 @@
 	.zeilen .kurz {
 		gap: 2px;
 		padding-top: 8px;
+	}
+	/* Neuigkeiten unter dem Aufmacher: Abstand zwischen Vorschau und Text */
+	.zeilen .kurz.mitvorschau {
+		gap: 12px;
+		padding: 10px 6px;
+	}
+	.mitvorschau .was {
+		gap: 4px;
 	}
 	.meta {
 		font-size: 13px;
