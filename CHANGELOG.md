@@ -13,6 +13,7 @@ Release mit Tag v<Version> an (.github/workflows/release.yml).
 ## 0.42.1 · 25.11.2026 · Startseite aufgeräumt
 
 - Die Neuigkeiten unter dem ersten Beitrag auf der Startseite haben wieder Luft zwischen Vorschaubild und Text.
+- Interne Beiträge tragen auch auf der Startseite das Schild „Intern“.
 
 ## 0.42.0 · 25.11.2026 · Nur für unser Team
 
