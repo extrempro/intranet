@@ -35,3 +35,7 @@ Erst „Aufbau, Schnellzugriff und Dokumente speichern“ übernimmt die Änderu
 ## Hinter den Kulissen
 
 Hier schaltest du die Funktion für die Abteilung frei oder aus.
+
+## Intern
+
+Der Reiter „Intern“ ist nur für dein Team sichtbar: Mitglieder, Leitung, Stellvertretung und Abteilungsverwaltung. Dort stehen interne Beiträge, Termine und Dokumente. Ordner machst du unter „Dokumente pflegen“ mit „Ordner nur für das Team“ intern. Die Redaktion und die Verwaltung sehen interne Inhalte nicht.

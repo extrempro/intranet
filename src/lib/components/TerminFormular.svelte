@@ -15,6 +15,8 @@
 		description: string;
 		allTenants: boolean;
 		tenantIds: string[];
+		/** Nur für das Team (Kap. 8.17) */
+		teamScope?: 'mitglieder' | 'stamm' | null;
 	}
 
 	let {
@@ -23,7 +25,14 @@
 		werte,
 		fehler = {}
 	}: {
-		einheiten: { id: string; name: string; label: string; isCentral: boolean }[];
+		einheiten: {
+			id: string;
+			name: string;
+			label: string;
+			isCentral: boolean;
+			/** Intern eintragen möglich (Kap. 8.17) */
+			intern?: boolean;
+		}[];
 		mandanten: { id: string; name: string }[];
 		werte: Werte;
 		fehler?: Partial<Record<keyof Werte | 'targets', string>>;
@@ -31,6 +40,7 @@
 
 	let v = $state(untrack(() => structuredClone(werte)));
 	const einheit = $derived(einheiten.find((e) => e.id === v.unitId));
+	const team = $derived(!!einheit?.intern && !!v.teamScope);
 </script>
 
 {#if einheiten.length > 1}
@@ -109,7 +119,62 @@
 	{#if fehler.description}<span class="feldfehler">{fehler.description}</span>{/if}
 </label>
 
-{#if einheit?.isCentral}
+{#if einheit?.intern}
+	<fieldset class="gruppe">
+		<legend>
+			Für wen?
+			<Info
+				thema="Nur für unser Team"
+				text="Interne Termine sehen nur die Mitglieder deiner Abteilung, Leitung und Stellvertretung, im Reiter „Intern“, im Kalender und im eigenen Kalender-Abo. Die Redaktion sieht sie nicht."
+			/>
+		</legend>
+		<label class="option">
+			<input
+				type="radio"
+				name="sicht"
+				value="alle"
+				checked={!v.teamScope}
+				onchange={() => (v.teamScope = null)}
+			/> Öffentlich
+		</label>
+		<label class="option">
+			<input
+				type="radio"
+				name="sicht"
+				value="team"
+				checked={!!v.teamScope}
+				onchange={() => (v.teamScope = 'mitglieder')}
+			/> Nur für unser Team
+		</label>
+		{#if team}
+			<div class="einzug">
+				<label class="option">
+					<input
+						type="radio"
+						name="kreis"
+						value="mitglieder"
+						checked={v.teamScope === 'mitglieder'}
+						onchange={() => (v.teamScope = 'mitglieder')}
+					/> Alle Mitglieder
+				</label>
+				<label class="option">
+					<input
+						type="radio"
+						name="kreis"
+						value="stamm"
+						checked={v.teamScope === 'stamm'}
+						onchange={() => (v.teamScope = 'stamm')}
+					/>
+					Nur mit Stammabteilung {einheit?.name}
+				</label>
+			</div>
+		{/if}
+	</fieldset>
+{/if}
+
+{#if team}
+	<p class="hinweis">Wer sieht das? Nur dein Team, Leitung und Stellvertretung.</p>
+{:else if einheit?.isCentral}
 	<fieldset class="gruppe">
 		<legend>
 			Wer sieht das?

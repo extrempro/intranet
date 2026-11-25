@@ -4,11 +4,31 @@
  * dürfen alle Angemeldeten jeden Termin öffnen. Anlegen nur mit dem Recht
  * „Termine“ und wenn die Einheit Termine haben darf (Regel/Ausnahme).
  */
-import { and, asc, eq, exists, gte, ilike, inArray, isNull, lt, lte, or, sql } from 'drizzle-orm';
+import {
+	and,
+	asc,
+	eq,
+	exists,
+	gte,
+	ilike,
+	inArray,
+	isNotNull,
+	isNull,
+	lt,
+	lte,
+	or,
+	sql
+} from 'drizzle-orm';
 import { addDays, berlinNow } from '../canteen.ts';
 import { validateEvent, type EventErrors, type EventInput } from '../calendar.ts';
 import { mayCreateEvents, unitTypeLabel } from '../roles.ts';
-import { canWriteEvents, eventUnitIds, type Principal } from './auth/access.ts';
+import {
+	canWriteEvents,
+	eventUnitIds,
+	siehtIntern,
+	teamBedingung,
+	type Principal
+} from './auth/access.ts';
 import { decryptSecret, encryptSecret, randomToken, sha256Hex } from './crypto.ts';
 import { doc, matches } from './fts.ts';
 import { getRetention } from './retention.ts';
@@ -62,6 +82,18 @@ export async function setCalendarTenants(p: Principal, ids: string[]) {
 	return list;
 }
 
+/**
+ * Interne Termine (Kap. 8.17) für eine Person ohne geladene Rechte (Abo-Link):
+ * dieselbe Regel wie teamBedingung bzw. die Datenbank-Funktion app_team_zugang.
+ */
+function teamFuerPerson(personId: string) {
+	return sql`(${events.teamScope} is null
+		or ${events.createdBy} = ${personId}
+		or exists (select 1 from unit_members m where m.unit_id = ${events.unitId} and m.person_id = ${personId} and (${events.teamScope} = 'mitglieder' or m.is_primary))
+		or exists (select 1 from units u where u.id = ${events.unitId} and ${personId}::uuid in (u.lead_person_id, u.second_lead_person_id, u.deputy_person_id))
+		or exists (select 1 from role_assignments r where r.person_id = ${personId} and r.role = 'abteilungsverwaltung' and r.scope_unit_id = ${events.unitId}))`;
+}
+
 /** Termin richtet sich an einen der Mandanten (wie bei Neuigkeiten). */
 function forTenants(ids: string[]) {
 	return or(
@@ -96,6 +128,8 @@ const columns = {
 	unitTitle: units.title,
 	tenantId: events.tenantId,
 	tenantShort: tenants.shortName,
+	/** Nur für das Team (Kap. 8.17) */
+	teamScope: events.teamScope,
 	updatedAt: events.updatedAt
 };
 
@@ -121,6 +155,7 @@ export async function listEvents(p: Principal, o: ListOptions) {
 				gte(events.date, o.from),
 				lte(events.date, o.to),
 				forTenants([p.tenantId, ...o.tenantIds]),
+				teamBedingung(p, events),
 				o.unitIds ? inArray(events.unitId, o.unitIds.length ? o.unitIds : [GUID_NONE]) : undefined,
 				like
 					? or(ilike(events.title, like), ilike(events.place, like), ilike(units.name, like))
@@ -151,7 +186,7 @@ export async function getEvent(p: Principal, id: string) {
 		.from(events)
 		.innerJoin(units, eq(units.id, events.unitId))
 		.innerJoin(tenants, eq(tenants.id, events.tenantId))
-		.where(eq(events.id, id));
+		.where(and(eq(events.id, id), teamBedingung(p, events)));
 	if (!row) return null;
 	const [targets, writable] = await Promise.all([
 		db
@@ -168,6 +203,34 @@ export async function getEvent(p: Principal, id: string) {
 		targets,
 		canEdit: writable.some((u) => u.id === row.unitId)
 	};
+}
+
+/** Kommende interne Termine einer Abteilung für den Reiter „Intern“ (Kap. 8.17). */
+export async function interneTermine(p: Principal, unitId: string) {
+	if (!GUID.test(unitId)) return [];
+	const today = berlinNow().date;
+	return db
+		.select({
+			id: events.id,
+			title: events.title,
+			date: events.date,
+			allDay: events.allDay,
+			startTime: events.startTime,
+			endTime: events.endTime,
+			place: events.place
+		})
+		.from(events)
+		.where(
+			and(
+				eq(events.unitId, unitId),
+				isNotNull(events.teamScope),
+				teamBedingung(p, events),
+				gte(events.date, today),
+				lt(events.date, addDays(today, 365))
+			)
+		)
+		.orderBy(asc(events.date), asc(events.startTime))
+		.limit(50);
 }
 
 /** Startseite „Heute und morgen“. */
@@ -195,6 +258,8 @@ export interface EventUnit {
 	label: string;
 	tenantId: string;
 	isCentral: boolean;
+	/** Intern eintragen möglich (Abteilung, Person gehört zum Team, Kap. 8.17) */
+	intern: boolean;
 }
 
 /** Einheiten, für die die Person Termine anlegen darf. */
@@ -212,7 +277,8 @@ export async function eventWritableUnits(p: Principal): Promise<EventUnit[]> {
 			name: u.name,
 			label: unitTypeLabel(u),
 			tenantId: u.tenantId,
-			isCentral: u.isCentral
+			isCentral: u.isCentral,
+			intern: u.type !== 'hub' && siehtIntern(p, u.id)
 		}));
 }
 
@@ -220,6 +286,8 @@ export interface SaveEventInput extends EventInput {
 	unitId: string;
 	allTenants: boolean;
 	tenantIds: string[];
+	/** Nur für das Team (Kap. 8.17) */
+	teamScope?: 'mitglieder' | 'stamm' | null;
 }
 
 export async function saveEvent(
@@ -230,9 +298,20 @@ export async function saveEvent(
 	const writable = await eventWritableUnits(p);
 	if (id) {
 		const [cur] = GUID.test(id)
-			? await db.select({ unitId: events.unitId }).from(events).where(eq(events.id, id))
+			? await db
+					.select({
+						unitId: events.unitId,
+						teamScope: events.teamScope,
+						createdBy: events.createdBy
+					})
+					.from(events)
+					.where(eq(events.id, id))
 			: [];
-		if (!cur || !writable.some((u) => u.id === cur.unitId))
+		const internOk =
+			!cur?.teamScope ||
+			cur.createdBy === p.personId ||
+			siehtIntern(p, cur.unitId, cur.teamScope === 'stamm' ? 'stamm' : 'mitglieder');
+		if (!cur || !internOk || !writable.some((u) => u.id === cur.unitId))
 			throw new CalendarError('Diesen Termin gibt es nicht oder du darfst ihn nicht ändern.');
 	}
 	const errors = validateEvent(input);
@@ -241,7 +320,11 @@ export async function saveEvent(
 	// Zielgruppe: nicht-zentrale Einheiten nur für den eigenen Mandanten
 	const known = new Set((await allTenants()).map((t) => t.id));
 	const selected = [...new Set(input.tenantIds)].filter((t) => known.has(t));
-	const central = unit?.isCentral ?? false;
+	const teamScope = input.teamScope ?? null;
+	if (teamScope && unit && !unit.intern)
+		errors.targets = 'Intern eintragen kann nur, wer selbst zum Team der Abteilung gehört.';
+	// Intern: nur der eigene Mandant
+	const central = (unit?.isCentral ?? false) && !teamScope;
 	const all = central ? input.allTenants : false;
 	if (central && !all && selected.length === 0)
 		errors.targets = 'Wähl bitte mindestens einen Mandanten aus.';
@@ -258,6 +341,7 @@ export async function saveEvent(
 		place: input.place.trim() || null,
 		description: input.description.trim() || null,
 		allTenants: all,
+		teamScope,
 		updatedBy: p.personId
 	};
 	const eventId = await db.transaction(async (tx) => {
@@ -473,6 +557,7 @@ export async function feedEvents(token: string) {
 				lte(events.date, addDays(today, 365)),
 				forTenants([row.tenantId, ...c.tenants]),
 				isNull(units.archivedAt),
+				teamFuerPerson(row.feed.personId),
 				or(departments, hubs)
 			)
 		)
@@ -528,6 +613,7 @@ export async function searchEvents(p: Principal, tsq: string, limit = 20) {
 				gte(events.date, berlinNow().date),
 				forTenants([p.tenantId, ...(await getCalendarTenants(p))]),
 				isNull(units.archivedAt),
+				teamBedingung(p, events),
 				matches(document, tsq)
 			)
 		)

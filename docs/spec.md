@@ -413,6 +413,20 @@ Umfragen hängen an einem Beitrag (Neuigkeiten und Hubs) und stehen im Beitrag u
 - **Auswertung** für das Team: Zahlen und Balken, Durchschnitt bei Bewertungen, Freitexte, Export als CSV (bei anonymen Umfragen ohne Namen und in zufälliger Reihenfolge). Export und Änderungen stehen im Protokoll.
 - **Startseite:** Karte „Offene Umfragen“ mit laufenden Umfragen, an denen du noch nicht teilgenommen hast; nur sichtbar, wenn es welche gibt.
 
+### 8.17 Nur für unser Team (interne Inhalte einer Abteilung)
+
+Abteilungen können Beiträge, Termine und Dokumentordner nur für das eigene Team veröffentlichen. Hubs haben das nicht.
+
+- **Wer gehört zum Team:** je nach Kreis „Alle Mitglieder“ (alle Mitglieder der Abteilung) oder „Nur Stammabteilung“ (nur, wer die Abteilung als Stammabteilung hat). Leitung, Stellvertretung und Abteilungsverwaltung gehören immer dazu, unabhängig vom Kreis.
+- **Nicht dabei:** Redaktion, Verwaltung und System-Admins sehen interne Inhalte nicht, außer sie gehören selbst zum Team. Interne Beiträge stehen nicht in der Arbeitsliste der Redaktion, die Redaktion kann dort nicht eingreifen.
+- **Schreiben:** Im Formular unter „Für wen?“: „Öffentlich“ oder „Nur für unser Team“ mit Kreis. Nur wer selbst zum Team gehört und für die Abteilung schreiben darf, kann intern schreiben. Interne Beiträge gehen immer an den eigenen Mandanten; Anheften und „Dringend“ gibt es dafür nicht.
+- **Anzeige:** Reiter „Intern“ auf der Abteilungsseite (nur für das Team) mit internen Beiträgen, Terminen und Dokumenten. Interne Beiträge erscheinen außerdem in den Neuigkeiten des Teams mit dem Schild „Intern · <Abteilung>“, interne Termine im Kalender und im Kalender-Abo nur für das Team.
+- **Dokumente:** Ordner lassen sich in „Dokumente pflegen“ als „Ordner nur für das Team“ markieren. Dateien darin liefert der Server nur an das Team aus.
+- **Benachrichtigung:** eigenes Thema „Intern aus deiner Abteilung“ (Glocke und Push an, E-Mail aus), nur an das Team.
+- **Prüfdialog:** Vor jedem Veröffentlichen fasst ein Dialog zusammen, wer den Beitrag sieht und wer benachrichtigt wird (beim Bearbeiten nur, wenn sich „Für wen?“ geändert hat). Klingt der Titel nach einer internen Info (z. B. „intern“, „nur für uns“), der Beitrag geht aber an alle, warnt der Dialog.
+- **Durchsetzung:** Die Datenbank prüft interne Beiträge selbst (Row-Level Security), zusätzlich zu den Prüfungen im Code.
+- **Später:** Gruppen innerhalb eines Teams.
+
 ## 9. Nachrichten
 
 - **Nur Gespräche zu Vorgängen**: Hub-Anträge, Anzeigen am Schwarzen Brett (Moderation und Interessierte), Rückmeldungen. Keine freien Nachrichten zwischen Personen (dafür ist Teams da).

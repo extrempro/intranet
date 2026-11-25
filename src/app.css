@@ -345,6 +345,14 @@ textarea {
 	color: var(--ac);
 }
 
+.schild.intern {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	background: var(--blau-bg);
+	color: var(--blau-tx);
+}
+
 .schild.rand {
 	background: transparent;
 	border: 1px solid var(--bd);

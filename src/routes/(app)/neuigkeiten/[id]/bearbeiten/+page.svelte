@@ -15,6 +15,7 @@
 	<form method="POST" class="felder">
 		{#key form}
 			<Beitragsformular
+				pruefenNurBeiAenderung
 				werte={form?.werte ?? data.werte}
 				einheiten={data.einheiten}
 				mandanten={data.mandanten}

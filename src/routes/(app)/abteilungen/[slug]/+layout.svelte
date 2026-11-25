@@ -23,6 +23,8 @@
 	const TELEFON =
 		'M5 4h4l2 5l-2.5 1.5a11 11 0 0 0 5 5l1.5 -2.5l5 2v4a2 2 0 0 1 -2 2a16 16 0 0 1 -15 -15a2 2 0 0 1 2 -2';
 	const UHR = 'M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0M12 7v5l3 3';
+	const SCHLOSS =
+		'M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2zM8 11v-4a4 4 0 1 1 8 0v4';
 	const ORT =
 		'M12 11m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0M17.66 16.66l-4.24 4.24a2 2 0 0 1 -2.83 0l-4.25 -4.24a8 8 0 1 1 11.31 0z';
 
@@ -33,7 +35,11 @@
 			{ key: 'ueberblick', label: 'Überblick', href: basis, anzahl: null, leer: false },
 			...abteilungReiter(data)
 				.map((r) => ({ ...r, href: `${basis}/${r.pfad}` }))
-				.filter((r) => !r.leer || r.pflegbar || pfad === r.href)
+				.filter((r) => !r.leer || r.pflegbar || pfad === r.href),
+			// Nur für das Team (Kap. 8.17)
+			...(e.internErlaubt
+				? [{ key: 'intern', label: 'Intern', href: `${basis}/intern`, anzahl: null, leer: false }]
+				: [])
 		].map((r) => ({ ...r, aktiv: pfad === r.href }))
 	);
 	const leitung = $derived(
@@ -149,7 +155,7 @@
 				<li>
 					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- basis kommt aus resolve() -->
 					<a href={r.href} aria-current={r.aktiv ? 'page' : undefined} data-sveltekit-noscroll>
-						{r.label}
+						{#if r.key === 'intern'}<Icon d={SCHLOSS} size={14} stroke={2} />{/if}{r.label}
 						{#if r.anzahl}<span class="zahl">{r.anzahl}</span>{/if}
 						{#if r.leer}<span class="leer">leer</span>{/if}
 					</a>

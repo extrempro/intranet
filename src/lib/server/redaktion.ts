@@ -106,6 +106,8 @@ export async function editorialWorklist(p: Principal) {
 						.where(
 							and(
 								unitScope,
+								// Interne Beiträge sind Sache der Abteilung (Kap. 8.17)
+								isNull(news.teamScope),
 								isNotNull(news.expiresAt),
 								gt(news.expiresAt, now),
 								lt(news.expiresAt, inAWeek)
@@ -174,7 +176,13 @@ export async function editorialWorklist(p: Principal) {
 						})
 						.from(news)
 						.innerJoin(units, eq(units.id, news.unitId))
-						.where(and(unitScope, or(gt(news.urgentUntil, now), gt(news.pinnedUntil, now))))
+						.where(
+							and(
+								unitScope,
+								isNull(news.teamScope),
+								or(gt(news.urgentUntil, now), gt(news.pinnedUntil, now))
+							)
+						)
 						.orderBy(sql`${news.urgentUntil} desc nulls last`, asc(news.pinnedUntil))
 				: [],
 			// Hub-Anträge vorprüfen

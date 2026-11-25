@@ -29,11 +29,13 @@ async function vorschaubilder(ids: string[]): Promise<Map<string, string>> {
 export async function hubBeitraege(
 	p: Parameters<typeof listNews>[0],
 	hubId: string,
-	anzahl: number
+	anzahl: number,
+	/** Abteilungen: interne Beiträge stehen im Reiter „Intern“ (Kap. 8.17) */
+	intern: 'nur' | 'ohne' = 'ohne'
 ) {
 	const [beitraege, zahlen] = await Promise.all([
-		listNews(p, { unitIds: [hubId], nachDatum: true, limit: anzahl }),
-		newsMonths(p, { unitIds: [hubId] })
+		listNews(p, { unitIds: [hubId], nachDatum: true, limit: anzahl, intern }),
+		newsMonths(p, { unitIds: [hubId], intern })
 	]);
 	const bilder = await vorschaubilder(beitraege.map((b) => b.id));
 	return {

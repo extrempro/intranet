@@ -13,6 +13,7 @@ import {
 	gt,
 	ilike,
 	inArray,
+	isNotNull,
 	isNull,
 	lte,
 	ne,
@@ -37,6 +38,8 @@ import {
 	editorialTenants,
 	isEditorial,
 	newsUnitIds,
+	siehtIntern,
+	teamBedingung,
 	type Principal
 } from './auth/access.ts';
 import { db, scoped } from './db/index.ts';
@@ -76,6 +79,8 @@ export interface SenderUnit {
 	mayUrgent: boolean;
 	/** Hub: Beiträge erscheinen unter „Aus den Hubs“, ohne Anheften und Dringend */
 	isHub: boolean;
+	/** Intern schreiben möglich: Teamgröße je Kreis (Kap. 8.17), sonst null */
+	intern: { mitglieder: number; stamm: number } | null;
 }
 
 /**
@@ -95,6 +100,39 @@ export function zielMandantenVon(
 }
 
 /** Einheiten, für die die Person schreiben darf (Kap. 5.2). */
+/**
+ * Teamgröße je Kreis für den Prüfdialog (Kap. 8.17): Mitglieder bzw. nur mit
+ * dieser Stammabteilung, dazu Leitung und Stellvertretung.
+ */
+export async function teamGroesse(unitId: string) {
+	const [r] = await db.execute<{ mitglieder: number; stamm: number }>(sql`
+		with leute as (
+			select m.person_id, m.is_primary from unit_members m
+			join persons pe on pe.id = m.person_id and pe.status = 'active'
+			where m.unit_id = ${unitId}
+			union all
+			select x.id, true from units u
+			cross join lateral (values (u.lead_person_id), (u.second_lead_person_id), (u.deputy_person_id)) as x(id)
+			where u.id = ${unitId} and x.id is not null
+		)
+		select count(distinct person_id)::int as mitglieder,
+			count(distinct person_id) filter (where is_primary)::int as stamm
+		from leute`);
+	return { mitglieder: r?.mitglieder ?? 0, stamm: r?.stamm ?? 0 };
+}
+
+/** Darf die Person diesen Beitrag als Team-Mitglied sehen bzw. bearbeiten? */
+function internErlaubt(
+	p: Principal,
+	row: { unitId: string; teamScope: string | null; createdBy: string | null }
+) {
+	return (
+		!row.teamScope ||
+		row.createdBy === p.personId ||
+		siehtIntern(p, row.unitId, row.teamScope === 'stamm' ? 'stamm' : 'mitglieder')
+	);
+}
+
 export async function writableUnits(p: Principal): Promise<SenderUnit[]> {
 	const ids = [...newsUnitIds(p)];
 	if (ids.length === 0) return [];
@@ -104,23 +142,27 @@ export async function writableUnits(p: Principal): Promise<SenderUnit[]> {
 		.innerJoin(tenants, eq(tenants.id, units.tenantId))
 		.where(inArray(units.id, ids))
 		.orderBy(asc(units.name));
-	return (
-		rows
-			.filter((r) => canWriteNews(p, r.unit))
-			// Ruhende und archivierte Hubs schreiben nicht (Kap. 8.12)
-			.filter((r) => !r.unit.archivedAt && !(r.unit.type === 'hub' && r.unit.restingSince))
-			.map((r) => ({
-				id: r.unit.id,
-				name: r.unit.name,
-				label: unitTypeLabel(r.unit),
-				tenantId: r.unit.tenantId,
-				isCentral: r.unit.isCentral,
-				zielMandanten: zielMandantenVon(p, r.unit),
-				mayUrgent:
-					r.unit.type !== 'hub' && mayPostUrgent({ ...r.unit, isKbb: r.kbbUnitId === r.unit.id }),
-				isHub: r.unit.type === 'hub'
-			}))
-	);
+	const liste = rows
+		.filter((r) => canWriteNews(p, r.unit))
+		// Ruhende und archivierte Hubs schreiben nicht (Kap. 8.12)
+		.filter((r) => !r.unit.archivedAt && !(r.unit.type === 'hub' && r.unit.restingSince));
+	// Intern schreiben nur Abteilungen, und nur wer selbst zum Team gehört (Kap. 8.17)
+	const intern = new Map<string, { mitglieder: number; stamm: number }>();
+	for (const r of liste)
+		if (r.unit.type !== 'hub' && siehtIntern(p, r.unit.id))
+			intern.set(r.unit.id, await teamGroesse(r.unit.id));
+	return liste.map((r) => ({
+		id: r.unit.id,
+		name: r.unit.name,
+		label: unitTypeLabel(r.unit),
+		tenantId: r.unit.tenantId,
+		isCentral: r.unit.isCentral,
+		zielMandanten: zielMandantenVon(p, r.unit),
+		mayUrgent:
+			r.unit.type !== 'hub' && mayPostUrgent({ ...r.unit, isKbb: r.kbbUnitId === r.unit.id }),
+		isHub: r.unit.type === 'hub',
+		intern: intern.get(r.unit.id) ?? null
+	}));
 }
 
 // ---------------------------------------------------------------------------
@@ -141,6 +183,8 @@ export interface ListOptions {
 	angeheftet?: 'nur' | 'ohne';
 	/** Nur nach Datum sortieren (Angeheftete nicht zuerst), z. B. für Monatsgruppen */
 	nachDatum?: boolean;
+	/** Interne Beiträge (Kap. 8.17): nur sie oder ohne sie; Standard: beide (soweit sichtbar) */
+	intern?: 'nur' | 'ohne';
 	/** Überspringen (Liste „ältere laden“) */
 	offset?: number;
 }
@@ -161,7 +205,8 @@ function readerVisible(p: Principal, writable: string[], editorial: boolean, now
 	return and(
 		or(targeted, own),
 		or(published, plannedOk),
-		or(isNull(news.expiresAt), gt(news.expiresAt, now))
+		or(isNull(news.expiresAt), gt(news.expiresAt, now)),
+		teamBedingung(p, news)
 	)!;
 }
 
@@ -184,6 +229,7 @@ const columns = {
 	urgentUntil: news.urgentUntil,
 	urgentText: news.urgentText,
 	allTenants: news.allTenants,
+	teamScope: news.teamScope,
 	unitName: absender.name,
 	unitSlug: absender.slug,
 	unitType: absender.type,
@@ -205,6 +251,7 @@ type Row = {
 	urgentUntil: Date | null;
 	urgentText: string | null;
 	allTenants: boolean;
+	teamScope: 'mitglieder' | 'stamm' | null;
 	unitName: string;
 	unitSlug: string;
 	unitType: 'geschaeftsfuehrung' | 'stabsstelle' | 'abteilung' | 'hub';
@@ -279,11 +326,15 @@ async function decorate(p: Principal, rows: Row[], now: Date) {
 				name: r.unitName,
 				label: unitTypeLabel({ type: r.unitType, title: r.unitTitle })
 			},
-			audience: r.allTenants
-				? 'Alle Mandanten'
-				: tenantNames.length > 1
-					? tenantNames.join(', ')
-					: (tenantNames[0] ?? ''),
+			// Intern (Kap. 8.17): Schild „Intern · Abteilung“
+			intern: Boolean(r.teamScope),
+			audience: r.teamScope
+				? `Intern · ${r.unitName}`
+				: r.allTenants
+					? 'Alle Mandanten'
+					: tenantNames.length > 1
+						? tenantNames.join(', ')
+						: (tenantNames[0] ?? ''),
 			canEdit: writable.has(r.unitId),
 			attachmentCount: attachmentCounts.find((a) => a.newsId === r.id)?.n ?? 0,
 			vorschau: vorschauVon(
@@ -349,6 +400,8 @@ function listConds(p: Principal, opts: ListOptions, now: Date): SQL[] {
 	const angeheftet = sql`(${news.pinnedUntil} > ${jetzt}::timestamptz and ${news.publishAt} <= ${jetzt}::timestamptz)`;
 	if (opts.angeheftet === 'nur') conds.push(angeheftet);
 	if (opts.angeheftet === 'ohne') conds.push(sql`not coalesce(${angeheftet}, false)`);
+	if (opts.intern === 'nur') conds.push(isNotNull(news.teamScope));
+	if (opts.intern === 'ohne') conds.push(isNull(news.teamScope));
 	return conds;
 }
 
@@ -634,10 +687,13 @@ export async function saveNews(
 	const text = await textMitBildern(p, input.bodyHtml, { art: 'news', id: newsId });
 	const bodyHtml = text.html;
 	const bodyText = htmlToText(bodyHtml);
-	// Hubs: weder anheften noch dringend (Kap. 8.3)
-	const draft: NewsDraft = sender.isHub
-		? { ...input, bodyText, pinnedUntil: null, urgentUntil: null, urgentText: null }
-		: { ...input, bodyText };
+	if (existing && !internErlaubt(p, existing)) throw new NewsError('Beitrag nicht gefunden.');
+	// Interne Beiträge (Kap. 8.17) und Hubs (Kap. 8.3): weder anheften noch dringend
+	const teamScope = input.teamScope ?? null;
+	const draft: NewsDraft =
+		sender.isHub || teamScope
+			? { ...input, bodyText, pinnedUntil: null, urgentUntil: null, urgentText: null }
+			: { ...input, bodyText };
 
 	const [{ n: otherUrgent }] = await db
 		.select({ n: sql<number>`count(*)::int` })
@@ -660,6 +716,12 @@ export async function saveNews(
 		otherActiveUrgent: otherUrgent,
 		urgentPerUnit: rules.urgentPerUnit
 	});
+	if (teamScope) {
+		if (sender.isHub) errors.tenants = 'Nur Abteilungen können intern schreiben.';
+		else if (!siehtIntern(p, sender.id))
+			errors.tenants = 'Intern schreiben kann nur, wer selbst zum Team gehört.';
+		else delete errors.tenants;
+	}
 	// Freigabe in der Vergangenheit nur bei bestehenden Beiträgen
 	if (!existing && input.publishAt && input.publishAt.getTime() < now.getTime() - 5 * 60_000) {
 		errors.publishAt = 'Die Freigabe darf nicht in der Vergangenheit liegen.';
@@ -677,8 +739,9 @@ export async function saveNews(
 						.where(eq(newsTenants.newsId, existing.id))
 				).map((r) => r.t)
 			: [];
-	const targets =
-		existing && !sender.zielMandanten && existing.unitId === sender.id
+	const targets = teamScope
+		? { allTenants: false, tenantIds: [sender.tenantId] }
+		: existing && !sender.zielMandanten && existing.unitId === sender.id
 			? existing.allTenants
 				? { allTenants: true, tenantIds: [] }
 				: { allTenants: false, tenantIds: bisher.length ? bisher : [sender.tenantId] }
@@ -742,6 +805,7 @@ export async function saveNews(
 		publishAt: draft.publishAt!,
 		expiresAt: draft.expiresAt,
 		allTenants: targets.allTenants,
+		teamScope,
 		pinnedUntil: draft.pinnedUntil,
 		pinnedByEditorial: Boolean(draft.pinnedUntil) && editorial,
 		urgentUntil: draft.urgentUntil,
@@ -814,7 +878,7 @@ export async function saveNews(
 export async function newsForEdit(p: Principal, id: string) {
 	if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
 	const [row] = await db.select().from(news).where(eq(news.id, id));
-	if (!row || !newsUnitIds(p).has(row.unitId)) return null;
+	if (!row || !newsUnitIds(p).has(row.unitId) || !internErlaubt(p, row)) return null;
 	const targets = await db
 		.select({ tenantId: newsTenants.tenantId })
 		.from(newsTenants)
@@ -828,10 +892,16 @@ export async function newsForEdit(p: Principal, id: string) {
 
 export async function deleteNews(p: Principal, id: string, ip: string) {
 	const [row] = await db
-		.select({ unitId: news.unitId, tenantId: news.tenantId })
+		.select({
+			unitId: news.unitId,
+			tenantId: news.tenantId,
+			teamScope: news.teamScope,
+			createdBy: news.createdBy
+		})
 		.from(news)
 		.where(eq(news.id, id));
-	if (!row || !newsUnitIds(p).has(row.unitId)) throw new NewsError('Beitrag nicht gefunden.');
+	if (!row || !newsUnitIds(p).has(row.unitId) || !internErlaubt(p, row))
+		throw new NewsError('Beitrag nicht gefunden.');
 	const fileIds = (
 		await db
 			.select({ fileId: newsAttachments.fileId })

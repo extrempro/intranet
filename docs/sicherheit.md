@@ -178,6 +178,14 @@ Neu: „Weiter, wo du warst“ am Konto.
 - **Einheiten ohne Pflege**: Die Liste wird beim Laden der Person berechnet (Rollen `abteilungsverwaltung`/`hub_team` fehlen, nicht archiviert) und gibt nur Beiträge, FAQs und Termine frei, nicht Mediathek, Umfragen oder Hinter den Kulissen (DB-Test).
 - **Themen**: Pflege nur System-Admins und Redaktion für alle Mandanten; Redaktion je Mandant und andere 403 (Unit-Test, live).
 
+## Nachprüfung Nur für unser Team (25.11.2026, Version 0.42.0)
+
+- **Datenbank**: Restriktive Policy `news_team` auf `news` mit der Funktion `app_team_zugang` (SECURITY DEFINER, nur für `intranet_app` ausführbar). Live geprüft: Mit dem Kontext einer Person aus der Redaktion liefert `news` keine internen Beiträge, mit dem eines Teammitglieds alle (DB-Test).
+- **Code**: Neuigkeiten, Beitragsseite, Bearbeiten, Löschen, Kalender, Suche, Kalender-Abo, Abteilungsseite und Dateiauslieferung prüfen den Team-Zugang; Redaktion, Verwaltung und Personen außerhalb des Teams bekommen 404 (DB-Test, e2e). Die Eingriffe der Redaktion greifen bei internen Beiträgen nicht.
+- **Schreiben**: Intern schreiben nur Teammitglieder mit Schreibrecht für die Abteilung, nicht für Hubs; Ziel ist immer der eigene Mandant, Anheften und Dringend werden verworfen (DB-Test).
+- **Dokumente**: Wer die Seite pflegt, aber nicht zum Team gehört, sieht und ändert interne Ordner nicht; Dateien darin liefert `/dateien/<id>` nur an das Team (DB-Test).
+- **Benachrichtigungen**: nur an aktive Personen im Team (DB-Test).
+
 ## Stand je ASVS-Kapitel (5.0)
 
 | Kapitel                                    | Stand             | Umsetzung, Belege                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |

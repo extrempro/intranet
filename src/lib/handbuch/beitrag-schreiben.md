@@ -50,6 +50,14 @@ Das geht wie die Bilder bei Neuigkeiten, Hub-Beiträgen, „Hinter den Kulissen�
 - Steht auf einem Bild etwas Wichtiges (Termin, Plan, Text), schreib es zusätzlich in den Beitrag.
 - PDFs möglichst barrierefrei erstellen (in Word: „Barrierefreiheit überprüfen“, beim Speichern als PDF „Dokumentstruktur-Tags“ an).
 
+## Nur für unser Team
+
+Schreibst du für eine Abteilung, zu der du selbst gehörst, wählst du unter „Für wen?“ „Nur für unser Team“. Dann wählst du den Kreis: „Alle Mitglieder“ oder „Nur Stammabteilung“. Leitung, Stellvertretung und Abteilungsverwaltung sehen interne Beiträge immer.
+
+Interne Beiträge sieht sonst niemand, auch nicht die Redaktion. Sie stehen in den Neuigkeiten deines Teams mit dem Schild „Intern“ und im Reiter „Intern“ der Abteilung. Anheften und dringende Meldungen gibt es dafür nicht.
+
+Vor dem Veröffentlichen zeigt dir ein kurzer Prüfdialog, wer den Beitrag sieht und wer benachrichtigt wird. Klingt dein Titel nach einer internen Info, der Beitrag geht aber an alle, weist dich der Dialog darauf hin.
+
 ## Anheften
 
 Angeheftete Beiträge stehen oben in den Neuigkeiten. Wie lange und wie viele gleichzeitig, legt die Verwaltung in den Regeln fest (Standard: höchstens 14 Tage, einer je Absender).

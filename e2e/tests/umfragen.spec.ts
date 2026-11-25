@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { anmelden, keineA11yFehler, nichtZuBreit } from './helpers';
+import { anmelden, keineA11yFehler, nichtZuBreit, freigeben } from './helpers';
 
 test('Umfrage am Beitrag: anlegen, Pflichtfrage, beantworten, Ergebnis', async ({ page }, info) => {
 	const titel = `Mittagessen ${info.project.name} ${info.retry}`;
@@ -18,7 +18,7 @@ test('Umfrage am Beitrag: anlegen, Pflichtfrage, beantworten, Ergebnis', async (
 	await page.evaluate(() => window.scrollTo(0, 0));
 	await keineA11yFehler(page);
 	await nichtZuBreit(page);
-	await page.getByRole('button', { name: 'Speichern und freigeben' }).click();
+	await freigeben(page);
 	await expect(page.getByRole('heading', { level: 1, name: titel })).toBeVisible();
 	await expect(page.getByRole('heading', { name: /Umfrage · Auswahl/ })).toBeVisible();
 	const adresse = page.url();

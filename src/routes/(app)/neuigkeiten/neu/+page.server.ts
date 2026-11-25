@@ -38,6 +38,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		// Zentral an alle, sonst der eigene Mandant (Redaktion kann weitere wählen)
 		allTenants: start.isCentral,
 		tenantIds: start.isCentral ? [] : [start.tenantId],
+		// ?sicht=team aus dem Reiter „Intern“ der Abteilung
+		teamScope: url.searchParams.get('sicht') === 'team' && start.intern ? 'mitglieder' : '',
 		replacePin: false,
 		attachments: [],
 		umfrage: ''

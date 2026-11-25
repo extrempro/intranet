@@ -37,6 +37,12 @@ export const TOPICS: TopicDefinition[] = [
 	},
 	{ key: 'neuigkeiten', label: 'Neuigkeiten', defaults: { bell: true, push: false, email: true } },
 	{
+		key: 'intern',
+		label: 'Intern aus deiner Abteilung',
+		hint: 'nur für dein Team',
+		defaults: { bell: true, push: true, email: false }
+	},
+	{
 		key: 'kulissen',
 		label: 'Hinter den Kulissen',
 		defaults: { bell: true, push: false, email: false }

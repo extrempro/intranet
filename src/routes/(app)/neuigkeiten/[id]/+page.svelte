@@ -8,6 +8,8 @@
 	import { formatDay, formatWhen } from '#lib/news.ts';
 	import MitFrage from '#lib/components/MitFrage.svelte';
 	import Umfrage from '#lib/components/Umfrage.svelte';
+	const SCHLOSS =
+		'M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2zM8 11v-4a4 4 0 1 1 8 0v4';
 
 	let { data, form } = $props();
 	const b = $derived(data.beitrag);
@@ -33,7 +35,9 @@
 				{#if b.planned}<span class="schild warn">
 						Geplant · erscheint {formatWhen(b.publishAt)}
 					</span>{/if}
-				{#if b.audience}<span class="schild">{b.audience}</span>{/if}
+				{#if b.audience}<span class={['schild', b.intern && 'intern']}>
+						{#if b.intern}<Icon d={SCHLOSS} size={13} stroke={2.2} />{/if}{b.audience}
+					</span>{/if}
 			</div>
 			<LinkKopieren />
 		</div>

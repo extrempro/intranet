@@ -28,7 +28,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			place: ev.place ?? '',
 			description: ev.description ?? '',
 			allTenants: ev.allTenants,
-			tenantIds: ev.targets.map((t) => t.id)
+			tenantIds: ev.targets.map((t) => t.id),
+			teamScope: ev.teamScope
 		}
 	};
 };

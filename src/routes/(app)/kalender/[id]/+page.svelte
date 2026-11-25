@@ -8,11 +8,13 @@
 	const t = $derived(data.termin);
 	const heute = berlinNow().date;
 	const zielgruppe = $derived(
-		t.allTenants
-			? 'Alle Mandanten'
-			: t.targets.length
-				? t.targets.map((x) => x.name).join(', ')
-				: `Nur ${t.tenantShort}`
+		t.teamScope
+			? `Intern: nur Team ${t.unitName}${t.teamScope === 'stamm' ? ' (Stammabteilung)' : ''}`
+			: t.allTenants
+				? 'Alle Mandanten'
+				: t.targets.length
+					? t.targets.map((x) => x.name).join(', ')
+					: `Nur ${t.tenantShort}`
 	);
 </script>
 

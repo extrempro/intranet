@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { anmelden, keineA11yFehler } from './helpers';
+import { anmelden, keineA11yFehler, freigeben } from './helpers';
 
 test('Beitrag schreiben: Entwurf, Rückfrage beim Verlassen, Veröffentlichen', async ({
 	page
@@ -28,7 +28,7 @@ test('Beitrag schreiben: Entwurf, Rückfrage beim Verlassen, Veröffentlichen', 
 	await expect(page).toHaveURL(/entwurf=/);
 	const entwurf = new URL(page.url()).searchParams.get('entwurf');
 
-	await page.getByRole('button', { name: 'Speichern und freigeben' }).click();
+	await freigeben(page);
 	await expect(page.getByRole('heading', { level: 1, name: titel })).toBeVisible();
 	await keineA11yFehler(page);
 

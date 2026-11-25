@@ -16,6 +16,8 @@ export interface NewsFormValues {
 	urgentText: string;
 	allTenants: boolean;
 	tenantIds: string[];
+	/** Nur für das Team (Kap. 8.17): '' = alle */
+	teamScope: '' | 'mitglieder' | 'stamm';
 	replacePin: boolean;
 	attachments: {
 		id: string;
@@ -43,6 +45,8 @@ export function readNewsForm(form: FormData): { input: SaveInput; values: NewsFo
 		urgentText: s('bannertext', 400),
 		allTenants: form.get('zielgruppe') !== 'auswahl',
 		tenantIds: form.getAll('mandanten').map(String).slice(0, 50),
+		teamScope:
+			form.get('sicht') === 'team' ? (form.get('kreis') === 'stamm' ? 'stamm' : 'mitglieder') : '',
 		replacePin: form.get('ersetzen') === 'on',
 		attachments: [],
 		umfrage: form.has('umfrage') ? s('umfrage', 100_000) : undefined
@@ -67,6 +71,7 @@ export function readNewsForm(form: FormData): { input: SaveInput; values: NewsFo
 		urgentText: values.urgent ? values.urgentText : null,
 		allTenants: values.allTenants,
 		tenantIds: values.tenantIds,
+		teamScope: values.teamScope || null,
 		replacePin: values.replacePin,
 		attachmentIds: form.getAll('anhaenge').map(String).slice(0, 20),
 		descriptions: beschreibungenAusForm(form)

@@ -7,6 +7,8 @@
 	import { resolve } from '$app/paths';
 	import { formatWhen, formatDay } from '#lib/news.ts';
 	import Icon from './Icon.svelte';
+	const SCHLOSS =
+		'M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2zM8 11v-4a4 4 0 1 1 8 0v4';
 
 	interface Item {
 		id: string;
@@ -20,6 +22,8 @@
 		wasUrgent: boolean;
 		pinned: boolean;
 		audience: string;
+		/** Nur für das Team (Kap. 8.17) */
+		intern?: boolean;
 		attachmentCount: number;
 		canEdit?: boolean;
 		sender: { name: string; label: string; slug?: string; hub?: boolean };
@@ -107,7 +111,11 @@
 						Dringend bis {formatWhen(item.urgentUntil)}
 					</span>{/if}
 				{#if item.wasUrgent}<span class="schild rand">War dringend</span>{/if}
-				{#if item.audience && !kompakt}<span class="schild">{item.audience}</span>{/if}
+				{#if item.audience && (!kompakt || item.intern)}<span
+						class={['schild', item.intern && 'intern']}
+					>
+						{#if item.intern}<Icon d={SCHLOSS} size={13} stroke={2.2} />{/if}{item.audience}
+					</span>{/if}
 			</div>
 			<svelte:element this={`h${ebene}`} class="titel">
 				<a class="dehnen titellink" {href}>{item.title}</a>

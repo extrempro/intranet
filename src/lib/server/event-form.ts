@@ -14,6 +14,9 @@ export function readEventForm(f: FormData): SaveEventInput {
 		place: s('ort', 300),
 		description: s('beschreibung', 5000),
 		allTenants: f.get('zielgruppe') !== 'auswahl',
-		tenantIds: f.getAll('mandanten').map(String).slice(0, 50)
+		tenantIds: f.getAll('mandanten').map(String).slice(0, 50),
+		// Nur für das Team (Kap. 8.17)
+		teamScope:
+			f.get('sicht') === 'team' ? (f.get('kreis') === 'stamm' ? 'stamm' : 'mitglieder') : null
 	};
 }
