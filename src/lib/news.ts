@@ -93,6 +93,8 @@ export interface NewsDraft {
 	/** Mit Mandantenwahl (zentrale Absender, Redaktion): alle oder einzelne Mandanten. */
 	allTenants: boolean;
 	tenantIds: string[];
+	/** Nur für das Team der Abteilung (Kap. 8.17); null = wie bisher */
+	teamScope?: 'mitglieder' | 'stamm' | null;
 }
 
 export type Zielmandanten = 'alle' | string[] | null;

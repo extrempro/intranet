@@ -43,6 +43,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		urgentText: n.urgentText ?? '',
 		allTenants: n.allTenants,
 		tenantIds: n.tenantIds,
+		teamScope: n.teamScope ?? '',
 		replacePin: false,
 		attachments: n.attachments
 	};

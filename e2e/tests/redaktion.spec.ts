@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { anmelden, keineA11yFehler, nichtZuBreit } from './helpers';
+import { anmelden, keineA11yFehler, nichtZuBreit, freigeben } from './helpers';
 
 test('Redaktion schreibt für eine Abteilung ohne Pflege an einen anderen Mandanten', async ({
 	page
@@ -22,7 +22,7 @@ test('Redaktion schreibt für eine Abteilung ohne Pflege an einen anderen Mandan
 	await page.getByRole('textbox', { name: 'Text' }).click();
 	await page.keyboard.type('Bitte die Lieferzeiten beachten.');
 	await keineA11yFehler(page);
-	await page.getByRole('button', { name: 'Speichern und freigeben' }).click();
+	await freigeben(page);
 	await expect(page.getByRole('heading', { level: 1, name: titel })).toBeVisible();
 	const adresse = page.url();
 

@@ -18,6 +18,7 @@ import {
 import { unitTypeLabel } from '../roles.ts';
 import { audit } from './audit.ts';
 import {
+	siehtIntern,
 	canAdministerTenant,
 	canManageUnit,
 	canWriteEvents,
@@ -191,7 +192,7 @@ export async function getDepartment(p: Principal, slug: string) {
 	const today = berlinNow().date;
 	const { responsibilityReviewMonths: months } = await getContentRules();
 
-	const { hubInhalte } = await import('./hub-inhalte.ts');
+	const { hubInhalte, dokumenteTeilen } = await import('./hub-inhalte.ts');
 	const [team, zust, termine, faqRows, inhalte] = await Promise.all([
 		teamOf(p, u.id),
 		responsibilityRows([u.id]),
@@ -207,7 +208,13 @@ export async function getDepartment(p: Principal, slug: string) {
 			})
 			.from(events)
 			.where(
-				and(eq(events.unitId, u.id), gte(events.date, today), lt(events.date, addDays(today, 120)))
+				and(
+					eq(events.unitId, u.id),
+					// Interne Termine stehen im Reiter „Intern“ (Kap. 8.17)
+					isNull(events.teamScope),
+					gte(events.date, today),
+					lt(events.date, addDays(today, 120))
+				)
 			)
 			.orderBy(asc(events.date), asc(events.startTime))
 			.limit(30),
@@ -277,8 +284,10 @@ export async function getDepartment(p: Principal, slug: string) {
 		/** Aufbau wie bei Hubs: Reiter und Blöcke im Überblick */
 		layout: cleanLayout(u.pageLayout, 'abteilung'),
 		links: inhalte.links,
-		ordner: inhalte.ordner,
-		dokumente: inhalte.dokumente,
+		// Interne Ordner (Kap. 8.17) getrennt, nur für das Team
+		...dokumenteTeilen(inhalte.ordner, inhalte.dokumente, siehtIntern(p, u.id)),
+		/** Person gehört zum Team: Reiter „Intern“, interne Inhalte (Kap. 8.17) */
+		internErlaubt: siehtIntern(p, u.id),
 		canManage,
 		canAdminister,
 		/** Dokumente pflegt, wer die Seite pflegt oder das Recht „Dokumente“ hat */
@@ -363,7 +372,7 @@ export async function getDepartmentForEdit(p: Principal, slug: string) {
 	if (!row) return null;
 	const u = await manageable(p, row.unit.id).catch(() => null);
 	if (!u) return null;
-	const { hubInhalte } = await import('./hub-inhalte.ts');
+	const { hubInhalte, dokumenteTeilen } = await import('./hub-inhalte.ts');
 	const [team, managers, fach, zust, inhalte] = await Promise.all([
 		db
 			.select({
@@ -417,8 +426,10 @@ export async function getDepartmentForEdit(p: Principal, slug: string) {
 		/** Aufbau, Schnellzugriff und Dokumente wie bei Hubs */
 		layout: cleanLayout(u.pageLayout, 'abteilung'),
 		links: inhalte.links,
-		ordner: inhalte.ordner,
-		dokumente: inhalte.dokumente,
+		// Interne Ordner (Kap. 8.17) getrennt, nur für das Team
+		...dokumenteTeilen(inhalte.ordner, inhalte.dokumente, siehtIntern(p, u.id)),
+		/** Person gehört zum Team: Reiter „Intern“, interne Inhalte (Kap. 8.17) */
+		internErlaubt: siehtIntern(p, u.id),
 		behindScenes: u.behindScenes,
 		isAdmin: canAdministerTenant(p, u.tenantId),
 		maxSchreibende: writersMax,

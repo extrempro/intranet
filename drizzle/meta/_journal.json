@@ -379,6 +379,13 @@
       "when": 1795520100000,
       "tag": "0053_faq_geprueft",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1795606400000,
+      "tag": "0054_intern_abteilung",
+      "breakpoints": true
     }
   ]
 }

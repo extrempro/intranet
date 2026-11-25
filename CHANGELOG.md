@@ -10,6 +10,15 @@ einfacher Sprache, ohne Technik. Nach dem Merge legt GitHub Actions dazu ein
 Release mit Tag v<Version> an (.github/workflows/release.yml).
 -->
 
+## 0.42.0 · 25.11.2026 · Nur für unser Team
+
+- Neu: Abteilungen können Beiträge, Termine und Dokumente nur für das eigene Team veröffentlichen, für alle Mitglieder oder nur für die Stammabteilung. Leitung, Stellvertretung und Abteilungsverwaltung sehen sie immer.
+- Neuer Reiter „Intern“ auf der Abteilungsseite, nur für das Team sichtbar.
+- Interne Beiträge stehen in deinen Neuigkeiten mit dem Schild „Intern“, interne Termine in deinem Kalender.
+- Die Redaktion und die Verwaltung sehen interne Inhalte nicht.
+- Vor dem Veröffentlichen zeigt ein kurzer Prüfdialog, wer den Beitrag sieht und wer benachrichtigt wird. Klingt der Titel intern, geht der Beitrag aber an alle, gibt es einen Hinweis.
+- Neue Benachrichtigung „Intern aus deiner Abteilung“, einstellbar unter Konto.
+
 ## 0.41.1 · 24.11.2026 · Einführungen auf Stand
 
 - Neu: eine kurze Einführung für die Mediathek (Suchen und filtern, Weiterschauen, selbst hochladen).

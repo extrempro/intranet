@@ -2,6 +2,7 @@
 	import type { Snippet } from 'svelte';
 	import { untrack } from 'svelte';
 	import Anhaenge from './Anhaenge.svelte';
+	import { frage } from '#lib/frage.svelte.ts';
 	import Editor from './Editor.svelte';
 	import Info from './Info.svelte';
 	import UmfrageEditor from './UmfrageEditor.svelte';
@@ -17,6 +18,8 @@
 		zielMandanten: 'alle' | string[] | null;
 		mayUrgent: boolean;
 		isHub: boolean;
+		/** Intern schreiben möglich: Teamgröße je Kreis (Kap. 8.17) */
+		intern?: { mitglieder: number; stamm: number } | null;
 		/** Darf an Beiträgen dieser Einheit Umfragen anlegen (Recht und Regel an) */
 		mayUmfrage?: boolean;
 		/** Umfragen für die Einheit von der Verwaltung freigeschaltet */
@@ -35,8 +38,14 @@
 		urgentText: string;
 		allTenants: boolean;
 		tenantIds: string[];
+		/** Nur für das Team (Kap. 8.17): '' = alle */
+		teamScope?: '' | 'mitglieder' | 'stamm';
 		replacePin: boolean;
-		attachments: { id: string; name: string; size: number }[];
+		attachments: {
+			id: string;
+			name: string;
+			size: number;
+		}[];
 		/** Umfrage als JSON (Kap. 8.16), leer = keine */
 		umfrage?: string;
 	}
@@ -50,7 +59,8 @@
 		regeln,
 		knopf,
 		zusatz,
-		umfrageGesperrt = false
+		umfrageGesperrt = false,
+		pruefenNurBeiAenderung = false
 	}: {
 		werte: Werte;
 		einheiten: Einheit[];
@@ -63,6 +73,8 @@
 		zusatz?: Snippet;
 		/** Umfrage hat schon Antworten */
 		umfrageGesperrt?: boolean;
+		/** Bearbeiten: Prüfdialog nur, wenn sich „Wer sieht das?“ geändert hat */
+		pruefenNurBeiAenderung?: boolean;
 	} = $props();
 
 	// Startwerte aus den Props, danach im Formular änderbar (tief reaktiv).
@@ -95,6 +107,91 @@
 		})
 	);
 	const hatUmfrage = $derived(!!v.umfrage && v.umfrage !== 'null');
+
+	// Intern (Kap. 8.17): nur Abteilungen, deren Team die Person angehört
+	const intern = $derived(einheit?.intern ?? null);
+	const team = $derived(!!intern && !!v.teamScope);
+	$effect(() => {
+		if (!intern && v.teamScope) untrack(() => (v.teamScope = ''));
+	});
+
+	// Prüfdialog vor dem Veröffentlichen
+	let knopfEl: HTMLButtonElement | undefined = $state();
+	let bestaetigt = false;
+	const start = untrack(() => ({
+		team: werte.teamScope ?? '',
+		alle: werte.allTenants,
+		ids: [...werte.tenantIds].sort().join()
+	}));
+	const geaendert = $derived(
+		(v.teamScope ?? '') !== start.team ||
+			(!team && (v.allTenants !== start.alle || [...v.tenantIds].sort().join() !== start.ids))
+	);
+	// Klingt der Titel nach einer internen Info? Dann bei „an alle“ nachfragen.
+	const INTERN_WOERTER = [
+		'intern',
+		'teambesprechung',
+		'teamsitzung',
+		'dienstplan',
+		'schichtplan',
+		'urlaubsplan',
+		'vertretungsplan',
+		'übergabe',
+		'nur für uns',
+		'nur für das team'
+	];
+	const klingtIntern = $derived(INTERN_WOERTER.some((w) => v.title.toLowerCase().includes(w)));
+	const empfaenger = $derived.by(() => {
+		if (team && intern) return v.teamScope === 'stamm' ? intern.stamm : intern.mitglieder;
+		return null;
+	});
+	const mandantText = $derived.by(() => {
+		if (!ziel) return 'Alle Personen deines Mandanten';
+		if (v.allTenants && ziel === 'alle') return 'Alle Personen in allen Mandanten';
+		const namen = mandanten.filter((m) => v.tenantIds.includes(m.id)).map((m) => m.name);
+		return namen.length ? `Alle Personen in ${namen.join(', ')}` : 'noch kein Mandant gewählt';
+	});
+	const geplant = $derived(
+		!!v.publishAt && (berlinToDate(v.publishAt)?.getTime() ?? 0) > Date.now() + 60_000
+	);
+
+	/** Zeilen des Prüfdialogs: wer sieht den Beitrag, wer wird benachrichtigt */
+	function pruefzeilen(): string[] {
+		const z: string[] = [];
+		if (team) {
+			z.push(
+				`Nur für das Team ${einheit?.name} (${v.teamScope === 'stamm' ? 'nur mit Stammabteilung' : 'alle Mitglieder'})`,
+				`${empfaenger} ${empfaenger === 1 ? 'Person' : 'Personen'}, mit Leitung und Stellvertretung`,
+				'Benachrichtigung, Push und Teams nur an das Team',
+				'Alle anderen sehen den Beitrag nicht, auch nicht die Redaktion'
+			);
+		} else {
+			z.push(`Wer sieht das: ${mandantText}`);
+			if (v.pin && v.pinnedUntil) z.push('Oben in den Neuigkeiten angeheftet');
+			if (v.urgent && v.urgentUntil) z.push('Als dringende Meldung mit Banner');
+			if (klingtIntern)
+				z.push(
+					'Achtung: Der Titel klingt nach einer internen Info. Soll das wirklich an alle?' +
+						(intern ? ' Für dein Team wähle „Nur für unser Team“.' : '')
+				);
+		}
+		if (geplant) z.push('Erscheint erst zur Freigabe');
+		return z.map((t) => `• ${t}`);
+	}
+
+	async function absenden(e: MouseEvent) {
+		if (bestaetigt || (pruefenNurBeiAenderung && !geaendert)) return;
+		e.preventDefault();
+		const ja = await frage({
+			titel: 'Bitte kurz prüfen',
+			text: pruefzeilen().join('\n'),
+			ja: knopf,
+			nein: 'Zurück'
+		});
+		if (!ja) return;
+		bestaetigt = true;
+		knopfEl?.click();
+	}
 	const fid = (k: string) => (fehler[k] ? `f-${k}` : undefined);
 </script>
 
@@ -141,7 +238,69 @@
 
 <Anhaenge start={werte.attachments} fehler={fehler.attachments} beschreibungen />
 
-{#if ziel}
+{#if intern}
+	<fieldset class="gruppe">
+		<legend>
+			Für wen?
+			<Info
+				thema="Nur für unser Team"
+				text="Interne Beiträge sehen nur die Mitglieder deiner Abteilung, Leitung und Stellvertretung. Sie stehen im Reiter „Intern“ und in den Neuigkeiten der Mitglieder. Die Redaktion sieht sie nicht."
+			/>
+		</legend>
+		<label class="option">
+			<input
+				type="radio"
+				name="sicht"
+				value="alle"
+				checked={!v.teamScope}
+				onchange={() => (v.teamScope = '')}
+			/> Öffentlich
+		</label>
+		<label class="option">
+			<input
+				type="radio"
+				name="sicht"
+				value="team"
+				checked={!!v.teamScope}
+				onchange={() => (v.teamScope = 'mitglieder')}
+			/> Nur für unser Team
+		</label>
+		{#if team}
+			<div class="einzug">
+				<label class="option">
+					<input
+						type="radio"
+						name="kreis"
+						value="mitglieder"
+						checked={v.teamScope === 'mitglieder'}
+						onchange={() => (v.teamScope = 'mitglieder')}
+					/> Alle Mitglieder
+				</label>
+				<label class="option">
+					<input
+						type="radio"
+						name="kreis"
+						value="stamm"
+						checked={v.teamScope === 'stamm'}
+						onchange={() => (v.teamScope = 'stamm')}
+					/>
+					Nur mit Stammabteilung {einheit?.name}
+				</label>
+				<p class="hinweis" aria-live="polite">
+					Erreicht {empfaenger}
+					{empfaenger === 1 ? 'Person' : 'Personen'} (mit Leitung und Stellvertretung). Anheften und „Dringend“
+					gibt es für interne Beiträge nicht.
+				</p>
+			</div>
+		{/if}
+	</fieldset>
+{:else}
+	<input type="hidden" name="sicht" value="alle" />
+{/if}
+
+{#if team}
+	<p class="hinweis">Wer sieht das? Nur dein Team, Leitung und Stellvertretung.</p>
+{:else if ziel}
 	<fieldset class="gruppe">
 		<legend>
 			Wer sieht das?
@@ -232,7 +391,7 @@
 	</label>
 </div>
 
-{#if !einheit?.isHub}
+{#if !einheit?.isHub && !team}
 	<fieldset class="gruppe">
 		<legend>
 			Anheften
@@ -268,7 +427,7 @@
 	</fieldset>
 {/if}
 
-{#if einheit?.mayUrgent}
+{#if einheit?.mayUrgent && !team}
 	<fieldset class="gruppe dringend">
 		<legend>
 			Dringende Meldung
@@ -336,7 +495,7 @@
 </section>
 
 <div class="aktionen">
-	<button class="knopf" type="submit">{knopf}</button>
+	<button class="knopf" type="submit" bind:this={knopfEl} onclick={absenden}>{knopf}</button>
 	{@render zusatz?.()}
 </div>
 

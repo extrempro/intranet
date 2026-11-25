@@ -24,7 +24,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			place: '',
 			description: '',
 			allTenants: true,
-			tenantIds: []
+			tenantIds: [],
+			// ?sicht=team aus dem Reiter „Intern“ der Abteilung
+			teamScope: (url.searchParams.get('sicht') === 'team' ? 'mitglieder' : null) as
+				'mitglieder' | 'stamm' | null
 		}
 	};
 };

@@ -33,6 +33,11 @@
 			title: string;
 			name: string;
 		}[];
+		/** Interne Ordner und Dokumente (Kap. 8.17), nur für das Team befüllt */
+		internOrdner?: { id: string; name: string }[];
+		internDokumente?: Einheit['dokumente'];
+		/** Person gehört zum Team: darf Ordner als intern markieren */
+		internErlaubt?: boolean;
 	}
 
 	let {
@@ -107,17 +112,25 @@
 		ziele.find((z) => z.url === url)?.label ?? url.replace(/^https?:\/\//, '');
 
 	// --- Dokumente ---
+	const alleOrdner = [...e.ordner, ...(e.internOrdner ?? [])];
 	let dokumente = $state(
-		e.dokumente.map((d) => ({
+		[...e.dokumente, ...(e.internDokumente ?? [])].map((d) => ({
 			id: d.id,
 			title: d.title,
 			name: d.name,
-			ordner: e.ordner.find((o) => o.id === d.folderId)?.name ?? ''
+			ordner: alleOrdner.find((o) => o.id === d.folderId)?.name ?? ''
 		}))
 	);
 	const ordnerNamen = $derived(
 		[...new Set(dokumente.map((d) => d.ordner.trim()).filter(Boolean))].sort()
 	);
+	// Ordner „nur für das Team“ (Kap. 8.17), nach Namen
+	let interneOrdner = $state<string[]>((e.internOrdner ?? []).map((o) => o.name.toLowerCase()));
+	const istIntern = (name: string) => interneOrdner.includes(name.trim().toLowerCase());
+	function internUmschalten(name: string, an: boolean) {
+		const n = name.trim().toLowerCase();
+		interneOrdner = an ? [...new Set([...interneOrdner, n])] : interneOrdner.filter((x) => x !== n);
+	}
 
 	const daten = $derived(
 		JSON.stringify({
@@ -126,7 +139,8 @@
 				ueberblick: aufbau.filter((z) => z.bereich === 'block' && z.an).map((z) => z.key)
 			},
 			links,
-			dokumente: dokumente.map((d) => ({ id: d.id, title: d.title, ordner: d.ordner }))
+			dokumente: dokumente.map((d) => ({ id: d.id, title: d.title, ordner: d.ordner })),
+			interneOrdner: interneOrdner.filter((n) => ordnerNamen.some((o) => o.toLowerCase() === n))
 		})
 	);
 
@@ -340,6 +354,25 @@
 		<datalist id="abteilung-ordner">
 			{#each ordnerNamen as o (o)}<option value={o}></option>{/each}
 		</datalist>
+		{#if e.internErlaubt && ordnerNamen.length}
+			<fieldset class="intern-ordner">
+				<legend>Ordner nur für das Team</legend>
+				<p class="hinweis">
+					Interne Ordner sehen nur Mitglieder, Leitung und Stellvertretung, im Reiter „Intern“. Die
+					Redaktion sieht sie nicht.
+				</p>
+				{#each ordnerNamen as o (o)}
+					<label class="option">
+						<input
+							type="checkbox"
+							checked={istIntern(o)}
+							onchange={(ev) => internUmschalten(o, ev.currentTarget.checked)}
+						/>
+						{o}
+					</label>
+				{/each}
+			</fieldset>
+		{/if}
 		{#key schluessel}
 			<Anhaenge start={[]} max={20} legende="Datei hinzufügen" />
 		{/key}

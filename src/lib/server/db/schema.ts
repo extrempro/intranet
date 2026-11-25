@@ -528,6 +528,8 @@ export const news = pgTable(
 		/** Hinter den Kulissen: Einwilligung der Abgebildeten bestätigt */
 		consentAt: timestamp('consent_at', { withTimezone: true }),
 		/** Benachrichtigt beim Veröffentlichen (Kap. 11); dringend ggf. später nachgeholt */
+		/** Nur für das Team der Abteilung (Kap. 8.17): alle Mitglieder oder nur Stammabteilung */
+		teamScope: text('team_scope', { enum: ['mitglieder', 'stamm'] }),
 		notifiedAt: timestamp('notified_at', { withTimezone: true }),
 		notifiedUrgent: boolean('notified_urgent').notNull().default(false),
 		createdAt: createdAt(),
@@ -993,6 +995,8 @@ export const unitDocumentFolders = pgTable(
 			.notNull()
 			.references(() => units.id, { onDelete: 'cascade' }),
 		name: text('name').notNull(),
+		/** Nur für das Team der Abteilung sichtbar (Kap. 8.17) */
+		intern: boolean('intern').notNull().default(false),
 		position: integer('position').notNull().default(0)
 	},
 	(t) => [index('unit_document_folders_unit').on(t.unitId, t.position)]
@@ -1182,6 +1186,8 @@ export const events = pgTable(
 		endTime: text('end_time'),
 		place: text('place'),
 		description: text('description'),
+		/** Nur für das Team der Abteilung (Kap. 8.17) */
+		teamScope: text('team_scope', { enum: ['mitglieder', 'stamm'] }),
 		allTenants: boolean('all_tenants').notNull().default(false),
 		createdBy: uuid('created_by').references(() => persons.id, { onDelete: 'set null' }),
 		updatedBy: uuid('updated_by').references(() => persons.id, { onDelete: 'set null' }),

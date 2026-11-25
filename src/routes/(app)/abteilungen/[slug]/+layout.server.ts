@@ -12,7 +12,7 @@ export const load: LayoutServerLoad = async ({ locals, params }) => {
 	const einheit = await getDepartment(p, params.slug);
 	if (!einheit) error(404, 'Diese Abteilung gibt es nicht oder nicht mehr.');
 	const [neues, mediathek, favoriten] = await Promise.all([
-		listNews(p, { unitIds: [einheit.id], limit: 1 }),
+		listNews(p, { unitIds: [einheit.id], limit: 1, intern: 'ohne' }),
 		einheitVideos(p, einheit.id),
 		listFavorites(p.personId)
 	]);

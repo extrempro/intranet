@@ -7,7 +7,7 @@
 import { and, asc, eq, inArray, isNull, max, sql } from 'drizzle-orm';
 import { HUB_GRENZEN, istLinkSymbol, linkAdresse } from '../hubs.ts';
 import { audit } from './audit.ts';
-import type { Principal } from './auth/access.ts';
+import { siehtIntern, type Principal } from './auth/access.ts';
 import { db } from './db/index.ts';
 import {
 	files,
@@ -88,7 +88,11 @@ export async function hubInhalte(unitId: string, koordination: string | null = n
 			.where(eq(unitLinks.unitId, unitId))
 			.orderBy(asc(unitLinks.position)),
 		db
-			.select({ id: unitDocumentFolders.id, name: unitDocumentFolders.name })
+			.select({
+				id: unitDocumentFolders.id,
+				name: unitDocumentFolders.name,
+				intern: unitDocumentFolders.intern
+			})
 			.from(unitDocumentFolders)
 			.where(eq(unitDocumentFolders.unitId, unitId))
 			.orderBy(asc(unitDocumentFolders.position), asc(unitDocumentFolders.name)),
@@ -123,6 +127,24 @@ export async function hubInhalte(unitId: string, koordination: string | null = n
 	};
 }
 
+/**
+ * Ordner und Dokumente getrennt nach öffentlich und intern (Kap. 8.17).
+ * Interne nur, wenn die Person zum Team gehört.
+ */
+export function dokumenteTeilen<
+	O extends { id: string; intern: boolean },
+	D extends { folderId: string | null }
+>(ordner: O[], dokumente: D[], mitIntern: boolean) {
+	const intern = new Set(ordner.filter((o) => o.intern).map((o) => o.id));
+	const istIntern = (d: D) => !!d.folderId && intern.has(d.folderId);
+	return {
+		ordner: ordner.filter((o) => !o.intern),
+		dokumente: dokumente.filter((d) => !istIntern(d)),
+		internOrdner: mitIntern ? ordner.filter((o) => o.intern) : [],
+		internDokumente: mitIntern ? dokumente.filter(istIntern) : []
+	};
+}
+
 /** Darf die Person die Datei als Titelbild, Symbol oder Dokument eines Hubs sehen? */
 export async function hubDateiErlaubt(p: Principal, fileId: string): Promise<boolean> {
 	if (!GUID.test(fileId)) return false;
@@ -138,9 +160,12 @@ export async function hubDateiErlaubt(p: Principal, fileId: string): Promise<boo
 	const [dok] = bild
 		? [null]
 		: await db
-				.select({ id: unitDocuments.unitId })
+				.select({ id: unitDocuments.unitId, intern: unitDocumentFolders.intern })
 				.from(unitDocuments)
+				.leftJoin(unitDocumentFolders, eq(unitDocumentFolders.id, unitDocuments.folderId))
 				.where(eq(unitDocuments.fileId, fileId));
+	// Dokumente in internen Ordnern nur für das Team (Kap. 8.17)
+	if (dok?.intern && !siehtIntern(p, dok.id)) return false;
 	const unitId = bild?.id ?? dok?.id;
 	return unitId ? hubSichtbar(p, unitId) : false;
 }

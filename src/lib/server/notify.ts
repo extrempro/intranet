@@ -194,6 +194,23 @@ export async function personsOfTenants(tenantIds: string[] | null) {
 	return rows.map((r) => r.id);
 }
 
+/** Wer interne Inhalte einer Abteilung bekommt (Kap. 8.17); aktive Konten. */
+export async function teamEmpfaenger(unitId: string, kreis: string): Promise<string[]> {
+	const rows = await db.execute<{ id: string }>(sql`
+		select distinct x.id from (
+			select m.person_id as id from unit_members m
+			where m.unit_id = ${unitId} and (${kreis} = 'mitglieder' or m.is_primary)
+			union all
+			select unnest(array[u.lead_person_id, u.second_lead_person_id, u.deputy_person_id]) from units u
+			where u.id = ${unitId}
+			union all
+			select r.person_id from role_assignments r
+			where r.role = 'abteilungsverwaltung' and r.scope_unit_id = ${unitId}
+		) x
+		join persons pe on pe.id = x.id and pe.status = 'active'`);
+	return rows.map((r) => r.id);
+}
+
 /**
  * Neuigkeiten beim Veröffentlichen melden (Kap. 8.1). Wird ein Beitrag
  * nachträglich dringend, folgt eine Meldung als „Dringend“.
@@ -208,6 +225,7 @@ export async function dispatchNews(now = new Date()) {
 			channel: news.channel,
 			unitName: units.name,
 			allTenants: news.allTenants,
+			teamScope: news.teamScope,
 			pinnedUntil: news.pinnedUntil,
 			urgentUntil: news.urgentUntil,
 			notifiedAt: news.notifiedAt
@@ -242,6 +260,15 @@ export async function dispatchNews(now = new Date()) {
 			await notifyWithChannels('hubs', await hubRecipients(n.unitId), {
 				title: n.title,
 				detail: n.unitName,
+				link: `/neuigkeiten/${n.id}`
+			});
+			continue;
+		}
+		if (n.teamScope) {
+			// Intern (Kap. 8.17): nur an das Team, Leitung und Abteilungsverwaltung
+			await notify('intern', await teamEmpfaenger(n.unitId, n.teamScope), {
+				title: n.title,
+				detail: `Intern · ${n.unitName}`,
 				link: `/neuigkeiten/${n.id}`
 			});
 			continue;

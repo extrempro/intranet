@@ -230,6 +230,7 @@
 								</span>
 								{#if !t.own}<span class="schild rand">{t.tenantShort}</span>{/if}
 								<span class="schild" class:quelle-einheit={!t.isHub}>{t.art}</span>
+								{#if t.teamScope}<span class="schild intern">Intern</span>{/if}
 								{#if t.subscribed}<span class="glocke" title="Du hast diesen Hub abonniert">
 										<Icon d={GLOCKE} size={16} stroke={2} />
 										<span class="sr-only">abonniert</span>

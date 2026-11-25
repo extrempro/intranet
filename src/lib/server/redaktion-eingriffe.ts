@@ -35,7 +35,8 @@ export function imBereich(
 async function beitragImBereich(p: Principal, id: string) {
 	if (!GUID.test(id)) return null;
 	const [n] = await db.select().from(news).where(eq(news.id, id));
-	if (!n) return null;
+	// Interne Beiträge einer Abteilung sieht und ändert die Redaktion nicht (Kap. 8.17)
+	if (!n || n.teamScope) return null;
 	const ziele = (
 		await db.select({ t: newsTenants.tenantId }).from(newsTenants).where(eq(newsTenants.newsId, id))
 	).map((r) => r.t);

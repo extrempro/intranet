@@ -5,7 +5,7 @@
  * Die Mandantentrennung gilt doppelt: hier im Code und zusätzlich per
  * Row-Level Security in PostgreSQL (siehe db/index.ts, scoped()).
  */
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, or, sql, type AnyColumn, type SQL } from 'drizzle-orm';
 import type { Role } from '../../roles.ts';
 import { db } from '../db/index.ts';
 import { locationOperators, roleAssignments, unitMembers, units } from '../db/schema.ts';
@@ -44,6 +44,8 @@ export interface Principal {
 	 * sie Beiträge, FAQs und Termine (Kap. 10). Beim Laden der Person berechnet.
 	 */
 	ohnePflege?: string[];
+	/** Abteilungen, in denen die Person Leitung oder Stellvertretung ist (interne Inhalte). */
+	leitung?: string[];
 }
 
 /** Die für Rechte nötigen Angaben einer Einheit. */
@@ -89,8 +91,43 @@ export async function loadPrincipal(person: { id: string; tenantId: string }): P
 		roles,
 		memberships,
 		operatorLocationId: operator[0]?.locationId ?? null,
-		ohnePflege: await einheitenOhnePflege(roles)
+		ohnePflege: await einheitenOhnePflege(roles),
+		leitung: (
+			await db
+				.select({ id: units.id })
+				.from(units)
+				.where(
+					sql`${person.id} in (${units.leadPersonId}, ${units.secondLeadPersonId}, ${units.deputyPersonId})`
+				)
+		).map((r) => r.id)
 	};
+}
+
+/** Kreis interner Inhalte einer Abteilung (Kap. 8.17): alle Mitglieder oder nur Stammabteilung. */
+export type TeamKreis = 'mitglieder' | 'stamm';
+
+/**
+ * Wer interne Inhalte einer Abteilung sieht: Mitglieder (bei „stamm“ nur mit
+ * dieser Stammabteilung), Leitung und Stellvertretung, die Abteilungsverwaltung.
+ * Die Redaktion bewusst nicht. Die schreibende Person sieht ihre eigenen
+ * Inhalte zusätzlich (Prüfung am Inhalt).
+ */
+export function teamSicht(p: Principal) {
+	const voll = new Set<string>(p.leitung ?? []);
+	for (const r of p.roles)
+		if (r.role === 'abteilungsverwaltung' && r.scopeUnitId) voll.add(r.scopeUnitId);
+	const mitglied = new Set<string>();
+	for (const m of p.memberships) {
+		mitglied.add(m.unitId);
+		if (m.isPrimary) voll.add(m.unitId);
+	}
+	return { voll, mitglied };
+}
+
+/** Sieht die Person interne Inhalte dieser Abteilung im Kreis? */
+export function siehtIntern(p: Principal, unitId: string, kreis: TeamKreis = 'mitglieder') {
+	const s = teamSicht(p);
+	return s.voll.has(unitId) || (kreis === 'mitglieder' && s.mitglied.has(unitId));
 }
 
 /** Einheiten ohne Abteilungsverwaltung bzw. Hub-Team im Bereich der Redaktion. */
@@ -322,4 +359,26 @@ export function canGrantRole(p: Principal, t: GrantTarget): boolean {
 	if (t.role === 'system_admin' || t.role === 'mandanten_admin') return false;
 	if (t.scope === 'all' || !t.tenantId) return false;
 	return canAdministerTenant(p, t.tenantId);
+}
+
+/**
+ * Interne Inhalte einer Abteilung (Kap. 8.17): nur Team, Leitung und
+ * Abteilungsverwaltung sehen sie, dazu wer sie geschrieben hat. Für Beiträge
+ * erzwingt das zusätzlich die Datenbank (Policy news_team). Für Termine gilt dieselbe Regel.
+ */
+export function teamBedingung(
+	p: Principal,
+	spalten: { unitId: AnyColumn; teamScope: AnyColumn; createdBy: AnyColumn }
+): SQL {
+	const s = teamSicht(p);
+	const voll = [...s.voll];
+	const mitglied = [...s.mitglied];
+	return or(
+		isNull(spalten.teamScope),
+		eq(spalten.createdBy, p.personId),
+		voll.length ? inArray(spalten.unitId, voll) : sql`false`,
+		mitglied.length
+			? and(eq(spalten.teamScope, 'mitglieder'), inArray(spalten.unitId, mitglied))
+			: sql`false`
+	)!;
 }

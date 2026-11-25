@@ -3,11 +3,11 @@
  * Intranet-PWA): Laden aller Angaben und Übernehmen der Änderungen in einem
  * Schritt. Jede Teiländerung prüft die Rechte wie die Einzelaktionen.
  */
-import { and, asc, eq, gte, inArray, ne, sql } from 'drizzle-orm';
+import { and, asc, eq, gte, inArray, isNull, ne, sql } from 'drizzle-orm';
 import { addDays, berlinNow } from '../canteen.ts';
 import { cleanLayout, HUB_GRENZEN, istLinkSymbol, linkAdresse, type HubLayout } from '../hubs.ts';
 import { audit } from './audit.ts';
-import type { Principal } from './auth/access.ts';
+import { siehtIntern, type Principal } from './auth/access.ts';
 import { deleteEvent, eventWritableUnits, saveEvent } from './calendar.ts';
 import { db } from './db/index.ts';
 import {
@@ -45,7 +45,7 @@ export async function hubPflegeDaten(p: Principal, unitId: string) {
 				place: events.place
 			})
 			.from(events)
-			.where(and(eq(events.unitId, unitId), gte(events.date, heute)))
+			.where(and(eq(events.unitId, unitId), isNull(events.teamScope), gte(events.date, heute)))
 			.orderBy(asc(events.date), asc(events.startTime))
 			.limit(50)
 	]);
@@ -103,6 +103,8 @@ export interface HubDaten {
 	kontakte: { personId: string; aufgabe: string }[];
 	links: { label: string; description: string; url: string; icon: string }[];
 	dokumente: { id: string; title: string; ordner: string }[];
+	/** Namen der Ordner „nur für das Team“ (Abteilungen, Kap. 8.17), klein geschrieben */
+	interneOrdner?: string[];
 	termine: { id: string | null; date: string; title: string; startTime: string; place: string }[];
 }
 
@@ -152,6 +154,10 @@ export function hubDatenLesen(roh: string): HubDaten {
 			title: s(d.title, 500),
 			ordner: s(d.ordner, 500)
 		})),
+		interneOrdner: (Array.isArray(j.interneOrdner) ? j.interneOrdner : [])
+			.slice(0, HUB_GRENZEN.ordner)
+			.map((n: unknown) => s(n, 500).trim().toLowerCase())
+			.filter(Boolean),
 		termine: liste(j.termine, 50).map((t) => ({
 			id: GUID.test(s(t.id, 40)) ? s(t.id, 40) : null,
 			date: s(t.date, 10),
@@ -267,7 +273,7 @@ export async function hubSpeichern(
 		await linksErsetzen(unitId, links);
 
 		// --- Dokumente ---
-		await dokumenteSpeichern(p, unitId, d.dokumente, neueDateien);
+		await dokumenteSpeichern(p, unitId, d.dokumente, neueDateien, d.interneOrdner);
 
 		// --- Termine ---
 		await termineSpeichern(p, unitId, u.isCentral, d.termine);
@@ -326,20 +332,36 @@ export async function dokumenteSpeichern(
 	p: Principal,
 	unitId: string,
 	liste: HubDaten['dokumente'],
-	neueDateien: string[]
+	neueDateien: string[],
+	/** Ordner „nur für das Team“ (Kap. 8.17); undefined = unverändert */
+	interneOrdner?: string[]
 ) {
 	await dokumentePflegbar(p, unitId);
+	// Interne Ordner gibt es nur bei Abteilungen und nur für Personen aus dem Team
+	const [einheit] = await db.select({ type: units.type }).from(units).where(eq(units.id, unitId));
+	const team = einheit?.type !== 'hub' && siehtIntern(p, unitId);
 	const vorhanden = await db
-		.select({ id: unitDocuments.id })
+		.select({ id: unitDocuments.id, intern: unitDocumentFolders.intern })
 		.from(unitDocuments)
+		.leftJoin(unitDocumentFolders, eq(unitDocumentFolders.id, unitDocuments.folderId))
 		.where(eq(unitDocuments.unitId, unitId));
-	for (const v of vorhanden)
+	// Wer nicht zum Team gehört, sieht interne Dokumente nicht und ändert sie nicht
+	const sichtbar = vorhanden.filter((v) => team || !v.intern);
+	for (const v of sichtbar)
 		if (!liste.some((d) => d.id === v.id)) await dokumentLoeschen(p, unitId, v.id);
 	// Ordner nach Namen: fehlende anlegen, leere am Ende löschen
-	const ordner = await db
-		.select({ id: unitDocumentFolders.id, name: unitDocumentFolders.name })
-		.from(unitDocumentFolders)
-		.where(eq(unitDocumentFolders.unitId, unitId));
+	const ordner = (
+		await db
+			.select({
+				id: unitDocumentFolders.id,
+				name: unitDocumentFolders.name,
+				intern: unitDocumentFolders.intern
+			})
+			.from(unitDocumentFolders)
+			.where(eq(unitDocumentFolders.unitId, unitId))
+	).filter((o) => team || !o.intern);
+	const internGewuenscht = (n: string) =>
+		team && (interneOrdner ?? []).includes(n.trim().toLowerCase());
 	const ordnerId = async (name: string) => {
 		const n = name.trim().slice(0, HUB_GRENZEN.ordnerName);
 		if (!n) return null;
@@ -349,13 +371,17 @@ export async function dokumenteSpeichern(
 			throw new HubError(`Höchstens ${HUB_GRENZEN.ordner} Ordner.`);
 		const [o] = await db
 			.insert(unitDocumentFolders)
-			.values({ unitId, name: n, position: ordner.length })
-			.returning({ id: unitDocumentFolders.id, name: unitDocumentFolders.name });
+			.values({ unitId, name: n, position: ordner.length, intern: internGewuenscht(n) })
+			.returning({
+				id: unitDocumentFolders.id,
+				name: unitDocumentFolders.name,
+				intern: unitDocumentFolders.intern
+			});
 		ordner.push(o);
 		return o.id;
 	};
 	for (const [i, dok] of liste.entries()) {
-		if (!vorhanden.some((v) => v.id === dok.id)) continue;
+		if (!sichtbar.some((v) => v.id === dok.id)) continue;
 		const title = dok.title.trim().slice(0, HUB_GRENZEN.dokumentTitel);
 		if (!title) throw new HubError('Jedes Dokument braucht einen Titel.');
 		await db
@@ -364,6 +390,14 @@ export async function dokumenteSpeichern(
 			.where(and(eq(unitDocuments.id, dok.id), eq(unitDocuments.unitId, unitId)));
 	}
 	if (neueDateien.length) await dokumenteHinzufuegen(p, unitId, neueDateien, null);
+	// Ordner als intern markieren oder freigeben (nur das Team)
+	if (team && interneOrdner)
+		for (const o of ordner)
+			if (o.intern !== internGewuenscht(o.name))
+				await db
+					.update(unitDocumentFolders)
+					.set({ intern: internGewuenscht(o.name) })
+					.where(and(eq(unitDocumentFolders.id, o.id), eq(unitDocumentFolders.unitId, unitId)));
 	await db
 		.delete(unitDocumentFolders)
 		.where(
@@ -385,7 +419,7 @@ async function termineSpeichern(
 	const vorhanden = await db
 		.select({ id: events.id })
 		.from(events)
-		.where(and(eq(events.unitId, unitId), gte(events.date, heute)));
+		.where(and(eq(events.unitId, unitId), isNull(events.teamScope), gte(events.date, heute)));
 	for (const v of vorhanden) if (!liste.some((t) => t.id === v.id)) await deleteEvent(p, v.id);
 	for (const t of liste) {
 		if (!t.title.trim() && !t.date) continue;

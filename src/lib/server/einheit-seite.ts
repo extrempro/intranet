@@ -17,6 +17,7 @@ export interface SeitenDaten {
 	aufbau: HubLayout;
 	links: ReturnType<typeof hubDatenLesen>['links'];
 	dokumente: ReturnType<typeof hubDatenLesen>['dokumente'];
+	interneOrdner?: string[];
 }
 
 /** JSON aus dem Formular lesen (Längen und Anzahlen begrenzt wie bei Hubs) */
@@ -28,7 +29,12 @@ export function seitenDatenLesen(roh: string): SeitenDaten {
 	} catch {
 		aufbau = null;
 	}
-	return { aufbau: cleanLayout(aufbau, 'abteilung'), links: d.links, dokumente: d.dokumente };
+	return {
+		aufbau: cleanLayout(aufbau, 'abteilung'),
+		links: d.links,
+		dokumente: d.dokumente,
+		interneOrdner: d.interneOrdner
+	};
 }
 
 /** Aufbau, Schnellzugriff und Dokumente in einem Schritt übernehmen */
@@ -45,7 +51,7 @@ export async function einheitSeiteSpeichern(
 		// Zuerst prüfen, damit nichts halb gespeichert wird
 		const links = linksPruefen(unitId, d.links);
 		await linksErsetzen(unitId, links);
-		await dokumenteSpeichern(p, unitId, d.dokumente, neueDateien);
+		await dokumenteSpeichern(p, unitId, d.dokumente, neueDateien, d.interneOrdner);
 		await db.update(units).set({ pageLayout: d.aufbau }).where(eq(units.id, unitId));
 	} catch (err) {
 		if (err instanceof HubError) return { fehler: err.message };

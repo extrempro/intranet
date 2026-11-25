@@ -38,3 +38,11 @@ export async function nichtZuBreit(page: Page) {
 	]);
 	expect(breite, 'Seitenbreite').toBeLessThanOrEqual(sicht);
 }
+
+/** Beitrag absenden: Knopf drücken und den Prüfdialog „Bitte kurz prüfen“ bestätigen. */
+export async function freigeben(page: Page, knopf = 'Speichern und freigeben') {
+	await page.getByRole('button', { name: knopf }).click();
+	const pruef = page.getByRole('alertdialog', { name: 'Bitte kurz prüfen' });
+	await expect(pruef).toBeVisible();
+	await pruef.getByRole('button', { name: knopf }).click();
+}
